@@ -23,7 +23,11 @@ import {
   type PermissionSettings,
 } from "./permissions.js";
 import { resolvePluginFieldLimitations } from "./plugin.js";
-import { resolveMcpConfigFileTrust, resolveTrustGate } from "./trust.js";
+import {
+  resolveMcpConfigFileTrust,
+  resolveTrustGate,
+  type ResolveTrustResult,
+} from "./trust.js";
 import { resolveSecurityFindings } from "./security-findings.js";
 import { buildSkillPreloadCapabilities } from "./skills.js";
 import { resolveAgentTools } from "./tools.js";
@@ -66,10 +70,23 @@ function capabilityKind(toolName: string): ResolvedCapability["kind"] {
   return isMcpTool(toolName) ? "mcp_tool" : "tool";
 }
 
-function trustStatusToCapabilityStatus(
-  status: "available" | "blocked_by_trust",
-): ResolvedCapability["status"] {
-  return status === "blocked_by_trust" ? "blocked" : "available";
+/**
+ * Map a trust resolution outcome onto capability status/enforcement.
+ * An `unknown` trust outcome must never collapse to available or blocked.
+ * @see docs/SPEC.md §13 invariants 3, 4
+ */
+function trustOutcome(status: ResolveTrustResult["status"]): {
+  status: ResolvedCapability["status"];
+  enforcement: ResolvedCapability["enforcement"];
+} {
+  switch (status) {
+    case "blocked_by_trust":
+      return { status: "blocked", enforcement: "enforced" };
+    case "unknown":
+      return { status: "unknown", enforcement: "unknown" };
+    default:
+      return { status: "available", enforcement: "enforced" };
+  }
 }
 
 function buildParentToolPool(agent: Agent): string[] {
@@ -275,11 +292,12 @@ function buildMcpServerCapabilities(snapshot: ProjectSnapshot): ResolvedCapabili
 
   return servers.map((server) => {
     const trustResult = resolveMcpConfigFileTrust(server.source);
+    const outcome = trustOutcome(trustResult.status);
     return {
       capabilityId: `mcp-server:${server.id}`,
       kind: "mcp_server" as const,
-      status: trustStatusToCapabilityStatus(trustResult.status),
-      enforcement: "enforced" as const,
+      status: outcome.status,
+      enforcement: outcome.enforcement,
       sources: [server.source],
       reasons: trustResult.reasons,
     };
@@ -302,11 +320,12 @@ function buildTrustCapabilities(agent: Agent, snapshot: ProjectSnapshot): Resolv
       mcpServerIndex: index,
     });
 
+    const outcome = trustOutcome(trustResult.status);
     capabilities.push({
       capabilityId: `inline-mcp:${index}`,
       kind: "mcp_server",
-      status: trustStatusToCapabilityStatus(trustResult.status),
-      enforcement: "enforced",
+      status: outcome.status,
+      enforcement: outcome.enforcement,
       sources: [
         {
           ...agent.source,
@@ -324,11 +343,12 @@ function buildTrustCapabilities(agent: Agent, snapshot: ProjectSnapshot): Resolv
       kind: "agent-hooks",
     });
 
+    const outcome = trustOutcome(trustResult.status);
     capabilities.push({
       capabilityId: "agent-hooks",
       kind: "instruction",
-      status: trustStatusToCapabilityStatus(trustResult.status),
-      enforcement: "enforced",
+      status: outcome.status,
+      enforcement: outcome.enforcement,
       sources: [{ ...agent.source, fieldPath: "frontmatter.hooks" }],
       reasons: trustResult.reasons,
     });

@@ -195,8 +195,14 @@ export interface EffectiveConfiguration {
 }
 
 export interface TrustState {
-  accepted: boolean;
+  /**
+   * `true` / `false` when `~/.claude.json` could be read; `"unknown"` when the
+   * trust record itself could not be determined (unreadable or malformed file).
+   */
+  accepted: boolean | "unknown";
   projectPath: string;
+  /** Why trust could not be determined. Set only when `accepted === "unknown"`. */
+  unknownReason?: string;
 }
 
 export interface ProjectSnapshot {

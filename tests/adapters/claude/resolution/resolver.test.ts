@@ -359,6 +359,60 @@ describe("resolveEffectiveConfiguration", () => {
     expect(hooks?.reasons[0]?.matrixRef).toBe("R5");
   });
 
+  it("resolves inline MCP and hooks as unknown when the trust record is undetermined", async () => {
+    const snapshot = makeSnapshot({
+      trust: {
+        accepted: "unknown",
+        projectPath: "/workspace/project",
+        unknownReason: "Could not read /home/user/.claude.json: EACCES.",
+      },
+      agents: [
+        makeAgent({
+          configuration: {
+            tools: ["Read"],
+            mcpServers: [{ transport: "stdio", commandName: "node", envKeys: [], headerKeys: [] }],
+            hooks: { form: "object", events: ["PreToolUse"], count: 1 },
+            unknownFields: {},
+          },
+        }),
+      ],
+    });
+
+    const result = await resolveEffectiveConfiguration(
+      snapshot,
+      "backend",
+      buildExecutionContext("foreground-subagent"),
+    );
+
+    const inlineMcp = result.capabilities.find((capability) => capability.capabilityId === "inline-mcp:0");
+    const hooks = result.capabilities.find((capability) => capability.capabilityId === "agent-hooks");
+
+    expect(inlineMcp).toMatchObject({ status: "unknown", enforcement: "unknown" });
+    expect(hooks).toMatchObject({ status: "unknown", enforcement: "unknown" });
+    expect(
+      result.capabilities.some((capability) => capability.status === "blocked"),
+    ).toBe(false);
+    expect(result.unknownRate).toBeGreaterThan(0);
+  });
+
+  it("never blocks .mcp.json servers when the trust record is undetermined (M1 #7)", async () => {
+    const snapshot = makeSnapshot({
+      trust: { accepted: "unknown", projectPath: "/workspace/project" },
+    });
+
+    const result = await resolveEffectiveConfiguration(
+      snapshot,
+      "backend",
+      buildExecutionContext("foreground-subagent"),
+    );
+
+    const mcpServer = result.capabilities.find((capability) =>
+      capability.capabilityId.startsWith("mcp-server:"),
+    );
+
+    expect(mcpServer).toMatchObject({ status: "available", enforcement: "enforced" });
+  });
+
   it("does not block MCP servers discovered from .mcp.json", async () => {
     const result = await resolveEffectiveConfiguration(
       makeSnapshot(),

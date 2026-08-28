@@ -18,7 +18,11 @@ export interface ResolveTrustInput {
 }
 
 export interface ResolveTrustResult {
-  status: "available" | "blocked_by_trust";
+  /**
+   * `unknown` when the trust rules do not cover the source, or when the trust
+   * record itself could not be determined. Never collapsed to available/blocked.
+   */
+  status: "available" | "blocked_by_trust" | "unknown";
   /** Whether this resource is subject to project trust rules (R1/R5). */
   gated: boolean;
   reasons: ResolutionReason[];
@@ -80,6 +84,18 @@ function hasDeclaredHooks(agent: Agent): boolean {
   return hooks.count > 0 || hooks.events.length > 0;
 }
 
+function unknownResult(
+  message: string,
+  source: SourceInfo,
+  matrixRef?: string,
+): ResolveTrustResult {
+  return {
+    status: "unknown",
+    gated: false,
+    reasons: [makeReason("unknown", message, source, matrixRef)],
+  };
+}
+
 function availableReason(
   agent: Agent,
   kind: TrustGatedKind,
@@ -106,17 +122,10 @@ export function resolveTrustGate(input: ResolveTrustInput): ResolveTrustResult {
 
   if (kind === "inline-mcp") {
     if (mcpServerEntry === undefined) {
-      return {
-        status: "available",
-        gated: false,
-        reasons: [
-          makeReason(
-            "unknown",
-            "No MCP server entry provided for inline-mcp trust resolution.",
-            agent.source,
-          ),
-        ],
-      };
+      return unknownResult(
+        "No MCP server entry provided for inline-mcp trust resolution.",
+        agent.source,
+      );
     }
 
     if (!isInlineMcpServerEntry(mcpServerEntry)) {
@@ -170,7 +179,26 @@ export function resolveTrustGate(input: ResolveTrustInput): ResolveTrustResult {
   const source = fieldSource(agent, fieldPath);
   const matrixRef = kind === "inline-mcp" ? "R1" : "R5";
 
-  if (trust.accepted) {
+  if (trust.accepted === "unknown") {
+    return {
+      status: "unknown",
+      gated: true,
+      reasons: [
+        makeReason(
+          "unknown",
+          `Project trust state could not be determined; ${
+            kind === "inline-mcp" ? "inline MCP server" : "agent frontmatter hooks"
+          } resolution is unknown.${
+            trust.unknownReason ? ` ${trust.unknownReason}` : ""
+          }`,
+          source,
+          matrixRef,
+        ),
+      ],
+    };
+  }
+
+  if (trust.accepted === true) {
     return {
       status: "available",
       gated: true,
@@ -207,17 +235,7 @@ export function resolveMcpConfigFileTrust(
   source: SourceInfo,
 ): ResolveTrustResult {
   if (!isMcpConfigFileSource(source)) {
-    return {
-      status: "available",
-      gated: false,
-      reasons: [
-        makeReason(
-          "unknown",
-          "Source is not an MCP configuration file.",
-          source,
-        ),
-      ],
-    };
+    return unknownResult("Source is not an MCP configuration file.", source);
   }
 
   return {

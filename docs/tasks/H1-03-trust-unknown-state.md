@@ -47,3 +47,20 @@ An unreadable trust file or a source the trust rules do not cover resolves as `u
 ## Notes
 
 `~/.claude.json` is read outside the project; a permission error there is normal on shared machines and must not be reported as a configuration guardrail.
+
+## Orchestrator verification (post-implementation)
+
+Resolved a project holding both gated resources (inline MCP server = R1, frontmatter hooks = R5) plus a `.mcp.json` server, against four trust states:
+
+| `~/.claude.json` | trust state | inline MCP (R1) | hooks (R5) | `.mcp.json` server | blocked |
+|---|---|---|---|---|---|
+| record accepted | `true` | available | available | available | — |
+| no record | `false` | blocked | blocked | available | R1, R5 only |
+| malformed JSON | `"unknown"` | unknown/unknown | unknown/unknown | available | none |
+| unreadable (EISDIR) | `"unknown"` | unknown/unknown | unknown/unknown | available | none |
+
+`blocked_by_trust` stayed confined to R1/R5 in every case and the `.mcp.json` server was never marked (M1 acceptance #7 holds). Accepted.
+
+**Note on testing:** an EACCES case cannot be reproduced in a root session — root reads a `chmod 000` file regardless — so EISDIR was used as the genuine read failure. An environment running as a non-root user should still be checked against EACCES when one is available.
+
+**Judgment call accepted:** a *missing* `~/.claude.json` stays `accepted: false` rather than `unknown`. Absence of the file is a definite absence of a trust record (R3), not an undetermined one; treating it as unknown would push the ordinary first-run case into unknown for no gain.
