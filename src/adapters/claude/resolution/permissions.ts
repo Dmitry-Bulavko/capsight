@@ -1,10 +1,12 @@
 import type {
-  Agent,
   ExecutionContext,
-  PermissionMode,
   ResolutionReason,
   SourceInfo,
 } from "../../../core/model/index.js";
+import type {
+  ClaudeAgent as Agent,
+  PermissionMode,
+} from "../model/index.js";
 import { FACT, type FactId } from "../version/facts.js";
 
 /** Effective permissions settings relevant to resolution (P4). */
@@ -48,7 +50,8 @@ export function resolvePermissionMode(
   const declared = agent.configuration.permissionMode;
   const reasons: ResolutionReason[] = [];
   const agentSource = agent.source;
-  const parentMode = context.parentPermissionMode;
+  // Core carries the parent mode as an opaque platform string (§12.2).
+  const parentMode = context.parentPermissionMode as PermissionMode | undefined;
 
   if (context.isFork) {
     const effective = parentMode ?? "default";

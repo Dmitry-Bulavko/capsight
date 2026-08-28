@@ -3,7 +3,7 @@ import type {
   ResolutionReason,
   SourceInfo,
 } from "../../../core/model/index.js";
-import { AGENT_TOOL_NAMES, isMcpTool } from "../../../core/resolver/builtin-tools.js";
+import { AGENT_TOOL_NAMES, isMcpTool } from "./tool-tables.js";
 import { MATRIX, gateCapability } from "../version/matrix.js";
 
 export interface ResolveAgentToolsInput {

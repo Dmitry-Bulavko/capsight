@@ -8,8 +8,9 @@ import type {
   PlatformVersion,
 } from "../src/core/model/index.js";
 import type { ManagedSimulationResult } from "../src/application/simulate.js";
-import { buildExecutionContext } from "../src/core/resolver/context.js";
+import { buildExecutionContext } from "../src/adapters/claude/resolution/context.js";
 import type { ContextPreset } from "../src/core/model/index.js";
+import type { PermissionMode } from "../src/adapters/claude/model/index.js";
 import { FACTS } from "../src/adapters/claude/version/facts.js";
 import { VERSION_MATRIX } from "../src/adapters/claude/version/matrix.js";
 import {
@@ -48,7 +49,7 @@ interface FixtureContextSpec {
   preset: ContextPreset;
   depth?: number;
   maxDepth?: number;
-  parentPermissionMode?: EffectiveConfiguration["context"]["parentPermissionMode"];
+  parentPermissionMode?: PermissionMode;
 }
 
 interface FixtureContract {

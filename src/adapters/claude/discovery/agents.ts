@@ -2,7 +2,14 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import os from "node:os";
-import type { Agent, AgentConfiguration, Scope, SourceInfo } from "../../../core/model/index.js";
+import type {
+  Scope,
+  SourceInfo,
+} from "../../../core/model/index.js";
+import type {
+  ClaudeAgent as Agent,
+  ClaudeAgentConfiguration as AgentConfiguration,
+} from "../model/index.js";
 import {
   getStringField,
   parseFrontmatter,

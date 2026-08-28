@@ -4,15 +4,17 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { resolveEffectiveConfiguration } from "../../../../src/adapters/claude/resolution/resolver.js";
 import { resolve } from "../../../../src/application/resolve.js";
-import { buildExecutionContext } from "../../../../src/core/resolver/context.js";
+import { buildExecutionContext } from "../../../../src/adapters/claude/resolution/context.js";
 import { FACT } from "../../../../src/adapters/claude/version/facts.js";
 import type {
-  Agent,
   PlatformVersion,
-  ProjectSnapshot,
   SourceInfo,
   TrustState,
 } from "../../../../src/core/model/index.js";
+import type {
+  ClaudeAgent as Agent,
+  ClaudeProjectSnapshot as ProjectSnapshot,
+} from "../../../../src/adapters/claude/model/index.js";
 import type { DiscoveredInstruction, DiscoveredMcpServer, SettingsLayer } from "../../../../src/adapters/claude/discovery/types.js";
 
 const tempDirs: string[] = [];

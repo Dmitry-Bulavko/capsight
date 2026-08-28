@@ -1,4 +1,8 @@
-import type { Agent, Scope, SourceInfo } from "../../../core/model/index.js";
+import type {
+  Scope,
+  SourceInfo,
+} from "../../../core/model/index.js";
+import type { ClaudeAgent as Agent } from "../model/index.js";
 
 export interface DiscoveredSkill {
   id: string;

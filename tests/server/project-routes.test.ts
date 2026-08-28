@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
-import type { Agent, PlatformVersion, ProjectSnapshot } from "../../src/core/model/index.js";
+import type { PlatformVersion } from "../../src/core/model/index.js";
+import type {
+  ClaudeAgent as Agent,
+  ClaudeProjectSnapshot as ProjectSnapshot,
+} from "../../src/adapters/claude/model/index.js";
 import type { ScanResult } from "../../src/application/scan.js";
 import { clearLastScan, setLastScan } from "../../src/application/scan-store.js";
 import { app } from "../../src/server/index.js";

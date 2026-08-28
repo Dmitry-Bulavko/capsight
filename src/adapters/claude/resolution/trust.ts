@@ -1,10 +1,12 @@
 import type {
-  Agent,
-  RedactedMcpServer,
   ResolutionReason,
   SourceInfo,
   TrustState,
 } from "../../../core/model/index.js";
+import type {
+  ClaudeAgent as Agent,
+  RedactedMcpServer,
+} from "../model/index.js";
 import { FACT, type FactId } from "../version/facts.js";
 
 export type TrustGatedKind = "inline-mcp" | "agent-hooks";

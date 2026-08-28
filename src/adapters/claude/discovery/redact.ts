@@ -1,9 +1,9 @@
 import path from "node:path";
+import type { UnknownFieldType } from "../../../core/model/index.js";
 import type {
   HooksSummary,
   RedactedMcpServer,
-  UnknownFieldType,
-} from "../../../core/model/index.js";
+} from "../model/index.js";
 
 /**
  * Redaction boundary for agent frontmatter values that can carry credentials.

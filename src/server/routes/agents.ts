@@ -1,8 +1,9 @@
 import { Router, type Request, type Response } from "express";
 import { AgentNotFoundError, resolve } from "../../application/resolve.js";
 import { getAgentsFromResult, getLastScan } from "../../application/scan-store.js";
-import type { ContextPreset, PermissionMode, Warning } from "../../core/model/index.js";
-import { buildExecutionContext } from "../../core/resolver/context.js";
+import type { ContextPreset, Warning } from "../../core/model/index.js";
+import type { PermissionMode } from "../../adapters/claude/model/index.js";
+import { buildExecutionContext } from "../../adapters/claude/resolution/context.js";
 
 const CONTEXT_PRESETS = new Set<ContextPreset>([
   "main-session",

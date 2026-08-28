@@ -9,7 +9,11 @@ import {
   isUserAgentForBudget,
 } from "../../../../src/adapters/claude/discovery/description-budget.js";
 import { buildProjectSnapshot } from "../../../../src/adapters/claude/discovery/snapshot.js";
-import type { Agent, PlatformVersion, SourceInfo } from "../../../../src/core/model/index.js";
+import type {
+  PlatformVersion,
+  SourceInfo,
+} from "../../../../src/core/model/index.js";
+import type { ClaudeAgent as Agent } from "../../../../src/adapters/claude/model/index.js";
 import type { WalkProjectScopesResult } from "../../../../src/adapters/claude/discovery/project-walk.js";
 
 const tempDirs: string[] = [];

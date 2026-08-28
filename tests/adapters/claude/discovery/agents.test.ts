@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import type { Agent } from "../../../../src/core/model/index.js";
+import type { ClaudeAgent as Agent } from "../../../../src/adapters/claude/model/index.js";
 import { discoverAgents } from "../../../../src/adapters/claude/discovery/agents.js";
 import type { ProjectScopeLevel } from "../../../../src/adapters/claude/discovery/project-walk.js";
 

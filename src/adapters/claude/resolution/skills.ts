@@ -1,12 +1,14 @@
 import fs from "node:fs/promises";
 import type {
-  Agent,
   ExecutionContext,
-  ProjectSnapshot,
   ResolutionReason,
   ResolvedCapability,
   SourceInfo,
 } from "../../../core/model/index.js";
+import type {
+  ClaudeAgent as Agent,
+  ClaudeProjectSnapshot as ProjectSnapshot,
+} from "../model/index.js";
 import { FACT, type FactId } from "../version/facts.js";
 import { MATRIX, gateCapability } from "../version/matrix.js";
 import type { DiscoveredSkill } from "../discovery/types.js";

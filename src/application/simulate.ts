@@ -1,11 +1,13 @@
 import path from "node:path";
 import type {
-  Agent,
   EffectiveConfiguration,
-  ProjectSnapshot,
   SourceInfo,
 } from "../core/model/index.js";
-import { buildExecutionContext } from "../core/resolver/context.js";
+import type {
+  ClaudeAgent as Agent,
+  ClaudeProjectSnapshot as ProjectSnapshot,
+} from "../adapters/claude/model/index.js";
+import { buildExecutionContext } from "../adapters/claude/resolution/context.js";
 import {
   applyManagedOverlay,
   loadManagedBundle,

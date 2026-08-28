@@ -1,4 +1,8 @@
-import type { Agent, SourceInfo, Warning } from "../../../core/model/index.js";
+import type {
+  SourceInfo,
+  Warning,
+} from "../../../core/model/index.js";
+import type { ClaudeAgent as Agent } from "../model/index.js";
 import { FACT } from "../version/facts.js";
 
 /** A10 threshold — total estimated description tokens before warning. */

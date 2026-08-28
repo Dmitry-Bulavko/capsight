@@ -2,10 +2,10 @@ import path from "node:path";
 import type { ManagedSimulationResult } from "../../src/application/simulate.js";
 import type {
   EffectiveConfiguration,
-  ProjectSnapshot,
   ResolvedCapability,
   SourceInfo,
 } from "../../src/core/model/index.js";
+import type { ClaudeProjectSnapshot as ProjectSnapshot } from "../../src/adapters/claude/model/index.js";
 
 export interface NormalizedDiscovery {
   agents: unknown[];

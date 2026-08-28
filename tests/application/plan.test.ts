@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { Agent, PlatformVersion, ProjectSnapshot } from "../../src/core/model/index.js";
+import type { PlatformVersion } from "../../src/core/model/index.js";
+import type {
+  ClaudeAgent as Agent,
+  ClaudeProjectSnapshot as ProjectSnapshot,
+} from "../../src/adapters/claude/model/index.js";
 import { plan } from "../../src/application/plan.js";
 import { clearLastScan, setLastScan } from "../../src/application/scan-store.js";
 import type { ScanResult } from "../../src/application/scan.js";

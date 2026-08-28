@@ -1,4 +1,19 @@
 export {
+  buildExecutionContext,
+  type ExecutionContextOverrides,
+} from "./context.js";
+export {
+  AGENT_TOOL_NAMES,
+  BACKGROUND_ALLOWED_BUILTIN_TOOLS,
+  CLAUDE_TOOL_TABLES,
+  FILTER_1_PLAN_MODE_EXEMPT_TOOLS,
+  FILTER_1_REMOVED_TOOLS,
+  TEAMMATE_ADDITIONAL_TOOLS,
+  isAgentTool,
+  isMcpTool,
+  mcpToolServerId,
+} from "./tool-tables.js";
+export {
   parseToolPattern,
   resolveAgentTools,
   type ResolveAgentToolsInput,

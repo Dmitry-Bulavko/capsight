@@ -1,4 +1,7 @@
-import type { Agent, AgentConfiguration } from "../../../core/model/index.js";
+import type {
+  ClaudeAgent as Agent,
+  ClaudeAgentConfiguration as AgentConfiguration,
+} from "../model/index.js";
 
 export interface AgentToolFrontmatterChange {
   tools?: string[];

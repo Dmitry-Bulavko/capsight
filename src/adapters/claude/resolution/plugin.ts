@@ -1,4 +1,8 @@
-import type { Agent, ResolutionReason, SourceInfo } from "../../../core/model/index.js";
+import type {
+  ResolutionReason,
+  SourceInfo,
+} from "../../../core/model/index.js";
+import type { ClaudeAgent as Agent } from "../model/index.js";
 import { FACT, type FactId } from "../version/facts.js";
 
 /** Frontmatter fields ignored for plugin agents (F9). */

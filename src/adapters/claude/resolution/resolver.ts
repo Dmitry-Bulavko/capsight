@@ -1,14 +1,16 @@
 import fs from "node:fs/promises";
 import type {
-  Agent,
   EffectiveConfiguration,
   ExecutionContext,
-  ProjectSnapshot,
   ResolutionReason,
   ResolvedCapability,
   SourceInfo,
   Warning,
 } from "../../../core/model/index.js";
+import type {
+  ClaudeAgent as Agent,
+  ClaudeProjectSnapshot as ProjectSnapshot,
+} from "../model/index.js";
 import { FACT, type FactId } from "../version/facts.js";
 import {
   MATRIX,
@@ -18,13 +20,16 @@ import {
   type MatrixId,
 } from "../version/matrix.js";
 import {
-  AGENT_TOOL_NAMES,
-  BACKGROUND_ALLOWED_BUILTIN_TOOLS,
-  FILTER_1_REMOVED_TOOLS,
   applyContextFilters,
-  isMcpTool,
   type ContextFilterRemoval,
 } from "../../../core/resolver/index.js";
+import {
+  AGENT_TOOL_NAMES,
+  BACKGROUND_ALLOWED_BUILTIN_TOOLS,
+  CLAUDE_TOOL_TABLES,
+  FILTER_1_REMOVED_TOOLS,
+  isMcpTool,
+} from "./tool-tables.js";
 import type { DiscoveredInstruction, DiscoveredMcpServer, SettingsLayer } from "../discovery/types.js";
 import {
   resolvePermissionMode,
@@ -601,7 +606,7 @@ export async function resolveEffectiveConfiguration(
       disallowedTools: agent.configuration.disallowedTools,
       agentSource: agent.source,
     });
-    const filterResult = applyContextFilters(toolsResult.pool, context);
+    const filterResult = applyContextFilters(toolsResult.pool, context, CLAUDE_TOOL_TABLES);
     toolCapabilities = applyFilterRemovals(
       toolsResult.capabilities,
       filterResult.removals,

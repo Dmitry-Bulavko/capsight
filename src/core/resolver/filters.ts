@@ -1,10 +1,5 @@
 import type { ExecutionContext, ResolutionReason } from "../model/index.js";
-import {
-  isAgentTool,
-  isBackgroundAllowedBuiltin,
-  isFilter1RemovedTool,
-  isMcpTool,
-} from "./builtin-tools.js";
+import type { PlatformToolTables } from "./tool-tables.js";
 
 export interface ContextFilterRemoval {
   tool: string;
@@ -27,8 +22,8 @@ function makeReason(
   return { type, message };
 }
 
-function isPlanMode(context: ExecutionContext): boolean {
-  return context.preset === "plan" || context.builtinKind === "plan";
+function isPlanMode(context: ExecutionContext, planKind: string): boolean {
+  return context.preset === "plan" || context.builtinKind === planKind;
 }
 
 function shouldApplyFilter1(context: ExecutionContext): boolean {
@@ -40,12 +35,14 @@ function shouldApplyFilter2(context: ExecutionContext): boolean {
 }
 
 /**
- * Apply context filters T1/T2, fork skip (T3), and Agent depth limit (N2).
+ * Apply context filters T1/T2, fork skip (T3), and spawn-tool depth limit (N2).
+ * All tool names come from `tables`; this engine contains none of its own.
  * @see docs/SPEC.md §4.4 rules 1–3
  */
 export function applyContextFilters(
   tools: readonly string[],
   context: ExecutionContext,
+  tables: PlatformToolTables,
 ): ContextFilterResult {
   if (context.isFork) {
     return {
@@ -58,6 +55,14 @@ export function applyContextFilters(
     };
   }
 
+  const agentTools = new Set(tables.agentToolNames);
+  const filter1Removed = new Set(tables.filter1RemovedTools);
+  const planExempt = new Set(tables.filter1PlanModeExemptTools);
+  const filter2Allowed = new Set<string>([
+    ...tables.filter2AllowedBuiltinTools,
+    ...(context.isTeammate ? tables.filter2TeammateAdditionalTools : []),
+  ]);
+
   const removals: ContextFilterRemoval[] = [];
   const removed = new Set<string>();
 
@@ -68,10 +73,10 @@ export function applyContextFilters(
     }
   };
 
-  // §4.4 rule 2 / N2 — Agent unavailable at depth limit (fork handled above).
+  // §4.4 rule 2 / N2 — spawn tool unavailable at depth limit (fork handled above).
   if (context.depth >= context.maxDepth) {
     for (const tool of tools) {
-      if (isAgentTool(tool)) {
+      if (agentTools.has(tool)) {
         remove(
           tool,
           makeReason(
@@ -85,11 +90,12 @@ export function applyContextFilters(
 
   // §4.4 rule 3 (Filter 1 first) / T1 — all subagents.
   if (shouldApplyFilter1(context)) {
+    const planMode = isPlanMode(context, tables.planModeBuiltinKind);
     for (const tool of tools) {
-      if (removed.has(tool) || !isFilter1RemovedTool(tool)) {
+      if (removed.has(tool) || !filter1Removed.has(tool)) {
         continue;
       }
-      if (tool === "ExitPlanMode" && isPlanMode(context)) {
+      if (planMode && planExempt.has(tool)) {
         continue;
       }
       remove(
@@ -102,7 +108,11 @@ export function applyContextFilters(
   // §4.4 rule 3 (Filter 2 after Filter 1) / T2 — background subagents.
   if (shouldApplyFilter2(context)) {
     for (const tool of tools) {
-      if (removed.has(tool) || isMcpTool(tool) || isBackgroundAllowedBuiltin(tool)) {
+      if (
+        removed.has(tool) ||
+        tables.isNamespacedTool(tool) ||
+        filter2Allowed.has(tool)
+      ) {
         continue;
       }
       remove(

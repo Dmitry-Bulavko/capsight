@@ -1,12 +1,14 @@
 import fs from "node:fs/promises";
 import type {
-  Agent,
-  ProjectSnapshot,
-  RedactedMcpServer,
   ResolvedCapability,
   SourceInfo,
   Warning,
 } from "../../../core/model/index.js";
+import type {
+  ClaudeAgent as Agent,
+  ClaudeProjectSnapshot as ProjectSnapshot,
+  RedactedMcpServer,
+} from "../model/index.js";
 import { FACT, type FactId } from "../version/facts.js";
 import type { DiscoveredSkill, SettingsLayer } from "../discovery/types.js";
 import { parseFrontmatter } from "../parsing/frontmatter.js";

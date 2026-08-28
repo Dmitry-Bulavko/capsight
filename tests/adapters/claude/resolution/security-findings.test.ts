@@ -8,13 +8,15 @@ import {
   resolveSecurityFindings,
 } from "../../../../src/adapters/claude/resolution/security-findings.js";
 import type {
-  Agent,
   PlatformVersion,
-  ProjectSnapshot,
   ResolvedCapability,
   SourceInfo,
   TrustState,
 } from "../../../../src/core/model/index.js";
+import type {
+  ClaudeAgent as Agent,
+  ClaudeProjectSnapshot as ProjectSnapshot,
+} from "../../../../src/adapters/claude/model/index.js";
 import type { DiscoveredSkill, SettingsLayer } from "../../../../src/adapters/claude/discovery/types.js";
 
 const tempDirs: string[] = [];

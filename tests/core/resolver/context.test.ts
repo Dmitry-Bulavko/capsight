@@ -1,8 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
-import {
-  buildExecutionContext,
-  getDefaultMaxDepth,
-} from "../../../src/core/resolver/context.js";
+import { buildExecutionContext } from "../../../src/adapters/claude/resolution/context.js";
+import { getDefaultMaxDepth } from "../../../src/adapters/claude/environment/depth.js";
 import type { ContextPreset } from "../../../src/core/model/index.js";
 
 const PRESET_EXPECTATIONS: Record<

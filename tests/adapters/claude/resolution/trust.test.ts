@@ -7,7 +7,11 @@ import {
   resolveTrustGate,
 } from "../../../../src/adapters/claude/resolution/trust.js";
 import { resolvePluginFieldLimitations } from "../../../../src/adapters/claude/resolution/plugin.js";
-import type { Agent, SourceInfo, TrustState } from "../../../../src/core/model/index.js";
+import type {
+  SourceInfo,
+  TrustState,
+} from "../../../../src/core/model/index.js";
+import type { ClaudeAgent as Agent } from "../../../../src/adapters/claude/model/index.js";
 
 const PROJECT_AGENT_SOURCE: SourceInfo = {
   platform: "claude",

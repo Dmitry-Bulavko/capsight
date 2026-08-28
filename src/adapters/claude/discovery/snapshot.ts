@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import type { PlatformVersion, ProjectSnapshot } from "../../../core/model/index.js";
+import type { PlatformVersion } from "../../../core/model/index.js";
+import type { ClaudeProjectSnapshot as ProjectSnapshot } from "../model/index.js";
 import { buildPlatformEnvironment } from "../environment/index.js";
 import { discoverAgents } from "./agents.js";
 import { discoverInstructions } from "./instructions.js";

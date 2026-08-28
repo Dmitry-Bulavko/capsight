@@ -2,8 +2,10 @@ import { Router, type Request, type Response } from "express";
 import { resolve } from "../../application/resolve.js";
 import { getLastScan } from "../../application/scan-store.js";
 import { buildInspectionGraph } from "../../core/graph/build-graph.js";
-import type { ContextPreset, PermissionMode } from "../../core/model/index.js";
-import { buildExecutionContext } from "../../core/resolver/context.js";
+import type { ContextPreset } from "../../core/model/index.js";
+import type { PermissionMode } from "../../adapters/claude/model/index.js";
+import { buildExecutionContext } from "../../adapters/claude/resolution/context.js";
+import { CLAUDE_TOOL_TABLES } from "../../adapters/claude/resolution/tool-tables.js";
 
 const CONTEXT_PRESETS = new Set<ContextPreset>([
   "main-session",
@@ -113,6 +115,7 @@ graphRouter.get("/", async (req, res) => {
     snapshot: lastScan.snapshot,
     context: parsed.context,
     effectiveByAgent,
+    toolTables: CLAUDE_TOOL_TABLES,
   });
 
   res.json(graph);

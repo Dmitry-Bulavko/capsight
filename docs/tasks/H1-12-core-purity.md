@@ -51,3 +51,21 @@ Claude-specific schemas, tool tables and environment variable names move into `s
 ## Notes
 
 Lowest urgency of the H1 set — it is an architecture debt, not a wrong answer to a user. Schedule after H1-01..H1-04. The value is that adding a second platform later does not require touching the resolver.
+
+## Orchestrator verification (post-implementation)
+
+```
+goldens modified:                none
+banned identifiers in src/core/: none
+src/core/ importing adapters/:   none (one doc comment mentions the path)
+adapter → core import:           type-only PlatformToolTables
+```
+
+The dependency inversion is the part that matters: core now declares the contract (`PlatformToolTables`) and the Claude adapter supplies the tables, instead of the adapter importing `AGENT_TOOL_NAMES` and `isMcpTool` out of core. `filters.ts` has no tool-name literal in a branch — the `ExitPlanMode` carve-out is `planMode && planExempt.has(tool)` over injected data. Suite 326 passed | 1 todo, goldens byte-identical, so this was a move and not a behaviour change. Accepted.
+
+**Deviations accepted:**
+
+1. `ProjectSnapshot.mcpServers: unknown[]` stays in core, allowlisted in the purity test. Core already speaks MCP vocabulary by design — `ResolvedCapability.kind` includes `"mcp_server"` and `"mcp_tool"` in §5 — so removing this one field would be inconsistent rather than pure.
+2. `ContextPreset` keeps `explore` / `plan` / `teammate` and `PRESET_FLAGS` keeps `builtinKind`. These are §4.2 preset concepts that the SPEC itself places in the platform-independent context model, not Claude identifiers smuggled into core.
+3. T4 teammate additions are now injected but inert, because the `teammate` preset is not background and filter 2 is where they apply. Data plumbing, not a verdict change — which is precisely why the goldens did not move.
+4. `matrixRef` stays `string` in core. Typing it as `FactId` would make `ResolutionReason`, `Warning`, `ResolvedCapability` and `EffectiveConfiguration` generic over the fact id and propagate through every route, UI component and service, for no behavioural gain.

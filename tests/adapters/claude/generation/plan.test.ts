@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Agent } from "../../../../src/core/model/index.js";
+import type { ClaudeAgent as Agent } from "../../../../src/adapters/claude/model/index.js";
 import {
   computeAgentToolFrontmatter,
   diffToolFrontmatter,

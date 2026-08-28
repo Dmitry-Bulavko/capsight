@@ -1,7 +1,7 @@
 /**
  * Platform-agnostic domain types.
- * Claude-specific types live in src/adapters/claude/.
- * @see docs/SPEC.md §5
+ * Claude-specific types live in src/adapters/claude/model/.
+ * @see docs/SPEC.md §5, §12.2
  */
 
 export type Scope =
@@ -13,14 +13,6 @@ export type Scope =
   | "local"
   | "nested-project"
   | "unknown";
-
-export type PermissionMode =
-  | "default"
-  | "acceptEdits"
-  | "auto"
-  | "dontAsk"
-  | "bypassPermissions"
-  | "plan";
 
 export type ContextPreset =
   | "main-session"
@@ -37,14 +29,17 @@ export interface ExecutionContext {
   isBackground: boolean;
   isFork: boolean;
   isTeammate: boolean;
-  builtinKind?: "explore" | "plan" | "general-purpose" | "claude";
+  /** Platform-defined builtin agent kind, when the preset denotes one. */
+  builtinKind?: string;
   depth: number;
   maxDepth: number;
-  parentPermissionMode?: PermissionMode;
+  /** Platform-defined parent permission mode identifier. */
+  parentPermissionMode?: string;
 }
 
 export interface SourceInfo {
-  platform: "claude";
+  /** Platform adapter identifier that produced this source. */
+  platform: string;
   path?: string;
   scope: Scope;
   fieldPath?: string;
@@ -52,7 +47,7 @@ export interface SourceInfo {
 }
 
 export interface PlatformVersion {
-  platform: "claude";
+  platform: string;
   version: string;
   raw: string;
   detectedAt: string;
@@ -67,29 +62,6 @@ export interface PlatformEnvironment {
   }>;
 }
 
-/**
- * Redacted inline MCP definition from agent configuration.
- * Key names only — never values (§0.1.8, §13 invariant 10).
- */
-export interface RedactedMcpServer {
-  name?: string;
-  transport: "stdio" | "sse" | "http" | "ws" | "unknown";
-  /** Executable name only, without arguments. */
-  commandName?: string;
-  envKeys: string[];
-  headerKeys: string[];
-}
-
-/**
- * Structural summary of declared hooks.
- * Event names and counts only — never command strings or arguments.
- */
-export interface HooksSummary {
-  form: "object" | "array" | "scalar";
-  events: string[];
-  count: number;
-}
-
 /** Value type of an unrecognized field; contents are never retained. */
 export type UnknownFieldType =
   | "string"
@@ -100,26 +72,19 @@ export type UnknownFieldType =
   | "object"
   | "unknown";
 
+/**
+ * Platform-neutral agent configuration. Field names of a platform's agent
+ * definition live in that platform's adapter, which extends this type
+ * (§12.2, §13 invariant 1).
+ */
 export interface AgentConfiguration {
-  tools?: string[];
-  disallowedTools?: string[];
-  mcpServers?: Array<string | RedactedMcpServer>;
-  model?: string;
-  permissionMode?: PermissionMode;
-  maxTurns?: number;
-  skills?: string[];
-  hooks?: HooksSummary;
-  memory?: "user" | "project" | "local";
-  background?: boolean;
-  effort?: string;
-  isolation?: "worktree";
-  initialPrompt?: string;
-  color?: string;
-  /** Unrecognized frontmatter keys mapped to value types (§8.2) — never values. */
+  /** Unrecognized configuration keys mapped to value types (§8.2) — never values. */
   unknownFields: Record<string, UnknownFieldType>;
 }
 
-export interface Agent {
+export interface Agent<
+  TConfiguration extends AgentConfiguration = AgentConfiguration,
+> {
   id: string;
   name: string;
   description: string;
@@ -131,7 +96,7 @@ export interface Agent {
     rule: string;
   };
   invalidReason?: "no-name" | "no-description" | "bad-yaml" | "bad-name-chars";
-  configuration: AgentConfiguration;
+  configuration: TConfiguration;
   isPluginAgent: boolean;
 }
 
@@ -196,8 +161,8 @@ export interface EffectiveConfiguration {
 
 export interface TrustState {
   /**
-   * `true` / `false` when `~/.claude.json` could be read; `"unknown"` when the
-   * trust record itself could not be determined (unreadable or malformed file).
+   * `true` / `false` when the platform trust record could be read; `"unknown"`
+   * when trust itself could not be determined (unreadable or malformed record).
    */
   accepted: boolean | "unknown";
   projectPath: string;
@@ -205,13 +170,15 @@ export interface TrustState {
   unknownReason?: string;
 }
 
-export interface ProjectSnapshot {
+export interface ProjectSnapshot<
+  TConfiguration extends AgentConfiguration = AgentConfiguration,
+> {
   id: string;
   projectPath: string;
   version: PlatformVersion;
   environment: PlatformEnvironment;
   trust: TrustState;
-  agents: Agent[];
+  agents: Array<Agent<TConfiguration>>;
   skills: unknown[];
   instructions: unknown[];
   mcpServers: unknown[];
