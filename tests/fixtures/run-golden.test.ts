@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import fsPromises from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,6 +8,11 @@ import type {
 } from "../../src/core/model/index.js";
 import { buildExecutionContext } from "../../src/core/resolver/context.js";
 import type { ContextPreset } from "../../src/core/model/index.js";
+import {
+  discoverFixtureNames,
+  formatPendingFixtures,
+  inspectFixtureCorpus,
+} from "./coverage-report.js";
 import {
   normalizeGoldenOutput,
   type NormalizedGoldenOutput,
@@ -38,17 +42,6 @@ interface FixtureContract {
   env: Record<string, string>;
   version: string;
   contexts: FixtureContextSpec[];
-}
-
-function discoverFixtures(): string[] {
-  return fs
-    .readdirSync(FIXTURES_ROOT, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .filter((entry) =>
-      fs.existsSync(path.join(FIXTURES_ROOT, entry.name, "expected.json")),
-    )
-    .map((entry) => entry.name)
-    .sort();
 }
 
 async function loadFixtureContract(fixtureDir: string): Promise<FixtureContract> {
@@ -135,9 +128,22 @@ describe("golden fixtures", () => {
     mockDetectClaudeVersion.mockReset();
   });
 
-  for (const fixtureName of discoverFixtures()) {
+  for (const fixtureName of discoverFixtureNames(FIXTURES_ROOT)) {
     it(`matches expected discovery and resolution for claude/${fixtureName}`, async () => {
       await runGoldenFixture(fixtureName);
     });
   }
+
+  // Fixtures from the declared SPEC §11.1 corpus that do not yet satisfy the
+  // §11.2 contract are surfaced as todos instead of being silently skipped.
+  for (const status of inspectFixtureCorpus(FIXTURES_ROOT)) {
+    if (status.completeness === "complete") {
+      continue;
+    }
+    it.todo(
+      `pending fixture claude/${status.name} (${status.completeness}; missing ${status.missingEntries.join(", ")})`,
+    );
+  }
 });
+
+console.warn(formatPendingFixtures(inspectFixtureCorpus(FIXTURES_ROOT)));

@@ -22,11 +22,66 @@ export interface CoverageReport {
 }
 
 export interface CapabilityMismatch {
+  kind: "capability-mismatch";
   fixtureName: string;
   agentName: string;
   capabilityId: string;
   actualStatus: ResolvedCapability["status"];
   expectedStatus: ResolvedCapability["status"] | undefined;
+  actualEnforcement: ResolvedCapability["enforcement"];
+  expectedEnforcement: ResolvedCapability["enforcement"] | undefined;
+}
+
+export interface MissingResolutionMismatch {
+  kind: "missing-resolution";
+  fixtureName: string;
+  agentName: string;
+  resolutionKey: string;
+}
+
+export type GateMismatch = CapabilityMismatch | MissingResolutionMismatch;
+
+/** Files SPEC §11.2 requires in every fixture directory. */
+export const FIXTURE_REQUIRED_ENTRIES = [
+  "project",
+  "env.json",
+  "version.txt",
+  "contexts.json",
+  "expected.json",
+] as const;
+
+export type FixtureRequiredEntry = (typeof FIXTURE_REQUIRED_ENTRIES)[number];
+
+/** The SPEC §11.1 corpus, declared explicitly so a dropped fixture is visible. */
+export const SPEC_FIXTURE_NAMES = [
+  "add-dir",
+  "background",
+  "basic",
+  "collision-nested",
+  "collision-same-dir",
+  "depth-limit",
+  "environment",
+  "fork",
+  "instructions",
+  "invalid-agents",
+  "managed-simulation",
+  "nested-project",
+  "permission-inheritance",
+  "plugin-agents",
+  "settings-permissions",
+  "skill-allowed-tools",
+  "skills-preload",
+  "tools-filters",
+  "trust-inline-mcp",
+  "version-drift",
+] as const;
+
+export type FixtureCompleteness = "complete" | "incomplete" | "empty" | "missing";
+
+export interface FixtureStatus {
+  name: string;
+  completeness: FixtureCompleteness;
+  missingEntries: FixtureRequiredEntry[];
 }
 
 const COVERAGE_RANK: Record<CoverageTier, number> = {
@@ -65,16 +120,23 @@ export function findConfidentCapabilityMismatches(
   actual: NormalizedGoldenOutput,
   expected: NormalizedGoldenOutput,
   fixtureName: string,
-): CapabilityMismatch[] {
-  const mismatches: CapabilityMismatch[] = [];
+): GateMismatch[] {
+  const mismatches: GateMismatch[] = [];
 
   const actualByKey = new Map(
     actual.resolutions.map((entry) => [resolutionKey(entry), entry]),
   );
 
   for (const expectedResolution of expected.resolutions) {
-    const actualResolution = actualByKey.get(resolutionKey(expectedResolution));
+    const key = resolutionKey(expectedResolution);
+    const actualResolution = actualByKey.get(key);
     if (!actualResolution) {
+      mismatches.push({
+        kind: "missing-resolution",
+        fixtureName,
+        agentName: expectedResolution.agentName,
+        resolutionKey: key,
+      });
       continue;
     }
 
@@ -91,16 +153,25 @@ export function findConfidentCapabilityMismatches(
       }
 
       const expectedCapability = expectedById.get(actualCapability.capabilityId);
-      if (
+      const statusDiffers =
         !expectedCapability ||
-        actualCapability.status !== expectedCapability.status
-      ) {
+        actualCapability.status !== expectedCapability.status;
+      // `unknown` enforcement is not a confident claim, so it never blocks (§11.3).
+      const enforcementDiffers =
+        actualCapability.enforcement !== "unknown" &&
+        (!expectedCapability ||
+          actualCapability.enforcement !== expectedCapability.enforcement);
+
+      if (statusDiffers || enforcementDiffers) {
         mismatches.push({
+          kind: "capability-mismatch",
           fixtureName,
           agentName: expectedResolution.agentName,
           capabilityId: actualCapability.capabilityId,
           actualStatus: actualCapability.status,
           expectedStatus: expectedCapability?.status,
+          actualEnforcement: actualCapability.enforcement,
+          expectedEnforcement: expectedCapability?.enforcement,
         });
       }
     }
@@ -109,16 +180,91 @@ export function findConfidentCapabilityMismatches(
   return mismatches;
 }
 
-export function discoverFixtureNames(
+/** Classifies one §11.1 fixture directory against the §11.2 contract. */
+export function inspectFixture(
+  fixtureName: string,
+  fixturesRoot: string = FIXTURES_ROOT,
+): FixtureStatus {
+  const fixtureDir = path.join(fixturesRoot, fixtureName);
+  if (!fs.existsSync(fixtureDir)) {
+    return {
+      name: fixtureName,
+      completeness: "missing",
+      missingEntries: [...FIXTURE_REQUIRED_ENTRIES],
+    };
+  }
+
+  const missingEntries = FIXTURE_REQUIRED_ENTRIES.filter(
+    (entry) => !fs.existsSync(path.join(fixtureDir, entry)),
+  );
+
+  if (missingEntries.length === 0) {
+    return { name: fixtureName, completeness: "complete", missingEntries: [] };
+  }
+  if (missingEntries.length === FIXTURE_REQUIRED_ENTRIES.length) {
+    return { name: fixtureName, completeness: "empty", missingEntries };
+  }
+  return { name: fixtureName, completeness: "incomplete", missingEntries };
+}
+
+/** Classifies the whole declared §11.1 corpus, in declaration order. */
+export function inspectFixtureCorpus(
+  fixturesRoot: string = FIXTURES_ROOT,
+): FixtureStatus[] {
+  return SPEC_FIXTURE_NAMES.map((name) => inspectFixture(name, fixturesRoot));
+}
+
+/** Directories present on disk that are not part of the declared §11.1 corpus. */
+export function findUndeclaredFixtureDirectories(
   fixturesRoot: string = FIXTURES_ROOT,
 ): string[] {
+  const declared = new Set<string>(SPEC_FIXTURE_NAMES);
   return fs
     .readdirSync(fixturesRoot, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
-    .filter((entry) =>
-      fs.existsSync(path.join(fixturesRoot, entry.name, "expected.json")),
-    )
     .map((entry) => entry.name)
+    .filter((name) => !declared.has(name))
+    .sort();
+}
+
+/** Fixtures that are not yet runnable: anything not `complete`. */
+export function pendingFixtureNames(
+  fixturesRoot: string = FIXTURES_ROOT,
+): string[] {
+  return inspectFixtureCorpus(fixturesRoot)
+    .filter((status) => status.completeness !== "complete")
+    .map((status) => status.name)
+    .sort();
+}
+
+export function formatPendingFixtures(statuses: readonly FixtureStatus[]): string {
+  const pending = statuses.filter((status) => status.completeness !== "complete");
+  const lines = [
+    "pending fixtures (SPEC §11.1): " +
+      pending.length +
+      " of " +
+      statuses.length,
+  ];
+  for (const status of pending) {
+    lines.push(
+      "  - " +
+        status.name +
+        " [" +
+        status.completeness +
+        "] missing: " +
+        status.missingEntries.join(", "),
+    );
+  }
+  return lines.join("\n");
+}
+
+/** Fixtures that satisfy the §11.2 contract and can therefore be executed. */
+export function discoverFixtureNames(
+  fixturesRoot: string = FIXTURES_ROOT,
+): string[] {
+  return inspectFixtureCorpus(fixturesRoot)
+    .filter((status) => status.completeness === "complete")
+    .map((status) => status.name)
     .sort();
 }
 

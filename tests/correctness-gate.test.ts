@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import fsPromises from "node:fs/promises";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -12,9 +11,14 @@ import {
   buildCoverageReport,
   discoverFixtureNames,
   findConfidentCapabilityMismatches,
+  findUndeclaredFixtureDirectories,
   formatCoverageReport,
+  formatPendingFixtures,
+  inspectFixtureCorpus,
   isConfidentCapabilityStatus,
+  pendingFixtureNames,
   FIXTURES_ROOT,
+  SPEC_FIXTURE_NAMES,
 } from "./fixtures/coverage-report.js";
 import {
   normalizeGoldenOutput,
@@ -231,11 +235,14 @@ describe("correctness gate rules", () => {
       findConfidentCapabilityMismatches(actual, expected, "sample"),
     ).toEqual([
       {
+        kind: "capability-mismatch",
         fixtureName: "sample",
         agentName: "agent",
         capabilityId: "Read",
         actualStatus: "available",
         expectedStatus: "denied",
+        actualEnforcement: "enforced",
+        expectedEnforcement: "enforced",
       },
     ]);
   });
@@ -258,13 +265,106 @@ describe("correctness gate rules", () => {
       findConfidentCapabilityMismatches(actual, expected, "sample"),
     ).toEqual([
       {
+        kind: "capability-mismatch",
         fixtureName: "sample",
         agentName: "agent",
         capabilityId: "Grep",
         actualStatus: "available",
         expectedStatus: undefined,
+        actualEnforcement: "enforced",
+        expectedEnforcement: undefined,
       },
     ]);
+  });
+
+  it("fails when confident enforcement differs from golden expectation", () => {
+    const expected = emptyGolden("agent");
+    expected.resolutions[0]!.capabilities = [
+      {
+        capabilityId: "Read",
+        kind: "tool",
+        status: "available",
+        enforcement: "advisory",
+        sources: [],
+        reasons: [],
+      },
+    ];
+
+    const actual = emptyGolden("agent");
+    actual.resolutions[0]!.capabilities = [
+      {
+        capabilityId: "Read",
+        kind: "tool",
+        status: "available",
+        enforcement: "enforced",
+        sources: [],
+        reasons: [],
+      },
+    ];
+
+    expect(
+      findConfidentCapabilityMismatches(actual, expected, "sample"),
+    ).toEqual([
+      {
+        kind: "capability-mismatch",
+        fixtureName: "sample",
+        agentName: "agent",
+        capabilityId: "Read",
+        actualStatus: "available",
+        expectedStatus: "available",
+        actualEnforcement: "enforced",
+        expectedEnforcement: "advisory",
+      },
+    ]);
+  });
+
+  it("treats unknown actual enforcement as non-blocking", () => {
+    const expected = emptyGolden("agent");
+    expected.resolutions[0]!.capabilities = [
+      {
+        capabilityId: "Read",
+        kind: "tool",
+        status: "available",
+        enforcement: "advisory",
+        sources: [],
+        reasons: [],
+      },
+    ];
+
+    const actual = emptyGolden("agent");
+    actual.resolutions[0]!.capabilities = [
+      {
+        capabilityId: "Read",
+        kind: "tool",
+        status: "available",
+        enforcement: "unknown",
+        sources: [],
+        reasons: [],
+      },
+    ];
+
+    expect(
+      findConfidentCapabilityMismatches(actual, expected, "sample"),
+    ).toEqual([]);
+  });
+
+  it("fails when an expected resolution has no matching actual resolution", () => {
+    const expected = emptyGolden("agent");
+    const actual = emptyGolden("agent");
+    actual.resolutions = [];
+
+    const mismatches = findConfidentCapabilityMismatches(
+      actual,
+      expected,
+      "sample",
+    );
+
+    expect(mismatches).toHaveLength(1);
+    expect(mismatches[0]).toMatchObject({
+      kind: "missing-resolution",
+      fixtureName: "sample",
+      agentName: "agent",
+    });
   });
 
   it("classifies confident vs unknown statuses explicitly", () => {
@@ -316,11 +416,74 @@ describe("correctness gate", () => {
 });
 
 describe("correctness gate fixture corpus", () => {
-  it("includes expected.json for every discovered fixture", () => {
-    for (const fixtureName of discoverFixtureNames()) {
-      expect(
-        fs.existsSync(path.join(FIXTURES_ROOT, fixtureName, "expected.json")),
-      ).toBe(true);
+  /**
+   * Fixtures from SPEC §11.1 that are not yet authored (H1-09..H1-11).
+   * Shrink this list as fixtures land; the test below fails until it matches
+   * reality, so the corpus cannot silently stay incomplete.
+   */
+  const EXPECTED_PENDING_FIXTURES = [
+    "add-dir",
+    "collision-nested",
+    "collision-same-dir",
+    "depth-limit",
+    "environment",
+    "instructions",
+    "invalid-agents",
+    "managed-simulation",
+    "nested-project",
+    "plugin-agents",
+    "settings-permissions",
+    "skill-allowed-tools",
+    "version-drift",
+  ];
+
+  it("declares exactly the 20 SPEC §11.1 fixture names", () => {
+    expect(SPEC_FIXTURE_NAMES).toHaveLength(20);
+    expect([...SPEC_FIXTURE_NAMES]).toEqual([...SPEC_FIXTURE_NAMES].sort());
+  });
+
+  it("has no fixture directory outside the declared §11.1 corpus", () => {
+    const undeclared = findUndeclaredFixtureDirectories(FIXTURES_ROOT);
+    expect(undeclared, undeclared.join(", ")).toEqual([]);
+  });
+
+  it("classifies every declared fixture and names its missing contract files", () => {
+    const corpus = inspectFixtureCorpus(FIXTURES_ROOT);
+    expect(corpus.map((status) => status.name)).toEqual([...SPEC_FIXTURE_NAMES]);
+
+    for (const status of corpus) {
+      expect(status.completeness, status.name).not.toBe("missing");
+      if (status.completeness === "complete") {
+        expect(status.missingEntries, status.name).toEqual([]);
+      } else {
+        expect(status.missingEntries.length, status.name).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it("matches the registered pending-fixture list", () => {
+    const pending = pendingFixtureNames(FIXTURES_ROOT);
+    expect(
+      pending,
+      formatPendingFixtures(inspectFixtureCorpus(FIXTURES_ROOT)),
+    ).toEqual(EXPECTED_PENDING_FIXTURES);
+  });
+
+  it("runs the gate over every complete fixture and nothing else", () => {
+    const complete = discoverFixtureNames(FIXTURES_ROOT);
+    const pending = pendingFixtureNames(FIXTURES_ROOT);
+
+    expect([...complete, ...pending].sort()).toEqual([...SPEC_FIXTURE_NAMES]);
+    expect(complete.length).toBe(SPEC_FIXTURE_NAMES.length - pending.length);
+  });
+
+  it("prints the pending fixtures with a count", () => {
+    const formatted = formatPendingFixtures(inspectFixtureCorpus(FIXTURES_ROOT));
+    expect(formatted).toContain(
+      "pending fixtures (SPEC §11.1): " + EXPECTED_PENDING_FIXTURES.length + " of 20",
+    );
+    for (const name of EXPECTED_PENDING_FIXTURES) {
+      expect(formatted).toContain(name);
     }
   });
 });

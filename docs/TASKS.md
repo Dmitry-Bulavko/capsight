@@ -98,8 +98,8 @@ Order: H1-01 → H1-02 → H1-03 → H1-05 → H1-06 → H1-04 → H1-07 → H1-
 | H1-04 | H1 | Wire version matrix into enforcement + degraded mode | done | §8.2, §8.3, inv 11 | src/adapters/claude/version/, resolution/ | `lookupFeature` drives enforcement; `version: unknown` degrades |
 | H1-05 | H1 | facts.ts — real fact registry with trust levels | done | §3, §0.1.1, §8.2 | src/adapters/claude/version/facts.ts | All used facts registered with doc/ext/spike |
 | H1-06 | H1 | Matrix entries for rules that already emit `enforced` | done | §0.1.3, §8.1 | src/adapters/claude/version/matrix.ts | No enforced rule without entry; no entry without fixture |
-| H1-07 | H1 | Gate: corpus completeness + enforcement comparison | in_progress | §11.1, §11.2, §11.3 | tests/correctness-gate.test.ts, tests/fixtures/ | Missing fixture fails; enforcement compared |
-| H1-08 | H1 | Coverage metric denominator = §3 fact list | todo | §11.4, inv 13 | tests/fixtures/coverage-report.ts | Denominator fixed at §3; CI-only |
+| H1-07 | H1 | Gate: corpus completeness + enforcement comparison | done | §11.1, §11.2, §11.3 | tests/correctness-gate.test.ts, tests/fixtures/ | Missing fixture fails; enforcement compared |
+| H1-08 | H1 | Coverage metric denominator = §3 fact list | in_progress | §11.4, inv 13 | tests/fixtures/coverage-report.ts | Denominator fixed at §3; CI-only |
 | H1-09 | H1 | Fixtures: invalid-agents, collision-same-dir, collision-nested, nested-project | todo | §11.1, A2–A4, A7 | tests/fixtures/claude/ | M0 acceptance #4, #5 covered by goldens |
 | H1-10 | H1 | Fixtures: settings-permissions, skill-allowed-tools, depth-limit, environment | todo | §11.1, S1–S8, K6, K7, N1–N3, §3.11 | tests/fixtures/claude/ | `[ext]` areas have fixture evidence |
 | H1-11 | H1 | Fixtures: instructions, plugin-agents, add-dir, version-drift, managed-simulation | todo | §11.1, I1, I2, F9, A6, A8, A9, K12, §7.8, §8.4 | tests/fixtures/claude/ | §11.1 corpus complete (20/20) |
