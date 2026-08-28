@@ -83,3 +83,27 @@ Gate: S0-05 done ✓ · M0 done ✓ · observed-layer: **no** ([S0-DECISION.md](
 | M3-01 | M3 | In-memory desired state editor | done | M3 §10 | src/ui/ | Pending edits in memory |
 | M3-02 | M3 | Diff planner | done | M3 §10 #2 | src/application/plan.ts | Deterministic diff |
 | M3-03 | M3 | Backup + apply + rollback | done | M3 §10 #4-7 | src/adapters/claude/generation/ | Write path with backup |
+
+## H1 — Correctness hardening (pre-v0.1)
+
+Source: audit of `aa7f109` against SPEC §0.1, §8, §11, §13. Gate for v0.1 release — SPEC §0.1.2 and §11.3 are not satisfied while H1-01..H1-04 are open.
+
+Order: H1-01 → H1-02 → H1-03 → H1-05 → H1-06 → H1-04 → H1-07 → H1-08 → H1-09 → H1-10 → H1-11 → rest.
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| H1-01 | H1 | Secret redaction boundary for snapshot output | todo | §0.1.8, §12.6, inv 10 | src/adapters/claude/discovery/agents.ts, snapshot.ts | Inline MCP `env`, `hooks`, `unknownFields` reduced to key names |
+| H1-02 | H1 | Unparseable `tools` patterns must not disable whitelist | todo | §0.1.2, inv 4, F2–F5 | src/adapters/claude/resolution/tools.ts | Zero parsed patterns → `unknown`, never whole pool `available` |
+| H1-03 | H1 | Trust resolution needs an `unknown` state | todo | §7.2, R1–R5, inv 4 | src/adapters/claude/{discovery,resolution}/trust.ts | Unreadable trust → `unknown`, not `blocked` |
+| H1-04 | H1 | Wire version matrix into enforcement + degraded mode | todo | §8.2, §8.3, inv 11 | src/adapters/claude/version/, resolution/ | `lookupFeature` drives enforcement; `version: unknown` degrades |
+| H1-05 | H1 | facts.ts — real fact registry with trust levels | todo | §3, §0.1.1, §8.2 | src/adapters/claude/version/facts.ts | All used facts registered with doc/ext/spike |
+| H1-06 | H1 | Matrix entries for rules that already emit `enforced` | todo | §0.1.3, §8.1 | src/adapters/claude/version/matrix.ts | No enforced rule without entry; no entry without fixture |
+| H1-07 | H1 | Gate: corpus completeness + enforcement comparison | todo | §11.1, §11.2, §11.3 | tests/correctness-gate.test.ts, tests/fixtures/ | Missing fixture fails; enforcement compared |
+| H1-08 | H1 | Coverage metric denominator = §3 fact list | todo | §11.4, inv 13 | tests/fixtures/coverage-report.ts | Denominator fixed at §3; CI-only |
+| H1-09 | H1 | Fixtures: invalid-agents, collision-same-dir, collision-nested, nested-project | todo | §11.1, A2–A4, A7 | tests/fixtures/claude/ | M0 acceptance #4, #5 covered by goldens |
+| H1-10 | H1 | Fixtures: settings-permissions, skill-allowed-tools, depth-limit, environment | todo | §11.1, S1–S8, K6, K7, N1–N3, §3.11 | tests/fixtures/claude/ | `[ext]` areas have fixture evidence |
+| H1-11 | H1 | Fixtures: instructions, plugin-agents, add-dir, version-drift, managed-simulation | todo | §11.1, I1, I2, F9, A6, A8, A9, K12, §7.8, §8.4 | tests/fixtures/claude/ | §11.1 corpus complete (20/20) |
+| H1-12 | H1 | Restore `src/core/` platform independence | todo | §12.2, inv 1 | src/core/, src/adapters/claude/ | No Claude identifiers in core; goldens unchanged |
+| H1-13 | H1 | McpServer model completeness + probe addressing | todo | §5, §7.9, §12.5 | src/adapters/claude/discovery/mcp.ts, types.ts | `name`, `definitionKind`, `configHash`; probe by name |
+| H1-14 | H1 | CLI parity with §12.5 (`explain`, `warnings`) | todo | §12.5, §7.5, §7.6 | src/cli/index.ts | Both commands present, read-only |
+| H1-15 | H1 | MCP probe hardening | todo | §9.4, §7.9, §12.3 | src/adapters/claude/probing/mcp-probe.ts | Isolated env, SIGKILL escalation, redacted argv |
