@@ -41,3 +41,15 @@ The matrix holds 11 entries. Rules that emit `enforcement: "enforced"` with **no
 ## Notes
 
 Ordering: H1-05 (facts) → this task (matrix) → H1-04 (wiring) → fixtures. The fixture-existence assertion here is what makes H1-09..H1-11 non-optional.
+
+## Orchestrator verification (post-implementation)
+
+Matrix grew from 11 to 23 entries. Verified by dumping every entry's status and fixture state:
+
+- 11 entries carry a real `fixture` whose `expected.json` exists;
+- 12 carry `pendingFixture` and claim no evidence — including `agent.depthLimit`, whose false `fixture: "depth-limit"` was the §0.1.3 breach this task targeted;
+- `agent.collisionSameDir` is `status: "unknown"`, not `supported` — A4 documents only that a single file loads, never which one wins, so the entry does not pretend otherwise.
+
+**Design choice accepted:** `fixture` xor `pendingFixture` on the record itself, rather than a central pending list. The claim and its rebuttal live on the same line, a fixture-writing task flips one field, and the test can assert "exactly one of the two" instead of cross-checking a list that drifts. `pendingFixture` intentionally does not require the directory to be complete — it also covers a directory that exists but lacks the case for this rule (`trust.frontmatterHooks` → `trust-inline-mcp`, `builtin.readOnly` → `tools-filters`).
+
+**Follow-through for H1-09..H1-11:** each of those tasks must flip the `pendingFixture` entries it satisfies to `fixture`, and H1-04 must treat a `pendingFixture` entry as evidence-free.

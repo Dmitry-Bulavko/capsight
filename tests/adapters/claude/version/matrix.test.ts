@@ -29,7 +29,42 @@ const M1_MATRIX_IDS = [
   FACT.P2,
   FACT.P4,
   FACT.P5,
+  "agent.collisionSameDir",
+  "agent.collisionNested",
+  "agent.descriptionBudget",
+  "agent.modelAllowlist",
+  "agent.pluginFieldLimits",
+  "skills.preload",
+  "skills.disableModelInvocation",
+  "skills.missing",
+  "trust.inlineMcp",
+  "trust.frontmatterHooks",
+  "instructions.hierarchy",
+  "builtin.readOnly",
 ] as const;
+
+/** Facts behind resolver rules that emit `enforcement: "enforced"` (§0.1.3). */
+const ENFORCED_RULE_FACTS: readonly FactId[] = [
+  FACT.A3,
+  FACT.A4,
+  FACT.A10,
+  FACT.F8,
+  FACT.F9,
+  FACT.K1,
+  FACT.K4,
+  FACT.K5,
+  FACT.I1,
+  FACT.B2,
+  FACT.R1,
+  FACT.R4,
+  FACT.R5,
+  FACT.N2,
+];
+
+const FIXTURES_ROOT = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../../fixtures/claude",
+);
 
 const SRC_ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -199,6 +234,48 @@ describe("VERSION_MATRIX", () => {
   it("contains an entry for each M1 resolver rule", () => {
     const ids = VERSION_MATRIX.map((entry) => entry.id);
     expect(ids).toEqual([...M1_MATRIX_IDS]);
+  });
+
+  it("covers every fact behind an enforced resolver rule", () => {
+    const referenced = new Set(VERSION_MATRIX.flatMap((entry) => entry.factRefs));
+    for (const id of ENFORCED_RULE_FACTS) {
+      expect(referenced.has(id)).toBe(true);
+    }
+  });
+
+  it("never names a fixture directory that lacks expected.json", () => {
+    const claiming = VERSION_MATRIX.filter((entry) => entry.fixture);
+    expect(claiming.length).toBeGreaterThan(0);
+    for (const entry of claiming) {
+      const expectedPath = path.join(FIXTURES_ROOT, entry.fixture!, "expected.json");
+      expect(fs.existsSync(expectedPath), `${entry.id} -> ${entry.fixture!}`).toBe(true);
+    }
+  });
+
+  it("marks an entry whose fixture is not written yet as pending, not verified", () => {
+    for (const entry of VERSION_MATRIX) {
+      expect(
+        Boolean(entry.fixture) !== Boolean(entry.pendingFixture),
+        `${entry.id} must declare exactly one of fixture / pendingFixture`,
+      ).toBe(true);
+
+      if (!entry.pendingFixture) {
+        continue;
+      }
+      // The corpus is fixed at 20 directories (§11.1): a pending entry points
+      // at one of them, and stays [doc] until that fixture exists (H1-04).
+      expect(
+        fs.existsSync(path.join(FIXTURES_ROOT, entry.pendingFixture)),
+        `${entry.id} -> ${entry.pendingFixture}`,
+      ).toBe(true);
+      expect(entry.confidence).toBe("doc");
+    }
+  });
+
+  it("represents the N5 depth-limit history via changedIn", () => {
+    const depth = VERSION_MATRIX.find((entry) => entry.id === "agent.depthLimit");
+    expect(depth?.factRefs).toEqual([FACT.N2, FACT.N5]);
+    expect(depth?.changedIn).toEqual(["2.1.172", "2.1.217", "2.1.219"]);
   });
 
   it("links tool rules to frontmatter facts", () => {
