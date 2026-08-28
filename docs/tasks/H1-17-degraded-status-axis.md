@@ -56,3 +56,19 @@ Reading 2 is the one that can produce a confidently wrong answer, which §0.1.2 
 ## Notes
 
 Raised by the orchestrator while verifying H1-04, not by the original audit. Schedule alongside H1-07, which touches the same gate predicate.
+
+## Orchestrator decision
+
+**Ruling: `status` must downgrade where it is version-sensitive, and the gate must stop counting a claim with `enforcement: "unknown"` as confident. Both halves, not one.**
+
+Reasoning. The two axes answer different questions. `status` answers "what does this configuration produce here"; `enforcement` answers "is that a guarantee or merely advisory". Reading 1 is right that these are independent in general — a `disallowedTools` deny is readable straight off the file, and stays readable even when we cannot vouch that the platform enforces it.
+
+But it is wrong for the capabilities this actually concerns. Whether `Bash` survives is decided by which filter applies (T1, T2), by the depth limit (N2), by the plan-mode exemption. Those are the platform's behaviour, not the file's content. With no detected version we do not know which of them ran, so `denied` is not a weaker claim than usual — it is a claim we have no basis for. §8.3 says exactly this: version-sensitive *conclusions* become unknown, and a status produced by a version-gated rule is one of them.
+
+The operational argument settles it. The gate's `isConfidentCapabilityStatus` keys on `status`, so today a degraded run still holds 32 claims against goldens while the product itself reports it does not know. Either the gate is checking claims the product disowns, or the product is making claims it cannot support. Both readings are bugs, and §0.1.2 ranks a confident wrong answer above every missing feature.
+
+**Scope of the downgrade.** A capability downgrades its `status` when the matrix entry it was gated on resolved `unsupported` or `unknown` — the same signal `gateCapability` already computes. A capability that was never version-gated keeps its status, and its enforcement is unaffected. The distinction must be mechanical, derived from the gate, not a hand-maintained list.
+
+**Consequence accepted.** In degraded mode `unknownRate` approaches 1 and the product says very little about resolution while discovery keeps working — agents, files, collisions and invalid reasons all still listed. That is precisely the degraded mode §8.3 describes, and it is the honest shape of "I cannot tell you what this agent gets without knowing which Claude Code is installed".
+
+**Also required by this decision:** `tests/fixtures/claude/version-drift/expected.json` currently records `status: "denied"` with `enforcement: "unknown"` for the entry whose matrix status is `changed`. That golden encodes the behaviour this decision changes and must be regenerated and re-read.
