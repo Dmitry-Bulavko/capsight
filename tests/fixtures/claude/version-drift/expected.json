@@ -846,7 +846,7 @@
         {
           "capabilityId": "Agent",
           "kind": "tool",
-          "status": "denied",
+          "status": "unknown",
           "enforcement": "unknown",
           "sources": [
             {
@@ -873,7 +873,7 @@
             },
             {
               "type": "version",
-              "message": "Version matrix reports \"agent.depthLimitDefault\" as changed on Claude Code 2.1.217; enforcement is unknown (SPEC §8.2).",
+              "message": "Version matrix reports \"agent.depthLimitDefault\" as changed on Claude Code 2.1.217; the feature resolves as unknown (SPEC §8.2).",
               "matrixRef": "agent.depthLimitDefault"
             }
           ]
@@ -1315,7 +1315,7 @@
         {
           "capabilityId": "Task",
           "kind": "tool",
-          "status": "denied",
+          "status": "unknown",
           "enforcement": "unknown",
           "sources": [
             {
@@ -1342,7 +1342,7 @@
             },
             {
               "type": "version",
-              "message": "Version matrix reports \"agent.depthLimitDefault\" as changed on Claude Code 2.1.217; enforcement is unknown (SPEC §8.2).",
+              "message": "Version matrix reports \"agent.depthLimitDefault\" as changed on Claude Code 2.1.217; the feature resolves as unknown (SPEC §8.2).",
               "matrixRef": "agent.depthLimitDefault"
             }
           ]

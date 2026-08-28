@@ -35,8 +35,10 @@ const mockScan = vi.mocked(scan);
 
 const mockVersion: PlatformVersion = {
   platform: "claude",
-  version: "1.0.0",
-  raw: "1.0.0 (mock)",
+  // A version the matrix supports: below 2.1.0 every gated rule resolves
+  // unsupported and the capability status degrades to unknown (§8.3, H1-17).
+  version: "2.1.233",
+  raw: "2.1.233 (mock)",
   detectedAt: "2026-01-01T00:00:00.000Z",
 };
 
@@ -321,8 +323,32 @@ describe("CLI commands", () => {
       expect(result.capability.reasons.some((reason) => reason.type === "denied")).toBe(
         true,
       );
-      expect(result.capability.reasons.some((reason) => reason.matrixRef)).toBe(true);
       expect(mockScan).not.toHaveBeenCalled();
+    });
+
+    it("reports the capability as unknown when no CLI version was detected (§8.3)", async () => {
+      setLastScan(
+        makeScanResult({
+          agents: [explainAgent],
+          version: {
+            platform: "claude",
+            version: "unknown",
+            raw: "",
+            detectedAt: "2026-01-01T00:00:00.000Z",
+          },
+        }),
+      );
+
+      const result = await runExplain("Bash", {
+        agentId: "backend",
+        context: "foreground-subagent",
+      });
+
+      // The deny is produced by a version-gated rule, so without a version
+      // neither axis is a claim we can make (H1-17).
+      expect(result.capability.status).toBe("unknown");
+      expect(result.capability.enforcement).toBe("unknown");
+      expect(result.capability.reasons.some((reason) => reason.matrixRef)).toBe(true);
     });
 
     it("defaults to background-subagent and reports why (§4.3)", async () => {

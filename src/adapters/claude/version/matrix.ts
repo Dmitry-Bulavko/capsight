@@ -378,6 +378,18 @@ export interface EnforcementDecision {
   enforcement: Enforcement;
   /** Present only when the matrix downgraded the verdict to `unknown`. */
   reason?: ResolutionReason;
+  /**
+   * Set when the matrix entry backing the rule did not resolve `supported` on
+   * this version — it is missing (§8.2), the version was not detected (§8.3),
+   * or the entry resolved `unsupported` / `changed` / `unknown`. The rule's
+   * `status` is then a version-sensitive conclusion with no basis behind it,
+   * so it degrades to `unknown` alongside `enforcement` (§8.3).
+   *
+   * Absent when only the *evidence* behind a supported entry is too weak: the
+   * platform behaviour is known, only the guarantee is not, which is exactly
+   * what the `enforcement` axis is for (§6).
+   */
+  statusUnfounded?: true;
 }
 
 export interface ResolveEnforcementInput {
@@ -422,21 +434,27 @@ export function resolveEnforcement(
   const { matrixId, version } = input;
   const baseline = input.baseline ?? "enforced";
 
-  const unknown = (message: string): EnforcementDecision => ({
+  const unknown = (
+    message: string,
+    statusUnfounded?: true,
+  ): EnforcementDecision => ({
     enforcement: "unknown",
     reason: { type: "version", message, matrixRef: matrixId },
+    ...(statusUnfounded ? { statusUnfounded } : {}),
   });
 
   const entry = VERSION_MATRIX.find((feature) => feature.id === matrixId);
   if (!entry) {
     return unknown(
       `No version matrix entry for "${matrixId}"; the feature resolves as unknown (SPEC §8.2).`,
+      true,
     );
   }
 
   if (version === "unknown") {
     return unknown(
       `Claude CLI version was not detected; version-sensitive feature "${matrixId}" resolves as unknown (SPEC §8.3).`,
+      true,
     );
   }
 
@@ -444,7 +462,8 @@ export function resolveEnforcement(
   if (resolved.status !== "supported") {
     return unknown(
       `Version matrix reports "${matrixId}" as ${resolved.status} on Claude Code ${version}` +
-        `${entry.minVersion ? ` (requires >= ${entry.minVersion})` : ""}; enforcement is unknown (SPEC §8.2).`,
+        `${entry.minVersion ? ` (requires >= ${entry.minVersion})` : ""}; the feature resolves as unknown (SPEC §8.2).`,
+      true,
     );
   }
 
@@ -468,6 +487,13 @@ export function resolveEnforcement(
  * Apply the matrix gate to a capability produced by a resolver rule. The rule's
  * own enforcement is the baseline; the matrix can only downgrade it, and when
  * it does it appends a `version`-typed reason explaining why.
+ *
+ * `status` degrades to `unknown` too when the entry the rule was gated on did
+ * not resolve `supported` (§8.3): what the configuration produces then depends
+ * on platform behaviour we cannot pin to a version, so the status is not a
+ * weaker claim but an unfounded one. A capability that is never gated — no
+ * `gateCapability` call — keeps its status untouched, which is what makes the
+ * distinction mechanical rather than a hand-maintained list.
  */
 export function gateCapability<T extends ResolvedCapability>(
   capability: T,
@@ -480,12 +506,19 @@ export function gateCapability<T extends ResolvedCapability>(
     baseline: capability.enforcement,
   });
 
-  if (decision.enforcement === capability.enforcement && !decision.reason) {
+  const status = decision.statusUnfounded ? "unknown" : capability.status;
+
+  if (
+    decision.enforcement === capability.enforcement &&
+    status === capability.status &&
+    !decision.reason
+  ) {
     return capability;
   }
 
   return {
     ...capability,
+    status,
     enforcement: decision.enforcement,
     reasons: decision.reason
       ? [...capability.reasons, decision.reason]

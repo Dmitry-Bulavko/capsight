@@ -400,11 +400,21 @@ describe("correctness gate rules", () => {
   });
 
   it("classifies confident vs unknown statuses explicitly", () => {
-    expect(isConfidentCapabilityStatus("unknown")).toBe(false);
-    expect(isConfidentCapabilityStatus("denied")).toBe(true);
-    expect(isConfidentCapabilityStatus("available")).toBe(true);
-    expect(isConfidentCapabilityStatus("preloaded")).toBe(true);
-    expect(isConfidentCapabilityStatus("blocked")).toBe(true);
+    const enforced = { enforcement: "enforced" } as const;
+    expect(isConfidentCapabilityStatus({ status: "unknown", ...enforced })).toBe(false);
+    expect(isConfidentCapabilityStatus({ status: "denied", ...enforced })).toBe(true);
+    expect(isConfidentCapabilityStatus({ status: "available", ...enforced })).toBe(true);
+    expect(isConfidentCapabilityStatus({ status: "preloaded", ...enforced })).toBe(true);
+    expect(isConfidentCapabilityStatus({ status: "blocked", ...enforced })).toBe(true);
+  });
+
+  it("does not treat a claim the product disowns as confident (H1-17)", () => {
+    expect(
+      isConfidentCapabilityStatus({ status: "denied", enforcement: "unknown" }),
+    ).toBe(false);
+    expect(
+      isConfidentCapabilityStatus({ status: "denied", enforcement: "advisory" }),
+    ).toBe(true);
   });
 });
 

@@ -325,7 +325,7 @@ describe("resolveAgentTools", () => {
     expect(result.pool).toEqual(["Write", "Read", "Grep"]);
   });
 
-  it("degrades enforcement to unknown when no CLI version was detected (§8.3)", () => {
+  it("degrades status and enforcement to unknown when no CLI version was detected (§8.3)", () => {
     const result = resolveAgentTools({
       parentPool: [...PARENT_POOL],
       version: "unknown",
@@ -341,8 +341,9 @@ describe("resolveAgentTools", () => {
         id,
       ).toBe(true);
     }
-    // Status is still resolved from the declaration; only enforcement degrades.
-    expect(capability("Read", result)?.status).toBe("available");
-    expect(capability("Bash", result)?.status).toBe("denied");
+    // Which filter ran is platform behaviour, not file content: without a
+    // version the status is unfounded, not merely unguaranteed (H1-17).
+    expect(capability("Read", result)?.status).toBe("unknown");
+    expect(capability("Bash", result)?.status).toBe("unknown");
   });
 });

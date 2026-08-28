@@ -72,3 +72,24 @@ The operational argument settles it. The gate's `isConfidentCapabilityStatus` ke
 **Consequence accepted.** In degraded mode `unknownRate` approaches 1 and the product says very little about resolution while discovery keeps working — agents, files, collisions and invalid reasons all still listed. That is precisely the degraded mode §8.3 describes, and it is the honest shape of "I cannot tell you what this agent gets without knowing which Claude Code is installed".
 
 **Also required by this decision:** `tests/fixtures/claude/version-drift/expected.json` currently records `status: "denied"` with `enforcement: "unknown"` for the entry whose matrix status is `changed`. That golden encodes the behaviour this decision changes and must be regenerated and re-read.
+
+## Orchestrator verification (post-implementation)
+
+Measured both modes on the `basic` fixture:
+
+| `claude --version` | version | capabilities | unknownRate | discovery |
+|---|---|---|---|---|
+| works | `2.1.251` | 4 available/enforced, 27 denied/enforced, 1 available/advisory | 0 | both agents active |
+| fails | `"unknown"` | 32 × unknown/unknown | 1 | both agents active |
+
+Discovery survives degradation in full, which is the half of §8.3 that must not regress. Only `version-drift/expected.json` moved, as predicted. Accepted.
+
+**The regenerated golden shows the split in one file:** at depth 3 on Claude Code 2.1.217, `Agent` resolves `unknown`/`unknown` while keeping its whole chain — `declared` (F2), `depth-limit` (N2), then the `version` reason naming `agent.depthLimitDefault` — and `Artifact` in the same resolution stays `denied`/`enforced`, because `agent.tools` resolves `supported` at that version. Gated-and-unfounded versus gated-and-supported, visible side by side.
+
+**Interpretation ratified.** The decision said "unsupported or unknown"; the entry driving `version-drift` has status `changed`. Treating `changed` as unfounded too — the rule being "anything but `supported`" — is correct and is what §8.4 requires: "понизить вывод до `unknown`, пока поведение не определено однозначно". A `changed` entry is precisely a rule whose behaviour diverged.
+
+**Correctly excluded from the downgrade:** a `supported` entry resting on a non-`[doc]` fact without fixture evidence. There the platform behaviour is known and only the guarantee is not, which is exactly what the `enforcement` axis exists to express.
+
+**Caught in passing:** the CLI test suite's mock `PlatformVersion` was `1.0.0`, below every `minVersion`, so it had been running entirely in a permanently-unsupported version without anyone noticing — invisible while status did not degrade.
+
+**Filed as H1-25:** the H1-15 SIGTERM→SIGKILL test flaked once during this work.

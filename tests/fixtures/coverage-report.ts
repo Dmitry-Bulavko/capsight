@@ -154,16 +154,22 @@ export function resolutionKey(resolution: NormalizedResolution): string {
   });
 }
 
-/** Confident statuses are every value except `unknown` (SPEC §11.3). */
+/**
+ * A capability claim is confident only when both axes are (SPEC §11.3). A
+ * status of `unknown` claims nothing, and a claim carrying
+ * `enforcement: "unknown"` is one the product itself disowns — the gate must
+ * not hold the product to it (H1-17).
+ */
 export function isConfidentCapabilityStatus(
-  status: ResolvedCapability["status"],
+  capability: Pick<ResolvedCapability, "status" | "enforcement">,
 ): boolean {
-  return status !== "unknown";
+  return capability.status !== "unknown" && capability.enforcement !== "unknown";
 }
 
 /**
  * Returns mismatches where actual output makes a confident capability claim
- * that differs from the golden expectation. `unknown` actual status never fails.
+ * that differs from the golden expectation. An actual `unknown` on either axis
+ * is not a confident claim and never fails.
  */
 export function findConfidentCapabilityMismatches(
   actual: NormalizedGoldenOutput,
@@ -197,7 +203,7 @@ export function findConfidentCapabilityMismatches(
     );
 
     for (const actualCapability of actualResolution.capabilities) {
-      if (!isConfidentCapabilityStatus(actualCapability.status)) {
+      if (!isConfidentCapabilityStatus(actualCapability)) {
         continue;
       }
 
@@ -205,11 +211,11 @@ export function findConfidentCapabilityMismatches(
       const statusDiffers =
         !expectedCapability ||
         actualCapability.status !== expectedCapability.status;
-      // `unknown` enforcement is not a confident claim, so it never blocks (§11.3).
+      // `unknown` enforcement never reaches here: the confidence guard above
+      // already skipped it, so it can never block (§11.3).
       const enforcementDiffers =
-        actualCapability.enforcement !== "unknown" &&
-        (!expectedCapability ||
-          actualCapability.enforcement !== expectedCapability.enforcement);
+        !expectedCapability ||
+        actualCapability.enforcement !== expectedCapability.enforcement;
 
       if (statusDiffers || enforcementDiffers) {
         mismatches.push({
