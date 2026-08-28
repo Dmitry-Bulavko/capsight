@@ -92,7 +92,7 @@ Order: H1-01 → H1-02 → H1-03 → H1-05 → H1-06 → H1-04 → H1-07 → H1-
 
 | ID | Phase | Title | Status | Spec refs | Files | Acceptance |
 |----|-------|-------|--------|-----------|-------|------------|
-| H1-01 | H1 | Secret redaction boundary for snapshot output | todo | §0.1.8, §12.6, inv 10 | src/adapters/claude/discovery/agents.ts, snapshot.ts | Inline MCP `env`, `hooks`, `unknownFields` reduced to key names |
+| H1-01 | H1 | Secret redaction boundary for snapshot output | in_progress | §0.1.8, §12.6, inv 10 | src/adapters/claude/discovery/agents.ts, snapshot.ts | Inline MCP `env`, `hooks`, `unknownFields` reduced to key names |
 | H1-02 | H1 | Unparseable `tools` patterns must not disable whitelist | todo | §0.1.2, inv 4, F2–F5 | src/adapters/claude/resolution/tools.ts | Zero parsed patterns → `unknown`, never whole pool `available` |
 | H1-03 | H1 | Trust resolution needs an `unknown` state | todo | §7.2, R1–R5, inv 4 | src/adapters/claude/{discovery,resolution}/trust.ts | Unreadable trust → `unknown`, not `blocked` |
 | H1-04 | H1 | Wire version matrix into enforcement + degraded mode | todo | §8.2, §8.3, inv 11 | src/adapters/claude/version/, resolution/ | `lookupFeature` drives enforcement; `version: unknown` degrades |
