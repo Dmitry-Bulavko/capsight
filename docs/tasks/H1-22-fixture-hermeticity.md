@@ -42,3 +42,13 @@ The same exposure applies to trust: `readTrustState` reads `~/.claude.json`, whi
 ## Notes
 
 Raised by the H1-10 implementation. Low severity for correctness of the product, high severity for trust in the suite: a corpus that fails depending on who runs it gets ignored, and an ignored gate is the failure mode H1-07 just finished fixing.
+
+## Added by the orchestrator after H1-20
+
+A second determinism exposure in the same runner, from the same root cause — the corpus depending on the machine rather than on the input:
+
+The golden runner resolves a fixture's agent by `name`. For an A4 collision two snapshot entries share a name, so it silently takes the first. After H1-20 the resolution is candidate-independent in `status` and `enforcement`, but the order of `sources` still reflects which entry was picked, and that order comes from filesystem read order (A4 has no documented rule — that is the whole point of the fact).
+
+- [ ] The runner resolves a fixture agent unambiguously — by id, or by name plus an explicit disambiguator in `contexts.json`
+- [ ] `sources` ordering in a resolution is normalized, so a differently-ordered directory walk cannot produce a golden diff
+- [ ] A test proves it: resolving the same ambiguous fixture with the candidate order reversed yields an identical golden

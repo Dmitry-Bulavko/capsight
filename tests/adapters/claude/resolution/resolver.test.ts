@@ -600,6 +600,189 @@ describe("resolveEffectiveConfiguration", () => {
   });
 });
 
+describe("resolving an agent whose declaration is not settled", () => {
+  const CANDIDATE_A: SourceInfo = {
+    platform: "claude",
+    scope: "project",
+    path: ".claude/agents/reviewer.md",
+  };
+  const CANDIDATE_B: SourceInfo = {
+    platform: "claude",
+    scope: "project",
+    path: ".claude/agents/extra/reviewer.md",
+  };
+
+  function ambiguousPair(
+    configA: Partial<Agent["configuration"]>,
+    configB: Partial<Agent["configuration"]>,
+  ): Agent[] {
+    const collision = {
+      candidates: [CANDIDATE_A, CANDIDATE_B],
+      rule: FACT.A4,
+      matrixRef: "agent.collisionSameDir",
+      enforcement: "unknown" as const,
+    };
+    return [
+      makeAgent({
+        id: "reviewer-a",
+        name: "reviewer",
+        source: CANDIDATE_A,
+        status: "ambiguous",
+        collision,
+        configuration: { unknownFields: {}, ...configA },
+      }),
+      makeAgent({
+        id: "reviewer-b",
+        name: "reviewer",
+        source: CANDIDATE_B,
+        status: "ambiguous",
+        collision,
+        configuration: { unknownFields: {}, ...configB },
+      }),
+    ];
+  }
+
+  it("emits an ambiguous-collision warning naming both candidate files (A4)", async () => {
+    const result = await resolveEffectiveConfiguration(
+      makeSnapshot({ agents: ambiguousPair({ tools: ["Read"] }, { tools: ["Grep"] }) }),
+      "reviewer-a",
+      buildExecutionContext("foreground-subagent"),
+    );
+
+    const warning = result.warnings.find(
+      (entry) => entry.category === "ambiguous-collision",
+    );
+    expect(warning).toBeDefined();
+    expect(warning!.evidence.map((source) => source.path)).toEqual([
+      CANDIDATE_A.path,
+      CANDIDATE_B.path,
+    ]);
+    // A4 documents that one file loads but not which, so the claim itself is
+    // undetermined on every version (H1-18).
+    expect(warning!.enforcement).toBe("unknown");
+  });
+
+  it("resolves a contested field as unknown on both axes without picking a candidate", async () => {
+    const result = await resolveEffectiveConfiguration(
+      makeSnapshot({ agents: ambiguousPair({ tools: ["Read"] }, { tools: ["Grep"] }) }),
+      "reviewer-a",
+      buildExecutionContext("foreground-subagent"),
+    );
+
+    for (const toolName of ["Read", "Grep"]) {
+      const capability = toolCapability(result, toolName);
+      expect(capability?.status).toBe("unknown");
+      expect(capability?.enforcement).toBe("unknown");
+      expect(
+        capability?.reasons.some((reason) => reason.type === "ambiguous"),
+      ).toBe(true);
+      // Both candidate files stay visible as evidence.
+      expect(capability?.sources.map((source) => source.path)).toContain(
+        CANDIDATE_B.path,
+      );
+    }
+  });
+
+  it("keeps a field both candidates agree on confident, with the agreement as the reason", async () => {
+    const result = await resolveEffectiveConfiguration(
+      makeSnapshot({ agents: ambiguousPair({ tools: ["Read"] }, { tools: ["Grep"] }) }),
+      "reviewer-a",
+      buildExecutionContext("foreground-subagent"),
+    );
+
+    const permission = result.capabilities.find(
+      (capability) => capability.kind === "permission",
+    );
+    expect(permission?.capabilityId).toBe("permission:default");
+    expect(permission?.status).toBe("available");
+    expect(permission?.enforcement).toBe("enforced");
+    expect(
+      permission?.reasons.some((reason) =>
+        reason.message.includes("declare the same permissionMode"),
+      ),
+    ).toBe(true);
+  });
+
+  it("does not name a contested permission mode in the capability id", async () => {
+    const result = await resolveEffectiveConfiguration(
+      makeSnapshot({
+        agents: ambiguousPair(
+          { permissionMode: "acceptEdits" },
+          { permissionMode: "default" },
+        ),
+      }),
+      "reviewer-a",
+      buildExecutionContext("foreground-subagent"),
+    );
+
+    const permission = result.capabilities.find(
+      (capability) => capability.kind === "permission",
+    );
+    expect(permission?.capabilityId).toBe("permission:unknown");
+    expect(permission?.status).toBe("unknown");
+    expect(permission?.enforcement).toBe("unknown");
+  });
+
+  it("refuses to resolve an invalid agent as if the file had loaded (A7)", async () => {
+    const result = await resolveEffectiveConfiguration(
+      makeSnapshot({
+        agents: [
+          makeAgent({
+            status: "invalid",
+            invalidReason: "no-description",
+            configuration: { unknownFields: {} },
+          }),
+        ],
+      }),
+      "backend",
+      buildExecutionContext("foreground-subagent"),
+    );
+
+    expect(result.capabilities).toEqual([]);
+    expect(result.unknownRate).toBe(1);
+    expect(result.warnings[0]?.message).toContain("A7");
+  });
+
+  it("resolves a shadowed agent through the winner and records the shadowing (A3)", async () => {
+    const winner = makeAgent({
+      id: "reviewer-winner",
+      name: "reviewer",
+      source: CANDIDATE_A,
+      configuration: { tools: ["Read"], unknownFields: {} },
+    });
+    const shadowed = makeAgent({
+      id: "reviewer-shadowed",
+      name: "reviewer",
+      source: CANDIDATE_B,
+      status: "shadowed",
+      collision: {
+        candidates: [CANDIDATE_A, CANDIDATE_B],
+        effective: CANDIDATE_A,
+        rule: FACT.A3,
+      },
+      configuration: { tools: ["Bash"], unknownFields: {} },
+    });
+
+    const result = await resolveEffectiveConfiguration(
+      makeSnapshot({ agents: [winner, shadowed] }),
+      "reviewer-shadowed",
+      buildExecutionContext("foreground-subagent"),
+    );
+
+    // The winner's `tools` decides, not the shadowed file's.
+    expect(toolCapability(result, "Read")?.status).toBe("available");
+    expect(toolCapability(result, "Bash")?.status).toBe("denied");
+    expect(
+      toolCapability(result, "Read")?.reasons.some(
+        (reason) => reason.type === "shadowed",
+      ),
+    ).toBe(true);
+    expect(
+      result.warnings.some((warning) => warning.category === "shadowing"),
+    ).toBe(true);
+  });
+});
+
 describe("application resolve wrapper", () => {
   it("delegates to resolveEffectiveConfiguration", async () => {
     const snapshot = makeSnapshot();

@@ -103,12 +103,17 @@ function trustOutcome(status: ResolveTrustResult["status"]): {
   }
 }
 
-function buildParentToolPool(agent: Agent): string[] {
+/**
+ * Parent pool the agent's filters are applied to. Several agents are passed
+ * for an A4 collision: the pool is the union over every candidate, so the set
+ * of enumerated tools does not depend on which candidate we happened to read.
+ */
+function buildParentToolPool(agents: readonly Agent[]): string[] {
   const pool = new Set<string>(BUILTIN_PARENT_POOL);
-  for (const pattern of [
+  for (const pattern of agents.flatMap((agent) => [
     ...(agent.configuration.tools ?? []),
     ...(agent.configuration.disallowedTools ?? []),
-  ]) {
+  ])) {
     if (!pattern.includes("*") && !pattern.includes("(")) {
       pool.add(pattern);
     }
@@ -541,6 +546,295 @@ function buildIgnoredFieldWarnings(
   return warnings;
 }
 
+/**
+ * Frontmatter fields a capability's verdict is derived from. Capabilities that
+ * come from the project rather than from the agent file (discovered MCP
+ * servers, instruction sources) derive from no field and are listed as such —
+ * a name collision between two agent files cannot change them.
+ */
+function agentDerivedFields(capability: ResolvedCapability): readonly string[] {
+  switch (capability.kind) {
+    case "tool":
+    case "mcp_tool":
+      return ["tools", "disallowedTools"];
+    case "permission":
+      return ["permissionMode"];
+    case "skill":
+      return ["skills"];
+    case "mcp_server":
+      return capability.capabilityId.startsWith("inline-mcp:")
+        ? ["mcpServers"]
+        : [];
+    case "instruction":
+      return capability.capabilityId === "agent-hooks" ? ["hooks"] : [];
+  }
+}
+
+/**
+ * The candidates behind an `ambiguous` agent and the frontmatter fields they
+ * disagree on. Discovery refuses to name a winner (A4, or a winner rule the
+ * matrix does not found on this version), so resolution may only state what
+ * every candidate states: a field they agree on has one value whichever file
+ * loads, a field they disagree on has no determinable value at all.
+ * @see docs/SPEC.md A4, §13 invariants 3, 4
+ */
+interface AgentAmbiguity {
+  candidates: Agent[];
+  candidateSources: SourceInfo[];
+  contested: ReadonlySet<string>;
+  rule: string;
+  matrixRef?: string;
+}
+
+function configurationField(agent: Agent, field: string): unknown {
+  return (agent.configuration as unknown as Record<string, unknown>)[field];
+}
+
+function analyzeAmbiguity(
+  snapshot: ProjectSnapshot,
+  agent: Agent,
+): AgentAmbiguity | undefined {
+  if (agent.status !== "ambiguous" || !agent.collision) {
+    return undefined;
+  }
+
+  const candidateSources = agent.collision.candidates;
+  const paths = new Set(
+    candidateSources
+      .map((source) => source.path)
+      .filter((value): value is string => value !== undefined),
+  );
+  const candidates = snapshot.agents.filter(
+    (entry) => entry.source.path !== undefined && paths.has(entry.source.path),
+  );
+
+  const fields = new Set(
+    candidates.flatMap((candidate) => Object.keys(candidate.configuration)),
+  );
+  const contested = new Set<string>();
+  for (const field of fields) {
+    const first = JSON.stringify(
+      configurationField(candidates[0]!, field) ?? null,
+    );
+    if (
+      candidates.some(
+        (candidate) =>
+          JSON.stringify(configurationField(candidate, field) ?? null) !== first,
+      )
+    ) {
+      contested.add(field);
+    }
+  }
+
+  return {
+    candidates,
+    candidateSources,
+    contested,
+    rule: agent.collision.rule,
+    ...(agent.collision.matrixRef ? { matrixRef: agent.collision.matrixRef } : {}),
+  };
+}
+
+/**
+ * Candidate files that are not already cited by this capability. Paths belong
+ * in `sources`/`evidence`, never in message text, so both colliding files stay
+ * visible without the message depending on where the project happens to live.
+ */
+function missingCandidateSources(
+  capability: ResolvedCapability,
+  candidateSources: readonly SourceInfo[],
+): SourceInfo[] {
+  const cited = new Set(
+    capability.sources
+      .map((source) => source.path)
+      .filter((value): value is string => value !== undefined),
+  );
+  return candidateSources.filter(
+    (source) => source.path !== undefined && !cited.has(source.path),
+  );
+}
+
+/**
+ * Apply an unresolved name collision to one capability. A contested field
+ * leaves the capability undetermined on both axes — presenting one candidate's
+ * `tools` as the effective set would be a confident wrong answer. Agreement is
+ * recorded as an ordinary reason and does not downgrade anything: it is not a
+ * version-sensitive claim, so it is deliberately not run through the matrix
+ * gate, whose A4 entry is `unknown` by construction.
+ */
+function applyAmbiguity(
+  capability: ResolvedCapability,
+  ambiguity: AgentAmbiguity,
+  agentName: string,
+): ResolvedCapability {
+  const fields = agentDerivedFields(capability);
+  if (fields.length === 0) {
+    return capability;
+  }
+
+  const contested = fields.filter((field) => ambiguity.contested.has(field));
+  const count = ambiguity.candidates.length;
+
+  if (contested.length === 0) {
+    return {
+      ...capability,
+      reasons: [
+        ...capability.reasons,
+        {
+          type: "declared",
+          message:
+            `All ${count} colliding declarations of agent "${agentName}" ` +
+            `declare the same ${fields.join(" and ")}, so this capability holds ` +
+            `whichever candidate the platform loads (${ambiguity.rule}).`,
+          matrixRef: ambiguity.rule,
+        },
+      ],
+    };
+  }
+
+  return {
+    ...capability,
+    // The mode itself is contested, so naming one candidate's mode in the id
+    // would smuggle a winner back in through the capability identity.
+    capabilityId:
+      capability.kind === "permission" ? "permission:unknown" : capability.capabilityId,
+    status: "unknown",
+    enforcement: "unknown",
+    sources: [
+      ...capability.sources,
+      ...missingCandidateSources(capability, ambiguity.candidateSources),
+    ],
+    reasons: [
+      ...capability.reasons,
+      {
+        type: "ambiguous",
+        message:
+          `Agent "${agentName}" is declared in ${count} colliding files that disagree on ` +
+          `${contested.join(" and ")}, and no candidate is effective (${ambiguity.rule}); ` +
+          "this capability is unknown. See sources for the candidate files.",
+        matrixRef: ambiguity.rule,
+      },
+    ],
+  };
+}
+
+function buildAmbiguousCollisionWarning(
+  agentName: string,
+  ambiguity: AgentAmbiguity,
+  version: string,
+): Warning {
+  const contested = [...ambiguity.contested].sort();
+  const warning: Warning = {
+    category: "ambiguous-collision",
+    severity: "warning",
+    message:
+      `Agent "${agentName}" is declared in ${ambiguity.candidates.length} colliding files ` +
+      `(see evidence) and no candidate is effective (${ambiguity.rule}). ` +
+      (contested.length > 0
+        ? `The candidates disagree on ${contested.join(", ")}; capabilities derived from those fields resolve unknown.`
+        : "The candidates declare identical configuration, so capabilities are unaffected."),
+    evidence: ambiguity.candidateSources,
+  };
+
+  return ambiguity.matrixRef
+    ? gateWarning(warning, ambiguity.matrixRef, version)
+    : warning;
+}
+
+/** The winner an A1/A3 collision names for a `shadowed` agent (§3 A3). */
+interface AgentShadowing {
+  winner: Agent;
+  effective: SourceInfo;
+  rule: string;
+}
+
+function analyzeShadowing(
+  snapshot: ProjectSnapshot,
+  agent: Agent,
+): AgentShadowing | undefined {
+  const effective = agent.collision?.effective;
+  if (agent.status !== "shadowed" || !effective?.path) {
+    return undefined;
+  }
+  const winner = snapshot.agents.find(
+    (entry) => entry.source.path === effective.path,
+  );
+  return winner
+    ? { winner, effective, rule: agent.collision!.rule }
+    : undefined;
+}
+
+function applyShadowing(
+  capability: ResolvedCapability,
+  shadowing: AgentShadowing,
+  agentName: string,
+): ResolvedCapability {
+  if (agentDerivedFields(capability).length === 0) {
+    return capability;
+  }
+  return {
+    ...capability,
+    reasons: [
+      ...capability.reasons,
+      {
+        type: "shadowed",
+        message:
+          `This declaration of agent "${agentName}" is shadowed (${shadowing.rule}); the ` +
+          "capability is resolved from the effective declaration named by this reason's source.",
+        source: shadowing.effective,
+        matrixRef: shadowing.rule,
+      },
+    ],
+  };
+}
+
+function buildShadowedWarning(
+  agentName: string,
+  agentSource: SourceInfo,
+  shadowing: AgentShadowing,
+): Warning {
+  return {
+    category: "shadowing",
+    severity: "info",
+    message:
+      `Agent "${agentName}" is shadowed by another declaration of the same name ` +
+      `(${shadowing.rule}); the effective declaration was resolved instead. Evidence lists ` +
+      "the shadowed file first and the effective file second.",
+    evidence: [agentSource, shadowing.effective],
+  };
+}
+
+/**
+ * An agent file the platform does not load (A7) has no effective
+ * configuration: reporting the empty frontmatter of an unparsed file as an
+ * inherited tool pool would be the §0.1.2 failure mode. Nothing is known, so
+ * nothing is claimed and the unknown rate is total.
+ */
+function resolveInvalidAgent(
+  snapshot: ProjectSnapshot,
+  agent: Agent,
+  agentId: string,
+  context: ExecutionContext,
+): EffectiveConfiguration {
+  return {
+    agentId,
+    context,
+    version: snapshot.version,
+    capabilities: [],
+    warnings: [
+      {
+        category: "unknown",
+        severity: "warning",
+        message:
+          `Agent file is invalid (${agent.invalidReason ?? "unknown"}) and is not loaded by ` +
+          "Claude Code (A7); no effective configuration can be resolved for it.",
+        evidence: [agent.source],
+      },
+    ],
+    unknownRate: 1,
+  };
+}
+
 function computeUnknownRate(capabilities: ResolvedCapability[]): number {
   if (capabilities.length === 0) {
     return 0;
@@ -582,10 +876,20 @@ export async function resolveEffectiveConfiguration(
   agentId: string,
   context: ExecutionContext,
 ): Promise<EffectiveConfiguration> {
-  const agent = snapshot.agents.find((entry) => entry.id === agentId);
-  if (!agent) {
+  const requested = snapshot.agents.find((entry) => entry.id === agentId);
+  if (!requested) {
     throw new AgentNotFoundError(agentId);
   }
+
+  if (requested.status === "invalid") {
+    return resolveInvalidAgent(snapshot, requested, agentId, context);
+  }
+
+  // A3 does name a winner, so a shadowed declaration resolves through it
+  // rather than through its own (unloaded) frontmatter.
+  const shadowing = analyzeShadowing(snapshot, requested);
+  const ambiguity = analyzeAmbiguity(snapshot, requested);
+  const agent = shadowing?.winner ?? requested;
 
   const permissionSettings = await readPermissionSettings(snapshot.settings);
   const permissionResult = resolvePermissionMode(
@@ -597,7 +901,7 @@ export async function resolveEffectiveConfiguration(
     agent,
     snapshot.version.version,
   );
-  const parentPool = buildParentToolPool(agent);
+  const parentPool = buildParentToolPool(ambiguity?.candidates ?? [agent]);
   // §8.3: with no `claude` CLI this is "unknown" and every version-sensitive
   // verdict below degrades to `enforcement: "unknown"`.
   const version = snapshot.version.version;
@@ -640,16 +944,34 @@ export async function resolveEffectiveConfiguration(
     context,
   );
 
-  const capabilities = sortCapabilities([
+  const resolved = [
     buildPermissionCapability(agent, context, permissionResult, version),
     ...toolCapabilities,
     ...buildMcpServerCapabilities(snapshot, version),
     ...buildTrustCapabilities(agent, snapshot, version),
     ...buildInstructionCapabilities(snapshot, context, version),
     ...skillCapabilities,
-  ]);
+  ];
+
+  const capabilities = sortCapabilities(
+    ambiguity
+      ? resolved.map((capability) =>
+          applyAmbiguity(capability, ambiguity, requested.name),
+        )
+      : shadowing
+        ? resolved.map((capability) =>
+            applyShadowing(capability, shadowing, requested.name),
+          )
+        : resolved,
+  );
 
   const warnings = [
+    ...(ambiguity
+      ? [buildAmbiguousCollisionWarning(requested.name, ambiguity, version)]
+      : []),
+    ...(shadowing
+      ? [buildShadowedWarning(requested.name, requested.source, shadowing)]
+      : []),
     ...buildIgnoredFieldWarnings(agent, permissionResult, pluginLimitations, version),
     ...(await resolveSecurityFindings({
       agent,
