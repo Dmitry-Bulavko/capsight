@@ -62,6 +62,25 @@ describe("parseToolPattern", () => {
       kind: "unknown",
       raw: "mcp__github(create)",
     });
+    expect(parseToolPattern("Bash(git diff:*)")).toEqual({
+      kind: "unknown",
+      raw: "Bash(git diff:*)",
+    });
+  });
+
+  it("parses Agent(type1, type2) as an Agent entry, not as unparseable (F5)", () => {
+    expect(parseToolPattern("Agent(reviewer, planner)")).toEqual({
+      kind: "agent-types",
+      types: ["reviewer", "planner"],
+    });
+    expect(parseToolPattern("Task(reviewer)")).toEqual({
+      kind: "agent-types",
+      types: ["reviewer"],
+    });
+    expect(parseToolPattern("Agent()")).toEqual({
+      kind: "unknown",
+      raw: "Agent()",
+    });
   });
 });
 
@@ -158,13 +177,101 @@ describe("resolveAgentTools", () => {
       agentSource: AGENT_SOURCE,
     });
 
-    expect(result.pool).toEqual(["Read", "Write"]);
-    const unknowns = result.capabilities.filter((c) => c.status === "unknown");
-    expect(unknowns).toHaveLength(2);
-    expect(unknowns.map((c) => c.capabilityId).sort()).toEqual([
+    // Nothing in `tools` parsed, so no tool may be reported available.
+    expect(result.pool).toEqual([]);
+    expect(
+      result.capabilities.filter((c) => c.status === "available"),
+    ).toHaveLength(0);
+    for (const toolName of ["Read", "Write"]) {
+      expect(capability(toolName, result)?.status).toBe("unknown");
+      expect(capability(toolName, result)?.enforcement).toBe("unknown");
+    }
+    const patternUnknowns = result.capabilities.filter(
+      (c) => c.capabilityId === "mcp__*" || c.capabilityId === "mcp__github(bad)",
+    );
+    expect(patternUnknowns.map((c) => c.capabilityId).sort()).toEqual([
       "mcp__*",
       "mcp__github(bad)",
     ]);
+    expect(patternUnknowns.every((c) => c.status === "unknown")).toBe(true);
+  });
+
+  it("never reports a tool available when the tools whitelist is unparseable", () => {
+    const result = resolveAgentTools({
+      parentPool: [...PARENT_POOL],
+      tools: ["Bash(git diff:*)"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    expect(result.pool).toEqual([]);
+    expect(
+      result.capabilities.filter((c) => c.status === "available"),
+    ).toHaveLength(0);
+    for (const toolName of PARENT_POOL) {
+      const cap = capability(toolName, result);
+      expect(cap?.status).toBe("unknown");
+      expect(cap?.enforcement).toBe("unknown");
+      expect(cap?.reasons[0]?.message).toContain("Bash(git diff:*)");
+      expect(cap?.sources.length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it("keeps parsed patterns effective while an unparsed one downgrades only what it could match", () => {
+    const result = resolveAgentTools({
+      parentPool: ["Read", "Write", "Bash"],
+      tools: ["Read", "Bash(git diff:*)"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    expect(result.pool).toEqual(["Read"]);
+    expect(capability("Read", result)?.status).toBe("available");
+    // Only `Bash` could have been meant by `Bash(git diff:*)`.
+    expect(capability("Bash", result)?.status).toBe("unknown");
+    expect(capability("Bash", result)?.enforcement).toBe("unknown");
+    expect(capability("Bash", result)?.reasons[0]?.message).toContain(
+      "Bash(git diff:*)",
+    );
+    expect(capability("Write", result)?.status).toBe("denied");
+  });
+
+  it("downgrades tools an unparseable disallowedTools pattern could remove", () => {
+    const result = resolveAgentTools({
+      parentPool: ["Read", "Write", "Bash"],
+      disallowedTools: ["Bash(rm:*)"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    expect(result.pool).toEqual(["Read", "Write"]);
+    expect(capability("Bash", result)?.status).toBe("unknown");
+    expect(capability("Bash", result)?.enforcement).toBe("unknown");
+    expect(capability("Bash", result)?.reasons[0]?.message).toContain("Bash(rm:*)");
+  });
+
+  it("treats Agent(type1, type2) as the Agent tool inside a subagent definition (F5)", () => {
+    const result = resolveAgentTools({
+      parentPool: ["Agent", "Task", "Read"],
+      tools: ["Agent(reviewer, planner)"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    expect(result.pool).toEqual(["Agent", "Task"]);
+    expect(capability("Agent", result)?.status).toBe("available");
+    expect(capability("Task", result)?.status).toBe("available");
+    expect(capability("Read", result)?.status).toBe("denied");
+    expect(
+      result.capabilities.some((c) => c.capabilityId === "Agent(reviewer, planner)"),
+    ).toBe(false);
+  });
+
+  it("denies every tool when tools is declared empty (F2, F4)", () => {
+    const result = resolveAgentTools({
+      parentPool: ["Read", "Write"],
+      tools: [],
+      agentSource: AGENT_SOURCE,
+    });
+
+    expect(result.pool).toEqual([]);
+    expect(capability("Read", result)?.status).toBe("denied");
   });
 
   it("returns empty pool when tools whitelist resolves to nothing (F4)", () => {

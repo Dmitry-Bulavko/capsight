@@ -24,6 +24,7 @@ type ParsedPattern =
   | { kind: "mcp-all" }
   | { kind: "mcp-server"; server: string }
   | { kind: "mcp-server-wildcard"; server: string }
+  | { kind: "agent-types"; types: string[] }
   | { kind: "unknown"; raw: string };
 
 interface IndexedPattern {
@@ -34,6 +35,9 @@ interface IndexedPattern {
 }
 
 const AGENT_ALIAS_SET = new Set<string>(AGENT_TOOL_NAMES);
+
+/** `Head(...)` form, e.g. `Agent(type1, type2)` (F5) or `Bash(git diff:*)`. */
+const PARENTHESISED_PATTERN = /^([^()]*)\((.*)\)$/;
 
 function fieldPath(field: IndexedPattern["field"], index: number): string {
   return `frontmatter.${field}[${index}]`;
@@ -74,6 +78,22 @@ export function parseToolPattern(
   options: { allowMcpAll?: boolean } = {},
 ): ParsedPattern {
   const allowMcpAll = options.allowMcpAll ?? false;
+
+  const parenthesised = PARENTHESISED_PATTERN.exec(pattern);
+  if (parenthesised) {
+    const head = parenthesised[1]!;
+    const inner = parenthesised[2]!;
+    if (AGENT_ALIAS_SET.has(head) && !inner.includes("(") && !inner.includes(")")) {
+      const types = inner
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter((entry) => entry.length > 0);
+      if (types.length > 0) {
+        return { kind: "agent-types", types };
+      }
+    }
+    return { kind: "unknown", raw: pattern };
+  }
 
   if (pattern.includes("(") || pattern.includes(")")) {
     return { kind: "unknown", raw: pattern };
@@ -120,6 +140,10 @@ function patternMatchesTool(parsed: ParsedPattern, toolName: string): boolean {
       );
     case "mcp-server-wildcard":
       return toolName.startsWith(`mcp__${parsed.server}__`);
+    case "agent-types":
+      // F5: inside a subagent definition the type list in parentheses is
+      // ignored; the entry still selects the Agent/Task tool itself.
+      return exactPatternMatches(AGENT_TOOL_NAMES[0], toolName);
     case "unknown":
       return false;
   }
@@ -137,6 +161,40 @@ function findMatchingPatterns(
     (entry) =>
       entry.parsed.kind !== "unknown" && patternMatchesTool(entry.parsed, toolName),
   );
+}
+
+/**
+ * Conservative bound on which tools an unparseable pattern could have referred
+ * to. Only the head before "(" is used, and only when it parses on its own
+ * (`Bash(git diff:*)` -> `Bash`); anything else could mean any tool, so every
+ * tool is treated as possibly matched. Never narrower than the truth: an
+ * unparseable restriction may only downgrade a verdict, never widen it.
+ * @see docs/SPEC.md §13 invariant 4, F3
+ */
+function unknownPatternCouldMatch(raw: string, toolName: string): boolean {
+  const parenIndex = raw.indexOf("(");
+  if (parenIndex <= 0) {
+    return true;
+  }
+  const head = parseToolPattern(raw.slice(0, parenIndex).trim(), {
+    allowMcpAll: true,
+  });
+  if (head.kind === "unknown") {
+    return true;
+  }
+  return patternMatchesTool(head, toolName);
+}
+
+function unknownPatternReason(
+  entry: IndexedPattern,
+  agentSource: SourceInfo,
+): ResolutionReason {
+  const source = patternSource(agentSource, entry.field, entry.index);
+  const message =
+    entry.field === "tools"
+      ? `Tool pattern "${entry.raw}" could not be parsed; whether it includes this tool is unknown (F3, F4).`
+      : `disallowedTools pattern "${entry.raw}" could not be parsed; whether it removes this tool is unknown (F2, F3).`;
+  return makeReason("unknown", message, source);
 }
 
 function isDeclaredInBothLists(
@@ -184,7 +242,7 @@ function unknownPatternCapabilities(
       reasons: [
         makeReason(
           "unknown",
-          "Unrecognized tool pattern syntax; not applied (F3).",
+          "Unrecognized tool pattern syntax; its effect on the tool pool is unknown (F3).",
           patternSource(agentSource, entry.field, entry.index),
         ),
       ],
@@ -206,7 +264,20 @@ export function resolveAgentTools(
   const effectiveWhitelist = whitelistPatterns.filter(
     (entry) => entry.parsed.kind !== "unknown",
   );
-  const applyWhitelist = tools !== undefined && effectiveWhitelist.length > 0;
+  const unknownWhitelist = whitelistPatterns.filter(
+    (entry) => entry.parsed.kind === "unknown",
+  );
+  const unknownDisallowed = disallowedPatterns.filter(
+    (entry) => entry.parsed.kind === "unknown",
+  );
+  // A declared `tools` list always applies, even when nothing in it parses:
+  // dropping it would turn an unreadable restriction into "whole parent pool
+  // available" (§0.1.2, §13 invariant 4).
+  const applyWhitelist = tools !== undefined;
+  // Nothing in `tools` parsed at all: the selection itself is unreadable, so no
+  // tool in the pool can be resolved either way (F4).
+  const whitelistFullyUnparsed =
+    applyWhitelist && effectiveWhitelist.length === 0 && unknownWhitelist.length > 0;
 
   const capabilities: ResolvedCapability[] = [];
   const pool: string[] = [];
@@ -215,6 +286,13 @@ export function resolveAgentTools(
     const inBothLists = isDeclaredInBothLists(toolName, tools, disallowedTools);
     const deniedMatches = findMatchingPatterns(toolName, disallowedPatterns);
     const allowedMatches = findMatchingPatterns(toolName, effectiveWhitelist);
+    const unknownAllowMatches = unknownWhitelist.filter(
+      (entry) =>
+        whitelistFullyUnparsed || unknownPatternCouldMatch(entry.raw, toolName),
+    );
+    const unknownDenyMatches = unknownDisallowed.filter((entry) =>
+      unknownPatternCouldMatch(entry.raw, toolName),
+    );
 
     if (inBothLists) {
       const sources = [
@@ -269,7 +347,11 @@ export function resolveAgentTools(
       continue;
     }
 
-    if (applyWhitelist && allowedMatches.length === 0) {
+    if (
+      applyWhitelist &&
+      allowedMatches.length === 0 &&
+      unknownAllowMatches.length === 0
+    ) {
       capabilities.push({
         capabilityId: toolName,
         kind: capabilityKind(toolName),
@@ -283,6 +365,28 @@ export function resolveAgentTools(
             agentSource,
           ),
         ],
+      });
+      continue;
+    }
+
+    // An unparseable pattern that could have covered this tool leaves the
+    // verdict unknown; it never resolves to available or denied (§13 invariant 4).
+    const blockingUnknown = [
+      ...(allowedMatches.length === 0 ? unknownAllowMatches : []),
+      ...unknownDenyMatches,
+    ];
+    if (blockingUnknown.length > 0) {
+      capabilities.push({
+        capabilityId: toolName,
+        kind: capabilityKind(toolName),
+        status: "unknown",
+        enforcement: "unknown",
+        sources: blockingUnknown.map((entry) =>
+          patternSource(agentSource, entry.field, entry.index),
+        ),
+        reasons: blockingUnknown.map((entry) =>
+          unknownPatternReason(entry, agentSource),
+        ),
       });
       continue;
     }
