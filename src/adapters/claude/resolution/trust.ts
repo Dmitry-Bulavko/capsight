@@ -5,6 +5,7 @@ import type {
   SourceInfo,
   TrustState,
 } from "../../../core/model/index.js";
+import { FACT, type FactId } from "../version/facts.js";
 
 export type TrustGatedKind = "inline-mcp" | "agent-hooks";
 
@@ -39,7 +40,7 @@ function makeReason(
   type: ResolutionReason["type"],
   message: string,
   source?: SourceInfo,
-  matrixRef?: string,
+  matrixRef?: FactId,
 ): ResolutionReason {
   return matrixRef
     ? { type, message, source, matrixRef }
@@ -87,7 +88,7 @@ function hasDeclaredHooks(agent: Agent): boolean {
 function unknownResult(
   message: string,
   source: SourceInfo,
-  matrixRef?: string,
+  matrixRef?: FactId,
 ): ResolveTrustResult {
   return {
     status: "unknown",
@@ -99,7 +100,7 @@ function unknownResult(
 function availableReason(
   agent: Agent,
   kind: TrustGatedKind,
-  matrixRef: string,
+  matrixRef: FactId,
   message: string,
 ): ResolveTrustResult {
   const fieldPath =
@@ -132,7 +133,7 @@ export function resolveTrustGate(input: ResolveTrustInput): ResolveTrustResult {
       return availableReason(
         agent,
         kind,
-        "R4",
+        FACT.R4,
         "Named MCP server reference does not require project trust (R4).",
       );
     }
@@ -141,7 +142,7 @@ export function resolveTrustGate(input: ResolveTrustInput): ResolveTrustResult {
       return availableReason(
         agent,
         kind,
-        "R4",
+        FACT.R4,
         `Inline MCP from ${agent.source.scope} scope loads without project trust (R4).`,
       );
     }
@@ -166,7 +167,7 @@ export function resolveTrustGate(input: ResolveTrustInput): ResolveTrustResult {
       return availableReason(
         agent,
         kind,
-        "R4",
+        FACT.R4,
         `Agent hooks from ${agent.source.scope} scope run without project trust (R4).`,
       );
     }
@@ -177,7 +178,7 @@ export function resolveTrustGate(input: ResolveTrustInput): ResolveTrustResult {
       ? `frontmatter.mcpServers[${mcpServerIndex ?? 0}]`
       : "frontmatter.hooks";
   const source = fieldSource(agent, fieldPath);
-  const matrixRef = kind === "inline-mcp" ? "R1" : "R5";
+  const matrixRef: FactId = kind === "inline-mcp" ? FACT.R1 : FACT.R5;
 
   if (trust.accepted === "unknown") {
     return {
@@ -246,7 +247,7 @@ export function resolveMcpConfigFileTrust(
         "trust",
         "MCP servers from .mcp.json are not subject to project trust (R4).",
         source,
-        "R4",
+        FACT.R4,
       ),
     ],
   };

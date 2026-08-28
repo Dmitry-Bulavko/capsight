@@ -9,6 +9,7 @@ import type {
   SourceInfo,
   Warning,
 } from "../../../core/model/index.js";
+import { FACT, type FactId } from "../version/facts.js";
 import {
   AGENT_TOOL_NAMES,
   BACKGROUND_ALLOWED_BUILTIN_TOOLS,
@@ -57,7 +58,7 @@ function makeReason(
   type: ResolutionReason["type"],
   message: string,
   source?: SourceInfo,
-  matrixRef?: string,
+  matrixRef?: FactId,
 ): ResolutionReason {
   return matrixRef
     ? { type, message, source, matrixRef }
@@ -211,7 +212,7 @@ function applyBuiltinKindDenials(
       "denied",
       "Write and Edit are denied for Explore/Plan built-in agents (B2).",
       agentSource,
-      "B2",
+      FACT.B2,
     );
 
     if (existing) {
@@ -281,7 +282,7 @@ function buildInstructionCapabilities(
           scope: instruction.scope,
           path: instruction.path,
         },
-        "I1",
+        FACT.I1,
       ),
     ],
   }));
@@ -380,7 +381,7 @@ function buildIgnoredFieldWarnings(
       severity: "warning",
       message: limitation.reasons[0]?.message ?? `Plugin agents ignore frontmatter ${limitation.field} (F9).`,
       evidence: [{ ...agent.source, fieldPath: `frontmatter.${limitation.field}` }],
-      matrixRef: "F9",
+      matrixRef: FACT.F9,
     });
   }
 
@@ -449,7 +450,7 @@ export async function resolveEffectiveConfiguration(
       "context-filter",
       "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
       agent.source,
-      "T3",
+      FACT.T3,
     );
     toolCapabilities = buildForkToolCapabilities(parentPool, forkReason);
   } else {

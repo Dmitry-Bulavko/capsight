@@ -7,6 +7,7 @@ import type {
   ResolvedCapability,
   SourceInfo,
 } from "../../../core/model/index.js";
+import { FACT, type FactId } from "../version/facts.js";
 import type { DiscoveredSkill } from "../discovery/types.js";
 import { parseFrontmatter } from "../parsing/frontmatter.js";
 
@@ -14,7 +15,7 @@ function makeReason(
   type: ResolutionReason["type"],
   message: string,
   source?: SourceInfo,
-  matrixRef?: string,
+  matrixRef?: FactId,
 ): ResolutionReason {
   return matrixRef
     ? { type, message, source, matrixRef }
@@ -101,7 +102,7 @@ export async function buildSkillPreloadCapabilities(
             "denied",
             "Skill cannot be preloaded because disable-model-invocation is set (K4).",
             skillSource,
-            "K4",
+            FACT.K4,
           ),
         ],
       });
@@ -119,7 +120,7 @@ export async function buildSkillPreloadCapabilities(
           "declared",
           "Skill content preloaded into agent context from frontmatter skills list (K1).",
           agentFieldSource,
-          "K1",
+          FACT.K1,
         ),
       ],
     });

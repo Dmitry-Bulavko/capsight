@@ -5,6 +5,7 @@ import type {
   ResolutionReason,
   SourceInfo,
 } from "../../../core/model/index.js";
+import { FACT, type FactId } from "../version/facts.js";
 
 /** Effective permissions settings relevant to resolution (P4). */
 export interface PermissionSettings {
@@ -26,7 +27,7 @@ function makeReason(
   type: ResolutionReason["type"],
   message: string,
   source?: SourceInfo,
-  matrixRef?: string,
+  matrixRef?: FactId,
 ): ResolutionReason {
   return matrixRef
     ? { type, message, source, matrixRef }
@@ -83,7 +84,7 @@ export function resolvePermissionMode(
           "parent-mode",
           `Parent session permission mode "${parentMode}" takes precedence; agent frontmatter ignored (P1).`,
           permissionModeSource(agentSource),
-          "P1",
+          FACT.P1,
         ),
       );
     } else {
@@ -92,7 +93,7 @@ export function resolvePermissionMode(
           "inherited",
           `Inherited parent session permission mode "${parentMode}" (P1).`,
           agentSource,
-          "P1",
+          FACT.P1,
         ),
       );
     }
@@ -111,7 +112,7 @@ export function resolvePermissionMode(
           "parent-mode",
           "Parent session is in auto mode; agent permissionMode frontmatter is ignored (P2).",
           permissionModeSource(agentSource),
-          "P2",
+          FACT.P2,
         ),
       );
     } else {
@@ -120,7 +121,7 @@ export function resolvePermissionMode(
           "inherited",
           "Inherited auto permission mode from parent session (P2).",
           agentSource,
-          "P2",
+          FACT.P2,
         ),
       );
     }
@@ -142,7 +143,7 @@ export function resolvePermissionMode(
         "denied",
         "bypassPermissions in agent frontmatter ignored because permissions.disableBypassPermissionsMode is set (P4).",
         permissionModeSource(agentSource),
-        "P4",
+        FACT.P4,
       ),
     );
     return {

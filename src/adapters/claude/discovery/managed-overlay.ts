@@ -13,6 +13,7 @@ import {
   parseFrontmatter,
 } from "../parsing/frontmatter.js";
 import type { SettingsLayer } from "./types.js";
+import { FACT } from "../version/facts.js";
 import {
   redactMcpServers,
   redactUnknownFields,
@@ -245,7 +246,7 @@ function reconcileAgentCollisions(agents: Agent[]): Agent[] {
         status: "ambiguous",
         collision: {
           candidates: group.map((entry) => entry.source),
-          rule: "A4",
+          rule: FACT.A4,
         },
       });
     }
@@ -282,8 +283,8 @@ function reconcileAgentCollisions(agents: Agent[]): Agent[] {
           effective: winner.source,
           rule:
             SCOPE_PRIORITY[loser.source.scope] === SCOPE_PRIORITY[winner.source.scope]
-              ? "A3"
-              : "A1",
+              ? FACT.A3
+              : FACT.A1,
         },
       });
     }

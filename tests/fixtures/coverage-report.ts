@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { M1_DOC_FACTS } from "../../src/adapters/claude/version/facts.js";
+import { M1_DOC_FACTS, type FactId } from "../../src/adapters/claude/version/facts.js";
 import { VERSION_MATRIX } from "../../src/adapters/claude/version/matrix.js";
 import type { ResolvedCapability } from "../../src/core/model/index.js";
 import type {
@@ -123,7 +123,7 @@ export function discoverFixtureNames(
 }
 
 function coverageTierForFact(
-  factId: string,
+  factId: FactId,
   availableFixtures: ReadonlySet<string>,
 ): CoverageTier {
   let tier: CoverageTier = "unverified";

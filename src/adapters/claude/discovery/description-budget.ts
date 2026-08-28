@@ -1,4 +1,5 @@
 import type { Agent, SourceInfo, Warning } from "../../../core/model/index.js";
+import { FACT } from "../version/facts.js";
 
 /** A10 threshold — total estimated description tokens before warning. */
 export const DESCRIPTION_BUDGET_THRESHOLD = 15_000;
@@ -69,7 +70,7 @@ export function computeDescriptionBudget(agents: Agent[]): DescriptionBudgetResu
         ...entry.source,
         fieldPath: "frontmatter.description",
       })),
-      matrixRef: "A10",
+      matrixRef: FACT.A10,
     });
   }
 

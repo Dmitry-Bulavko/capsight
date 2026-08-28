@@ -3,25 +3,12 @@
  * @see docs/SPEC.md §3, §8
  */
 
-import {
-  F2,
-  F3,
-  F4,
-  F11,
-  N2,
-  P1,
-  P2,
-  P4,
-  P5,
-  T1,
-  T2,
-  T3,
-} from "./facts.js";
+import { FACT, type FactId } from "./facts.js";
 
 export interface FeatureCompatibility {
   id: string;
   feature: string;
-  factRefs: string[];
+  factRefs: readonly FactId[];
   minVersion?: string;
   changedIn?: string[];
   observedIn?: string[];
@@ -35,7 +22,7 @@ export const VERSION_MATRIX: FeatureCompatibility[] = [
   {
     id: "agent.disallowedTools",
     feature: "Agent frontmatter disallowedTools filtering",
-    factRefs: [F2, F3],
+    factRefs: [FACT.F2, FACT.F3],
     minVersion: "2.1.0",
     status: "supported",
     confidence: "doc",
@@ -45,7 +32,7 @@ export const VERSION_MATRIX: FeatureCompatibility[] = [
   {
     id: "agent.tools",
     feature: "Agent frontmatter tools whitelist",
-    factRefs: [F2, F4],
+    factRefs: [FACT.F2, FACT.F4],
     minVersion: "2.1.0",
     changedIn: ["2.1.208"],
     status: "supported",
@@ -56,7 +43,7 @@ export const VERSION_MATRIX: FeatureCompatibility[] = [
   {
     id: "agent.toolAliases",
     feature: "Agent and Task tool name aliases",
-    factRefs: [F11],
+    factRefs: [FACT.F11],
     minVersion: "2.1.63",
     status: "supported",
     confidence: "doc",
@@ -65,7 +52,7 @@ export const VERSION_MATRIX: FeatureCompatibility[] = [
   {
     id: "context.filter1",
     feature: "Subagent filter 1",
-    factRefs: [T1],
+    factRefs: [FACT.T1],
     minVersion: "2.1.0",
     status: "supported",
     confidence: "doc",
@@ -74,7 +61,7 @@ export const VERSION_MATRIX: FeatureCompatibility[] = [
   {
     id: "context.filter2",
     feature: "Background subagent filter 2",
-    factRefs: [T2],
+    factRefs: [FACT.T2],
     minVersion: "2.1.0",
     status: "supported",
     confidence: "doc",
@@ -83,7 +70,7 @@ export const VERSION_MATRIX: FeatureCompatibility[] = [
   {
     id: "context.fork",
     feature: "Fork context skips agent configuration filters",
-    factRefs: [T3],
+    factRefs: [FACT.T3],
     minVersion: "2.1.0",
     status: "supported",
     confidence: "doc",
@@ -92,43 +79,43 @@ export const VERSION_MATRIX: FeatureCompatibility[] = [
   {
     id: "agent.depthLimit",
     feature: "Agent tool unavailable at subagent depth limit",
-    factRefs: [N2],
+    factRefs: [FACT.N2],
     minVersion: "2.1.0",
     status: "supported",
     confidence: "doc",
     fixture: "depth-limit",
   },
   {
-    id: "P1",
+    id: FACT.P1,
     feature: "Parent bypassPermissions/acceptEdits overrides agent permissionMode",
-    factRefs: [P1],
+    factRefs: [FACT.P1],
     minVersion: "2.1.0",
     status: "supported",
     confidence: "doc",
     fixture: "permission-inheritance",
   },
   {
-    id: "P2",
+    id: FACT.P2,
     feature: "Parent auto mode ignores agent permissionMode frontmatter",
-    factRefs: [P2],
+    factRefs: [FACT.P2],
     minVersion: "2.1.0",
     status: "supported",
     confidence: "doc",
     fixture: "permission-inheritance",
   },
   {
-    id: "P4",
+    id: FACT.P4,
     feature: "permissions.disableBypassPermissionsMode blocks agent bypassPermissions",
-    factRefs: [P4],
+    factRefs: [FACT.P4],
     minVersion: "2.1.223",
     status: "supported",
     confidence: "doc",
     fixture: "permission-inheritance",
   },
   {
-    id: "P5",
+    id: FACT.P5,
     feature: "Agent permissionMode from frontmatter when no parent override",
-    factRefs: [P5],
+    factRefs: [FACT.P5],
     minVersion: "2.1.0",
     status: "supported",
     confidence: "doc",

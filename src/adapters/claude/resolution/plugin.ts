@@ -1,4 +1,5 @@
 import type { Agent, ResolutionReason, SourceInfo } from "../../../core/model/index.js";
+import { FACT, type FactId } from "../version/facts.js";
 
 /** Frontmatter fields ignored for plugin agents (F9). */
 export const PLUGIN_INEFFECTIVE_FIELDS = [
@@ -21,7 +22,7 @@ function makeReason(
   type: ResolutionReason["type"],
   message: string,
   source: SourceInfo,
-  matrixRef?: string,
+  matrixRef?: FactId,
 ): ResolutionReason {
   return matrixRef
     ? { type, message, source, matrixRef }
@@ -77,7 +78,7 @@ export function resolvePluginFieldLimitations(
           "plugin-limitation",
           `Plugin agents ignore frontmatter ${field} (F9).`,
           source,
-          "F9",
+          FACT.F9,
         ),
       ],
     });

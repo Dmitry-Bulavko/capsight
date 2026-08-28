@@ -7,6 +7,7 @@ import type {
   SourceInfo,
   Warning,
 } from "../../../core/model/index.js";
+import { FACT, type FactId } from "../version/facts.js";
 import type { DiscoveredSkill, SettingsLayer } from "../discovery/types.js";
 import { parseFrontmatter } from "../parsing/frontmatter.js";
 import { isInlineMcpServerEntry } from "./trust.js";
@@ -23,7 +24,7 @@ export interface ResolveSecurityFindingsInput {
 function securityWarning(
   message: string,
   evidence: SourceInfo[],
-  matrixRef?: string,
+  matrixRef?: FactId,
 ): Warning {
   return {
     category: "security-finding",
@@ -76,7 +77,7 @@ function findBypassPermissionsWarning(agent: Agent): Warning | undefined {
   return securityWarning(
     "Agent declares permissionMode bypassPermissions, which skips permission prompts.",
     [{ ...agent.source, fieldPath: "frontmatter.permissionMode" }],
-    "P5",
+    FACT.P5,
   );
 }
 
@@ -97,7 +98,7 @@ function findInlineMcpCommandWarnings(agent: Agent): Warning[] {
       securityWarning(
         `Inline MCP server runs arbitrary command "${record.commandName}" from agent frontmatter.`,
         [{ ...agent.source, fieldPath: `frontmatter.mcpServers[${index}]` }],
-        "R1",
+        FACT.R1,
       ),
     );
   }
@@ -149,7 +150,7 @@ async function findSkillAllowedToolsWarnings(
               fieldPath: `frontmatter.allowed-tools[${index}]`,
             },
           ],
-          "K6",
+          FACT.K6,
         ),
       );
     }
@@ -194,7 +195,7 @@ async function readFalseAllowGlobWarnings(
                 fieldPath: `permissions.allow[${index}]`,
               },
             ],
-            "S4",
+            FACT.S4,
           ),
         );
       }

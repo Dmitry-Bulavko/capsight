@@ -9,6 +9,7 @@ import {
 } from "../parsing/frontmatter.js";
 import type { ProjectScopeLevel } from "./project-walk.js";
 import type { RawAgentFile, AgentDiscoveryResult } from "./types.js";
+import { FACT } from "../version/facts.js";
 import {
   redactMcpServers,
   redactUnknownFields,
@@ -224,7 +225,7 @@ function resolveCollisions(parsed: ParsedAgent[]): Agent[] {
       status: "ambiguous",
       collision: {
         candidates: group.map((g) => sourceInfo(g.file.scope, g.file.filePath)),
-        rule: "A4",
+        rule: FACT.A4,
       },
     });
   }
@@ -256,7 +257,7 @@ function resolveCollisions(parsed: ParsedAgent[]): Agent[] {
         collision: {
           candidates: sorted.map((s) => sourceInfo(s.file.scope, s.file.filePath)),
           effective: sourceInfo(winner.file.scope, winner.file.filePath),
-          rule: loser.file.scopePriority === winner.file.scopePriority ? "A3" : "A1",
+          rule: loser.file.scopePriority === winner.file.scopePriority ? FACT.A3 : FACT.A1,
         },
       });
     }

@@ -14,6 +14,7 @@ import {
   type ManagedBundle,
 } from "../adapters/claude/discovery/managed-overlay.js";
 import { resolveEffectiveConfiguration } from "../adapters/claude/resolution/resolver.js";
+import { FACT } from "../adapters/claude/version/facts.js";
 import { getLastScan, getOrScan } from "./scan-store.js";
 
 export { ManagedBundleError } from "../adapters/claude/discovery/managed-overlay.js";
@@ -40,7 +41,7 @@ export interface ModelChangeDelta {
   declared: string;
   effective: string;
   source: SourceInfo;
-  matrixRef: "F8";
+  matrixRef: typeof FACT.F8;
 }
 
 export interface IgnoredFieldDelta {
@@ -165,7 +166,7 @@ function findModelChanges(
       declared: resolved.declared!,
       effective: resolved.effective,
       source: { ...agent.source, fieldPath: "frontmatter.model" },
-      matrixRef: "F8",
+      matrixRef: FACT.F8,
     },
   ];
 }
