@@ -13,8 +13,12 @@ import {
 } from "../../../../src/adapters/claude/version/facts.js";
 import {
   compareSemver,
+  isMatrixId,
   lookupFeature,
+  resolveEnforcement,
+  MATRIX,
   VERSION_MATRIX,
+  type FeatureCompatibility,
 } from "../../../../src/adapters/claude/version/matrix.js";
 
 const M1_MATRIX_IDS = [
@@ -328,5 +332,126 @@ describe("lookupFeature", () => {
 
   it("returns undefined for unknown feature ids", () => {
     expect(lookupFeature("agent.nonexistent", "2.1.5")).toBeUndefined();
+  });
+});
+
+describe("resolveEnforcement", () => {
+  const DETECTED = "2.1.233";
+
+  /** Temporarily rewrite one live matrix entry, restoring it afterwards. */
+  function withEntry(
+    id: string,
+    patch: Partial<FeatureCompatibility>,
+    body: () => void,
+  ): void {
+    const entry = VERSION_MATRIX.find((candidate) => candidate.id === id) as
+      | FeatureCompatibility
+      | undefined;
+    expect(entry, `matrix entry ${id}`).toBeDefined();
+    const original = { ...entry! };
+    Object.assign(entry!, patch);
+    try {
+      body();
+    } finally {
+      for (const key of Object.keys(entry!) as Array<keyof FeatureCompatibility>) {
+        delete (entry as unknown as Record<string, unknown>)[key];
+      }
+      Object.assign(entry!, original);
+    }
+  }
+
+  it("enforces a supported [doc] entry on a detected version", () => {
+    expect(
+      resolveEnforcement({ matrixId: MATRIX["agent.tools"], version: DETECTED }),
+    ).toEqual({ enforcement: "enforced" });
+  });
+
+  it("keeps the rule's own baseline rather than upgrading it", () => {
+    expect(
+      resolveEnforcement({
+        matrixId: MATRIX["instructions.hierarchy"],
+        version: DETECTED,
+        baseline: "advisory",
+      }).enforcement,
+    ).toBe("advisory");
+  });
+
+  it("resolves unknown for a rule whose matrix id is not registered (§8.2)", () => {
+    const unregistered = "agent.neverRegistered";
+    expect(isMatrixId(unregistered)).toBe(false);
+
+    const decision = resolveEnforcement({
+      matrixId: unregistered,
+      version: DETECTED,
+    });
+    expect(decision.enforcement).toBe("unknown");
+    expect(decision.reason?.type).toBe("version");
+    expect(decision.reason?.matrixRef).toBe(unregistered);
+  });
+
+  it("resolves unknown for every registered entry when the CLI version is unknown (§8.3)", () => {
+    for (const entry of VERSION_MATRIX) {
+      const decision = resolveEnforcement({
+        matrixId: entry.id,
+        version: "unknown",
+      });
+      expect(decision.enforcement, entry.id).toBe("unknown");
+      expect(decision.reason?.type, entry.id).toBe("version");
+    }
+  });
+
+  it("resolves unknown below minVersion and for a non-supported status", () => {
+    expect(
+      resolveEnforcement({ matrixId: MATRIX[FACT.P4], version: "2.1.200" })
+        .enforcement,
+    ).toBe("unknown");
+    expect(
+      resolveEnforcement({ matrixId: MATRIX[FACT.P4], version: "2.1.223" })
+        .enforcement,
+    ).toBe("enforced");
+    // agent.collisionSameDir is registered with status "unknown" (A4).
+    expect(
+      resolveEnforcement({
+        matrixId: MATRIX["agent.collisionSameDir"],
+        version: DETECTED,
+      }).enforcement,
+    ).toBe("unknown");
+  });
+
+  it("lets an [ext] fact back enforced only at confidence >= fixture (§8.2)", () => {
+    const id = MATRIX["trust.inlineMcp"];
+    expect(factConfidence(FACT.S1)).toBe("ext");
+
+    withEntry(id, { factRefs: [FACT.R1, FACT.S1], confidence: "fixture" }, () => {
+      expect(
+        resolveEnforcement({ matrixId: id, version: DETECTED }).enforcement,
+      ).toBe("enforced");
+    });
+
+    // Flip the same fixture-backed entry back to doc: the [ext] fact can no
+    // longer support an enforced verdict.
+    withEntry(id, { factRefs: [FACT.R1, FACT.S1], confidence: "doc" }, () => {
+      const decision = resolveEnforcement({ matrixId: id, version: DETECTED });
+      expect(decision.enforcement).toBe("unknown");
+      expect(decision.reason?.type).toBe("version");
+      expect(decision.reason?.message).toContain(FACT.S1);
+    });
+  });
+
+  it("treats a pendingFixture entry as evidence-free however it is annotated", () => {
+    const id = MATRIX["agent.descriptionBudget"];
+    withEntry(
+      id,
+      {
+        factRefs: [FACT.A10, FACT.S1],
+        confidence: "runtime-observed",
+        pendingFixture: "invalid-agents",
+      },
+      () => {
+        expect(
+          resolveEnforcement({ matrixId: id, version: DETECTED }).enforcement,
+        ).toBe("unknown");
+      },
+    );
   });
 });

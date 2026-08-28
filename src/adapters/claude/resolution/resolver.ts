@@ -11,6 +11,12 @@ import type {
 } from "../../../core/model/index.js";
 import { FACT, type FactId } from "../version/facts.js";
 import {
+  MATRIX,
+  gateCapability,
+  isMatrixId,
+  type MatrixId,
+} from "../version/matrix.js";
+import {
   AGENT_TOOL_NAMES,
   BACKGROUND_ALLOWED_BUILTIN_TOOLS,
   FILTER_1_REMOVED_TOOLS,
@@ -153,43 +159,80 @@ function agentForPermissionResolution(agent: Agent): Agent {
 function buildForkToolCapabilities(
   parentPool: readonly string[],
   forkReason: ResolutionReason,
+  version: string,
 ): ResolvedCapability[] {
-  return parentPool.map((toolName) => ({
-    capabilityId: toolName,
-    kind: capabilityKind(toolName),
-    status: "available" as const,
-    enforcement: "unknown" as const,
-    sources: [PARENT_SESSION_SOURCE],
-    reasons: [forkReason],
-  }));
+  return parentPool.map((toolName) =>
+    gateCapability(
+      {
+        capabilityId: toolName,
+        kind: capabilityKind(toolName),
+        status: "available" as const,
+        enforcement: "unknown" as const,
+        sources: [PARENT_SESSION_SOURCE],
+        reasons: [forkReason],
+      },
+      MATRIX["context.fork"],
+      version,
+    ),
+  );
+}
+
+/**
+ * Matrix entry behind a context-filter removal. Filter 2 removals are the only
+ * ones the core filter labels as background; depth-limit removals carry their
+ * own reason type (N2/N5).
+ */
+function removalMatrixId(removal: ContextFilterRemoval): MatrixId {
+  if (removal.reason.type === "depth-limit") {
+    return MATRIX["agent.depthLimit"];
+  }
+  return removal.reason.message.includes("filter 2")
+    ? MATRIX["context.filter2"]
+    : MATRIX["context.filter1"];
 }
 
 function applyFilterRemovals(
   capabilities: ResolvedCapability[],
   removals: readonly ContextFilterRemoval[],
+  version: string,
 ): ResolvedCapability[] {
   const byId = new Map(capabilities.map((capability) => [capability.capabilityId, capability]));
 
   for (const removal of removals) {
+    const matrixId = removalMatrixId(removal);
     const existing = byId.get(removal.tool);
     if (existing) {
-      byId.set(removal.tool, {
-        ...existing,
-        status: "denied",
-        enforcement: "enforced",
-        reasons: [...existing.reasons, removal.reason],
-      });
+      byId.set(
+        removal.tool,
+        gateCapability(
+          {
+            ...existing,
+            status: "denied",
+            enforcement: "enforced",
+            reasons: [...existing.reasons, removal.reason],
+          },
+          matrixId,
+          version,
+        ),
+      );
       continue;
     }
 
-    byId.set(removal.tool, {
-      capabilityId: removal.tool,
-      kind: capabilityKind(removal.tool),
-      status: "denied",
-      enforcement: "enforced",
-      sources: [PARENT_SESSION_SOURCE],
-      reasons: [removal.reason],
-    });
+    byId.set(
+      removal.tool,
+      gateCapability(
+        {
+          capabilityId: removal.tool,
+          kind: capabilityKind(removal.tool),
+          status: "denied",
+          enforcement: "enforced",
+          sources: [PARENT_SESSION_SOURCE],
+          reasons: [removal.reason],
+        },
+        matrixId,
+        version,
+      ),
+    );
   }
 
   return [...byId.values()];
@@ -199,6 +242,7 @@ function applyBuiltinKindDenials(
   capabilities: ResolvedCapability[],
   context: ExecutionContext,
   agentSource: SourceInfo,
+  version: string,
 ): ResolvedCapability[] {
   if (context.builtinKind !== "explore" && context.builtinKind !== "plan") {
     return capabilities;
@@ -216,96 +260,149 @@ function applyBuiltinKindDenials(
     );
 
     if (existing) {
-      byId.set(toolName, {
-        ...existing,
-        status: "denied",
-        enforcement: "enforced",
-        reasons: [...existing.reasons, reason],
-      });
+      byId.set(
+        toolName,
+        gateCapability(
+          {
+            ...existing,
+            status: "denied",
+            enforcement: "enforced",
+            reasons: [...existing.reasons, reason],
+          },
+          MATRIX["builtin.readOnly"],
+          version,
+        ),
+      );
       continue;
     }
 
-    byId.set(toolName, {
-      capabilityId: toolName,
-      kind: "tool",
-      status: "denied",
-      enforcement: "enforced",
-      sources: [agentSource],
-      reasons: [reason],
-    });
+    byId.set(
+      toolName,
+      gateCapability(
+        {
+          capabilityId: toolName,
+          kind: "tool",
+          status: "denied",
+          enforcement: "enforced",
+          sources: [agentSource],
+          reasons: [reason],
+        },
+        MATRIX["builtin.readOnly"],
+        version,
+      ),
+    );
   }
 
   return [...byId.values()];
 }
 
+/**
+ * Matrix entry behind the effective permission mode: the rule that actually
+ * fired (P1/P2/P4), the fork rule, or P5 when frontmatter/default applies.
+ */
+function permissionMatrixId(
+  context: ExecutionContext,
+  permissionResult: ReturnType<typeof resolvePermissionMode>,
+): MatrixId {
+  if (context.isFork) {
+    return MATRIX["context.fork"];
+  }
+  const ref = permissionResult.reasons[0]?.matrixRef;
+  return ref !== undefined && isMatrixId(ref) ? ref : MATRIX[FACT.P5];
+}
+
 function buildPermissionCapability(
   agent: Agent,
+  context: ExecutionContext,
   permissionResult: ReturnType<typeof resolvePermissionMode>,
+  version: string,
 ): ResolvedCapability {
-  return {
-    capabilityId: `permission:${permissionResult.effective}`,
-    kind: "permission",
-    status: "available",
-    enforcement: "enforced",
-    sources: [agent.source],
-    reasons: permissionResult.reasons,
-  };
+  return gateCapability(
+    {
+      capabilityId: `permission:${permissionResult.effective}`,
+      kind: "permission",
+      status: "available",
+      enforcement: "enforced",
+      sources: [agent.source],
+      reasons: permissionResult.reasons,
+    },
+    permissionMatrixId(context, permissionResult),
+    version,
+  );
 }
 
 function buildInstructionCapabilities(
   snapshot: ProjectSnapshot,
   context: ExecutionContext,
+  version: string,
 ): ResolvedCapability[] {
   if (context.builtinKind === "explore" || context.builtinKind === "plan") {
     return [];
   }
 
   const instructions = snapshot.instructions as DiscoveredInstruction[];
-  return instructions.map((instruction) => ({
-    capabilityId: instruction.id,
-    kind: "instruction" as const,
-    status: "available" as const,
-    enforcement: "advisory" as const,
-    sources: [
+  return instructions.map((instruction) =>
+    gateCapability(
       {
-        platform: "claude" as const,
-        scope: instruction.scope,
-        path: instruction.path,
+        capabilityId: instruction.id,
+        kind: "instruction" as const,
+        status: "available" as const,
+        enforcement: "advisory" as const,
+        sources: [
+          {
+            platform: "claude" as const,
+            scope: instruction.scope,
+            path: instruction.path,
+          },
+        ],
+        reasons: [
+          makeReason(
+            "declared",
+            "Instruction source loaded into session context (I1).",
+            {
+              platform: "claude",
+              scope: instruction.scope,
+              path: instruction.path,
+            },
+            FACT.I1,
+          ),
+        ],
       },
-    ],
-    reasons: [
-      makeReason(
-        "declared",
-        "Instruction source loaded into session context (I1).",
-        {
-          platform: "claude",
-          scope: instruction.scope,
-          path: instruction.path,
-        },
-        FACT.I1,
-      ),
-    ],
-  }));
+      MATRIX["instructions.hierarchy"],
+      version,
+    ),
+  );
 }
 
-function buildMcpServerCapabilities(snapshot: ProjectSnapshot): ResolvedCapability[] {
+function buildMcpServerCapabilities(
+  snapshot: ProjectSnapshot,
+  version: string,
+): ResolvedCapability[] {
   const servers = snapshot.mcpServers as DiscoveredMcpServer[];
 
   return servers.map((server) => {
     const trustResult = resolveMcpConfigFileTrust(server.source);
     const outcome = trustOutcome(trustResult.status);
-    return {
-      capabilityId: `mcp-server:${server.id}`,
-      kind: "mcp_server" as const,
-      status: outcome.status,
-      enforcement: outcome.enforcement,
-      sources: [server.source],
-      reasons: trustResult.reasons,
-    };
+    return gateCapability(
+      {
+        capabilityId: `mcp-server:${server.id}`,
+        kind: "mcp_server" as const,
+        status: outcome.status,
+        enforcement: outcome.enforcement,
+        sources: [server.source],
+        reasons: trustResult.reasons,
+      },
+      MATRIX["trust.inlineMcp"],
+      version,
+    );
   });
 }
 
-function buildTrustCapabilities(agent: Agent, snapshot: ProjectSnapshot): ResolvedCapability[] {
+function buildTrustCapabilities(
+  agent: Agent,
+  snapshot: ProjectSnapshot,
+  version: string,
+): ResolvedCapability[] {
   if (agent.isPluginAgent) {
     return [];
   }
@@ -322,19 +419,25 @@ function buildTrustCapabilities(agent: Agent, snapshot: ProjectSnapshot): Resolv
     });
 
     const outcome = trustOutcome(trustResult.status);
-    capabilities.push({
-      capabilityId: `inline-mcp:${index}`,
-      kind: "mcp_server",
-      status: outcome.status,
-      enforcement: outcome.enforcement,
-      sources: [
+    capabilities.push(
+      gateCapability(
         {
-          ...agent.source,
-          fieldPath: `frontmatter.mcpServers[${index}]`,
+          capabilityId: `inline-mcp:${index}`,
+          kind: "mcp_server",
+          status: outcome.status,
+          enforcement: outcome.enforcement,
+          sources: [
+            {
+              ...agent.source,
+              fieldPath: `frontmatter.mcpServers[${index}]`,
+            },
+          ],
+          reasons: trustResult.reasons,
         },
-      ],
-      reasons: trustResult.reasons,
-    });
+        MATRIX["trust.inlineMcp"],
+        version,
+      ),
+    );
   }
 
   if (agent.configuration.hooks !== undefined && agent.configuration.hooks !== null) {
@@ -345,14 +448,20 @@ function buildTrustCapabilities(agent: Agent, snapshot: ProjectSnapshot): Resolv
     });
 
     const outcome = trustOutcome(trustResult.status);
-    capabilities.push({
-      capabilityId: "agent-hooks",
-      kind: "instruction",
-      status: outcome.status,
-      enforcement: outcome.enforcement,
-      sources: [{ ...agent.source, fieldPath: "frontmatter.hooks" }],
-      reasons: trustResult.reasons,
-    });
+    capabilities.push(
+      gateCapability(
+        {
+          capabilityId: "agent-hooks",
+          kind: "instruction",
+          status: outcome.status,
+          enforcement: outcome.enforcement,
+          sources: [{ ...agent.source, fieldPath: "frontmatter.hooks" }],
+          reasons: trustResult.reasons,
+        },
+        MATRIX["trust.frontmatterHooks"],
+        version,
+      ),
+    );
   }
 
   return capabilities;
@@ -442,6 +551,9 @@ export async function resolveEffectiveConfiguration(
   );
   const pluginLimitations = resolvePluginFieldLimitations(agent);
   const parentPool = buildParentToolPool(agent);
+  // §8.3: with no `claude` CLI this is "unknown" and every version-sensitive
+  // verdict below degrades to `enforcement: "unknown"`.
+  const version = snapshot.version.version;
 
   let toolCapabilities: ResolvedCapability[];
 
@@ -452,17 +564,27 @@ export async function resolveEffectiveConfiguration(
       agent.source,
       FACT.T3,
     );
-    toolCapabilities = buildForkToolCapabilities(parentPool, forkReason);
+    toolCapabilities = buildForkToolCapabilities(parentPool, forkReason, version);
   } else {
     const toolsResult = resolveAgentTools({
       parentPool,
+      version,
       tools: agent.configuration.tools,
       disallowedTools: agent.configuration.disallowedTools,
       agentSource: agent.source,
     });
     const filterResult = applyContextFilters(toolsResult.pool, context);
-    toolCapabilities = applyFilterRemovals(toolsResult.capabilities, filterResult.removals);
-    toolCapabilities = applyBuiltinKindDenials(toolCapabilities, context, agent.source);
+    toolCapabilities = applyFilterRemovals(
+      toolsResult.capabilities,
+      filterResult.removals,
+      version,
+    );
+    toolCapabilities = applyBuiltinKindDenials(
+      toolCapabilities,
+      context,
+      agent.source,
+      version,
+    );
   }
 
   const skillCapabilities = await buildSkillPreloadCapabilities(
@@ -472,11 +594,11 @@ export async function resolveEffectiveConfiguration(
   );
 
   const capabilities = sortCapabilities([
-    buildPermissionCapability(agent, permissionResult),
+    buildPermissionCapability(agent, context, permissionResult, version),
     ...toolCapabilities,
-    ...buildMcpServerCapabilities(snapshot),
-    ...buildTrustCapabilities(agent, snapshot),
-    ...buildInstructionCapabilities(snapshot, context),
+    ...buildMcpServerCapabilities(snapshot, version),
+    ...buildTrustCapabilities(agent, snapshot, version),
+    ...buildInstructionCapabilities(snapshot, context, version),
     ...skillCapabilities,
   ]);
 

@@ -455,6 +455,95 @@ describe("resolveEffectiveConfiguration", () => {
     expect(result.warnings.some((warning) => warning.category === "ignored-field")).toBe(true);
   });
 
+  it("degrades every version-sensitive capability to unknown without a CLI version (§8.3)", async () => {
+    const snapshot = makeSnapshot({
+      version: {
+        platform: "claude",
+        version: "unknown",
+        raw: "",
+        detectedAt: "2026-01-01T00:00:00.000Z",
+      },
+    });
+
+    const result = await resolveEffectiveConfiguration(
+      snapshot,
+      "backend",
+      buildExecutionContext("background-subagent"),
+    );
+
+    assertCapabilityContract(result.capabilities);
+    expect(result.capabilities.length).toBeGreaterThan(0);
+    for (const capability of result.capabilities) {
+      expect(capability.enforcement).toBe("unknown");
+      expect(
+        capability.reasons.some((reason) => reason.type === "version"),
+        `${capability.capabilityId} needs a version-typed reason`,
+      ).toBe(true);
+    }
+    expect(result.unknownRate).toBe(1);
+  });
+
+  it("keeps enforcement enforced when the CLI version is detected", async () => {
+    const result = await resolveEffectiveConfiguration(
+      makeSnapshot(),
+      "backend",
+      buildExecutionContext("background-subagent"),
+    );
+
+    expect(toolCapability(result, "Read")?.enforcement).toBe("enforced");
+    expect(
+      result.capabilities.every(
+        (capability) => !capability.reasons.some((reason) => reason.type === "version"),
+      ),
+    ).toBe(true);
+  });
+
+  it("leaves a rule below its matrix minVersion unknown (P4 needs 2.1.223)", async () => {
+    const settings = await makeSettingsLayer({
+      permissions: { disableBypassPermissionsMode: true },
+    });
+    const agents = [
+      makeAgent({
+        configuration: {
+          tools: ["Read"],
+          permissionMode: "bypassPermissions",
+          unknownFields: {},
+        },
+      }),
+    ];
+    const context = buildExecutionContext("foreground-subagent");
+
+    const old = await resolveEffectiveConfiguration(
+      makeSnapshot({ agents, settings: [settings] }),
+      "backend",
+      context,
+    );
+    const current = await resolveEffectiveConfiguration(
+      makeSnapshot({
+        agents,
+        settings: [settings],
+        version: {
+          platform: "claude",
+          version: "2.1.223",
+          raw: "2.1.223",
+          detectedAt: "2026-01-01T00:00:00.000Z",
+        },
+      }),
+      "backend",
+      context,
+    );
+
+    const permissionOf = (
+      result: Awaited<ReturnType<typeof resolveEffectiveConfiguration>>,
+    ) => result.capabilities.find((capability) => capability.kind === "permission");
+
+    expect(permissionOf(old)?.enforcement).toBe("unknown");
+    expect(
+      permissionOf(old)?.reasons.some((reason) => reason.type === "version"),
+    ).toBe(true);
+    expect(permissionOf(current)?.enforcement).toBe("enforced");
+  });
+
   it("computes unknownRate from capabilities with unknown status or enforcement", async () => {
     const fork = await resolveEffectiveConfiguration(
       makeSnapshot(),

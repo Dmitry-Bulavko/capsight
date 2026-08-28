@@ -88,6 +88,7 @@ describe("resolveAgentTools", () => {
   it("inherits parent pool when no tools whitelist is declared", () => {
     const result = resolveAgentTools({
       parentPool: [...PARENT_POOL],
+      version: "2.1.233",
       disallowedTools: ["Bash"],
       agentSource: AGENT_SOURCE,
     });
@@ -102,6 +103,7 @@ describe("resolveAgentTools", () => {
   it("applies disallowedTools before tools whitelist (F2)", () => {
     const result = resolveAgentTools({
       parentPool: [...PARENT_POOL],
+      version: "2.1.233",
       tools: ["Read", "Write", "Grep", "Bash"],
       disallowedTools: ["Bash", "mcp__github__merge_pr"],
       agentSource: AGENT_SOURCE,
@@ -116,6 +118,7 @@ describe("resolveAgentTools", () => {
   it("supports MCP server and wildcard patterns (F3)", () => {
     const result = resolveAgentTools({
       parentPool: [...PARENT_POOL],
+      version: "2.1.233",
       tools: ["mcp__github", "Read"],
       agentSource: AGENT_SOURCE,
     });
@@ -129,6 +132,7 @@ describe("resolveAgentTools", () => {
   it("denies all MCP tools with mcp__* in disallowedTools (F3)", () => {
     const result = resolveAgentTools({
       parentPool: [...PARENT_POOL],
+      version: "2.1.233",
       disallowedTools: ["mcp__*"],
       agentSource: AGENT_SOURCE,
     });
@@ -141,6 +145,7 @@ describe("resolveAgentTools", () => {
   it("removes tools declared in both lists (F2)", () => {
     const result = resolveAgentTools({
       parentPool: [...PARENT_POOL],
+      version: "2.1.233",
       tools: ["Read", "Write"],
       disallowedTools: ["Read"],
       agentSource: AGENT_SOURCE,
@@ -155,6 +160,7 @@ describe("resolveAgentTools", () => {
   it("treats Agent and Task as aliases (F11)", () => {
     const denied = resolveAgentTools({
       parentPool: ["Agent", "Task", "Read"],
+      version: "2.1.233",
       disallowedTools: ["Agent"],
       agentSource: AGENT_SOURCE,
     });
@@ -163,6 +169,7 @@ describe("resolveAgentTools", () => {
 
     const allowed = resolveAgentTools({
       parentPool: ["Agent", "Task", "Read"],
+      version: "2.1.233",
       tools: ["Task"],
       agentSource: AGENT_SOURCE,
     });
@@ -172,6 +179,7 @@ describe("resolveAgentTools", () => {
   it("emits unknown status for unrecognized patterns without confident deny", () => {
     const result = resolveAgentTools({
       parentPool: ["Read", "Write"],
+      version: "2.1.233",
       disallowedTools: ["mcp__github(bad)"],
       tools: ["mcp__*"],
       agentSource: AGENT_SOURCE,
@@ -199,6 +207,7 @@ describe("resolveAgentTools", () => {
   it("never reports a tool available when the tools whitelist is unparseable", () => {
     const result = resolveAgentTools({
       parentPool: [...PARENT_POOL],
+      version: "2.1.233",
       tools: ["Bash(git diff:*)"],
       agentSource: AGENT_SOURCE,
     });
@@ -219,6 +228,7 @@ describe("resolveAgentTools", () => {
   it("keeps parsed patterns effective while an unparsed one downgrades only what it could match", () => {
     const result = resolveAgentTools({
       parentPool: ["Read", "Write", "Bash"],
+      version: "2.1.233",
       tools: ["Read", "Bash(git diff:*)"],
       agentSource: AGENT_SOURCE,
     });
@@ -237,6 +247,7 @@ describe("resolveAgentTools", () => {
   it("downgrades tools an unparseable disallowedTools pattern could remove", () => {
     const result = resolveAgentTools({
       parentPool: ["Read", "Write", "Bash"],
+      version: "2.1.233",
       disallowedTools: ["Bash(rm:*)"],
       agentSource: AGENT_SOURCE,
     });
@@ -250,6 +261,7 @@ describe("resolveAgentTools", () => {
   it("treats Agent(type1, type2) as the Agent tool inside a subagent definition (F5)", () => {
     const result = resolveAgentTools({
       parentPool: ["Agent", "Task", "Read"],
+      version: "2.1.233",
       tools: ["Agent(reviewer, planner)"],
       agentSource: AGENT_SOURCE,
     });
@@ -266,6 +278,7 @@ describe("resolveAgentTools", () => {
   it("denies every tool when tools is declared empty (F2, F4)", () => {
     const result = resolveAgentTools({
       parentPool: ["Read", "Write"],
+      version: "2.1.233",
       tools: [],
       agentSource: AGENT_SOURCE,
     });
@@ -277,6 +290,7 @@ describe("resolveAgentTools", () => {
   it("returns empty pool when tools whitelist resolves to nothing (F4)", () => {
     const result = resolveAgentTools({
       parentPool: ["Read", "Write"],
+      version: "2.1.233",
       tools: ["NonExistentBuiltin"],
       agentSource: AGENT_SOURCE,
     });
@@ -288,6 +302,7 @@ describe("resolveAgentTools", () => {
   it("requires every capability to have sources and reasons", () => {
     const result = resolveAgentTools({
       parentPool: [...PARENT_POOL],
+      version: "2.1.233",
       tools: ["Read"],
       disallowedTools: ["Bash"],
       agentSource: AGENT_SOURCE,
@@ -302,10 +317,32 @@ describe("resolveAgentTools", () => {
   it("preserves deterministic parent pool ordering", () => {
     const result = resolveAgentTools({
       parentPool: ["Write", "Read", "Grep"],
+      version: "2.1.233",
       tools: ["Read", "Grep", "Write"],
       agentSource: AGENT_SOURCE,
     });
 
     expect(result.pool).toEqual(["Write", "Read", "Grep"]);
+  });
+
+  it("degrades enforcement to unknown when no CLI version was detected (§8.3)", () => {
+    const result = resolveAgentTools({
+      parentPool: [...PARENT_POOL],
+      version: "unknown",
+      tools: ["Read"],
+      disallowedTools: ["Bash"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    for (const id of ["Read", "Bash", "Write"]) {
+      expect(capability(id, result)?.enforcement, id).toBe("unknown");
+      expect(
+        capability(id, result)?.reasons.some((reason) => reason.type === "version"),
+        id,
+      ).toBe(true);
+    }
+    // Status is still resolved from the declaration; only enforcement degrades.
+    expect(capability("Read", result)?.status).toBe("available");
+    expect(capability("Bash", result)?.status).toBe("denied");
   });
 });

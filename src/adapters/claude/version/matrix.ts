@@ -3,15 +3,16 @@
  * @see docs/SPEC.md §3, §8
  */
 
-import { FACT, type FactId } from "./facts.js";
+import type { ResolutionReason, ResolvedCapability } from "../../../core/model/index.js";
+import { FACT, factConfidence, type FactId } from "./facts.js";
 
 export interface FeatureCompatibility {
   id: string;
   feature: string;
   factRefs: readonly FactId[];
   minVersion?: string;
-  changedIn?: string[];
-  observedIn?: string[];
+  changedIn?: readonly string[];
+  observedIn?: readonly string[];
   status: "supported" | "unsupported" | "changed" | "unknown";
   confidence: "doc" | "fixture" | "runtime-observed";
   /**
@@ -29,7 +30,7 @@ export interface FeatureCompatibility {
   notes?: string;
 }
 
-export const VERSION_MATRIX: FeatureCompatibility[] = [
+const MATRIX_ENTRIES = [
   {
     id: "agent.disallowedTools",
     feature: "Agent frontmatter disallowedTools filtering",
@@ -248,7 +249,25 @@ export const VERSION_MATRIX: FeatureCompatibility[] = [
     pendingFixture: "tools-filters",
     notes: "tools-filters has no explore/plan context yet; the built-in kinds must be added there.",
   },
-];
+] as const satisfies readonly FeatureCompatibility[];
+
+export const VERSION_MATRIX: readonly FeatureCompatibility[] = MATRIX_ENTRIES;
+
+/** Id of a registered matrix entry. Unregistered ids fail typecheck. */
+export type MatrixId = (typeof MATRIX_ENTRIES)[number]["id"];
+
+/**
+ * Matrix id constants, e.g. `MATRIX["agent.tools"]`. Resolver call sites go
+ * through this object so every reference is checked against the matrix; an
+ * id that is not registered cannot be spelled at all.
+ */
+export const MATRIX = Object.freeze(
+  Object.fromEntries(MATRIX_ENTRIES.map((entry) => [entry.id, entry.id])),
+) as { readonly [K in MatrixId]: K };
+
+export function isMatrixId(value: string): value is MatrixId {
+  return VERSION_MATRIX.some((entry) => entry.id === value);
+}
 
 function parseSemver(version: string): [number, number, number] | null {
   const match = version.match(/^(\d+)\.(\d+)\.(\d+)/);
@@ -302,4 +321,125 @@ export function lookupFeature(
   }
 
   return entry;
+}
+
+export type Enforcement = ResolvedCapability["enforcement"];
+
+export interface EnforcementDecision {
+  enforcement: Enforcement;
+  /** Present only when the matrix downgraded the verdict to `unknown`. */
+  reason?: ResolutionReason;
+}
+
+export interface ResolveEnforcementInput {
+  /** Matrix entry backing the rule that produced the capability. */
+  matrixId: string;
+  /** Detected Claude Code version, or `"unknown"` in degraded mode (§8.3). */
+  version: string;
+  /** Enforcement the rule would claim if the matrix allows it. */
+  baseline?: Enforcement;
+}
+
+const CONFIDENCE_RANK: Record<FeatureCompatibility["confidence"], number> = {
+  doc: 0,
+  fixture: 1,
+  "runtime-observed": 2,
+};
+
+/**
+ * Evidence actually backing an entry. A `pendingFixture` entry has no fixture
+ * yet, so it can never rise above `doc` however it is annotated (§0.1.3).
+ */
+function evidenceConfidence(
+  entry: FeatureCompatibility,
+): FeatureCompatibility["confidence"] {
+  return entry.fixture ? entry.confidence : "doc";
+}
+
+/**
+ * The single place where a resolver rule turns into an `enforcement` verdict.
+ * Version comparison never happens outside this module (§13 invariant 11).
+ *
+ * `unknown` is returned when: the rule has no matrix entry (§8.2), the CLI
+ * version was not detected (§8.3), the entry is not `supported` on that
+ * version, or the entry rests on a non-`[doc]` fact without fixture-level
+ * evidence (§8.2).
+ *
+ * @see docs/SPEC.md §8.2, §8.3, §13 invariant 11
+ */
+export function resolveEnforcement(
+  input: ResolveEnforcementInput,
+): EnforcementDecision {
+  const { matrixId, version } = input;
+  const baseline = input.baseline ?? "enforced";
+
+  const unknown = (message: string): EnforcementDecision => ({
+    enforcement: "unknown",
+    reason: { type: "version", message, matrixRef: matrixId },
+  });
+
+  const entry = VERSION_MATRIX.find((feature) => feature.id === matrixId);
+  if (!entry) {
+    return unknown(
+      `No version matrix entry for "${matrixId}"; the feature resolves as unknown (SPEC §8.2).`,
+    );
+  }
+
+  if (version === "unknown") {
+    return unknown(
+      `Claude CLI version was not detected; version-sensitive feature "${matrixId}" resolves as unknown (SPEC §8.3).`,
+    );
+  }
+
+  const resolved = lookupFeature(matrixId, version)!;
+  if (resolved.status !== "supported") {
+    return unknown(
+      `Version matrix reports "${matrixId}" as ${resolved.status} on Claude Code ${version}` +
+        `${entry.minVersion ? ` (requires >= ${entry.minVersion})` : ""}; enforcement is unknown (SPEC §8.2).`,
+    );
+  }
+
+  const weakFacts = entry.factRefs.filter(
+    (ref) => factConfidence(ref) !== "doc",
+  );
+  if (
+    weakFacts.length > 0 &&
+    CONFIDENCE_RANK[evidenceConfidence(entry)] < CONFIDENCE_RANK.fixture
+  ) {
+    return unknown(
+      `Matrix entry "${matrixId}" rests on non-[doc] fact(s) ${weakFacts.join(", ")} ` +
+        `but has no fixture-level evidence; enforcement is unknown (SPEC §8.2).`,
+    );
+  }
+
+  return { enforcement: baseline };
+}
+
+/**
+ * Apply the matrix gate to a capability produced by a resolver rule. The rule's
+ * own enforcement is the baseline; the matrix can only downgrade it, and when
+ * it does it appends a `version`-typed reason explaining why.
+ */
+export function gateCapability<T extends ResolvedCapability>(
+  capability: T,
+  matrixId: string,
+  version: string,
+): T {
+  const decision = resolveEnforcement({
+    matrixId,
+    version,
+    baseline: capability.enforcement,
+  });
+
+  if (decision.enforcement === capability.enforcement && !decision.reason) {
+    return capability;
+  }
+
+  return {
+    ...capability,
+    enforcement: decision.enforcement,
+    reasons: decision.reason
+      ? [...capability.reasons, decision.reason]
+      : capability.reasons,
+  };
 }

@@ -4,10 +4,16 @@ import type {
   SourceInfo,
 } from "../../../core/model/index.js";
 import { AGENT_TOOL_NAMES, isMcpTool } from "../../../core/resolver/builtin-tools.js";
+import { MATRIX, gateCapability } from "../version/matrix.js";
 
 export interface ResolveAgentToolsInput {
   /** Parent session tool pool before agent frontmatter filters. */
   parentPool: readonly string[];
+  /**
+   * Detected Claude Code version, or `"unknown"` in degraded mode. Every
+   * verdict below is gated on the matrix for this version (§8.2, §8.3).
+   */
+  version: string;
   tools?: readonly string[];
   disallowedTools?: readonly string[];
   agentSource: SourceInfo;
@@ -230,10 +236,11 @@ function indexPatterns(
 function unknownPatternCapabilities(
   patterns: readonly IndexedPattern[],
   agentSource: SourceInfo,
+  version: string,
 ): ResolvedCapability[] {
   return patterns
     .filter((entry) => entry.parsed.kind === "unknown")
-    .map((entry) => ({
+    .map((entry) => gateCapability({
       capabilityId: entry.raw,
       kind: "tool" as const,
       status: "unknown" as const,
@@ -246,7 +253,7 @@ function unknownPatternCapabilities(
           patternSource(agentSource, entry.field, entry.index),
         ),
       ],
-    }));
+    }, entry.field === "tools" ? MATRIX["agent.tools"] : MATRIX["agent.disallowedTools"], version));
 }
 
 /**
@@ -257,7 +264,7 @@ function unknownPatternCapabilities(
 export function resolveAgentTools(
   input: ResolveAgentToolsInput,
 ): ResolveAgentToolsResult {
-  const { parentPool, tools, disallowedTools, agentSource } = input;
+  const { parentPool, version, tools, disallowedTools, agentSource } = input;
 
   const disallowedPatterns = indexPatterns(disallowedTools, "disallowedTools", true);
   const whitelistPatterns = indexPatterns(tools, "tools", false);
@@ -305,20 +312,26 @@ export function resolveAgentTools(
       ];
       const uniqueSources = dedupeSources(sources);
 
-      capabilities.push({
-        capabilityId: toolName,
-        kind: capabilityKind(toolName),
-        status: "denied",
-        enforcement: "enforced",
-        sources: uniqueSources,
-        reasons: [
-          makeReason(
-            "denied",
-            "Declared in both tools and disallowedTools; removed (F2).",
-            uniqueSources[0],
-          ),
-        ],
-      });
+      capabilities.push(
+        gateCapability(
+          {
+            capabilityId: toolName,
+            kind: capabilityKind(toolName),
+            status: "denied",
+            enforcement: "enforced",
+            sources: uniqueSources,
+            reasons: [
+              makeReason(
+                "denied",
+                "Declared in both tools and disallowedTools; removed (F2).",
+                uniqueSources[0],
+              ),
+            ],
+          },
+          MATRIX["agent.disallowedTools"],
+          version,
+        ),
+      );
       continue;
     }
 
@@ -328,22 +341,28 @@ export function resolveAgentTools(
         deniedMatches[0]!.field,
         deniedMatches[0]!.index,
       );
-      capabilities.push({
-        capabilityId: toolName,
-        kind: capabilityKind(toolName),
-        status: "denied",
-        enforcement: "enforced",
-        sources: deniedMatches.map((entry) =>
-          patternSource(agentSource, entry.field, entry.index),
+      capabilities.push(
+        gateCapability(
+          {
+            capabilityId: toolName,
+            kind: capabilityKind(toolName),
+            status: "denied",
+            enforcement: "enforced",
+            sources: deniedMatches.map((entry) =>
+              patternSource(agentSource, entry.field, entry.index),
+            ),
+            reasons: [
+              makeReason(
+                "denied",
+                `Removed by disallowedTools pattern "${deniedMatches[0]!.raw}" (F2, F3).`,
+                source,
+              ),
+            ],
+          },
+          MATRIX["agent.disallowedTools"],
+          version,
         ),
-        reasons: [
-          makeReason(
-            "denied",
-            `Removed by disallowedTools pattern "${deniedMatches[0]!.raw}" (F2, F3).`,
-            source,
-          ),
-        ],
-      });
+      );
       continue;
     }
 
@@ -352,20 +371,26 @@ export function resolveAgentTools(
       allowedMatches.length === 0 &&
       unknownAllowMatches.length === 0
     ) {
-      capabilities.push({
-        capabilityId: toolName,
-        kind: capabilityKind(toolName),
-        status: "denied",
-        enforcement: "enforced",
-        sources: [agentSource],
-        reasons: [
-          makeReason(
-            "denied",
-            "Not included in tools whitelist (F2).",
-            agentSource,
-          ),
-        ],
-      });
+      capabilities.push(
+        gateCapability(
+          {
+            capabilityId: toolName,
+            kind: capabilityKind(toolName),
+            status: "denied",
+            enforcement: "enforced",
+            sources: [agentSource],
+            reasons: [
+              makeReason(
+                "denied",
+                "Not included in tools whitelist (F2).",
+                agentSource,
+              ),
+            ],
+          },
+          MATRIX["agent.tools"],
+          version,
+        ),
+      );
       continue;
     }
 
@@ -376,18 +401,24 @@ export function resolveAgentTools(
       ...unknownDenyMatches,
     ];
     if (blockingUnknown.length > 0) {
-      capabilities.push({
-        capabilityId: toolName,
-        kind: capabilityKind(toolName),
-        status: "unknown",
-        enforcement: "unknown",
-        sources: blockingUnknown.map((entry) =>
-          patternSource(agentSource, entry.field, entry.index),
+      capabilities.push(
+        gateCapability(
+          {
+            capabilityId: toolName,
+            kind: capabilityKind(toolName),
+            status: "unknown",
+            enforcement: "unknown",
+            sources: blockingUnknown.map((entry) =>
+              patternSource(agentSource, entry.field, entry.index),
+            ),
+            reasons: blockingUnknown.map((entry) =>
+              unknownPatternReason(entry, agentSource),
+            ),
+          },
+          MATRIX["agent.tools"],
+          version,
         ),
-        reasons: blockingUnknown.map((entry) =>
-          unknownPatternReason(entry, agentSource),
-        ),
-      });
+      );
       continue;
     }
 
@@ -415,25 +446,31 @@ export function resolveAgentTools(
       );
     }
 
-    capabilities.push({
-      capabilityId: toolName,
-      kind: capabilityKind(toolName),
-      status: "available",
-      enforcement: "enforced",
-      sources:
-        allowedMatches.length > 0
-          ? allowedMatches.map((entry) =>
-              patternSource(agentSource, entry.field, entry.index),
-            )
-          : [agentSource],
-      reasons,
-    });
+    capabilities.push(
+      gateCapability(
+        {
+          capabilityId: toolName,
+          kind: capabilityKind(toolName),
+          status: "available",
+          enforcement: "enforced",
+          sources:
+            allowedMatches.length > 0
+              ? allowedMatches.map((entry) =>
+                  patternSource(agentSource, entry.field, entry.index),
+                )
+              : [agentSource],
+          reasons,
+        },
+        MATRIX["agent.tools"],
+        version,
+      ),
+    );
     pool.push(toolName);
   }
 
   capabilities.push(
-    ...unknownPatternCapabilities(disallowedPatterns, agentSource),
-    ...unknownPatternCapabilities(whitelistPatterns, agentSource),
+    ...unknownPatternCapabilities(disallowedPatterns, agentSource, version),
+    ...unknownPatternCapabilities(whitelistPatterns, agentSource, version),
   );
 
   return { capabilities, pool };
