@@ -45,3 +45,11 @@ Four directories are `.gitkeep`-only. `managed-simulation/` has `project/`, `man
 ## Notes
 
 `version-drift/` is the one fixture that must stay `unknown` by design — it exists to prove the resolver does not guess (§8.4 item 4).
+
+## Added by the orchestrator after H1-06 and H1-08
+
+Beyond writing fixture content, each fixture task must close the loop on the matrix:
+
+- [ ] Flip every matrix entry this task satisfies from `pendingFixture` to `fixture`
+- [ ] Promote that entry's `confidence` from `"doc"` to `"fixture"` **only** after reading the fixture and confirming it actually exercises the rule — a directory existing is not evidence
+- [ ] Shrink `EXPECTED_PENDING_FIXTURES` in `tests/correctness-gate.test.ts` accordingly; the corpus test fails until it matches reality

@@ -41,3 +41,21 @@ The maturity metric is computed over the fixed §3 fact corpus, not over the sub
 ## Notes
 
 Expect the reported maturity to drop sharply. That is the point of the task — the metric is supposed to be monotone and honest (§11.4).
+
+## Orchestrator verification (post-implementation)
+
+Report printed directly from the built helper:
+
+```
+SPEC §3 facts       : 92
+runtime-observed    : 0
+fixture-verified    : 0
+documentation-only  : 26
+unverified          : 66
+```
+
+Buckets sum to 92 and the denominator is the registry, not the implementation's own scope. The previous report read `fixture-verified: 11, documentation-only: 1, unverified: 0` — roughly 92% maturity against a real §3 coverage now visible as 26/92 documented and 66 untouched. Accepted.
+
+**`fixture-verified: 0` is correct, not a miscount.** Criterion 2 requires the matrix entry's own `confidence` to be `"fixture"` or higher, and all 24 entries are still `"doc"` — H1-06 left them there deliberately, because a fixture directory existing is not evidence that it exercises the fact. Fourteen facts (F2, F3, F4, F11, T1, T2, T3, P1, P2, P4, P5, K1, R1, R4) have a named on-disk fixture and sit in `documentation-only` until someone confirms the fixture actually pins the rule and promotes the entry.
+
+**Consequence assigned:** promoting `confidence: "doc"` → `"fixture"` is now part of H1-09, H1-10 and H1-11, for the entries whose fixtures those tasks write or verify. Nobody may promote an entry without having read the fixture that justifies it.

@@ -1,5 +1,7 @@
+import fs from "node:fs";
 import fsPromises from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type {
   EffectiveConfiguration,
@@ -7,8 +9,11 @@ import type {
 } from "../src/core/model/index.js";
 import { buildExecutionContext } from "../src/core/resolver/context.js";
 import type { ContextPreset } from "../src/core/model/index.js";
+import { FACTS } from "../src/adapters/claude/version/facts.js";
+import { VERSION_MATRIX } from "../src/adapters/claude/version/matrix.js";
 import {
   buildCoverageReport,
+  classifyFactCoverage,
   discoverFixtureNames,
   findConfidentCapabilityMismatches,
   findUndeclaredFixtureDirectories,
@@ -398,20 +403,126 @@ describe("correctness gate", () => {
     });
   }
 
-  it("reports fixture-verified vs documentation-only coverage counts", () => {
+  it("counts coverage over the fixed §3 fact corpus, not the registered subset", () => {
     const fixtures = discoverFixtureNames();
     expect(fixtures.length).toBeGreaterThan(0);
 
     const report = buildCoverageReport(fixtures);
-    expect(report.runtimeObserved).toBe(0);
-    expect(report.fixtureVerified).toBeGreaterThan(0);
+
+    // §11.4: the denominator is the whole §3 registry and cannot shrink.
+    expect(report.total).toBe(FACTS.length);
     expect(
-      report.fixtureVerified + report.documentationOnly + report.unverified,
-    ).toBeGreaterThan(0);
+      report.runtimeObserved +
+        report.fixtureVerified +
+        report.documentationOnly +
+        report.unverified,
+    ).toBe(FACTS.length);
+
+    // No runtime probing exists while the S0 fallback holds (§9.5).
+    expect(report.runtimeObserved).toBe(0);
+
+    // A fact no matrix entry references is unverified — recomputed here from
+    // the registries so the report cannot quietly reclassify it.
+    const referenced = new Set<string>(
+      VERSION_MATRIX.flatMap((entry) => [...entry.factRefs]),
+    );
+    const unreferenced = FACTS.filter((fact) => !referenced.has(fact.id));
+    expect(unreferenced.length).toBeGreaterThan(0);
+    expect(report.unverified).toBe(unreferenced.length);
+    for (const fact of unreferenced) {
+      expect(classifyFactCoverage(fact.id, new Set(fixtures))).toBe("unverified");
+    }
+
+    // Every fact a matrix entry references is at least documentation-only.
+    expect(report.fixtureVerified + report.documentationOnly).toBe(
+      FACTS.length - unreferenced.length,
+    );
 
     const formatted = formatCoverageReport(report);
-    expect(formatted).toContain("fixture-verified");
-    expect(formatted).toContain("documentation-only");
+    expect(formatted).toContain("SPEC §3 facts       : " + FACTS.length);
+    expect(formatted).toContain("fixture-verified    : " + report.fixtureVerified);
+    expect(formatted).toContain("unverified          : " + report.unverified);
+  });
+
+  it("counts fixture-verified only when a matrix entry raised its own confidence", () => {
+    const fixtures = ["tools-filters"];
+    const facts = [{ id: FACTS[0]!.id }] as const;
+
+    const docEntryWithFixture = [
+      {
+        id: "probe",
+        feature: "probe",
+        factRefs: [FACTS[0]!.id],
+        status: "supported",
+        confidence: "doc",
+        fixture: "tools-filters",
+      },
+    ] as const;
+
+    // Fixture directory exists, but the entry never claimed fixture evidence.
+    expect(
+      buildCoverageReport(fixtures, { facts, matrix: docEntryWithFixture }),
+    ).toMatchObject({ fixtureVerified: 0, documentationOnly: 1 });
+
+    // Entry claims fixture evidence, but the named fixture is not available.
+    expect(
+      buildCoverageReport([], {
+        facts,
+        matrix: [{ ...docEntryWithFixture[0], confidence: "fixture" }],
+      }),
+    ).toMatchObject({ fixtureVerified: 0, documentationOnly: 1 });
+
+    // Both conditions hold.
+    expect(
+      buildCoverageReport(fixtures, {
+        facts,
+        matrix: [{ ...docEntryWithFixture[0], confidence: "fixture" }],
+      }),
+    ).toMatchObject({ fixtureVerified: 1, documentationOnly: 0 });
+
+    // `runtime-observed` stays structurally reachable, and is 0 in the real
+    // matrix only because no entry carries runtime evidence yet (§9.5).
+    expect(
+      buildCoverageReport(fixtures, {
+        facts,
+        matrix: [{ ...docEntryWithFixture[0], confidence: "runtime-observed" }],
+      }),
+    ).toMatchObject({ runtimeObserved: 1, fixtureVerified: 0 });
+  });
+
+  it("keeps the coverage report out of every route and UI component", () => {
+    // §13 invariant 13: the suite metric is a property of the test suite, not
+    // of the scanned project, so no shipped source may import or render it.
+    const srcRoot = path.join(
+      path.dirname(fileURLToPath(import.meta.url)),
+      "..",
+      "src",
+    );
+
+    const offenders: string[] = [];
+    const walk = (dir: string): void => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          walk(full);
+          continue;
+        }
+        if (!/\.(ts|tsx)$/.test(entry.name)) {
+          continue;
+        }
+        const source = fs.readFileSync(full, "utf8");
+        if (
+          /coverage-report|buildCoverageReport|formatCoverageReport|fixture-verified|documentation-only/.test(
+            source,
+          )
+        ) {
+          offenders.push(path.relative(srcRoot, full));
+        }
+      }
+    };
+    walk(srcRoot);
+
+    expect(offenders, offenders.join(", ")).toEqual([]);
   });
 });
 

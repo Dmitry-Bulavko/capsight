@@ -45,3 +45,11 @@ All four are `.gitkeep`-only. `depth-limit/` is additionally named as the fixtur
 ## Notes
 
 The golden files here are the contract for a later settings-permissions implementation. Recording `unknown` now is correct and expected (§11.3).
+
+## Added by the orchestrator after H1-06 and H1-08
+
+Beyond writing fixture content, each fixture task must close the loop on the matrix:
+
+- [ ] Flip every matrix entry this task satisfies from `pendingFixture` to `fixture`
+- [ ] Promote that entry's `confidence` from `"doc"` to `"fixture"` **only** after reading the fixture and confirming it actually exercises the rule — a directory existing is not evidence
+- [ ] Shrink `EXPECTED_PENDING_FIXTURES` in `tests/correctness-gate.test.ts` accordingly; the corpus test fails until it matches reality

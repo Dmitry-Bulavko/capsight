@@ -1,8 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { M1_DOC_FACTS, type FactId } from "../../src/adapters/claude/version/facts.js";
-import { VERSION_MATRIX } from "../../src/adapters/claude/version/matrix.js";
+import { FACTS, type FactId } from "../../src/adapters/claude/version/facts.js";
+import {
+  VERSION_MATRIX,
+  type FeatureCompatibility,
+} from "../../src/adapters/claude/version/matrix.js";
 import type { ResolvedCapability } from "../../src/core/model/index.js";
 import type {
   NormalizedGoldenOutput,
@@ -12,9 +15,15 @@ import type {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const FIXTURES_ROOT = path.join(__dirname, "claude");
 
-export type CoverageTier = "fixture-verified" | "documentation-only" | "unverified";
+export type CoverageTier =
+  | "runtime-observed"
+  | "fixture-verified"
+  | "documentation-only"
+  | "unverified";
 
 export interface CoverageReport {
+  /** Fixed denominator: every §3 fact registered in `facts.ts` (SPEC §11.4). */
+  total: number;
   runtimeObserved: number;
   fixtureVerified: number;
   documentationOnly: number;
@@ -88,6 +97,7 @@ const COVERAGE_RANK: Record<CoverageTier, number> = {
   unverified: 0,
   "documentation-only": 1,
   "fixture-verified": 2,
+  "runtime-observed": 3,
 };
 
 export function resolutionKey(resolution: NormalizedResolution): string {
@@ -268,42 +278,91 @@ export function discoverFixtureNames(
     .sort();
 }
 
-function coverageTierForFact(
+/**
+ * Evidence one matrix entry contributes for a fact it references.
+ *
+ * A named fixture that exists on disk is necessary but not sufficient: the
+ * entry's own `confidence` must also have been raised to `"fixture"` or
+ * higher. Directory existence alone proves nothing about whether the fixture
+ * exercises the fact (SPEC §11.4, §0.1.3).
+ */
+function entryCoverageTier(
+  entry: FeatureCompatibility,
+  availableFixtures: ReadonlySet<string>,
+): CoverageTier {
+  const hasFixture =
+    entry.fixture !== undefined && availableFixtures.has(entry.fixture);
+  if (!hasFixture) {
+    return "documentation-only";
+  }
+  if (entry.confidence === "runtime-observed") {
+    return "runtime-observed";
+  }
+  if (entry.confidence === "fixture") {
+    return "fixture-verified";
+  }
+  return "documentation-only";
+}
+
+/**
+ * Best evidence tier any matrix entry provides for a §3 fact. A fact no matrix
+ * entry references is `unverified` — the implementation cannot make it vanish
+ * from the denominator by not registering it.
+ */
+export function classifyFactCoverage(
   factId: FactId,
   availableFixtures: ReadonlySet<string>,
+  matrix: readonly FeatureCompatibility[] = VERSION_MATRIX,
 ): CoverageTier {
   let tier: CoverageTier = "unverified";
 
-  for (const entry of VERSION_MATRIX) {
+  for (const entry of matrix) {
     if (!entry.factRefs.includes(factId)) {
       continue;
     }
-
-    if (entry.fixture && availableFixtures.has(entry.fixture)) {
-      tier = "fixture-verified";
-      break;
-    }
-
-    if (entry.confidence === "doc" && COVERAGE_RANK["documentation-only"] > COVERAGE_RANK[tier]) {
-      tier = "documentation-only";
+    const candidate = entryCoverageTier(entry, availableFixtures);
+    if (COVERAGE_RANK[candidate] > COVERAGE_RANK[tier]) {
+      tier = candidate;
     }
   }
 
   return tier;
 }
 
-/** Fixed-denominator coverage counts for §3 facts referenced by M1 resolver rules. */
+export interface CoverageReportOptions {
+  /** Denominator override, for tests only. Defaults to the full §3 registry. */
+  facts?: readonly { readonly id: FactId }[];
+  matrix?: readonly FeatureCompatibility[];
+}
+
+/**
+ * Coverage counts over the fixed §3 fact corpus (SPEC §11.4). The denominator
+ * is the whole registry in `facts.ts`, never the subset the implementation
+ * happens to reference, so the metric can only rise by adding evidence.
+ *
+ * CI diagnostic only: this number is a property of the test suite, not of the
+ * scanned project, and must never reach a route or a UI component
+ * (SPEC §13 invariant 13). The user-facing number is
+ * `EffectiveConfiguration.unknownRate`.
+ */
 export function buildCoverageReport(
   availableFixtures: readonly string[] = discoverFixtureNames(),
+  options: CoverageReportOptions = {},
 ): CoverageReport {
   const fixtureSet = new Set(availableFixtures);
+  const facts = options.facts ?? FACTS;
+  const matrix = options.matrix ?? VERSION_MATRIX;
+
+  let runtimeObserved = 0;
   let fixtureVerified = 0;
   let documentationOnly = 0;
   let unverified = 0;
 
-  for (const factId of M1_DOC_FACTS) {
-    const tier = coverageTierForFact(factId, fixtureSet);
-    switch (tier) {
+  for (const fact of facts) {
+    switch (classifyFactCoverage(fact.id, fixtureSet, matrix)) {
+      case "runtime-observed":
+        runtimeObserved += 1;
+        break;
       case "fixture-verified":
         fixtureVerified += 1;
         break;
@@ -317,7 +376,8 @@ export function buildCoverageReport(
   }
 
   return {
-    runtimeObserved: 0,
+    total: facts.length,
+    runtimeObserved,
     fixtureVerified,
     documentationOnly,
     unverified,
@@ -326,6 +386,7 @@ export function buildCoverageReport(
 
 export function formatCoverageReport(report: CoverageReport): string {
   return [
+    "SPEC §3 facts       : " + report.total,
     "runtime-observed    : " + report.runtimeObserved,
     "fixture-verified    : " + report.fixtureVerified,
     "documentation-only  : " + report.documentationOnly,
