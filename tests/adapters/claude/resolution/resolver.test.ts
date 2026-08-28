@@ -511,9 +511,18 @@ describe("resolveEffectiveConfiguration", () => {
     );
 
     expect(toolCapability(result, "Read")?.enforcement).toBe("enforced");
+    const versionGated = result.capabilities.filter((capability) =>
+      capability.reasons.some((reason) => reason.type === "version"),
+    );
+    // The snapshot pins 2.1.0, below the 2.1.63 Task -> Agent rename, so a
+    // verdict reached only through the alias is legitimately version-gated
+    // (F11, H1-19). Nothing else is.
     expect(
-      result.capabilities.every(
-        (capability) => !capability.reasons.some((reason) => reason.type === "version"),
+      versionGated.every((capability) =>
+        capability.reasons.some(
+          (reason) =>
+            reason.type === "version" && reason.matrixRef === "agent.toolAliases",
+        ),
       ),
     ).toBe(true);
   });
@@ -578,7 +587,16 @@ describe("resolveEffectiveConfiguration", () => {
 
     expect(fork.unknownRate).toBeGreaterThan(foreground.unknownRate);
     expect(fork.unknownRate).toBeGreaterThan(0);
-    expect(foreground.unknownRate).toBe(0);
+    // The snapshot pins 2.1.0: the only unknown left in the foreground run is
+    // the `Task` verdict, which the whitelisted `Agent` reaches only through
+    // the alias the 2.1.63 rename introduced (F11, H1-19).
+    const foregroundUnknown = foreground.capabilities.filter(
+      (capability) =>
+        capability.status === "unknown" || capability.enforcement === "unknown",
+    );
+    expect(foregroundUnknown.map((capability) => capability.capabilityId)).toEqual([
+      "Task",
+    ]);
   });
 });
 

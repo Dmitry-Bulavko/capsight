@@ -30,7 +30,7 @@ type ParsedPattern =
   | { kind: "mcp-all" }
   | { kind: "mcp-server"; server: string }
   | { kind: "mcp-server-wildcard"; server: string }
-  | { kind: "agent-types"; types: string[] }
+  | { kind: "agent-types"; head: string; types: string[] }
   | { kind: "unknown"; raw: string };
 
 interface IndexedPattern {
@@ -65,17 +65,80 @@ function makeReason(
   return source ? { type, message, source } : { type, message };
 }
 
-function expandAliases(toolName: string): string[] {
-  if (AGENT_ALIAS_SET.has(toolName)) {
-    return [...AGENT_TOOL_NAMES];
-  }
-  return [toolName];
+/**
+ * Outcome of matching one pattern against one tool name.
+ * @see docs/SPEC.md F11
+ */
+interface NameMatch {
+  /**
+   * `true` when the match only held because `Agent` and `Task` were treated as
+   * the same tool. Tracked per match so the F11 version gate lands on the
+   * verdicts that relied on the rename alias and on no others.
+   */
+  aliasDependent: boolean;
 }
 
-function exactPatternMatches(pattern: string, toolName: string): boolean {
-  return expandAliases(pattern).some(
-    (alias) => expandAliases(toolName).includes(alias),
-  );
+const NAME_MATCH_DIRECT: NameMatch = { aliasDependent: false };
+const NAME_MATCH_ALIAS: NameMatch = { aliasDependent: true };
+
+/** @returns `null` when the pattern does not name this tool at all. */
+function matchToolName(pattern: string, toolName: string): NameMatch | null {
+  if (pattern === toolName) {
+    return NAME_MATCH_DIRECT;
+  }
+  return AGENT_ALIAS_SET.has(pattern) && AGENT_ALIAS_SET.has(toolName)
+    ? NAME_MATCH_ALIAS
+    : null;
+}
+
+/**
+ * Match a tool against a list of raw pattern strings, preferring a match that
+ * names the tool directly: such a match holds on every version, so the alias
+ * gate must not be triggered by an incidental second match through the alias.
+ */
+function matchAnyToolName(
+  patterns: readonly string[],
+  toolName: string,
+): NameMatch | null {
+  let aliasMatch: NameMatch | null = null;
+  for (const pattern of patterns) {
+    const match = matchToolName(pattern, toolName);
+    if (!match) {
+      continue;
+    }
+    if (!match.aliasDependent) {
+      return match;
+    }
+    aliasMatch = match;
+  }
+  return aliasMatch;
+}
+
+/**
+ * A verdict relied on the alias only when *every* match behind it did; one
+ * match naming the tool directly holds on any version, so the verdict stands.
+ */
+function reliesOnAlias(matches: readonly MatchedPattern[]): boolean {
+  return matches.length > 0 && matches.every((match) => match.aliasDependent);
+}
+
+/**
+ * Second gate for a verdict that only holds because `Task` and `Agent` name the
+ * same tool. The rename landed in v2.1.63 and `Task(...)` is an alias only from
+ * there (F11), so below that version — and in degraded mode — the verdict has
+ * no basis and degrades on both axes, exactly like any other ungated rule.
+ * Verdicts that never went through the alias are left untouched.
+ *
+ * @see docs/SPEC.md F11, §8.2, §8.3, §13 invariant 11
+ */
+function gateAliasDependent<T extends ResolvedCapability>(
+  capability: T,
+  aliasDependent: boolean,
+  version: string,
+): T {
+  return aliasDependent
+    ? gateCapability(capability, MATRIX["agent.toolAliases"], version)
+    : capability;
 }
 
 /** @see docs/SPEC.md F3, S3 */
@@ -95,7 +158,7 @@ export function parseToolPattern(
         .map((entry) => entry.trim())
         .filter((entry) => entry.length > 0);
       if (types.length > 0) {
-        return { kind: "agent-types", types };
+        return { kind: "agent-types", head, types };
       }
     }
     return { kind: "unknown", raw: pattern };
@@ -133,25 +196,31 @@ export function parseToolPattern(
   return { kind: "unknown", raw: pattern };
 }
 
-function patternMatchesTool(parsed: ParsedPattern, toolName: string): boolean {
+function patternMatchesTool(
+  parsed: ParsedPattern,
+  toolName: string,
+): NameMatch | null {
   switch (parsed.kind) {
     case "exact":
-      return exactPatternMatches(parsed.value, toolName);
+      return matchToolName(parsed.value, toolName);
     case "mcp-all":
-      return isMcpTool(toolName);
+      return isMcpTool(toolName) ? NAME_MATCH_DIRECT : null;
     case "mcp-server":
-      return (
-        toolName === `mcp__${parsed.server}` ||
+      return toolName === `mcp__${parsed.server}` ||
         toolName.startsWith(`mcp__${parsed.server}__`)
-      );
+        ? NAME_MATCH_DIRECT
+        : null;
     case "mcp-server-wildcard":
-      return toolName.startsWith(`mcp__${parsed.server}__`);
+      return toolName.startsWith(`mcp__${parsed.server}__`)
+        ? NAME_MATCH_DIRECT
+        : null;
     case "agent-types":
       // F5: inside a subagent definition the type list in parentheses is
-      // ignored; the entry still selects the Agent/Task tool itself.
-      return exactPatternMatches(AGENT_TOOL_NAMES[0], toolName);
+      // ignored; the entry still selects the Agent/Task tool itself, under the
+      // name it was written with — `Task(...)` reaches `Agent` only via F11.
+      return matchToolName(parsed.head, toolName);
     case "unknown":
-      return false;
+      return null;
   }
 }
 
@@ -159,14 +228,23 @@ function capabilityKind(toolName: string): ResolvedCapability["kind"] {
   return isMcpTool(toolName) ? "mcp_tool" : "tool";
 }
 
+type MatchedPattern = IndexedPattern & Pick<NameMatch, "aliasDependent">;
+
 function findMatchingPatterns(
   toolName: string,
   patterns: readonly IndexedPattern[],
-): IndexedPattern[] {
-  return patterns.filter(
-    (entry) =>
-      entry.parsed.kind !== "unknown" && patternMatchesTool(entry.parsed, toolName),
-  );
+): MatchedPattern[] {
+  const matches: MatchedPattern[] = [];
+  for (const entry of patterns) {
+    if (entry.parsed.kind === "unknown") {
+      continue;
+    }
+    const match = patternMatchesTool(entry.parsed, toolName);
+    if (match) {
+      matches.push({ ...entry, aliasDependent: match.aliasDependent });
+    }
+  }
+  return matches;
 }
 
 /**
@@ -188,7 +266,7 @@ function unknownPatternCouldMatch(raw: string, toolName: string): boolean {
   if (head.kind === "unknown") {
     return true;
   }
-  return patternMatchesTool(head, toolName);
+  return patternMatchesTool(head, toolName) !== null;
 }
 
 function unknownPatternReason(
@@ -203,18 +281,24 @@ function unknownPatternReason(
   return makeReason("unknown", message, source);
 }
 
-function isDeclaredInBothLists(
+function declaredInBothLists(
   toolName: string,
   tools: readonly string[] | undefined,
   disallowedTools: readonly string[] | undefined,
-): boolean {
+): NameMatch | null {
   if (!tools || !disallowedTools) {
-    return false;
+    return null;
   }
-  return (
-    tools.some((pattern) => exactPatternMatches(pattern, toolName)) &&
-    disallowedTools.some((pattern) => exactPatternMatches(pattern, toolName))
-  );
+  const allowed = matchAnyToolName(tools, toolName);
+  const denied = matchAnyToolName(disallowedTools, toolName);
+  if (!allowed || !denied) {
+    return null;
+  }
+  // Either side reaching the tool only through the alias makes the combined
+  // verdict alias-dependent.
+  return {
+    aliasDependent: allowed.aliasDependent || denied.aliasDependent,
+  };
 }
 
 function indexPatterns(
@@ -290,7 +374,7 @@ export function resolveAgentTools(
   const pool: string[] = [];
 
   for (const toolName of parentPool) {
-    const inBothLists = isDeclaredInBothLists(toolName, tools, disallowedTools);
+    const inBothLists = declaredInBothLists(toolName, tools, disallowedTools);
     const deniedMatches = findMatchingPatterns(toolName, disallowedPatterns);
     const allowedMatches = findMatchingPatterns(toolName, effectiveWhitelist);
     const unknownAllowMatches = unknownWhitelist.filter(
@@ -313,22 +397,26 @@ export function resolveAgentTools(
       const uniqueSources = dedupeSources(sources);
 
       capabilities.push(
-        gateCapability(
-          {
-            capabilityId: toolName,
-            kind: capabilityKind(toolName),
-            status: "denied",
-            enforcement: "enforced",
-            sources: uniqueSources,
-            reasons: [
-              makeReason(
-                "denied",
-                "Declared in both tools and disallowedTools; removed (F2).",
-                uniqueSources[0],
-              ),
-            ],
-          },
-          MATRIX["agent.disallowedTools"],
+        gateAliasDependent(
+          gateCapability(
+            {
+              capabilityId: toolName,
+              kind: capabilityKind(toolName),
+              status: "denied",
+              enforcement: "enforced",
+              sources: uniqueSources,
+              reasons: [
+                makeReason(
+                  "denied",
+                  "Declared in both tools and disallowedTools; removed (F2).",
+                  uniqueSources[0],
+                ),
+              ],
+            },
+            MATRIX["agent.disallowedTools"],
+            version,
+          ),
+          inBothLists.aliasDependent,
           version,
         ),
       );
@@ -342,24 +430,28 @@ export function resolveAgentTools(
         deniedMatches[0]!.index,
       );
       capabilities.push(
-        gateCapability(
-          {
-            capabilityId: toolName,
-            kind: capabilityKind(toolName),
-            status: "denied",
-            enforcement: "enforced",
-            sources: deniedMatches.map((entry) =>
-              patternSource(agentSource, entry.field, entry.index),
-            ),
-            reasons: [
-              makeReason(
-                "denied",
-                `Removed by disallowedTools pattern "${deniedMatches[0]!.raw}" (F2, F3).`,
-                source,
+        gateAliasDependent(
+          gateCapability(
+            {
+              capabilityId: toolName,
+              kind: capabilityKind(toolName),
+              status: "denied",
+              enforcement: "enforced",
+              sources: deniedMatches.map((entry) =>
+                patternSource(agentSource, entry.field, entry.index),
               ),
-            ],
-          },
-          MATRIX["agent.disallowedTools"],
+              reasons: [
+                makeReason(
+                  "denied",
+                  `Removed by disallowedTools pattern "${deniedMatches[0]!.raw}" (F2, F3).`,
+                  source,
+                ),
+              ],
+            },
+            MATRIX["agent.disallowedTools"],
+            version,
+          ),
+          reliesOnAlias(deniedMatches),
           version,
         ),
       );
@@ -447,21 +539,25 @@ export function resolveAgentTools(
     }
 
     capabilities.push(
-      gateCapability(
-        {
-          capabilityId: toolName,
-          kind: capabilityKind(toolName),
-          status: "available",
-          enforcement: "enforced",
-          sources:
-            allowedMatches.length > 0
-              ? allowedMatches.map((entry) =>
-                  patternSource(agentSource, entry.field, entry.index),
-                )
-              : [agentSource],
-          reasons,
-        },
-        MATRIX["agent.tools"],
+      gateAliasDependent(
+        gateCapability(
+          {
+            capabilityId: toolName,
+            kind: capabilityKind(toolName),
+            status: "available",
+            enforcement: "enforced",
+            sources:
+              allowedMatches.length > 0
+                ? allowedMatches.map((entry) =>
+                    patternSource(agentSource, entry.field, entry.index),
+                  )
+                : [agentSource],
+            reasons,
+          },
+          MATRIX["agent.tools"],
+          version,
+        ),
+        reliesOnAlias(allowedMatches),
         version,
       ),
     );

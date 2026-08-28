@@ -71,10 +71,12 @@ describe("parseToolPattern", () => {
   it("parses Agent(type1, type2) as an Agent entry, not as unparseable (F5)", () => {
     expect(parseToolPattern("Agent(reviewer, planner)")).toEqual({
       kind: "agent-types",
+      head: "Agent",
       types: ["reviewer", "planner"],
     });
     expect(parseToolPattern("Task(reviewer)")).toEqual({
       kind: "agent-types",
+      head: "Task",
       types: ["reviewer"],
     });
     expect(parseToolPattern("Agent()")).toEqual({
@@ -174,6 +176,87 @@ describe("resolveAgentTools", () => {
       agentSource: AGENT_SOURCE,
     });
     expect(allowed.pool).toEqual(["Agent", "Task"]);
+  });
+
+  it("leaves alias-dependent verdicts undetermined below 2.1.63 (F11)", () => {
+    const denied = resolveAgentTools({
+      parentPool: ["Agent", "Task", "Read"],
+      version: "2.1.62",
+      disallowedTools: ["Agent"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    // `Agent` is named directly: that verdict never went through the alias.
+    expect(capability("Agent", denied)?.status).toBe("denied");
+    expect(capability("Agent", denied)?.enforcement).toBe("enforced");
+    // `Task` was only reached by treating it as the same tool, which the
+    // rename had not yet made true on this version.
+    expect(capability("Task", denied)?.status).toBe("unknown");
+    expect(capability("Task", denied)?.enforcement).toBe("unknown");
+    expect(
+      capability("Task", denied)?.reasons.some(
+        (reason) =>
+          reason.type === "version" && reason.matrixRef === "agent.toolAliases",
+      ),
+    ).toBe(true);
+    // A verdict that never touched the alias is unaffected: the downgrade is
+    // per-match, not blanket.
+    expect(capability("Read", denied)?.status).toBe("available");
+    expect(capability("Read", denied)?.enforcement).toBe("enforced");
+  });
+
+  it("leaves alias-dependent allow verdicts undetermined below 2.1.63 (F11)", () => {
+    const result = resolveAgentTools({
+      parentPool: ["Agent", "Task", "Read"],
+      version: "2.1.62",
+      tools: ["Task"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    expect(capability("Task", result)?.status).toBe("available");
+    expect(capability("Agent", result)?.status).toBe("unknown");
+    expect(capability("Agent", result)?.enforcement).toBe("unknown");
+    // Not selected by any pattern at all; nothing alias-dependent about it.
+    expect(capability("Read", result)?.status).toBe("denied");
+    expect(capability("Read", result)?.enforcement).toBe("enforced");
+  });
+
+  it("keeps an alias-dependent verdict when another pattern names the tool directly", () => {
+    const result = resolveAgentTools({
+      parentPool: ["Agent", "Task"],
+      version: "2.1.62",
+      disallowedTools: ["Task", "Agent"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    expect(capability("Agent", result)?.status).toBe("denied");
+    expect(capability("Agent", result)?.enforcement).toBe("enforced");
+    expect(capability("Task", result)?.status).toBe("denied");
+    expect(capability("Task", result)?.enforcement).toBe("enforced");
+  });
+
+  it("gates the F5 type list on the name it was written with (F11)", () => {
+    const result = resolveAgentTools({
+      parentPool: ["Agent", "Task"],
+      version: "2.1.62",
+      tools: ["Task(reviewer)"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    expect(capability("Task", result)?.status).toBe("available");
+    expect(capability("Agent", result)?.status).toBe("unknown");
+  });
+
+  it("leaves alias-dependent verdicts undetermined in degraded mode (§8.3)", () => {
+    const result = resolveAgentTools({
+      parentPool: ["Agent", "Task", "Read"],
+      version: "unknown",
+      disallowedTools: ["Agent"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    expect(capability("Task", result)?.status).toBe("unknown");
+    expect(capability("Task", result)?.enforcement).toBe("unknown");
   });
 
   it("emits unknown status for unrecognized patterns without confident deny", () => {

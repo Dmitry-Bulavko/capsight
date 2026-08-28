@@ -567,6 +567,11 @@
               }
             },
             {
+              "type": "version",
+              "message": "Version matrix reports \"agent.toolAliases\" as unsupported on Claude Code 2.1.0 (requires >= 2.1.63); the feature resolves as unknown (SPEC §8.2).",
+              "matrixRef": "agent.toolAliases"
+            },
+            {
               "type": "context-filter",
               "message": "Tool removed by background subagent filter 2 (T2)."
             }
