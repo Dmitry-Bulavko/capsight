@@ -43,3 +43,10 @@ Five matrix entries have no capability-producing site and are therefore never co
 ## Notes
 
 Raised by the H1-04 implementation. `Warning` has no `enforcement` field today; decide whether it needs one or whether an undetermined warning is expressed through its category.
+
+## Added by the orchestrator after H1-11
+
+A9 and K12 (`--add-dir` contributing `.claude/agents/` and `.claude/skills/`) now have a fixture proving the behaviour, but no matrix entry, so they raise no §11.4 coverage. Every existing entry backs a resolver rule with a `gateCapability` call site, and add-dir is discovery-level — the same category question this task already covers for A3/A4/A10/F8/F9.
+
+- [ ] Decide whether discovery-level facts belong in the version matrix at all, and record the decision here
+- [ ] If they do, add entries for A9 and K12 alongside the five this task already covers

@@ -1,4 +1,5 @@
 import path from "node:path";
+import type { ManagedSimulationResult } from "../../src/application/simulate.js";
 import type {
   EffectiveConfiguration,
   ProjectSnapshot,
@@ -24,9 +25,26 @@ export interface NormalizedResolution {
   unknownRate: number;
 }
 
+/**
+ * Managed simulation delta (§7.8), with agent ids and absolute paths removed
+ * so the golden records only which agents become shadowed, which tools are
+ * denied, which fields are ignored and which models are substituted (F8).
+ */
+export interface NormalizedSimulation {
+  context: EffectiveConfiguration["context"];
+  delta: {
+    shadowedAgents: unknown[];
+    deniedTools: unknown[];
+    modelChanges: unknown[];
+    ignoredFields: unknown[];
+  };
+}
+
 export interface NormalizedGoldenOutput {
   discovery: NormalizedDiscovery;
   resolutions: NormalizedResolution[];
+  /** Present only for fixtures that ship a `managed-bundle/` (§7.8). */
+  simulation?: NormalizedSimulation;
 }
 
 function toPosixRelative(projectRoot: string, value: string | undefined): string | undefined {
@@ -263,15 +281,58 @@ function normalizeResolution(
   };
 }
 
+/**
+ * Strip the ids and absolute paths from a §7.8 simulation result. Bundle path
+ * and snapshot id are dropped: they are machine-specific and say nothing about
+ * the delta the fixture asserts.
+ */
+function normalizeSimulation(
+  simulation: ManagedSimulationResult,
+  projectRoot: string,
+): NormalizedSimulation {
+  // The managed bundle sits next to `project/`, so its paths are normalized
+  // against the fixture directory and stay relative in the golden.
+  const fixtureRoot = path.dirname(path.resolve(projectRoot));
+  const stripAgentId = <T extends { agentId: string }>(entry: T): Omit<T, "agentId"> => {
+    const { agentId: _agentId, ...rest } = entry;
+    return rest;
+  };
+
+  return {
+    context: simulation.context,
+    delta: {
+      shadowedAgents: simulation.delta.shadowedAgents.map((entry) => ({
+        ...stripAgentId(entry),
+        shadowedBy: normalizeSource(fixtureRoot, entry.shadowedBy),
+      })),
+      deniedTools: simulation.delta.deniedTools.map(stripAgentId),
+      modelChanges: simulation.delta.modelChanges.map((entry) => ({
+        ...stripAgentId(entry),
+        source: normalizeSource(fixtureRoot, entry.source),
+      })),
+      ignoredFields: simulation.delta.ignoredFields.map((entry) => ({
+        ...stripAgentId(entry),
+        evidence: entry.evidence.map(
+          (source) => normalizeSource(fixtureRoot, source) ?? source,
+        ),
+      })),
+    },
+  };
+}
+
 export function normalizeGoldenOutput(
   snapshot: ProjectSnapshot,
   resolutions: Array<{ agentName: string; resolution: EffectiveConfiguration }>,
   projectRoot: string,
+  simulation?: ManagedSimulationResult,
 ): NormalizedGoldenOutput {
   return {
     discovery: normalizeDiscovery(snapshot, projectRoot),
     resolutions: resolutions.map(({ agentName, resolution }) =>
       normalizeResolution(resolution, agentName, projectRoot),
     ),
+    ...(simulation
+      ? { simulation: normalizeSimulation(simulation, projectRoot) }
+      : {}),
   };
 }

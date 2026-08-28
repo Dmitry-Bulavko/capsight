@@ -6,12 +6,15 @@ import type {
   EffectiveConfiguration,
   PlatformVersion,
 } from "../../src/core/model/index.js";
+import type { ManagedSimulationResult } from "../../src/application/simulate.js";
 import { buildExecutionContext } from "../../src/core/resolver/context.js";
 import type { ContextPreset } from "../../src/core/model/index.js";
 import {
   discoverFixtureNames,
   formatPendingFixtures,
   inspectFixtureCorpus,
+  resolveFixtureAddDirs,
+  resolveFixtureManagedBundle,
   resolveFixtureScanPath,
 } from "./coverage-report.js";
 import {
@@ -89,8 +92,10 @@ async function runGoldenFixture(fixtureName: string): Promise<void> {
   const { scan } = await import("../../src/application/scan.js");
   const { resolve } = await import("../../src/application/resolve.js");
 
+  const addDirs = resolveFixtureAddDirs(fixtureDir);
   const scanResult = await scan({
     projectPath: resolveFixtureScanPath(fixtureDir),
+    ...(addDirs.length > 0 ? { addDirs } : {}),
   });
   const resolutions: Array<{ agentName: string; resolution: EffectiveConfiguration }> =
     [];
@@ -118,7 +123,25 @@ async function runGoldenFixture(fixtureName: string): Promise<void> {
     resolutions.push({ agentName: contextSpec.agentName, resolution });
   }
 
-  const actual = normalizeGoldenOutput(scanResult.snapshot, resolutions, projectRoot);
+  // A fixture that ships a `managed-bundle/` also records the §7.8 delta.
+  const managedBundlePath = resolveFixtureManagedBundle(fixtureDir);
+  let simulation: ManagedSimulationResult | undefined;
+  if (managedBundlePath) {
+    const { simulateManagedOverlay } = await import(
+      "../../src/application/simulate.js"
+    );
+    simulation = await simulateManagedOverlay({
+      managedBundlePath,
+      snapshot: scanResult.snapshot,
+    });
+  }
+
+  const actual = normalizeGoldenOutput(
+    scanResult.snapshot,
+    resolutions,
+    projectRoot,
+    simulation,
+  );
   expect(actual).toEqual(expected);
 }
 

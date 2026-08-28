@@ -7,6 +7,7 @@ import type {
   EffectiveConfiguration,
   PlatformVersion,
 } from "../src/core/model/index.js";
+import type { ManagedSimulationResult } from "../src/application/simulate.js";
 import { buildExecutionContext } from "../src/core/resolver/context.js";
 import type { ContextPreset } from "../src/core/model/index.js";
 import { FACTS } from "../src/adapters/claude/version/facts.js";
@@ -22,6 +23,8 @@ import {
   inspectFixtureCorpus,
   isConfidentCapabilityStatus,
   pendingFixtureNames,
+  resolveFixtureAddDirs,
+  resolveFixtureManagedBundle,
   resolveFixtureScanPath,
   FIXTURES_ROOT,
   SPEC_FIXTURE_NAMES,
@@ -100,8 +103,10 @@ async function runFixtureToGolden(
   const { scan } = await import("../src/application/scan.js");
   const { resolve } = await import("../src/application/resolve.js");
 
+  const addDirs = resolveFixtureAddDirs(fixtureDir);
   const scanResult = await scan({
     projectPath: resolveFixtureScanPath(fixtureDir),
+    ...(addDirs.length > 0 ? { addDirs } : {}),
   });
   const resolutions: Array<{ agentName: string; resolution: EffectiveConfiguration }> =
     [];
@@ -129,7 +134,25 @@ async function runFixtureToGolden(
     resolutions.push({ agentName: contextSpec.agentName, resolution });
   }
 
-  const actual = normalizeGoldenOutput(scanResult.snapshot, resolutions, projectRoot);
+  // A fixture that ships a `managed-bundle/` also records the §7.8 delta.
+  const managedBundlePath = resolveFixtureManagedBundle(fixtureDir);
+  let simulation: ManagedSimulationResult | undefined;
+  if (managedBundlePath) {
+    const { simulateManagedOverlay } = await import(
+      "../src/application/simulate.js"
+    );
+    simulation = await simulateManagedOverlay({
+      managedBundlePath,
+      snapshot: scanResult.snapshot,
+    });
+  }
+
+  const actual = normalizeGoldenOutput(
+    scanResult.snapshot,
+    resolutions,
+    projectRoot,
+    simulation,
+  );
   return { actual, expected };
 }
 
@@ -531,17 +554,14 @@ describe("correctness gate", () => {
 
 describe("correctness gate fixture corpus", () => {
   /**
-   * Fixtures from SPEC §11.1 that are not yet authored (H1-09..H1-11).
+   * Fixtures from SPEC §11.1 that are not yet authored. `plugin-agents`
+   * (F9, A6, A8) stays pending because discovery has no plugin agent source
+   * at all: nothing sets `isPluginAgent`, so a plugin fixture would assert
+   * behaviour the product does not have yet.
    * Shrink this list as fixtures land; the test below fails until it matches
    * reality, so the corpus cannot silently stay incomplete.
    */
-  const EXPECTED_PENDING_FIXTURES = [
-    "add-dir",
-    "instructions",
-    "managed-simulation",
-    "plugin-agents",
-    "version-drift",
-  ];
+  const EXPECTED_PENDING_FIXTURES = ["plugin-agents"];
 
   it("declares exactly the 20 SPEC §11.1 fixture names", () => {
     expect(SPEC_FIXTURE_NAMES).toHaveLength(20);

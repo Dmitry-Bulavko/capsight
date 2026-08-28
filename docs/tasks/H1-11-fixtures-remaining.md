@@ -53,3 +53,25 @@ Beyond writing fixture content, each fixture task must close the loop on the mat
 - [ ] Flip every matrix entry this task satisfies from `pendingFixture` to `fixture`
 - [ ] Promote that entry's `confidence` from `"doc"` to `"fixture"` **only** after reading the fixture and confirming it actually exercises the rule — a directory existing is not evidence
 - [ ] Shrink `EXPECTED_PENDING_FIXTURES` in `tests/correctness-gate.test.ts` accordingly; the corpus test fails until it matches reality
+
+## Orchestrator verification (post-implementation)
+
+Read the goldens directly:
+
+```
+instructions:  foreground-subagent  sources=3 (one per hierarchy level)  reason=I1
+               explore              sources=0  reason=I2  status=denied
+               plan                 sources=0  reason=I2  status=denied
+version-drift: depth 3 → 2 capabilities enforcement=unknown, unknownRate 0.065
+managed-simulation: golden carries a `simulation` section with the delta
+```
+
+Suite 322 passed | 1 todo. Four of five fixtures landed. Accepted.
+
+**Resolver change accepted (blocker note 3).** Explore/Plan previously resolved instructions as an empty list with no explanation. §4.4 item 4 requires "инструкции резолвятся как 0 источников с reason по I2", so the reason was missing outright — the alternative was a golden asserting a reason the product does not emit, or dropping the capability and losing M1 acceptance #5. Emitting one capability with zero sources and an I2 reason is what the spec describes.
+
+**`version-drift` keeps `status: denied` with `enforcement: unknown`.** That is the product's actual downgrade mechanism, the same as fork/T3, and recording it honestly is right. Whether `status` should also drop is exactly the open question filed as H1-17 — this fixture will need revisiting once that decision lands.
+
+**Filed as H1-23 — `plugin-agents/` is blocked by a missing feature, not a missing fixture.** Nothing in discovery ever produces `isPluginAgent: true`; `discoverAgentSources()` has no plugin scope and nothing computes the A6 scoped id. The downstream F9/A8 handling in `resolution/plugin.ts` and `parseAgentFile` is correct but unreachable from `scan()`. M1 acceptance #6 therefore holds only for an agent built in a unit test, never for one a user has. Refusing to fake the fixture was the right call.
+
+**A9/K12 have no matrix entry** — appended to H1-18, which already owns the discovery-level entry question.

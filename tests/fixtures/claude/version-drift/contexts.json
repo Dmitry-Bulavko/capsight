@@ -1,0 +1,12 @@
+[
+  {
+    "agentName": "spawner",
+    "preset": "foreground-subagent",
+    "depth": 0
+  },
+  {
+    "agentName": "spawner",
+    "preset": "foreground-subagent",
+    "depth": 3
+  }
+]

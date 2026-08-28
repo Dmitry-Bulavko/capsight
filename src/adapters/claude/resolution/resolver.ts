@@ -12,6 +12,7 @@ import type {
 import { FACT, type FactId } from "../version/facts.js";
 import {
   MATRIX,
+  depthLimitMatrixId,
   gateCapability,
   isMatrixId,
   type MatrixId,
@@ -182,9 +183,13 @@ function buildForkToolCapabilities(
  * ones the core filter labels as background; depth-limit removals carry their
  * own reason type (N2/N5).
  */
-function removalMatrixId(removal: ContextFilterRemoval): MatrixId {
+function removalMatrixId(
+  removal: ContextFilterRemoval,
+  version: string,
+): MatrixId {
   if (removal.reason.type === "depth-limit") {
-    return MATRIX["agent.depthLimit"];
+    // Below 2.1.219 the N5 default depth is a recorded drift (§8.4).
+    return depthLimitMatrixId(version);
   }
   return removal.reason.message.includes("filter 2")
     ? MATRIX["context.filter2"]
@@ -199,7 +204,7 @@ function applyFilterRemovals(
   const byId = new Map(capabilities.map((capability) => [capability.capabilityId, capability]));
 
   for (const removal of removals) {
-    const matrixId = removalMatrixId(removal);
+    const matrixId = removalMatrixId(removal, version);
     const existing = byId.get(removal.tool);
     if (existing) {
       byId.set(
@@ -337,7 +342,30 @@ function buildInstructionCapabilities(
   version: string,
 ): ResolvedCapability[] {
   if (context.builtinKind === "explore" || context.builtinKind === "plan") {
-    return [];
+    // §4.4 item 4: instructions resolve as zero sources with an I2 reason. The
+    // capability carries no `sources` precisely because no instruction file is
+    // loaded; there is no frontmatter field or setting that changes this (I2).
+    return [
+      gateCapability(
+        {
+          capabilityId: "instructions",
+          kind: "instruction" as const,
+          status: "denied" as const,
+          enforcement: "enforced" as const,
+          sources: [],
+          reasons: [
+            makeReason(
+              "context-filter",
+              "Explore and Plan built-in agents load no CLAUDE.md instruction sources (I2).",
+              undefined,
+              FACT.I2,
+            ),
+          ],
+        },
+        MATRIX["instructions.builtinKind"],
+        version,
+      ),
+    ];
   }
 
   const instructions = snapshot.instructions as DiscoveredInstruction[];

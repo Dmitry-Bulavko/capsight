@@ -29,6 +29,7 @@ const M1_MATRIX_IDS = [
   "context.filter2",
   "context.fork",
   "agent.depthLimit",
+  "agent.depthLimitDefault",
   FACT.P1,
   FACT.P2,
   FACT.P4,
@@ -44,6 +45,7 @@ const M1_MATRIX_IDS = [
   "trust.inlineMcp",
   "trust.frontmatterHooks",
   "instructions.hierarchy",
+  "instructions.builtinKind",
   "builtin.readOnly",
 ] as const;
 
@@ -58,6 +60,7 @@ const ENFORCED_RULE_FACTS: readonly FactId[] = [
   FACT.K4,
   FACT.K5,
   FACT.I1,
+  FACT.I2,
   FACT.B2,
   FACT.R1,
   FACT.R4,

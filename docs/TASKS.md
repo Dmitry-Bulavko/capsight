@@ -102,8 +102,8 @@ Order: H1-01 → H1-02 → H1-03 → H1-05 → H1-06 → H1-04 → H1-07 → H1-
 | H1-08 | H1 | Coverage metric denominator = §3 fact list | done | §11.4, inv 13 | tests/fixtures/coverage-report.ts | Denominator fixed at §3; CI-only |
 | H1-09 | H1 | Fixtures: invalid-agents, collision-same-dir, collision-nested, nested-project | done | §11.1, A2–A4, A7 | tests/fixtures/claude/ | M0 acceptance #4, #5 covered by goldens |
 | H1-10 | H1 | Fixtures: settings-permissions, skill-allowed-tools, depth-limit, environment | done | §11.1, S1–S8, K6, K7, N1–N3, §3.11 | tests/fixtures/claude/ | `[ext]` areas have fixture evidence |
-| H1-11 | H1 | Fixtures: instructions, plugin-agents, add-dir, version-drift, managed-simulation | in_progress | §11.1, I1, I2, F9, A6, A8, A9, K12, §7.8, §8.4 | tests/fixtures/claude/ | §11.1 corpus complete (20/20) |
-| H1-12 | H1 | Restore `src/core/` platform independence | todo | §12.2, inv 1 | src/core/, src/adapters/claude/ | No Claude identifiers in core; goldens unchanged |
+| H1-11 | H1 | Fixtures: instructions, add-dir, version-drift, managed-simulation (plugin-agents blocked → H1-23) | done | §11.1, I1, I2, F9, A6, A8, A9, K12, §7.8, §8.4 | tests/fixtures/claude/ | §11.1 corpus complete (20/20) |
+| H1-12 | H1 | Restore `src/core/` platform independence | in_progress | §12.2, inv 1 | src/core/, src/adapters/claude/ | No Claude identifiers in core; goldens unchanged |
 | H1-13 | H1 | McpServer model completeness + probe addressing | todo | §5, §7.9, §12.5 | src/adapters/claude/discovery/mcp.ts, types.ts | `name`, `definitionKind`, `configHash`; probe by name |
 | H1-14 | H1 | CLI parity with §12.5 (`explain`, `warnings`) | todo | §12.5, §7.5, §7.6 | src/cli/index.ts | Both commands present, read-only |
 | H1-15 | H1 | MCP probe hardening | todo | §9.4, §7.9, §12.3 | src/adapters/claude/probing/mcp-probe.ts | Isolated env, SIGKILL escalation, redacted argv |
@@ -114,3 +114,4 @@ Order: H1-01 → H1-02 → H1-03 → H1-05 → H1-06 → H1-04 → H1-07 → H1-
 | H1-20 | H1 | Resolving an ambiguous or invalid agent must not be silent | todo | A4, §5, inv 3, 4, 14 | src/adapters/claude/resolution/resolver.ts | ambiguous-collision warning emitted; contested fields unknown |
 | H1-21 | H1 | Settings permissions never resolved — denied tool can read as available | todo | §4.4 rule 7, S1–S8, §6, inv 4, 14 | src/adapters/claude/resolution/, discovery/settings.ts | deny applied last and overrides everything |
 | H1-22 | H1 | Fixture runs must not read the developer's own `~/.claude/` | todo | §11.2, inv 2 | tests/fixtures/run-golden.test.ts, correctness-gate.test.ts | Goldens resolve identically on any machine |
+| H1-23 | H1 | Plugin agents are never discovered | todo | A1, A6, A8, F9, M1 #6 | src/adapters/claude/discovery/agents.ts | Plugin agents discovered; plugin-agents fixture lands |

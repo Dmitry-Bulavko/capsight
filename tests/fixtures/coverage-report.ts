@@ -77,6 +77,29 @@ export function resolveFixtureScanPath(fixtureDir: string): string {
   return relative === "" ? projectRoot : path.join(projectRoot, relative);
 }
 
+/**
+ * Directories the fixture passes to `scan({ addDirs })`. Optional
+ * `add-dirs.json` holds paths relative to the fixture directory, so an
+ * `--add-dir` fixture (A9, K12) can attach a directory the upward scope walk
+ * never reaches. Absent file means no additional directories.
+ */
+export function resolveFixtureAddDirs(fixtureDir: string): string[] {
+  const addDirsFile = path.join(fixtureDir, "add-dirs.json");
+  if (!fs.existsSync(addDirsFile)) {
+    return [];
+  }
+  const parsed = JSON.parse(fs.readFileSync(addDirsFile, "utf8")) as string[];
+  return parsed.map((entry) => path.join(fixtureDir, entry));
+}
+
+/** Managed bundle a §7.8 simulation fixture overlays, when it declares one. */
+export function resolveFixtureManagedBundle(
+  fixtureDir: string,
+): string | undefined {
+  const bundlePath = path.join(fixtureDir, "managed-bundle");
+  return fs.existsSync(bundlePath) ? bundlePath : undefined;
+}
+
 /** The SPEC §11.1 corpus, declared explicitly so a dropped fixture is visible. */
 export const SPEC_FIXTURE_NAMES = [
   "add-dir",

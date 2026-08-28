@@ -1,5 +1,4 @@
 {
-  "availableModels": ["claude-sonnet-4"],
   "permissions": {
     "disableBypassPermissionsMode": true
   }

@@ -1,0 +1,10 @@
+[
+  {
+    "agentName": "vendor-auditor",
+    "preset": "foreground-subagent"
+  },
+  {
+    "agentName": "reviewer",
+    "preset": "foreground-subagent"
+  }
+]

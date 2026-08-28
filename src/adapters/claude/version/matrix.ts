@@ -104,6 +104,21 @@ const MATRIX_ENTRIES = [
       "of N5 rest on documentation alone until a runtime probe can observe them.",
   },
   {
+    id: "agent.depthLimitDefault",
+    feature: "Default subagent spawn depth before 2.1.219",
+    factRefs: [FACT.N5],
+    changedIn: ["2.1.172", "2.1.217", "2.1.219"],
+    observedIn: ["2.1.217"],
+    status: "changed",
+    confidence: "fixture",
+    fixture: "version-drift",
+    notes:
+      "N5 records three different defaults below 2.1.219 (5, then 1) and no fixture or probe " +
+      "has observed any of them; the resolver only knows the 2.1.219+ default of 3. The " +
+      "version-drift fixture pins 2.1.217 and reproduces the discrepancy, so the depth-limit " +
+      "verdict is downgraded to unknown on those versions per §8.4 rather than guessed.",
+  },
+  {
     id: FACT.P1,
     feature: "Parent bypassPermissions/acceptEdits overrides agent permissionMode",
     factRefs: [FACT.P1],
@@ -176,9 +191,12 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.F8],
     minVersion: "2.1.0",
     status: "supported",
-    confidence: "doc",
-    pendingFixture: "managed-simulation",
-    notes: "Substitution model on block is not documented; simulate.ts reports the block only.",
+    confidence: "fixture",
+    fixture: "managed-simulation",
+    notes:
+      "The managed-simulation fixture records the block and the substitution the simulation " +
+      "reports (first entry of availableModels). Which model the platform actually substitutes " +
+      "is not documented, so only the fact of the block is a platform claim.",
   },
   {
     id: "agent.pluginFieldLimits",
@@ -241,8 +259,17 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.I1],
     minVersion: "2.1.0",
     status: "supported",
-    confidence: "doc",
-    pendingFixture: "instructions",
+    confidence: "fixture",
+    fixture: "instructions",
+  },
+  {
+    id: "instructions.builtinKind",
+    feature: "Explore and Plan resolve zero instruction sources",
+    factRefs: [FACT.I2],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "instructions",
   },
   {
     id: "builtin.readOnly",
@@ -326,6 +353,23 @@ export function lookupFeature(
   }
 
   return entry;
+}
+
+/** First version whose N5 default subagent depth (3) the corpus covers. */
+const DEPTH_LIMIT_OBSERVED_FROM = "2.1.219";
+
+/**
+ * Matrix entry backing a depth-limit verdict on a given CLI version. Below
+ * 2.1.219 the N5 default changed twice and no fixture or probe has observed
+ * those values, so the verdict routes through the `agent.depthLimitDefault`
+ * drift entry and degrades to `unknown` (§8.4). Version comparison stays in
+ * this module (§8.2, §13 invariant 11).
+ */
+export function depthLimitMatrixId(version: string): MatrixId {
+  const comparison = compareSemver(version, DEPTH_LIMIT_OBSERVED_FROM);
+  return comparison === null || comparison < 0
+    ? MATRIX["agent.depthLimitDefault"]
+    : MATRIX["agent.depthLimit"];
 }
 
 export type Enforcement = ResolvedCapability["enforcement"];

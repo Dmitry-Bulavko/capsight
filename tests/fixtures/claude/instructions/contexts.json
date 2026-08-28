@@ -1,0 +1,14 @@
+[
+  {
+    "agentName": "docs-writer",
+    "preset": "foreground-subagent"
+  },
+  {
+    "agentName": "docs-writer",
+    "preset": "explore"
+  },
+  {
+    "agentName": "docs-writer",
+    "preset": "plan"
+  }
+]

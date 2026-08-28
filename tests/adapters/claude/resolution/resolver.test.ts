@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { resolveEffectiveConfiguration } from "../../../../src/adapters/claude/resolution/resolver.js";
 import { resolve } from "../../../../src/application/resolve.js";
 import { buildExecutionContext } from "../../../../src/core/resolver/context.js";
+import { FACT } from "../../../../src/adapters/claude/version/facts.js";
 import type {
   Agent,
   PlatformVersion,
@@ -194,7 +195,7 @@ describe("resolveEffectiveConfiguration", () => {
     expect(result.unknownRate).toBeGreaterThan(0);
   });
 
-  it("returns zero instruction capabilities for explore and plan contexts (I2)", async () => {
+  it("resolves zero instruction sources with an I2 reason for explore and plan (I2)", async () => {
     const snapshot = makeSnapshot();
 
     const explore = await resolveEffectiveConfiguration(
@@ -208,8 +209,18 @@ describe("resolveEffectiveConfiguration", () => {
       buildExecutionContext("plan"),
     );
 
-    expect(explore.capabilities.filter((capability) => capability.kind === "instruction")).toHaveLength(0);
-    expect(plan.capabilities.filter((capability) => capability.kind === "instruction")).toHaveLength(0);
+    // §4.4 item 4: one instruction capability carrying zero sources and the
+    // I2 reason, not a silently empty capability list.
+    for (const result of [explore, plan]) {
+      const instructions = result.capabilities.filter(
+        (capability) => capability.kind === "instruction",
+      );
+      expect(instructions).toHaveLength(1);
+      expect(instructions[0]?.capabilityId).toBe("instructions");
+      expect(instructions[0]?.status).toBe("denied");
+      expect(instructions[0]?.sources).toHaveLength(0);
+      expect(instructions[0]?.reasons[0]?.matrixRef).toBe(FACT.I2);
+    }
     expect(toolCapability(explore, "Write")?.status).toBe("denied");
     expect(toolCapability(plan, "Edit")?.status).toBe("denied");
   });
