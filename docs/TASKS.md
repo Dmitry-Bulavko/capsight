@@ -105,8 +105,8 @@ Order: H1-01 → H1-02 → H1-03 → H1-05 → H1-06 → H1-04 → H1-07 → H1-
 | H1-11 | H1 | Fixtures: instructions, add-dir, version-drift, managed-simulation (plugin-agents blocked → H1-23) | done | §11.1, I1, I2, F9, A6, A8, A9, K12, §7.8, §8.4 | tests/fixtures/claude/ | §11.1 corpus complete (20/20) |
 | H1-12 | H1 | Restore `src/core/` platform independence | done | §12.2, inv 1 | src/core/, src/adapters/claude/ | No Claude identifiers in core; goldens unchanged |
 | H1-13 | H1 | McpServer model completeness + probe addressing | done | §5, §7.9, §12.5 | src/adapters/claude/discovery/mcp.ts, types.ts | `name`, `definitionKind`, `configHash`; probe by name |
-| H1-14 | H1 | CLI parity with §12.5 (`explain`, `warnings`) | in_progress | §12.5, §7.5, §7.6 | src/cli/index.ts | Both commands present, read-only |
-| H1-15 | H1 | MCP probe hardening | todo | §9.4, §7.9, §12.3 | src/adapters/claude/probing/mcp-probe.ts | Isolated env, SIGKILL escalation, redacted argv |
+| H1-14 | H1 | CLI parity with §12.5 (`explain`, `warnings`) | done | §12.5, §7.5, §7.6 | src/cli/index.ts | Both commands present, read-only |
+| H1-15 | H1 | MCP probe hardening | in_progress | §9.4, §7.9, §12.3 | src/adapters/claude/probing/mcp-probe.ts | Isolated env, SIGKILL escalation, redacted argv |
 | H1-16 | H1 | Warn that `.agent-manager/` must be gitignored on first write | todo | §12.3, H1-01 decision | src/adapters/claude/generation/, src/application/ | First write to `.agent-manager/` warns if not ignored |
 | H1-17 | H1 | Decide whether degraded mode downgrades `status` too | todo | §8.3, §11.3, §6 | src/adapters/claude/version/matrix.ts, tests/fixtures/coverage-report.ts | Decision recorded and implemented |
 | H1-18 | H1 | Gate discovery and simulate verdicts through the matrix | todo | §8.2, inv 11, A3, A4, A10, F8, F9 | src/adapters/claude/discovery/, src/application/simulate.ts | Five inert matrix entries actually consulted |
@@ -115,3 +115,4 @@ Order: H1-01 → H1-02 → H1-03 → H1-05 → H1-06 → H1-04 → H1-07 → H1-
 | H1-21 | H1 | Settings permissions never resolved — denied tool can read as available | todo | §4.4 rule 7, S1–S8, §6, inv 4, 14 | src/adapters/claude/resolution/, discovery/settings.ts | deny applied last and overrides everything |
 | H1-22 | H1 | Fixture runs must not read the developer's own `~/.claude/` | todo | §11.2, inv 2 | tests/fixtures/run-golden.test.ts, correctness-gate.test.ts | Goldens resolve identically on any machine |
 | H1-23 | H1 | Plugin agents are never discovered | todo | A1, A6, A8, F9, M1 #6 | src/adapters/claude/discovery/agents.ts | Plugin agents discovered; plugin-agents fixture lands |
+| H1-24 | H1 | CLI and API disagree on the default execution context | todo | §4.3, §4.1, T6 | src/server/routes/agents.ts, src/cli/index.ts | One shared default + caption on every surface |

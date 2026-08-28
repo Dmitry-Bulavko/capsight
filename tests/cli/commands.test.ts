@@ -12,7 +12,18 @@ import {
   scanAndStore,
   setLastScan,
 } from "../../src/application/scan-store.js";
-import { runAgents, runDiff, runScan, runSimulateManaged, runStatus } from "../../src/cli/index.js";
+import {
+  CONTEXT_PRESETS,
+  DEFAULT_CONTEXT_PRESET,
+  DEFAULT_CONTEXT_REASON,
+  runAgents,
+  runDiff,
+  runExplain,
+  runScan,
+  runSimulateManaged,
+  runStatus,
+  runWarnings,
+} from "../../src/cli/index.js";
 
 vi.mock("../../src/application/scan.js", () => ({
   scan: vi.fn(),
@@ -270,6 +281,240 @@ describe("CLI commands", () => {
       });
       expect(output.snapshotId).toBe(result.snapshot.id);
       simulateSpy.mockRestore();
+    });
+  });
+
+  describe("runExplain", () => {
+    const explainAgent: Agent = {
+      id: "backend",
+      name: "backend",
+      description: "Backend agent",
+      source: {
+        platform: "claude",
+        scope: "project",
+        path: "/mock/project/.claude/agents/backend.md",
+      },
+      status: "active",
+      configuration: {
+        tools: ["Read", "Write", "Grep", "Bash"],
+        disallowedTools: ["Bash"],
+        unknownFields: {},
+      },
+      isPluginAgent: false,
+    };
+
+    it("prints the §7.5 chain fields for a capability", async () => {
+      setLastScan(makeScanResult({ agents: [explainAgent] }));
+
+      const result = await runExplain("Bash", {
+        agentId: "backend",
+        context: "foreground-subagent",
+      });
+
+      expect(result.agentId).toBe("backend");
+      expect(result.context.preset).toBe("foreground-subagent");
+      expect(result.capability.capabilityId).toBe("Bash");
+      expect(result.capability.status).toBe("denied");
+      expect(result.capability.enforcement).toEqual(expect.any(String));
+      expect(result.capability.sources.length).toBeGreaterThanOrEqual(1);
+      // denied-by + chain both live in `reasons`, matching the API response.
+      expect(result.capability.reasons.some((reason) => reason.type === "denied")).toBe(
+        true,
+      );
+      expect(result.capability.reasons.some((reason) => reason.matrixRef)).toBe(true);
+      expect(mockScan).not.toHaveBeenCalled();
+    });
+
+    it("defaults to background-subagent and reports why (§4.3)", async () => {
+      setLastScan(makeScanResult({ agents: [explainAgent] }));
+
+      const result = await runExplain("Read", { agentId: "backend" });
+
+      expect(result.context.preset).toBe("background-subagent");
+      expect(DEFAULT_CONTEXT_PRESET).toBe("background-subagent");
+      expect(result.contextDefault).toEqual({
+        preset: "background-subagent",
+        reason: DEFAULT_CONTEXT_REASON,
+      });
+      expect(DEFAULT_CONTEXT_REASON).toMatch(/T6/);
+    });
+
+    it("omits the default caption when --context is given explicitly", async () => {
+      setLastScan(makeScanResult({ agents: [explainAgent] }));
+
+      const result = await runExplain("Read", {
+        agentId: "backend",
+        context: "background-subagent",
+      });
+
+      expect(result.contextDefault).toBeUndefined();
+    });
+
+    it("accepts every §4.3 preset", async () => {
+      setLastScan(makeScanResult({ agents: [explainAgent] }));
+
+      expect(CONTEXT_PRESETS).toEqual([
+        "main-session",
+        "foreground-subagent",
+        "background-subagent",
+        "fork",
+        "explore",
+        "plan",
+        "teammate",
+      ]);
+
+      for (const preset of CONTEXT_PRESETS) {
+        const result = await runExplain("Read", { agentId: "backend", context: preset });
+        expect(result.context.preset).toBe(preset);
+      }
+    });
+
+    it("rejects an unknown preset", async () => {
+      setLastScan(makeScanResult({ agents: [explainAgent] }));
+
+      await expect(
+        runExplain("Read", { agentId: "backend", context: "not-a-preset" }),
+      ).rejects.toThrow(/Invalid context preset/);
+    });
+
+    it("throws when the capability is not resolved", async () => {
+      setLastScan(makeScanResult({ agents: [explainAgent] }));
+
+      await expect(
+        runExplain("nonexistent-tool", { agentId: "backend" }),
+      ).rejects.toThrow("Capability not found: nonexistent-tool");
+    });
+
+    it("throws when the agent does not exist", async () => {
+      setLastScan(makeScanResult({ agents: [explainAgent] }));
+
+      await expect(runExplain("Read", { agentId: "missing" })).rejects.toThrow(
+        "Agent not found: missing",
+      );
+    });
+
+    it("applies depth and parentMode overrides", async () => {
+      setLastScan(makeScanResult({ agents: [explainAgent] }));
+
+      const result = await runExplain("Read", {
+        agentId: "backend",
+        context: "background-subagent",
+        depth: 1,
+        parentMode: "auto",
+      });
+
+      expect(result.context).toMatchObject({
+        preset: "background-subagent",
+        depth: 1,
+        parentPermissionMode: "auto",
+      });
+    });
+
+    it("does not mutate the stored snapshot", async () => {
+      const stored = makeScanResult({ agents: [explainAgent] });
+      const before = JSON.stringify(stored);
+      setLastScan(stored);
+
+      await runExplain("Read", { agentId: "backend" });
+
+      expect(JSON.stringify(stored)).toBe(before);
+    });
+  });
+
+  describe("runWarnings", () => {
+    const warningAgent: Agent = {
+      id: "backend",
+      name: "backend",
+      description: "Backend agent",
+      source: {
+        platform: "claude",
+        scope: "project",
+        path: "/mock/project/.claude/agents/backend.md",
+      },
+      status: "active",
+      configuration: {
+        tools: ["Read", "Bash"],
+        permissionMode: "bypassPermissions",
+        unknownFields: {},
+      },
+      isPluginAgent: false,
+    };
+
+    it("lists warnings with category, severity, evidence and agentId", async () => {
+      setLastScan(makeScanResult({ agents: [warningAgent] }));
+
+      const result = await runWarnings();
+
+      expect(result.warnings.length).toBeGreaterThan(0);
+      for (const warning of result.warnings) {
+        expect(warning).toMatchObject({
+          agentId: "backend",
+          category: expect.any(String),
+          severity: expect.any(String),
+          message: expect.any(String),
+          evidence: expect.any(Array),
+        });
+      }
+      expect(result.warnings.some((warning) => warning.matrixRef !== undefined)).toBe(
+        true,
+      );
+    });
+
+    it("defaults to background-subagent and reports why (§4.3)", async () => {
+      setLastScan(makeScanResult({ agents: [warningAgent] }));
+
+      const result = await runWarnings();
+
+      expect(result.contextDefault).toEqual({
+        preset: "background-subagent",
+        reason: DEFAULT_CONTEXT_REASON,
+      });
+    });
+
+    it("skips non-active agents", async () => {
+      setLastScan(
+        makeScanResult({
+          agents: [
+            warningAgent,
+            {
+              ...warningAgent,
+              id: "invalid-agent",
+              name: "invalid-agent",
+              status: "invalid",
+              invalidReason: "no-description",
+            },
+          ],
+        }),
+      );
+
+      const result = await runWarnings();
+
+      const agentIds = result.warnings.map((warning) => warning.agentId);
+      expect(agentIds).not.toContain("invalid-agent");
+    });
+
+    it("rejects an unknown preset", async () => {
+      setLastScan(makeScanResult({ agents: [warningAgent] }));
+
+      await expect(runWarnings({ context: "not-a-preset" })).rejects.toThrow(
+        /Invalid context preset/,
+      );
+    });
+
+    it("rejects an unknown parentMode", async () => {
+      setLastScan(makeScanResult({ agents: [warningAgent] }));
+
+      await expect(runWarnings({ parentMode: "nope" })).rejects.toThrow(
+        /Invalid parentMode/,
+      );
+    });
+
+    it("scans cwd when no prior scan exists", async () => {
+      mockScan.mockResolvedValue(makeScanResult({ agents: [warningAgent] }));
+
+      await runWarnings();
+
+      expect(mockScan).toHaveBeenCalledWith({ projectPath: process.cwd() });
     });
   });
 
