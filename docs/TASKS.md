@@ -100,8 +100,8 @@ Order: H1-01 → H1-02 → H1-03 → H1-05 → H1-06 → H1-04 → H1-07 → H1-
 | H1-06 | H1 | Matrix entries for rules that already emit `enforced` | done | §0.1.3, §8.1 | src/adapters/claude/version/matrix.ts | No enforced rule without entry; no entry without fixture |
 | H1-07 | H1 | Gate: corpus completeness + enforcement comparison | done | §11.1, §11.2, §11.3 | tests/correctness-gate.test.ts, tests/fixtures/ | Missing fixture fails; enforcement compared |
 | H1-08 | H1 | Coverage metric denominator = §3 fact list | done | §11.4, inv 13 | tests/fixtures/coverage-report.ts | Denominator fixed at §3; CI-only |
-| H1-09 | H1 | Fixtures: invalid-agents, collision-same-dir, collision-nested, nested-project | in_progress | §11.1, A2–A4, A7 | tests/fixtures/claude/ | M0 acceptance #4, #5 covered by goldens |
-| H1-10 | H1 | Fixtures: settings-permissions, skill-allowed-tools, depth-limit, environment | todo | §11.1, S1–S8, K6, K7, N1–N3, §3.11 | tests/fixtures/claude/ | `[ext]` areas have fixture evidence |
+| H1-09 | H1 | Fixtures: invalid-agents, collision-same-dir, collision-nested, nested-project | done | §11.1, A2–A4, A7 | tests/fixtures/claude/ | M0 acceptance #4, #5 covered by goldens |
+| H1-10 | H1 | Fixtures: settings-permissions, skill-allowed-tools, depth-limit, environment | in_progress | §11.1, S1–S8, K6, K7, N1–N3, §3.11 | tests/fixtures/claude/ | `[ext]` areas have fixture evidence |
 | H1-11 | H1 | Fixtures: instructions, plugin-agents, add-dir, version-drift, managed-simulation | todo | §11.1, I1, I2, F9, A6, A8, A9, K12, §7.8, §8.4 | tests/fixtures/claude/ | §11.1 corpus complete (20/20) |
 | H1-12 | H1 | Restore `src/core/` platform independence | todo | §12.2, inv 1 | src/core/, src/adapters/claude/ | No Claude identifiers in core; goldens unchanged |
 | H1-13 | H1 | McpServer model completeness + probe addressing | todo | §5, §7.9, §12.5 | src/adapters/claude/discovery/mcp.ts, types.ts | `name`, `definitionKind`, `configHash`; probe by name |
@@ -111,3 +111,4 @@ Order: H1-01 → H1-02 → H1-03 → H1-05 → H1-06 → H1-04 → H1-07 → H1-
 | H1-17 | H1 | Decide whether degraded mode downgrades `status` too | todo | §8.3, §11.3, §6 | src/adapters/claude/version/matrix.ts, tests/fixtures/coverage-report.ts | Decision recorded and implemented |
 | H1-18 | H1 | Gate discovery and simulate verdicts through the matrix | todo | §8.2, inv 11, A3, A4, A10, F8, F9 | src/adapters/claude/discovery/, src/application/simulate.ts | Five inert matrix entries actually consulted |
 | H1-19 | H1 | Version-gate the Agent/Task alias expansion | todo | F11, §8.2 | src/adapters/claude/resolution/tools.ts | Alias-dependent verdicts unknown below 2.1.63 |
+| H1-20 | H1 | Resolving an ambiguous or invalid agent must not be silent | todo | A4, §5, inv 3, 4, 14 | src/adapters/claude/resolution/resolver.ts | ambiguous-collision warning emitted; contested fields unknown |

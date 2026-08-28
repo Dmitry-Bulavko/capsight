@@ -1,0 +1,6 @@
+[
+  {
+    "agentName": "auditor",
+    "preset": "foreground-subagent"
+  }
+]

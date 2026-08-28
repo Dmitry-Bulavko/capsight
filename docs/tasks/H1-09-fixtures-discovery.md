@@ -53,3 +53,28 @@ Beyond writing fixture content, each fixture task must close the loop on the mat
 - [ ] Flip every matrix entry this task satisfies from `pendingFixture` to `fixture`
 - [ ] Promote that entry's `confidence` from `"doc"` to `"fixture"` **only** after reading the fixture and confirming it actually exercises the rule — a directory existing is not evidence
 - [ ] Shrink `EXPECTED_PENDING_FIXTURES` in `tests/correctness-gate.test.ts` accordingly; the corpus test fails until it matches reality
+
+## Orchestrator verification (post-implementation)
+
+Read the generated goldens directly rather than trusting the run:
+
+```
+collision-same-dir:  reviewer  ambiguous  rule=A4  candidates=2  effective=absent   (x2)
+                     planner   active
+invalid-agents:      broken-yaml         invalid  bad-yaml
+                     colon-name          invalid  bad-name-chars
+                     dash-name           invalid  bad-name-chars
+                     missing-description invalid  no-description
+                     missing-name        invalid  no-name
+                     auditor             active
+```
+
+No `expected.json` in the corpus contains an absolute path. Suite is 306 passed | 9 todo, down from 13 pending fixtures to 9. Accepted.
+
+**Contract extension accepted:** an optional `cwd.txt` naming a directory inside `project/` to scan from. Without it A2/A3 were untestable — `walkProjectScopes` only walks upward, so two `.claude/agents/` levels could not both sit inside a fixture whose scan root was `project/`. The file is additive and the five §11.2 entries are unchanged, but §11.2 itself does not mention it; the SPEC should gain a line, which is the document owner's call.
+
+**Normalizer bug found and fixed in passing:** `normalizeDiscovery` normalized `agent.source` but not `collision.candidates` / `collision.effective`, so the first goldens carried absolute paths. No previous fixture had a collision, so nothing caught it. This is exactly why the empty corpus was dangerous.
+
+**Filed as H1-20:** the resolver ignores `agent.status` — resolving an ambiguous agent silently returns one candidate's configuration, though `Warning.category` already declares an unused `"ambiguous-collision"`. Discovery knows it does not know; resolution asserts anyway.
+
+**`agent.descriptionBudget` correctly left pending:** it covers A10, which this fixture does not exercise, and `snapshot.warnings` is not part of the normalized golden at all. Promoting it would have been the false claim this whole task exists to prevent.

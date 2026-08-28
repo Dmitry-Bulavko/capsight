@@ -12,6 +12,7 @@ import {
   discoverFixtureNames,
   formatPendingFixtures,
   inspectFixtureCorpus,
+  resolveFixtureScanPath,
 } from "./coverage-report.js";
 import {
   normalizeGoldenOutput,
@@ -88,7 +89,9 @@ async function runGoldenFixture(fixtureName: string): Promise<void> {
   const { scan } = await import("../../src/application/scan.js");
   const { resolve } = await import("../../src/application/resolve.js");
 
-  const scanResult = await scan({ projectPath: projectRoot });
+  const scanResult = await scan({
+    projectPath: resolveFixtureScanPath(fixtureDir),
+  });
   const resolutions: Array<{ agentName: string; resolution: EffectiveConfiguration }> =
     [];
 

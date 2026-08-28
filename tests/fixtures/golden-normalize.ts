@@ -98,6 +98,26 @@ function normalizeDiscovery(
         return {
           ...rest,
           source: normalizeSource(projectRoot, agent.source),
+          // Collision evidence carries absolute paths too (A3/A4 fixtures).
+          ...(agent.collision
+            ? {
+                collision: {
+                  ...agent.collision,
+                  candidates: agent.collision.candidates.map(
+                    (candidate) =>
+                      normalizeSource(projectRoot, candidate) ?? candidate,
+                  ),
+                  ...(agent.collision.effective
+                    ? {
+                        effective: normalizeSource(
+                          projectRoot,
+                          agent.collision.effective,
+                        ),
+                      }
+                    : {}),
+                },
+              }
+            : {}),
         };
       }),
     (agent) => (agent as { name: string }).name,

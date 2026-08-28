@@ -22,6 +22,7 @@ import {
   inspectFixtureCorpus,
   isConfidentCapabilityStatus,
   pendingFixtureNames,
+  resolveFixtureScanPath,
   FIXTURES_ROOT,
   SPEC_FIXTURE_NAMES,
 } from "./fixtures/coverage-report.js";
@@ -99,7 +100,9 @@ async function runFixtureToGolden(
   const { scan } = await import("../src/application/scan.js");
   const { resolve } = await import("../src/application/resolve.js");
 
-  const scanResult = await scan({ projectPath: projectRoot });
+  const scanResult = await scan({
+    projectPath: resolveFixtureScanPath(fixtureDir),
+  });
   const resolutions: Array<{ agentName: string; resolution: EffectiveConfiguration }> =
     [];
 
@@ -534,14 +537,10 @@ describe("correctness gate fixture corpus", () => {
    */
   const EXPECTED_PENDING_FIXTURES = [
     "add-dir",
-    "collision-nested",
-    "collision-same-dir",
     "depth-limit",
     "environment",
     "instructions",
-    "invalid-agents",
     "managed-simulation",
-    "nested-project",
     "plugin-agents",
     "settings-permissions",
     "skill-allowed-tools",

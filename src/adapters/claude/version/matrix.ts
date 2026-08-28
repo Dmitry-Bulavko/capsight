@@ -142,8 +142,8 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.A4],
     minVersion: "2.1.0",
     status: "unknown",
-    confidence: "doc",
-    pendingFixture: "collision-same-dir",
+    confidence: "fixture",
+    fixture: "collision-same-dir",
     notes:
       "Only the single-load behaviour is documented; which file wins follows FS read order (A4), so the winner stays unknown.",
   },
@@ -153,8 +153,8 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.A3],
     minVersion: "2.1.178",
     status: "supported",
-    confidence: "doc",
-    pendingFixture: "collision-nested",
+    confidence: "fixture",
+    fixture: "collision-nested",
   },
   {
     id: "agent.descriptionBudget",
@@ -164,6 +164,8 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "doc",
     pendingFixture: "invalid-agents",
+    notes:
+      "The invalid-agents fixture covers the A7 skip reasons only; the A10 budget warning still needs its own oversized-description case.",
   },
   {
     id: "agent.modelAllowlist",

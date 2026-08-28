@@ -61,6 +61,22 @@ export const FIXTURE_REQUIRED_ENTRIES = [
 
 export type FixtureRequiredEntry = (typeof FIXTURE_REQUIRED_ENTRIES)[number];
 
+/**
+ * Directory the scan starts from for a fixture. Optional `cwd.txt` names a
+ * path inside `project/` so a fixture can exercise the upward walk from cwd
+ * (SPEC A2/A3); without it the scan starts at `project/` itself. Golden output
+ * stays normalized against `project/` either way, so paths remain relative.
+ */
+export function resolveFixtureScanPath(fixtureDir: string): string {
+  const projectRoot = path.join(fixtureDir, "project");
+  const cwdFile = path.join(fixtureDir, "cwd.txt");
+  if (!fs.existsSync(cwdFile)) {
+    return projectRoot;
+  }
+  const relative = fs.readFileSync(cwdFile, "utf8").trim();
+  return relative === "" ? projectRoot : path.join(projectRoot, relative);
+}
+
 /** The SPEC §11.1 corpus, declared explicitly so a dropped fixture is visible. */
 export const SPEC_FIXTURE_NAMES = [
   "add-dir",
