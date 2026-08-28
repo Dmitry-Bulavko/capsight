@@ -47,3 +47,14 @@ Agent frontmatter values that can carry credentials never leave the discovery la
 ## Notes
 
 Reference implementation for the correct shape already exists: `probing/mcp-probe.ts:130-140` (`computeMcpConfigHash` hashes only sorted key names) and `environment/index.ts:89`. Mirror that, do not invent a second convention.
+
+## Orchestrator decision (post-implementation)
+
+**Question raised:** an M3 backup byte-copies the agent's own `.md` file, so a token written in that file remains inside `.agent-manager/backups/<op>/files/...`. Invariant 7 requires a restorable copy; invariant 10 lists `backup` among the places secrets must not reach.
+
+**Ruling:** invariant 10 governs data the product *derives and transmits* — API responses, CLI stdout, logs, probe cache, history and backup *manifests*. A verbatim restore copy is not derived data: it is the user's own file, staying inside the user's own project, and redacting it would make rollback lossy and silently corrupt the user's configuration. Invariant 7 wins for the byte-copy; invariant 10 is enforced on the manifest, which H1-01 does.
+
+**Consequences to keep true:**
+
+- `.agent-manager/` stays out of version control — §12.3 already recommends gitignoring it; H1-16 tracks making the tool say so when it first writes there.
+- No new surface may read a backup's file bytes back into an API response, log or UI without re-redacting.

@@ -67,22 +67,56 @@ export interface PlatformEnvironment {
   }>;
 }
 
+/**
+ * Redacted inline MCP definition from agent configuration.
+ * Key names only — never values (§0.1.8, §13 invariant 10).
+ */
+export interface RedactedMcpServer {
+  name?: string;
+  transport: "stdio" | "sse" | "http" | "ws" | "unknown";
+  /** Executable name only, without arguments. */
+  commandName?: string;
+  envKeys: string[];
+  headerKeys: string[];
+}
+
+/**
+ * Structural summary of declared hooks.
+ * Event names and counts only — never command strings or arguments.
+ */
+export interface HooksSummary {
+  form: "object" | "array" | "scalar";
+  events: string[];
+  count: number;
+}
+
+/** Value type of an unrecognized field; contents are never retained. */
+export type UnknownFieldType =
+  | "string"
+  | "number"
+  | "boolean"
+  | "null"
+  | "array"
+  | "object"
+  | "unknown";
+
 export interface AgentConfiguration {
   tools?: string[];
   disallowedTools?: string[];
-  mcpServers?: Array<string | Record<string, unknown>>;
+  mcpServers?: Array<string | RedactedMcpServer>;
   model?: string;
   permissionMode?: PermissionMode;
   maxTurns?: number;
   skills?: string[];
-  hooks?: unknown;
+  hooks?: HooksSummary;
   memory?: "user" | "project" | "local";
   background?: boolean;
   effort?: string;
   isolation?: "worktree";
   initialPrompt?: string;
   color?: string;
-  unknownFields: Record<string, unknown>;
+  /** Unrecognized frontmatter keys mapped to value types (§8.2) — never values. */
+  unknownFields: Record<string, UnknownFieldType>;
 }
 
 export interface Agent {

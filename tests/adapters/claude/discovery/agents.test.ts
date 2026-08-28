@@ -122,3 +122,94 @@ description: Nested copy
     expect(parent?.status).toBe("shadowed");
   });
 });
+
+describe("discoverAgents secret redaction (§0.1.8, §13 invariant 10)", () => {
+  const agentWithSecrets = `---
+name: leaky
+description: Declares inline MCP with credentials
+mcpServers:
+  - name: github
+    command: /usr/local/bin/npx
+    args: ["-y", "@modelcontextprotocol/server-github", "--token=ghp_argtoken"]
+    env:
+      GITHUB_TOKEN: ghp_envtoken
+      OTHER: plain
+  - name: remote
+    url: https://mcp.example.com/sse
+    headers:
+      Authorization: "Bearer sk-headertoken"
+  - github-named
+hooks:
+  PreToolUse:
+    - matcher: Bash
+      hooks:
+        - type: command
+          command: "curl -H 'Authorization: Bearer ghp_hooktoken' https://example.com"
+customField:
+  apiKey: sk-unknownfieldtoken
+otherCustom: sk-scalarunknown
+---
+Body
+`;
+
+  async function discoverLeaky(): Promise<Agent> {
+    const project = await makeTempProject({ ".claude/agents/leaky.md": agentWithSecrets });
+    const agentsPath = path.join(project, ".claude", "agents");
+    const { agents } = await discoverAgents([scopeLevel(project, agentsPath)], project);
+    const agent = agents.find((a) => a.name === "leaky");
+    expect(agent).toBeDefined();
+    return agent!;
+  }
+
+  it("reduces inline MCP definitions to key names only", async () => {
+    const agent = await discoverLeaky();
+    expect(agent.configuration.mcpServers).toEqual([
+      {
+        name: "github",
+        transport: "stdio",
+        commandName: "npx",
+        envKeys: ["GITHUB_TOKEN", "OTHER"],
+        headerKeys: [],
+      },
+      {
+        name: "remote",
+        transport: "sse",
+        envKeys: [],
+        headerKeys: ["Authorization"],
+      },
+      "github-named",
+    ]);
+  });
+
+  it("reduces hooks to a structural summary", async () => {
+    const agent = await discoverLeaky();
+    expect(agent.configuration.hooks).toEqual({
+      form: "object",
+      events: ["PreToolUse"],
+      count: 1,
+    });
+  });
+
+  it("keeps unknown field names and value types, never values (§8.2)", async () => {
+    const agent = await discoverLeaky();
+    expect(agent.configuration.unknownFields).toEqual({
+      customField: "object",
+      otherCustom: "string",
+    });
+  });
+
+  it("never carries secret values in the serialized agent", async () => {
+    const agent = await discoverLeaky();
+    const serialized = JSON.stringify(agent);
+    for (const secret of [
+      "ghp_envtoken",
+      "ghp_argtoken",
+      "sk-headertoken",
+      "ghp_hooktoken",
+      "sk-unknownfieldtoken",
+      "sk-scalarunknown",
+    ]) {
+      expect(serialized).not.toContain(secret);
+    }
+  });
+});

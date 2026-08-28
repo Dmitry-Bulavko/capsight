@@ -16,10 +16,10 @@
           ],
           "mcpServers": [
             {
-              "command": "node",
-              "args": [
-                "inline-server.js"
-              ]
+              "transport": "stdio",
+              "commandName": "node",
+              "envKeys": [],
+              "headerKeys": []
             }
           ],
           "unknownFields": {}

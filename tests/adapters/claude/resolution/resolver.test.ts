@@ -230,7 +230,7 @@ describe("resolveEffectiveConfiguration", () => {
           configuration: {
             tools: ["Read"],
             permissionMode: "acceptEdits",
-            hooks: { PreToolUse: [] },
+            hooks: { form: "object", events: ["PreToolUse"], count: 1 },
             mcpServers: ["github"],
             unknownFields: {},
           },
@@ -308,7 +308,7 @@ describe("resolveEffectiveConfiguration", () => {
         makeAgent({
           configuration: {
             tools: ["Read"],
-            mcpServers: [{ command: "node", args: ["server.js"] }],
+            mcpServers: [{ transport: "stdio", commandName: "node", envKeys: [], headerKeys: [] }],
             unknownFields: {},
           },
         }),
@@ -336,8 +336,8 @@ describe("resolveEffectiveConfiguration", () => {
         makeAgent({
           configuration: {
             tools: ["Read"],
-            mcpServers: [{ command: "node", args: ["server.js"] }],
-            hooks: { PreToolUse: [{ matcher: "Bash", hooks: [] }] },
+            mcpServers: [{ transport: "stdio", commandName: "node", envKeys: [], headerKeys: [] }],
+            hooks: { form: "object", events: ["PreToolUse"], count: 1 },
             unknownFields: {},
           },
         }),

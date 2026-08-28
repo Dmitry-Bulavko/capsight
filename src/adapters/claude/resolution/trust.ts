@@ -1,5 +1,6 @@
 import type {
   Agent,
+  RedactedMcpServer,
   ResolutionReason,
   SourceInfo,
   TrustState,
@@ -12,7 +13,7 @@ export interface ResolveTrustInput {
   trust: TrustState;
   kind: TrustGatedKind;
   /** Entry from frontmatter.mcpServers when kind is inline-mcp. */
-  mcpServerEntry?: string | Record<string, unknown>;
+  mcpServerEntry?: string | RedactedMcpServer;
   mcpServerIndex?: number;
 }
 
@@ -49,7 +50,7 @@ function fieldSource(agent: Agent, fieldPath: string): SourceInfo {
 
 /** Inline MCP definition in agent frontmatter (object), not a named reference (string). */
 export function isInlineMcpServerEntry(
-  entry: string | Record<string, unknown>,
+  entry: string | RedactedMcpServer,
 ): boolean {
   return typeof entry === "object" && entry !== null && !Array.isArray(entry);
 }
@@ -70,16 +71,13 @@ export function isTrustGatedAgent(agent: Agent): boolean {
 
 function hasDeclaredHooks(agent: Agent): boolean {
   const hooks = agent.configuration.hooks;
-  if (hooks === undefined || hooks === null) {
+  if (!hooks) {
     return false;
   }
-  if (Array.isArray(hooks)) {
-    return hooks.length > 0;
+  if (hooks.form === "scalar") {
+    return true;
   }
-  if (typeof hooks === "object") {
-    return Object.keys(hooks as Record<string, unknown>).length > 0;
-  }
-  return true;
+  return hooks.count > 0 || hooks.events.length > 0;
 }
 
 function availableReason(

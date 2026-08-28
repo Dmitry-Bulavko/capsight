@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import type {
   Agent,
   ProjectSnapshot,
+  RedactedMcpServer,
   ResolvedCapability,
   SourceInfo,
   Warning,
@@ -87,14 +88,14 @@ function findInlineMcpCommandWarnings(agent: Agent): Warning[] {
       continue;
     }
 
-    const record = entry as Record<string, unknown>;
-    if (typeof record.command !== "string" || record.command.length === 0) {
+    const record = entry as RedactedMcpServer;
+    if (typeof record.commandName !== "string" || record.commandName.length === 0) {
       continue;
     }
 
     warnings.push(
       securityWarning(
-        `Inline MCP server runs arbitrary command "${record.command}" from agent frontmatter.`,
+        `Inline MCP server runs arbitrary command "${record.commandName}" from agent frontmatter.`,
         [{ ...agent.source, fieldPath: `frontmatter.mcpServers[${index}]` }],
         "R1",
       ),

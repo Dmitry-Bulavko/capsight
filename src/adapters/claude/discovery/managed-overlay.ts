@@ -13,6 +13,11 @@ import {
   parseFrontmatter,
 } from "../parsing/frontmatter.js";
 import type { SettingsLayer } from "./types.js";
+import {
+  redactMcpServers,
+  redactUnknownFields,
+  summarizeHooks,
+} from "./redact.js";
 
 const SCOPE_PRIORITY: Record<Scope, number> = {
   managed: 50,
@@ -67,24 +72,19 @@ function sourceInfo(scope: Scope, filePath: string): SourceInfo {
 }
 
 function buildConfiguration(data: Record<string, unknown>): AgentConfiguration {
-  const unknownFields: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(data)) {
-    if (!KNOWN_FRONTMATTER_KEYS.has(key)) {
-      unknownFields[key] = value;
-    }
-  }
+  const unknownFields = redactUnknownFields(data, KNOWN_FRONTMATTER_KEYS);
 
   return {
     tools: Array.isArray(data.tools) ? data.tools.map(String) : undefined,
     disallowedTools: Array.isArray(data.disallowedTools)
       ? data.disallowedTools.map(String)
       : undefined,
-    mcpServers: Array.isArray(data.mcpServers) ? data.mcpServers : undefined,
+    mcpServers: redactMcpServers(data.mcpServers),
     model: getStringField(data, "model"),
     permissionMode: getStringField(data, "permissionMode") as AgentConfiguration["permissionMode"],
     maxTurns: typeof data.maxTurns === "number" ? data.maxTurns : undefined,
     skills: Array.isArray(data.skills) ? data.skills.map(String) : undefined,
-    hooks: data.hooks,
+    hooks: summarizeHooks(data.hooks),
     memory: getStringField(data, "memory") as AgentConfiguration["memory"],
     background: typeof data.background === "boolean" ? data.background : undefined,
     effort: getStringField(data, "effort"),

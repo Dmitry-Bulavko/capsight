@@ -178,7 +178,7 @@ describe("resolveSecurityFindings", () => {
     const agent = makeAgent({
       configuration: {
         tools: ["Read"],
-        mcpServers: [{ command: "node", args: ["server.js"] }],
+        mcpServers: [{ transport: "stdio", commandName: "node", envKeys: [], headerKeys: [] }],
         unknownFields: {},
       },
     });

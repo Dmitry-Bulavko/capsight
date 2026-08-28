@@ -55,7 +55,7 @@ function makeAgent(
 
 describe("isInlineMcpServerEntry", () => {
   it("treats object entries as inline definitions", () => {
-    expect(isInlineMcpServerEntry({ command: "node", args: ["server.js"] })).toBe(
+    expect(isInlineMcpServerEntry({ transport: "stdio", commandName: "node", envKeys: [], headerKeys: [] })).toBe(
       true,
     );
   });
@@ -123,7 +123,7 @@ describe("isTrustGatedAgent", () => {
 describe("resolveTrustGate", () => {
   it("blocks project inline MCP when trust is not accepted (R1)", () => {
     const agent = makeAgent(PROJECT_AGENT_SOURCE, {
-      mcpServers: [{ command: "node", args: ["mcp.js"] }],
+      mcpServers: [{ transport: "stdio", commandName: "node", envKeys: [], headerKeys: [] }],
       unknownFields: {},
     });
 
@@ -145,7 +145,7 @@ describe("resolveTrustGate", () => {
 
   it("allows project inline MCP when trust is accepted (R1)", () => {
     const agent = makeAgent(PROJECT_AGENT_SOURCE, {
-      mcpServers: [{ command: "node", args: ["mcp.js"] }],
+      mcpServers: [{ transport: "stdio", commandName: "node", envKeys: [], headerKeys: [] }],
       unknownFields: {},
     });
 
@@ -187,7 +187,7 @@ describe("resolveTrustGate", () => {
 
   it("does not gate inline MCP from user-level agents (R4)", () => {
     const agent = makeAgent(USER_AGENT_SOURCE, {
-      mcpServers: [{ command: "node", args: ["mcp.js"] }],
+      mcpServers: [{ transport: "stdio", commandName: "node", envKeys: [], headerKeys: [] }],
       unknownFields: {},
     });
 
@@ -208,7 +208,7 @@ describe("resolveTrustGate", () => {
 
   it("blocks project agent hooks when trust is not accepted (R5)", () => {
     const agent = makeAgent(PROJECT_AGENT_SOURCE, {
-      hooks: { PreToolUse: [{ matcher: "Bash", hooks: [] }] },
+      hooks: { form: "object", events: ["PreToolUse"], count: 1 },
       unknownFields: {},
     });
 
@@ -227,7 +227,7 @@ describe("resolveTrustGate", () => {
 
   it("allows user-level agent hooks without trust (R4)", () => {
     const agent = makeAgent(USER_AGENT_SOURCE, {
-      hooks: { PreToolUse: [{ matcher: "Bash", hooks: [] }] },
+      hooks: { form: "object", events: ["PreToolUse"], count: 1 },
       unknownFields: {},
     });
 
@@ -268,7 +268,7 @@ describe("resolvePluginFieldLimitations", () => {
     const agent = makeAgent(
       pluginSource,
       {
-        hooks: { PreToolUse: [] },
+        hooks: { form: "object", events: ["PreToolUse"], count: 1 },
         mcpServers: ["github"],
         permissionMode: "acceptEdits",
         unknownFields: {},
@@ -295,7 +295,7 @@ describe("resolvePluginFieldLimitations", () => {
 
   it("returns no limitations for non-plugin agents", () => {
     const agent = makeAgent(PROJECT_AGENT_SOURCE, {
-      hooks: { PreToolUse: [] },
+      hooks: { form: "object", events: ["PreToolUse"], count: 1 },
       mcpServers: ["github"],
       permissionMode: "acceptEdits",
       unknownFields: {},
