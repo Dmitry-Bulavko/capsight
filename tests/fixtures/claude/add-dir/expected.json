@@ -24,7 +24,8 @@
         "source": {
           "platform": "claude",
           "scope": "unknown",
-          "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+          "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+          "matrixRef": "discovery.addDirAgents"
         },
         "status": "active",
         "configuration": {
@@ -46,9 +47,11 @@
         "source": {
           "platform": "claude",
           "scope": "unknown",
-          "path": "vendor-lib/.claude/skills/vendor-lint/SKILL.md"
+          "path": "vendor-lib/.claude/skills/vendor-lint/SKILL.md",
+          "matrixRef": "discovery.addDirSkills"
         },
-        "path": "vendor-lib/.claude/skills/vendor-lint/SKILL.md"
+        "path": "vendor-lib/.claude/skills/vendor-lint/SKILL.md",
+        "enforcement": "enforced"
       }
     ],
     "instructions": [
@@ -91,7 +94,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -101,7 +105,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -115,7 +120,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -125,7 +131,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -139,7 +146,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -149,7 +157,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -163,7 +172,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -173,7 +183,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -187,7 +198,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -197,7 +209,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -211,7 +224,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -221,7 +235,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -235,7 +250,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -245,7 +261,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -259,7 +276,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -269,7 +287,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -283,7 +302,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -293,7 +313,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -307,7 +328,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -317,7 +339,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -331,7 +354,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -341,7 +365,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -355,7 +380,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -365,7 +391,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -379,7 +406,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -389,7 +417,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -403,7 +432,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -413,7 +443,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -427,7 +458,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -437,7 +469,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -451,7 +484,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -461,7 +495,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -476,6 +511,7 @@
               "platform": "claude",
               "scope": "unknown",
               "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents",
               "fieldPath": "frontmatter.tools[0]"
             }
           ],
@@ -487,6 +523,7 @@
                 "platform": "claude",
                 "scope": "unknown",
                 "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents",
                 "fieldPath": "frontmatter.tools[0]"
               }
             }
@@ -501,7 +538,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -511,7 +549,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -525,7 +564,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -535,7 +575,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -549,7 +590,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -559,7 +601,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -573,7 +616,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -583,7 +627,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -597,7 +642,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -607,7 +653,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -621,7 +668,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -631,7 +679,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -645,7 +694,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -655,7 +705,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -669,7 +720,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -679,7 +731,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -693,7 +746,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -703,7 +757,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -717,7 +772,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -727,7 +783,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -741,7 +798,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -751,7 +809,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -765,7 +824,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -775,7 +835,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -789,7 +850,8 @@
             {
               "platform": "claude",
               "scope": "unknown",
-              "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents"
             }
           ],
           "reasons": [
@@ -799,7 +861,8 @@
               "source": {
                 "platform": "claude",
                 "scope": "unknown",
-                "path": "vendor-lib/.claude/agents/vendor-auditor.md"
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents"
               }
             }
           ]
@@ -839,6 +902,7 @@
               "platform": "claude",
               "scope": "unknown",
               "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents",
               "fieldPath": "frontmatter.skills[0]"
             },
             {
@@ -855,6 +919,7 @@
                 "platform": "claude",
                 "scope": "unknown",
                 "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents",
                 "fieldPath": "frontmatter.skills[0]"
               },
               "matrixRef": "K1"

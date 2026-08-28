@@ -29,8 +29,8 @@ export async function buildProjectSnapshot(
 
   const [agentResult, skills, instructions, mcpServers, settings, trust] =
     await Promise.all([
-      discoverAgents(walk.scopes, projectPath, addDirs),
-      discoverSkills(walk.scopes, projectPath, addDirs),
+      discoverAgents(walk.scopes, projectPath, addDirs, version.version),
+      discoverSkills(walk.scopes, projectPath, addDirs, version.version),
       discoverInstructions(walk.scopes, projectPath),
       discoverMcpServers(walk.scopes, projectPath, walk.repoRoot),
       discoverSettingsLayers(walk.scopes),
@@ -38,7 +38,7 @@ export async function buildProjectSnapshot(
     ]);
 
   const environment = await buildPlatformEnvironment({ settingsLayers: settings });
-  const budget = computeDescriptionBudget(agentResult.agents);
+  const budget = computeDescriptionBudget(agentResult.agents, version.version);
   const scannedAt = new Date().toISOString();
 
   const snapshotBody = JSON.stringify({

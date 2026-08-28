@@ -95,7 +95,7 @@ describe("computeDescriptionBudget", () => {
         description: light,
         source: { ...SOURCE, path: ".claude/agents/light.md" },
       }),
-    ]);
+    ], "2.1.240");
 
     expect(result.totalEstimatedTokens).toBeGreaterThan(DESCRIPTION_BUDGET_THRESHOLD);
     expect(result.warnings).toHaveLength(1);
@@ -103,7 +103,9 @@ describe("computeDescriptionBudget", () => {
     const warning = result.warnings[0]!;
     expect(warning.category).toBe("budget");
     expect(warning.severity).toBe("warning");
-    expect(warning.matrixRef).toBe("A10");
+    expect(warning.matrixRef).toBe("agent.descriptionBudget");
+    // A10 is a startup warning, not a boundary the platform applies (§6).
+    expect(warning.enforcement).toBe("advisory");
     expect(warning.message).toContain(String(DESCRIPTION_BUDGET_THRESHOLD));
     expect(warning.message).toContain("heavy-agent");
     expect(warning.message).toContain("light-agent");
@@ -111,6 +113,20 @@ describe("computeDescriptionBudget", () => {
     expect(warning.evidence.every((entry) => entry.fieldPath === "frontmatter.description")).toBe(
       true,
     );
+  });
+
+  it("reports the budget warning as undetermined in degraded mode (§8.3)", () => {
+    const heavy = "x".repeat(DESCRIPTION_BUDGET_THRESHOLD * 4 + 4);
+    const result = computeDescriptionBudget([
+      makeAgent({ name: "heavy-agent", description: heavy }),
+    ]);
+
+    const warning = result.warnings[0]!;
+    expect(warning.enforcement).toBe("unknown");
+    expect(warning.matrixRef).toBe("agent.descriptionBudget");
+    expect(warning.message).toContain("SPEC §8.3");
+    // The finding itself is still reported — only the platform claim is not.
+    expect(warning.message).toContain("heavy-agent");
   });
 
   it("skips plugin agents in the total", () => {

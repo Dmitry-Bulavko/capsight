@@ -50,3 +50,21 @@ A9 and K12 (`--add-dir` contributing `.claude/agents/` and `.claude/skills/`) no
 
 - [ ] Decide whether discovery-level facts belong in the version matrix at all, and record the decision here
 - [ ] If they do, add entries for A9 and K12 alongside the five this task already covers
+
+## Orchestrator verification (post-implementation)
+
+Suite 414 passed | 1 todo. Seven goldens moved and each change is justified. Accepted.
+
+**Decision accepted: discovery-level facts do belong in the matrix.** §8.2 governs a *feature*, not a capability shape, and §6 requires every product claim to carry an enforcement status — §6 names the A4 collision as its own example of `unknown`. "The nearest nested directory wins" is a version-sensitive platform claim exactly as `disallowedTools` is; only the shape of the output differs. Gating by output type rather than by content would have left the five entries inert, which was the finding.
+
+**`Warning.enforcement` as a separate optional field is right.** Category says what the warning is about, enforcement says how sure we are; folding doubt into the category would delete the finding in order to record the uncertainty. Optional is also right: a §7.6 security finding reports configuration read directly and makes no platform claim, so there is nothing to gate.
+
+**The gate caught a real defect in the H1-09 fixtures.** `collision-nested` and `nested-project` asserted an A3 winner while pinning version 2.1.0 — but A3 is documented only from v2.1.178. A fixture cannot demonstrate a rule at a version where the rule does not exist, so the pin was the defect, now 2.1.178. At 2.1.177 or an unknown version the resolver marks the group `ambiguous` with no winner, per §8.4. This is the second time the corpus has repaid the work of filling it.
+
+**A4 unchanged where it matters:** both `reviewer` records stay `ambiguous`, winner-free, now carrying `matrixRef: agent.collisionSameDir` and `enforcement: "unknown"` — the entry is `status: "unknown"` by construction, so A4 reads undetermined on every version.
+
+**Scope expansion accepted:** `skills.ts` was touched though not listed, because it is K12's only possible call site and an entry with no consumer is the exact pattern this task exists to remove.
+
+**Filed as H1-26:** A1 cross-scope shadowing is now the only ungated collision rule. The implementer was right not to fake a gate for an unregistered fact, and right to flag it.
+
+**Still pending, correctly:** `agent.pluginFieldLimits` has a call site and unit coverage but no fixture until plugin discovery exists (H1-23); `agent.descriptionBudget` has a call site but no oversized-description fixture case, so it stays `confidence: "doc"`.

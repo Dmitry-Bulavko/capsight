@@ -3,7 +3,7 @@ import type {
   Warning,
 } from "../../../core/model/index.js";
 import type { ClaudeAgent as Agent } from "../model/index.js";
-import { FACT } from "../version/facts.js";
+import { gateWarning, MATRIX } from "../version/matrix.js";
 
 /** A10 threshold — total estimated description tokens before warning. */
 export const DESCRIPTION_BUDGET_THRESHOLD = 15_000;
@@ -40,9 +40,18 @@ function formatBreakdown(contributions: AgentDescriptionContribution[]): string 
 
 /**
  * Count description tokens across user agents and emit a budget warning when over threshold.
+ *
+ * The warning claims platform behaviour — that Claude Code warns at startup
+ * above the A10 budget — so it goes through the matrix and reads `unknown`
+ * when the entry does not found it on this version (§8.2, §8.3).
+ *
  * @see docs/SPEC.md §7.7, A10
  */
-export function computeDescriptionBudget(agents: Agent[]): DescriptionBudgetResult {
+export function computeDescriptionBudget(
+  agents: Agent[],
+  /** Detected CLI version, `"unknown"` in degraded mode (§8.3). */
+  version = "unknown",
+): DescriptionBudgetResult {
   const contributions: AgentDescriptionContribution[] = [];
 
   for (const agent of agents) {
@@ -66,16 +75,24 @@ export function computeDescriptionBudget(agents: Agent[]): DescriptionBudgetResu
   const warnings: Warning[] = [];
 
   if (totalEstimatedTokens > DESCRIPTION_BUDGET_THRESHOLD) {
-    warnings.push({
-      category: "budget",
-      severity: "warning",
-      message: `Agent description budget exceeds ${DESCRIPTION_BUDGET_THRESHOLD} tokens (~${totalEstimatedTokens} estimated). Per-agent: ${formatBreakdown(contributions)}`,
-      evidence: contributions.map((entry) => ({
-        ...entry.source,
-        fieldPath: "frontmatter.description",
-      })),
-      matrixRef: FACT.A10,
-    });
+    warnings.push(
+      gateWarning(
+        {
+          category: "budget",
+          severity: "warning",
+          message: `Agent description budget exceeds ${DESCRIPTION_BUDGET_THRESHOLD} tokens (~${totalEstimatedTokens} estimated). Per-agent: ${formatBreakdown(contributions)}`,
+          evidence: contributions.map((entry) => ({
+            ...entry.source,
+            fieldPath: "frontmatter.description",
+          })),
+          // A10 is a startup warning, not a restriction the platform applies
+          // (§6: `description` is advisory), so `advisory` is the ceiling.
+          enforcement: "advisory",
+        },
+        MATRIX["agent.descriptionBudget"],
+        version,
+      ),
+    );
   }
 
   return { totalEstimatedTokens, contributions, warnings };

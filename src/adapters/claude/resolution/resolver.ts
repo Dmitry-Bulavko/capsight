@@ -16,6 +16,7 @@ import {
   MATRIX,
   depthLimitMatrixId,
   gateCapability,
+  gateWarning,
   isMatrixId,
   type MatrixId,
 } from "../version/matrix.js";
@@ -504,6 +505,7 @@ function buildIgnoredFieldWarnings(
   agent: Agent,
   permissionResult: ReturnType<typeof resolvePermissionMode>,
   pluginLimitations: ReturnType<typeof resolvePluginFieldLimitations>,
+  version: string,
 ): Warning[] {
   const warnings: Warning[] = [];
 
@@ -518,13 +520,22 @@ function buildIgnoredFieldWarnings(
   }
 
   for (const limitation of pluginLimitations) {
-    warnings.push({
-      category: "ignored-field",
-      severity: "warning",
-      message: limitation.reasons[0]?.message ?? `Plugin agents ignore frontmatter ${limitation.field} (F9).`,
-      evidence: [{ ...agent.source, fieldPath: `frontmatter.${limitation.field}` }],
-      matrixRef: FACT.F9,
-    });
+    warnings.push(
+      gateWarning(
+        {
+          category: "ignored-field",
+          severity: "warning",
+          message:
+            limitation.reasons[0]?.message ??
+            `Plugin agents ignore frontmatter ${limitation.field} (F9).`,
+          evidence: [
+            { ...agent.source, fieldPath: `frontmatter.${limitation.field}` },
+          ],
+        },
+        MATRIX["agent.pluginFieldLimits"],
+        version,
+      ),
+    );
   }
 
   return warnings;
@@ -582,7 +593,10 @@ export async function resolveEffectiveConfiguration(
     context,
     permissionSettings,
   );
-  const pluginLimitations = resolvePluginFieldLimitations(agent);
+  const pluginLimitations = resolvePluginFieldLimitations(
+    agent,
+    snapshot.version.version,
+  );
   const parentPool = buildParentToolPool(agent);
   // §8.3: with no `claude` CLI this is "unknown" and every version-sensitive
   // verdict below degrades to `enforcement: "unknown"`.
@@ -636,7 +650,7 @@ export async function resolveEffectiveConfiguration(
   ]);
 
   const warnings = [
-    ...buildIgnoredFieldWarnings(agent, permissionResult, pluginLimitations),
+    ...buildIgnoredFieldWarnings(agent, permissionResult, pluginLimitations, version),
     ...(await resolveSecurityFindings({
       agent,
       snapshot,

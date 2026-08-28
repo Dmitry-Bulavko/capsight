@@ -3,7 +3,12 @@
  * @see docs/SPEC.md §3, §8
  */
 
-import type { ResolutionReason, ResolvedCapability } from "../../../core/model/index.js";
+import type {
+  Enforcement,
+  ResolutionReason,
+  ResolvedCapability,
+  Warning,
+} from "../../../core/model/index.js";
 import { FACT, factConfidence, type FactId } from "./facts.js";
 
 export interface FeatureCompatibility {
@@ -272,6 +277,31 @@ const MATRIX_ENTRIES = [
     fixture: "instructions",
   },
   {
+    id: "discovery.addDirAgents",
+    feature: "--add-dir attaches the added directory's .claude/agents/",
+    factRefs: [FACT.A9],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "add-dir",
+    notes:
+      "A9 attaches agents only; the rest of the added directory's configuration " +
+      "is not loaded. Discovery-level, so the gate lands on the discovered " +
+      "agent's status rather than on a capability.",
+  },
+  {
+    id: "discovery.addDirSkills",
+    feature: "--add-dir attaches the added directory's .claude/skills/",
+    factRefs: [FACT.K12],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "add-dir",
+    notes:
+      "K12 is the deliberate exception to A9 and is [ext], so the add-dir " +
+      "fixture is what lifts it above documentation (§8.2).",
+  },
+  {
     id: "builtin.readOnly",
     feature: "Explore and Plan built-in agents deny Write and Edit",
     factRefs: [FACT.B2],
@@ -372,7 +402,7 @@ export function depthLimitMatrixId(version: string): MatrixId {
     : MATRIX["agent.depthLimit"];
 }
 
-export type Enforcement = ResolvedCapability["enforcement"];
+export type { Enforcement } from "../../../core/model/index.js";
 
 export interface EnforcementDecision {
   enforcement: Enforcement;
@@ -523,5 +553,103 @@ export function gateCapability<T extends ResolvedCapability>(
     reasons: decision.reason
       ? [...capability.reasons, decision.reason]
       : capability.reasons,
+  };
+}
+
+/**
+ * Apply the matrix gate to a `Warning` that asserts platform behaviour. The
+ * warning's own enforcement is the baseline; as with `gateCapability` the
+ * matrix can only downgrade it.
+ *
+ * When the matrix does not found the claim on this version the warning becomes
+ * undetermined: `enforcement` drops to `unknown` and the reason is appended to
+ * the message, since a `Warning` has no `reasons` list to carry it. Severity
+ * and category are left alone — they say what the warning is about, not how
+ * confident we are in it, and collapsing the two axes would lose the finding.
+ *
+ * @see docs/SPEC.md §6, §8.2, §8.3
+ */
+export function gateWarning(
+  warning: Warning,
+  matrixId: string,
+  version: string,
+): Warning {
+  const decision = resolveEnforcement({
+    matrixId,
+    version,
+    baseline: warning.enforcement ?? "enforced",
+  });
+
+  return {
+    ...warning,
+    matrixRef: matrixId,
+    enforcement: decision.enforcement,
+    ...(decision.reason
+      ? { message: `${warning.message} ${decision.reason.message}` }
+      : {}),
+  };
+}
+
+/** Matrix entry backing a name-collision rule, when one is registered. */
+const COLLISION_MATRIX_IDS: Partial<Record<FactId, MatrixId>> = {
+  [FACT.A3]: "agent.collisionNested",
+  [FACT.A4]: "agent.collisionSameDir",
+};
+
+export interface CollisionGate {
+  /** Matrix entry the rule was gated on; absent when no entry backs the rule. */
+  matrixRef?: MatrixId;
+  /** Confidence in the collision record (§6); absent when it was not gated. */
+  enforcement?: Enforcement;
+  /**
+   * `true` when the matrix does not found a winner for this rule on this
+   * version — the entry is missing, unsupported, or `unknown` (A4 always is,
+   * because A4 documents that one file loads but not which). The record must
+   * then stay winner-free: a winner is never guessed (§8.2, §8.4).
+   *
+   * `false` for a rule with no registered entry: such a record was never gated
+   * at all, and this function does not silently claim it was.
+   */
+  winnerUnfounded: boolean;
+}
+
+/**
+ * Gate a name-collision record produced by discovery. Discovery-level, so the
+ * verdict lands on the record rather than on a `ResolvedCapability`, but the
+ * version arithmetic stays here (§13 invariant 11).
+ */
+export function gateCollision(rule: string, version: string): CollisionGate {
+  const matrixRef = COLLISION_MATRIX_IDS[rule as FactId];
+  if (!matrixRef) {
+    return { winnerUnfounded: false };
+  }
+
+  const decision = resolveEnforcement({ matrixId: matrixRef, version });
+  return {
+    matrixRef,
+    enforcement: decision.enforcement,
+    winnerUnfounded: decision.statusUnfounded === true,
+  };
+}
+
+export interface DiscoveryGate {
+  enforcement: Enforcement;
+  /**
+   * `true` when the matrix does not found the discovery rule on this version:
+   * the files were read, but whether the platform loads them is not a claim we
+   * can make, so the finding is reported as `unknown` (§8.2, §8.3).
+   */
+  unfounded: boolean;
+}
+
+/**
+ * Gate a discovery-level finding — "the platform loads what we found here" —
+ * against the entry that documents the rule which attached it (A9, K12).
+ */
+export function gateDiscovery(matrixId: string, version: string): DiscoveryGate {
+  const decision = resolveEnforcement({ matrixId, version });
+  return {
+    enforcement: decision.enforcement,
+    unfounded: decision.statusUnfounded === true,
   };
 }

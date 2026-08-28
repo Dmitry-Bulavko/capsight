@@ -280,7 +280,7 @@ describe("resolvePluginFieldLimitations", () => {
       true,
     );
 
-    const results = resolvePluginFieldLimitations(agent);
+    const results = resolvePluginFieldLimitations(agent, "2.1.240");
 
     expect(results.map((entry) => entry.field).sort()).toEqual([
       "hooks",
@@ -291,10 +291,32 @@ describe("resolvePluginFieldLimitations", () => {
       expect(entry).toMatchObject({
         ineffective: true,
         effective: undefined,
+        enforcement: "enforced",
       });
       expect(entry.reasons[0]?.type).toBe("plugin-limitation");
       expect(entry.reasons[0]?.matrixRef).toBe("F9");
     }
+  });
+
+  it("reports F9 as undetermined without a detected version (§8.3)", () => {
+    const agent = makeAgent(
+      pluginSource,
+      {
+        mcpServers: ["github"],
+        unknownFields: {},
+      },
+      true,
+    );
+
+    const results = resolvePluginFieldLimitations(agent);
+
+    expect(results[0]?.enforcement).toBe("unknown");
+    expect(
+      results[0]?.reasons.some(
+        (reason) =>
+          reason.type === "version" && reason.message.includes("SPEC §8.3"),
+      ),
+    ).toBe(true);
   });
 
   it("returns no limitations for non-plugin agents", () => {

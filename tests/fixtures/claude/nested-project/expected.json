@@ -103,7 +103,9 @@
             "scope": "nested-project",
             "path": "svc/.claude/agents/shared.md"
           },
-          "rule": "A3"
+          "rule": "A3",
+          "matrixRef": "agent.collisionNested",
+          "enforcement": "enforced"
         }
       }
     ],

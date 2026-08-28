@@ -53,7 +53,9 @@
             "scope": "project",
             "path": "app/.claude/agents/reviewer.md"
           },
-          "rule": "A3"
+          "rule": "A3",
+          "matrixRef": "agent.collisionNested",
+          "enforcement": "enforced"
         }
       }
     ],

@@ -6,6 +6,7 @@ import type { Scope, SourceInfo } from "../../../core/model/index.js";
 import { getStringField, parseFrontmatter } from "../parsing/frontmatter.js";
 import type { ProjectScopeLevel } from "./project-walk.js";
 import type { DiscoveredSkill } from "./types.js";
+import { gateDiscovery, MATRIX } from "../version/matrix.js";
 
 async function isDirectory(dirPath: string): Promise<boolean> {
   try {
@@ -126,6 +127,8 @@ export async function discoverSkills(
   projectScopes: ProjectScopeLevel[],
   projectPath: string,
   addDirs: string[] = [],
+  /** Detected CLI version, `"unknown"` in degraded mode (§8.3). */
+  version = "unknown",
 ): Promise<DiscoveredSkill[]> {
   const skills: DiscoveredSkill[] = [];
   const seen = new Set<string>();
@@ -163,10 +166,21 @@ export async function discoverSkills(
     addSkill(skill);
   }
 
+  // K12: `--add-dir` attaches the added directory's skills, the one deliberate
+  // exception to A9. That is a version-sensitive platform claim, so the matrix
+  // decides how confidently we can report it (§8.2, §8.3).
+  const addDirGate = gateDiscovery(MATRIX["discovery.addDirSkills"], version);
   for (const addDir of addDirs) {
     const skillsPath = path.join(path.resolve(addDir), ".claude", "skills");
     for (const skill of await discoverFromSkillsDir(skillsPath, "unknown")) {
-      addSkill(skill);
+      addSkill({
+        ...skill,
+        source: {
+          ...skill.source,
+          matrixRef: MATRIX["discovery.addDirSkills"],
+        },
+        enforcement: addDirGate.enforcement,
+      });
     }
   }
 

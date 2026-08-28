@@ -849,7 +849,8 @@
             "path": "managed-bundle/agents/backend.md",
             "fieldPath": "frontmatter.model"
           },
-          "matrixRef": "F8"
+          "matrixRef": "F8",
+          "enforcement": "enforced"
         }
       ],
       "ignoredFields": [

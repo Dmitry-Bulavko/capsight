@@ -1,4 +1,5 @@
 import type {
+  Enforcement,
   Scope,
   SourceInfo,
 } from "../../../core/model/index.js";
@@ -10,6 +11,12 @@ export interface DiscoveredSkill {
   description?: string;
   source: SourceInfo;
   path: string;
+  /**
+   * Confidence that the platform actually attaches this skill (§6). Set only
+   * for skills a version-sensitive discovery rule attached (K12); absent for
+   * skills found on the ordinary scope walk, which no matrix entry gates.
+   */
+  enforcement?: Enforcement;
 }
 
 export interface DiscoveredInstruction {
@@ -52,6 +59,11 @@ export interface RawAgentFile {
   scopeDistance: number;
   scopePriority: number;
   isPluginAgent: boolean;
+  /**
+   * Matrix entry backing the rule that attached this directory (A9). Absent
+   * for the ordinary project/user scope walk, which no entry gates.
+   */
+  matrixRef?: string;
 }
 
 export interface AgentDiscoveryResult {

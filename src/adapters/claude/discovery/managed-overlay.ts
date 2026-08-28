@@ -16,6 +16,7 @@ import {
 } from "../parsing/frontmatter.js";
 import type { SettingsLayer } from "./types.js";
 import { FACT } from "../version/facts.js";
+import { gateCollision } from "../version/matrix.js";
 import {
   redactMcpServers,
   redactUnknownFields,
@@ -211,7 +212,7 @@ function agentsRootFor(filePath: string): string {
   return path.dirname(filePath);
 }
 
-function reconcileAgentCollisions(agents: Agent[]): Agent[] {
+function reconcileAgentCollisions(agents: Agent[], version: string): Agent[] {
   const invalidAgents = agents.filter((agent) => agent.status === "invalid");
   const validAgents = agents.filter((agent) => agent.status !== "invalid");
 
@@ -239,6 +240,10 @@ function reconcileAgentCollisions(agents: Agent[]): Agent[] {
     }
   }
 
+  // A4's entry is `unknown` by construction: one file loads, but which is not
+  // documented, so the record stays winner-free whatever the version.
+  const sameDirGate = gateCollision(FACT.A4, version);
+
   const resolved: Agent[] = [];
   for (const agent of validAgents) {
     if (ambiguousIds.has(agent.id)) {
@@ -249,6 +254,10 @@ function reconcileAgentCollisions(agents: Agent[]): Agent[] {
         collision: {
           candidates: group.map((entry) => entry.source),
           rule: FACT.A4,
+          ...(sameDirGate.matrixRef ? { matrixRef: sameDirGate.matrixRef } : {}),
+          ...(sameDirGate.enforcement
+            ? { enforcement: sameDirGate.enforcement }
+            : {}),
         },
       });
     }
@@ -274,19 +283,52 @@ function reconcileAgentCollisions(agents: Agent[]): Agent[] {
     });
 
     const winner = sorted[0]!;
+    const runnerUp = sorted[1];
+    const candidates = sorted.map((entry) => entry.source);
+
+    // The winner is decided by the rule separating the top two candidates.
+    const decidingRule =
+      runnerUp &&
+      SCOPE_PRIORITY[runnerUp.source.scope] === SCOPE_PRIORITY[winner.source.scope]
+        ? FACT.A3
+        : FACT.A1;
+    const decidingGate = gateCollision(decidingRule, version);
+
+    if (runnerUp && decidingGate.winnerUnfounded) {
+      for (const agent of sorted) {
+        resolved.push({
+          ...agent,
+          status: "ambiguous",
+          collision: {
+            candidates,
+            rule: decidingRule,
+            ...(decidingGate.matrixRef ? { matrixRef: decidingGate.matrixRef } : {}),
+            ...(decidingGate.enforcement
+              ? { enforcement: decidingGate.enforcement }
+              : {}),
+          },
+        });
+      }
+      continue;
+    }
+
     resolved.push({ ...winner, status: "active", collision: undefined });
 
     for (const loser of sorted.slice(1)) {
+      const rule =
+        SCOPE_PRIORITY[loser.source.scope] === SCOPE_PRIORITY[winner.source.scope]
+          ? FACT.A3
+          : FACT.A1;
+      const gate = gateCollision(rule, version);
       resolved.push({
         ...loser,
         status: "shadowed",
         collision: {
-          candidates: sorted.map((entry) => entry.source),
+          candidates,
           effective: winner.source,
-          rule:
-            SCOPE_PRIORITY[loser.source.scope] === SCOPE_PRIORITY[winner.source.scope]
-              ? FACT.A3
-              : FACT.A1,
+          rule,
+          ...(gate.matrixRef ? { matrixRef: gate.matrixRef } : {}),
+          ...(gate.enforcement ? { enforcement: gate.enforcement } : {}),
         },
       });
     }
@@ -388,7 +430,10 @@ export function applyManagedOverlay(
   snapshot: ProjectSnapshot,
   bundle: ManagedBundle,
 ): ProjectSnapshot {
-  const mergedAgents = reconcileAgentCollisions([...snapshot.agents, ...bundle.agents]);
+  const mergedAgents = reconcileAgentCollisions(
+    [...snapshot.agents, ...bundle.agents],
+    snapshot.version.version,
+  );
 
   const existingSettings = snapshot.settings as SettingsLayer[];
   const settings = bundle.settingsLayer

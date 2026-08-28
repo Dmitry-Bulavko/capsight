@@ -118,8 +118,28 @@ describe("managed simulation fixture", () => {
         declared: "blocked-model",
         effective: "claude-sonnet-4",
         matrixRef: "F8",
+        enforcement: "enforced",
       }),
     ]);
+  });
+
+  it("reports the F8 model block as undetermined in degraded mode (§8.3)", async () => {
+    const snapshot = await buildProjectSnapshot({
+      projectPath: PROJECT_PATH,
+      version: { ...VERSION, version: "unknown", raw: "" },
+      walk: WALK,
+    });
+
+    const result = await simulateManagedOverlay({
+      managedBundlePath: BUNDLE_PATH,
+      snapshot,
+    });
+
+    const change = result.delta.modelChanges[0]!;
+    expect(change.enforcement).toBe("unknown");
+    expect(change.enforcementReason).toContain("SPEC §8.3");
+    // The substitution is still reported; only the platform claim is not.
+    expect(change.declared).toBe("blocked-model");
   });
 
   it("does not write to project or managed bundle paths", async () => {

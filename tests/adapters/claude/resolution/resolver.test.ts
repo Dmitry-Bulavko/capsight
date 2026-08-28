@@ -261,7 +261,11 @@ describe("resolveEffectiveConfiguration", () => {
     );
 
     expect(result.warnings.filter((warning) => warning.category === "ignored-field").length).toBeGreaterThanOrEqual(2);
-    expect(result.warnings.some((warning) => warning.matrixRef === "F9")).toBe(true);
+    const pluginWarning = result.warnings.find(
+      (warning) => warning.matrixRef === "agent.pluginFieldLimits",
+    );
+    expect(pluginWarning).toBeDefined();
+    expect(pluginWarning!.enforcement).toBe("enforced");
   });
 
   it("emits Bash guardrail warning when restrictions coexist with Bash access", async () => {

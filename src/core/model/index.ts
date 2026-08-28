@@ -37,6 +37,13 @@ export interface ExecutionContext {
   parentPermissionMode?: string;
 }
 
+/**
+ * Confidence axis every product claim carries (§6). `unknown` is not a weaker
+ * claim but the absence of one: the platform behaviour behind it is not founded
+ * on the detected version.
+ */
+export type Enforcement = "enforced" | "advisory" | "unknown";
+
 export interface SourceInfo {
   /** Platform adapter identifier that produced this source. */
   platform: string;
@@ -92,8 +99,17 @@ export interface Agent<
   status: "active" | "shadowed" | "ambiguous" | "invalid" | "unknown";
   collision?: {
     candidates: SourceInfo[];
+    /**
+     * The candidate that loads. Absent whenever the collision rule does not
+     * name a winner (A4) or the matrix does not found the winner rule on the
+     * detected version — a winner is never guessed (§8.2, §8.4).
+     */
     effective?: SourceInfo;
     rule: string;
+    /** Matrix entry the rule was gated on. Absent when no entry backs it. */
+    matrixRef?: string;
+    /** Confidence in this record (§6). Absent when the rule was not gated. */
+    enforcement?: Enforcement;
   };
   invalidReason?: "no-name" | "no-description" | "bad-yaml" | "bad-name-chars";
   configuration: TConfiguration;
@@ -125,7 +141,7 @@ export interface ResolvedCapability {
   capabilityId: string;
   kind: "tool" | "mcp_server" | "mcp_tool" | "skill" | "instruction" | "permission";
   status: "available" | "denied" | "preloaded" | "blocked" | "unknown";
-  enforcement: "enforced" | "advisory" | "unknown";
+  enforcement: Enforcement;
   sources: SourceInfo[];
   reasons: ResolutionReason[];
 }
@@ -148,6 +164,17 @@ export interface Warning {
   message: string;
   evidence: SourceInfo[];
   matrixRef?: string;
+  /**
+   * Confidence in the platform claim the warning makes (§6). Set by
+   * `gateWarning`; `unknown` means the backing matrix entry is missing or not
+   * supported on the detected version, so the warning is undetermined rather
+   * than asserted, and its message carries the reason.
+   *
+   * Absent on findings that make no platform claim — a §7.9 security finding
+   * reports configuration we read directly, not behaviour the platform
+   * guarantees, so there is no version-sensitive claim to gate.
+   */
+  enforcement?: Enforcement;
 }
 
 export interface EffectiveConfiguration {

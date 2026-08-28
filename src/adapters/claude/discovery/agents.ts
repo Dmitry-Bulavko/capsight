@@ -17,6 +17,7 @@ import {
 import type { ProjectScopeLevel } from "./project-walk.js";
 import type { RawAgentFile, AgentDiscoveryResult } from "./types.js";
 import { FACT } from "../version/facts.js";
+import { gateCollision, gateDiscovery, MATRIX } from "../version/matrix.js";
 import {
   redactMcpServers,
   redactUnknownFields,
@@ -91,8 +92,18 @@ function agentId(filePath: string): string {
   return createHash("sha256").update(filePath).digest("hex").slice(0, 16);
 }
 
-function sourceInfo(scope: Scope, filePath: string): SourceInfo {
-  return { platform: "claude", scope, path: filePath };
+function sourceInfo(
+  scope: Scope,
+  filePath: string,
+  matrixRef?: string,
+): SourceInfo {
+  return matrixRef
+    ? { platform: "claude", scope, path: filePath, matrixRef }
+    : { platform: "claude", scope, path: filePath };
+}
+
+function fileSource(file: RawAgentFile): SourceInfo {
+  return sourceInfo(file.scope, file.filePath, file.matrixRef);
 }
 
 function buildConfiguration(data: Record<string, unknown>): AgentConfiguration {
@@ -170,7 +181,7 @@ async function parseAgentFile(file: RawAgentFile): Promise<ParsedAgent> {
     id: agentId(file.filePath),
     name: effectiveName,
     description: effectiveDescription ?? "",
-    source: sourceInfo(file.scope, file.filePath),
+    source: fileSource(file),
     status: "active",
     configuration: buildConfiguration(parsed.data),
     isPluginAgent: file.isPluginAgent,
@@ -179,7 +190,7 @@ async function parseAgentFile(file: RawAgentFile): Promise<ParsedAgent> {
   return { kind: "valid", file, agent };
 }
 
-function resolveCollisions(parsed: ParsedAgent[]): Agent[] {
+function resolveCollisions(parsed: ParsedAgent[], version: string): Agent[] {
   const agents: Agent[] = [];
   const invalidAgents: Agent[] = [];
 
@@ -189,7 +200,7 @@ function resolveCollisions(parsed: ParsedAgent[]): Agent[] {
         id: agentId(item.file.filePath),
         name: path.basename(item.file.filePath, ".md"),
         description: "",
-        source: sourceInfo(item.file.scope, item.file.filePath),
+        source: fileSource(item.file),
         status: "invalid",
         invalidReason: item.invalidReason,
         configuration: { unknownFields: {} },
@@ -225,14 +236,21 @@ function resolveCollisions(parsed: ParsedAgent[]): Agent[] {
   }
 
   const remaining = valid.filter((item) => !ambiguousIds.has(item.agent.id));
+  // A4 documents that one file loads but not which, so its entry is `unknown`
+  // by construction and the gate keeps this record winner-free.
+  const sameDirGate = gateCollision(FACT.A4, version);
   for (const item of valid.filter((item) => ambiguousIds.has(item.agent.id))) {
     const group = byAgentsRoot.get(item.file.agentsRoot)!.get(item.agent.name)!;
     agents.push({
       ...item.agent,
       status: "ambiguous",
       collision: {
-        candidates: group.map((g) => sourceInfo(g.file.scope, g.file.filePath)),
+        candidates: group.map((g) => fileSource(g.file)),
         rule: FACT.A4,
+        ...(sameDirGate.matrixRef ? { matrixRef: sameDirGate.matrixRef } : {}),
+        ...(sameDirGate.enforcement
+          ? { enforcement: sameDirGate.enforcement }
+          : {}),
       },
     });
   }
@@ -255,16 +273,52 @@ function resolveCollisions(parsed: ParsedAgent[]): Agent[] {
     });
 
     const winner = sorted[0]!;
+    const runnerUp = sorted[1];
+    const candidates = sorted.map((s) => fileSource(s.file));
+
+    // The rule that decides the winner is the one separating the top two
+    // candidates: A3 when they tie on scope priority, A1 otherwise.
+    const decidingRule =
+      runnerUp && runnerUp.file.scopePriority === winner.file.scopePriority
+        ? FACT.A3
+        : FACT.A1;
+    const decidingGate = gateCollision(decidingRule, version);
+
+    if (runnerUp && decidingGate.winnerUnfounded) {
+      // The matrix does not found the winner rule on this version, so no file
+      // is named effective — the whole group stays ambiguous (§8.2, §8.4).
+      for (const item of sorted) {
+        agents.push({
+          ...item.agent,
+          status: "ambiguous",
+          collision: {
+            candidates,
+            rule: decidingRule,
+            ...(decidingGate.matrixRef ? { matrixRef: decidingGate.matrixRef } : {}),
+            ...(decidingGate.enforcement
+              ? { enforcement: decidingGate.enforcement }
+              : {}),
+          },
+        });
+      }
+      continue;
+    }
+
     agents.push({ ...winner.agent, status: "active" });
 
     for (const loser of sorted.slice(1)) {
+      const rule =
+        loser.file.scopePriority === winner.file.scopePriority ? FACT.A3 : FACT.A1;
+      const gate = gateCollision(rule, version);
       agents.push({
         ...loser.agent,
         status: "shadowed",
         collision: {
-          candidates: sorted.map((s) => sourceInfo(s.file.scope, s.file.filePath)),
-          effective: sourceInfo(winner.file.scope, winner.file.filePath),
-          rule: loser.file.scopePriority === winner.file.scopePriority ? FACT.A3 : FACT.A1,
+          candidates,
+          effective: fileSource(winner.file),
+          rule,
+          ...(gate.matrixRef ? { matrixRef: gate.matrixRef } : {}),
+          ...(gate.enforcement ? { enforcement: gate.enforcement } : {}),
         },
       });
     }
@@ -316,6 +370,7 @@ export async function discoverAgentSources(
         scopeDistance: 0,
         scopePriority: SCOPE_PRIORITY.unknown,
         isPluginAgent: false,
+        matrixRef: MATRIX["discovery.addDirAgents"],
       });
     }
   }
@@ -331,14 +386,35 @@ export async function discoverAgentSources(
   return rawFiles;
 }
 
+/**
+ * Downgrade an agent whose discovery rule the matrix does not found on this
+ * version: the file was read, but that the platform loads it is a claim with
+ * no basis, so the agent is reported as `unknown` rather than `active`
+ * (§8.2, §8.3). Agents the ordinary scope walk found carry no `matrixRef` and
+ * are untouched, which keeps the gate mechanical rather than a curated list.
+ */
+function gateDiscoveredAgents(agents: Agent[], version: string): Agent[] {
+  return agents.map((agent) => {
+    const matrixRef = agent.source.matrixRef;
+    if (!matrixRef || agent.status === "invalid") {
+      return agent;
+    }
+    return gateDiscovery(matrixRef, version).unfounded
+      ? { ...agent, status: "unknown" }
+      : agent;
+  });
+}
+
 export async function discoverAgents(
   projectScopes: ProjectScopeLevel[],
   projectPath: string,
   addDirs: string[] = [],
+  /** Detected CLI version, `"unknown"` in degraded mode (§8.3). */
+  version = "unknown",
 ): Promise<AgentDiscoveryResult> {
   const rawFiles = await discoverAgentSources(projectScopes, projectPath, addDirs);
   const parsed = await Promise.all(rawFiles.map(parseAgentFile));
-  const agents = resolveCollisions(parsed);
+  const agents = gateDiscoveredAgents(resolveCollisions(parsed, version), version);
   const invalidCount = agents.filter((a) => a.status === "invalid").length;
   return { agents, invalidCount };
 }

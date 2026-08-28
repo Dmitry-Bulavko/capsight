@@ -109,11 +109,12 @@ Order: H1-01 → H1-02 → H1-03 → H1-05 → H1-06 → H1-04 → H1-07 → H1-
 | H1-15 | H1 | MCP probe hardening | done | §9.4, §7.9, §12.3 | src/adapters/claude/probing/mcp-probe.ts | Isolated env, SIGKILL escalation, redacted argv |
 | H1-16 | H1 | Warn that `.agent-manager/` must be gitignored on first write | done | §12.3, H1-01 decision | src/adapters/claude/generation/, src/application/ | First write to `.agent-manager/` warns if not ignored |
 | H1-17 | H1 | Decide whether degraded mode downgrades `status` too | done | §8.3, §11.3, §6 | src/adapters/claude/version/matrix.ts, tests/fixtures/coverage-report.ts | Decision recorded and implemented |
-| H1-18 | H1 | Gate discovery and simulate verdicts through the matrix | in_progress | §8.2, inv 11, A3, A4, A10, F8, F9 | src/adapters/claude/discovery/, src/application/simulate.ts | Five inert matrix entries actually consulted |
-| H1-19 | H1 | Version-gate the Agent/Task alias expansion | todo | F11, §8.2 | src/adapters/claude/resolution/tools.ts | Alias-dependent verdicts unknown below 2.1.63 |
+| H1-18 | H1 | Gate discovery and simulate verdicts through the matrix | done | §8.2, inv 11, A3, A4, A10, F8, F9 | src/adapters/claude/discovery/, src/application/simulate.ts | Five inert matrix entries actually consulted |
+| H1-19 | H1 | Version-gate the Agent/Task alias expansion | in_progress | F11, §8.2 | src/adapters/claude/resolution/tools.ts | Alias-dependent verdicts unknown below 2.1.63 |
 | H1-20 | H1 | Resolving an ambiguous or invalid agent must not be silent | todo | A4, §5, inv 3, 4, 14 | src/adapters/claude/resolution/resolver.ts | ambiguous-collision warning emitted; contested fields unknown |
 | H1-21 | H1 | Settings permissions never resolved — denied tool can read as available | todo | §4.4 rule 7, S1–S8, §6, inv 4, 14 | src/adapters/claude/resolution/, discovery/settings.ts | deny applied last and overrides everything |
 | H1-22 | H1 | Fixture runs must not read the developer's own `~/.claude/` | todo | §11.2, inv 2 | tests/fixtures/run-golden.test.ts, correctness-gate.test.ts | Goldens resolve identically on any machine |
 | H1-23 | H1 | Plugin agents are never discovered | todo | A1, A6, A8, F9, M1 #6 | src/adapters/claude/discovery/agents.ts | Plugin agents discovered; plugin-agents fixture lands |
 | H1-24 | H1 | CLI and API disagree on the default execution context | todo | §4.3, §4.1, T6 | src/server/routes/agents.ts, src/cli/index.ts | One shared default + caption on every surface |
 | H1-25 | H1 | Flaky SIGTERM→SIGKILL escalation test | todo | §9.4, §11.3 | tests/adapters/claude/probing/mcp-probe.test.ts | Cause identified; 20 consecutive passes |
+| H1-26 | H1 | Cross-scope shadowing (A1) is the last ungated collision rule | todo | A1, §8.2, §6, inv 3 | src/adapters/claude/version/matrix.ts, discovery/agents.ts | A1 gated like A3/A4 |

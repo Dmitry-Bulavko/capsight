@@ -47,7 +47,9 @@
               "path": ".claude/agents/reviewer.md"
             }
           ],
-          "rule": "A4"
+          "rule": "A4",
+          "matrixRef": "agent.collisionSameDir",
+          "enforcement": "unknown"
         }
       },
       {
@@ -79,7 +81,9 @@
               "path": ".claude/agents/reviewer.md"
             }
           ],
-          "rule": "A4"
+          "rule": "A4",
+          "matrixRef": "agent.collisionSameDir",
+          "enforcement": "unknown"
         }
       }
     ],

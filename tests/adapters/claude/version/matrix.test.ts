@@ -13,6 +13,9 @@ import {
 } from "../../../../src/adapters/claude/version/facts.js";
 import {
   compareSemver,
+  gateCollision,
+  gateDiscovery,
+  gateWarning,
   isMatrixId,
   lookupFeature,
   resolveEnforcement,
@@ -20,6 +23,7 @@ import {
   VERSION_MATRIX,
   type FeatureCompatibility,
 } from "../../../../src/adapters/claude/version/matrix.js";
+import type { Warning } from "../../../../src/core/model/index.js";
 
 const M1_MATRIX_IDS = [
   "agent.disallowedTools",
@@ -46,18 +50,22 @@ const M1_MATRIX_IDS = [
   "trust.frontmatterHooks",
   "instructions.hierarchy",
   "instructions.builtinKind",
+  "discovery.addDirAgents",
+  "discovery.addDirSkills",
   "builtin.readOnly",
 ] as const;
 
 /** Facts behind resolver rules that emit `enforcement: "enforced"` (§0.1.3). */
 const ENFORCED_RULE_FACTS: readonly FactId[] = [
   FACT.A3,
+  FACT.A9,
   FACT.A4,
   FACT.A10,
   FACT.F8,
   FACT.F9,
   FACT.K1,
   FACT.K4,
+  FACT.K12,
   FACT.K5,
   FACT.I1,
   FACT.I2,
@@ -456,5 +464,112 @@ describe("resolveEnforcement", () => {
         ).toBe("unknown");
       },
     );
+  });
+});
+
+describe("gateWarning", () => {
+  const DETECTED = "2.1.233";
+
+  const budgetWarning: Warning = {
+    category: "budget",
+    severity: "warning",
+    message: "Agent description budget exceeded.",
+    evidence: [],
+    enforcement: "advisory",
+  };
+
+  it("keeps the warning's own baseline when the matrix founds it", () => {
+    const gated = gateWarning(
+      budgetWarning,
+      MATRIX["agent.descriptionBudget"],
+      DETECTED,
+    );
+
+    expect(gated.enforcement).toBe("advisory");
+    expect(gated.matrixRef).toBe("agent.descriptionBudget");
+    expect(gated.message).toBe(budgetWarning.message);
+  });
+
+  it("reports the warning as undetermined when no entry backs it (§8.2)", () => {
+    const gated = gateWarning(budgetWarning, "agent.notRegistered", DETECTED);
+
+    expect(gated.enforcement).toBe("unknown");
+    expect(gated.message).toContain("SPEC §8.2");
+    // Category and severity say what the warning is about, not how sure we
+    // are of it, so the gate leaves them alone.
+    expect(gated.category).toBe("budget");
+    expect(gated.severity).toBe("warning");
+  });
+
+  it("reports the warning as undetermined without a detected version (§8.3)", () => {
+    const gated = gateWarning(
+      budgetWarning,
+      MATRIX["agent.descriptionBudget"],
+      "unknown",
+    );
+
+    expect(gated.enforcement).toBe("unknown");
+    expect(gated.message).toContain("SPEC §8.3");
+  });
+});
+
+describe("gateCollision", () => {
+  it("never founds an A4 winner, on any version", () => {
+    for (const version of ["2.1.240", "2.1.0", "unknown"]) {
+      const gate = gateCollision(FACT.A4, version);
+      expect(gate.matrixRef, version).toBe("agent.collisionSameDir");
+      expect(gate.enforcement, version).toBe("unknown");
+      expect(gate.winnerUnfounded, version).toBe(true);
+    }
+  });
+
+  it("founds the A3 winner only from the version the rule appears in", () => {
+    expect(gateCollision(FACT.A3, "2.1.178")).toEqual({
+      matrixRef: "agent.collisionNested",
+      enforcement: "enforced",
+      winnerUnfounded: false,
+    });
+    expect(gateCollision(FACT.A3, "2.1.177").winnerUnfounded).toBe(true);
+    expect(gateCollision(FACT.A3, "unknown").winnerUnfounded).toBe(true);
+  });
+
+  it("does not pretend an unregistered rule was gated", () => {
+    // A1 has no matrix entry yet, so no confidence is claimed for it either
+    // way — the record simply never passed through the matrix.
+    expect(gateCollision(FACT.A1, "2.1.240")).toEqual({ winnerUnfounded: false });
+  });
+});
+
+describe("gateDiscovery", () => {
+  it("founds the A9 and K12 add-dir rules on a detected version", () => {
+    expect(gateDiscovery(MATRIX["discovery.addDirAgents"], "2.1.240")).toEqual({
+      enforcement: "enforced",
+      unfounded: false,
+    });
+    expect(gateDiscovery(MATRIX["discovery.addDirSkills"], "2.1.240")).toEqual({
+      enforcement: "enforced",
+      unfounded: false,
+    });
+  });
+
+  it("leaves both add-dir rules unfounded in degraded mode (§8.3)", () => {
+    expect(gateDiscovery(MATRIX["discovery.addDirAgents"], "unknown")).toEqual({
+      enforcement: "unknown",
+      unfounded: true,
+    });
+    expect(gateDiscovery(MATRIX["discovery.addDirSkills"], "unknown")).toEqual({
+      enforcement: "unknown",
+      unfounded: true,
+    });
+  });
+
+  it("keeps K12 above documentation only through its fixture (§8.2)", () => {
+    const entry = VERSION_MATRIX.find(
+      (candidate) => candidate.id === "discovery.addDirSkills",
+    );
+    // K12 is [ext], so the entry may not rest on documentation alone.
+    expect(factConfidence(FACT.K12)).toBe("ext");
+    expect(entry?.confidence).toBe("fixture");
+    expect(entry?.fixture).toBe("add-dir");
   });
 });

@@ -110,7 +110,8 @@ description: Nested copy
       scopeLevel(root, parentAgents),
     ];
 
-    const { agents } = await discoverAgents(scopes, appPath);
+    // A3 exists from 2.1.178; below that the matrix does not found a winner.
+    const { agents } = await discoverAgents(scopes, appPath, [], "2.1.178");
     const nested = agents.find(
       (a) => a.name === "shared" && a.source.path?.includes("packages"),
     );
@@ -120,6 +121,110 @@ description: Nested copy
 
     expect(nested?.status).toBe("active");
     expect(parent?.status).toBe("shadowed");
+    expect(parent?.collision?.matrixRef).toBe("agent.collisionNested");
+    expect(parent?.collision?.enforcement).toBe("enforced");
+  });
+
+  it("names no A3 winner below the version the rule appears in", async () => {
+    const root = await makeTempProject({
+      ".claude/agents/shared.md": `---
+name: shared
+description: Parent copy
+---
+`,
+      "packages/app/.claude/agents/shared.md": `---
+name: shared
+description: Nested copy
+---
+`,
+    });
+
+    const appPath = path.join(root, "packages", "app");
+    const scopes: ProjectScopeLevel[] = [
+      scopeLevel(appPath, path.join(appPath, ".claude", "agents")),
+      scopeLevel(root, path.join(root, ".claude", "agents")),
+    ];
+
+    for (const version of ["2.1.177", "unknown"]) {
+      const { agents } = await discoverAgents(scopes, appPath, [], version);
+      const shared = agents.filter((a: Agent) => a.name === "shared");
+
+      expect(shared).toHaveLength(2);
+      for (const agent of shared) {
+        expect(agent.status, version).toBe("ambiguous");
+        expect(agent.collision?.effective, version).toBeUndefined();
+        expect(agent.collision?.enforcement, version).toBe("unknown");
+        expect(agent.collision?.matrixRef, version).toBe("agent.collisionNested");
+      }
+    }
+  });
+
+  it("keeps an A4 same-directory collision winner-free on every version", async () => {
+    const project = await makeTempProject({
+      ".claude/agents/reviewer.md": `---
+name: reviewer
+description: One copy
+---
+`,
+      ".claude/agents/extra/duplicate.md": `---
+name: reviewer
+description: Another copy in the same agents root
+---
+`,
+    });
+    const agentsPath = path.join(project, ".claude", "agents");
+
+    const { agents } = await discoverAgents(
+      [scopeLevel(project, agentsPath)],
+      project,
+      [],
+      "2.1.240",
+    );
+
+    const reviewers = agents.filter((a: Agent) => a.name === "reviewer");
+    expect(reviewers).toHaveLength(2);
+    for (const agent of reviewers) {
+      expect(agent.status).toBe("ambiguous");
+      expect(agent.collision?.effective).toBeUndefined();
+      // A4's entry is `unknown` by construction: one file loads, but not which.
+      expect(agent.collision?.enforcement).toBe("unknown");
+      expect(agent.collision?.matrixRef).toBe("agent.collisionSameDir");
+    }
+  });
+
+  it("reports an --add-dir agent as unknown when A9 is not founded (A9)", async () => {
+    const project = await makeTempProject({
+      ".claude/agents/reviewer.md": `---
+name: reviewer
+description: Project agent
+---
+`,
+    });
+    const vendor = await makeTempProject({
+      ".claude/agents/vendor.md": `---
+name: vendor
+description: Agent attached through --add-dir
+---
+`,
+    });
+    const agentsPath = path.join(project, ".claude", "agents");
+    const scopes = [scopeLevel(project, agentsPath)];
+
+    const detected = await discoverAgents(scopes, project, [vendor], "2.1.240");
+    const attached = detected.agents.find((a: Agent) => a.name === "vendor");
+    expect(attached?.status).toBe("active");
+    expect(attached?.source.matrixRef).toBe("discovery.addDirAgents");
+
+    // §8.3: without a detected version the platform claim behind A9 has no
+    // basis, so the agent is reported as unknown rather than active.
+    const degraded = await discoverAgents(scopes, project, [vendor]);
+    expect(degraded.agents.find((a: Agent) => a.name === "vendor")?.status).toBe(
+      "unknown",
+    );
+    // The ordinary scope walk is not gated and keeps its status.
+    expect(degraded.agents.find((a: Agent) => a.name === "reviewer")?.status).toBe(
+      "active",
+    );
   });
 });
 
