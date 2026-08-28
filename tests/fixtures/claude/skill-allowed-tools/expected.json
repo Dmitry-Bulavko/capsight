@@ -1,0 +1,873 @@
+{
+  "discovery": {
+    "agents": [
+      {
+        "name": "runner",
+        "description": "Agent with no tools whitelist so the skill allowed-tools list cannot look like a restriction",
+        "source": {
+          "platform": "claude",
+          "scope": "project",
+          "path": ".claude/agents/runner.md"
+        },
+        "status": "active",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      }
+    ],
+    "skills": [
+      {
+        "name": "deployer",
+        "description": "Skill that pre-approves deployment tools via allowed-tools",
+        "source": {
+          "platform": "claude",
+          "scope": "project",
+          "path": ".claude/skills/deployer/SKILL.md"
+        },
+        "path": ".claude/skills/deployer/SKILL.md"
+      }
+    ],
+    "instructions": [
+      {
+        "type": "CLAUDE.md",
+        "path": "CLAUDE.md",
+        "scope": "project",
+        "sizeBytes": 163
+      }
+    ],
+    "mcpServers": [],
+    "settings": [],
+    "trust": {
+      "accepted": false,
+      "projectPath": "."
+    },
+    "environment": {
+      "relevant": []
+    }
+  },
+  "resolutions": [
+    {
+      "agentName": "runner",
+      "context": {
+        "preset": "foreground-subagent",
+        "isMainSession": false,
+        "isBackground": false,
+        "isFork": false,
+        "isTeammate": false,
+        "depth": 0,
+        "maxDepth": 3
+      },
+      "capabilities": [
+        {
+          "capabilityId": "permission:default",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "No permissionMode declared; using default (manual) mode (P5).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Agent",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Artifact",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "AskUserQuestion",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            },
+            {
+              "type": "context-filter",
+              "message": "Tool removed by subagent filter 1 (T1)."
+            }
+          ]
+        },
+        {
+          "capabilityId": "Bash",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Edit",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EndConversation",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            },
+            {
+              "type": "context-filter",
+              "message": "Tool removed by subagent filter 1 (T1)."
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            },
+            {
+              "type": "context-filter",
+              "message": "Tool removed by subagent filter 1 (T1)."
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterWorktree",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            },
+            {
+              "type": "context-filter",
+              "message": "Tool removed by subagent filter 1 (T1)."
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitWorktree",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Glob",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Grep",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Monitor",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "NotebookEdit",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "PowerShell",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Read",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ScheduleWakeup",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            },
+            {
+              "type": "context-filter",
+              "message": "Tool removed by subagent filter 1 (T1)."
+            }
+          ]
+        },
+        {
+          "capabilityId": "SendMessage",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Skill",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Task",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskOutput",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            },
+            {
+              "type": "context-filter",
+              "message": "Tool removed by subagent filter 1 (T1)."
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskStop",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TodoWrite",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ToolSearch",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WaitForMcpServers",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            },
+            {
+              "type": "context-filter",
+              "message": "Tool removed by subagent filter 1 (T1)."
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebFetch",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebSearch",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Workflow",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            },
+            {
+              "type": "context-filter",
+              "message": "Tool removed by subagent filter 1 (T1)."
+            }
+          ]
+        },
+        {
+          "capabilityId": "Write",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/runner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/runner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "instruction:CLAUDE.md",
+          "kind": "instruction",
+          "status": "available",
+          "enforcement": "advisory",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": "CLAUDE.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Instruction source loaded into session context (I1).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": "CLAUDE.md"
+              },
+              "matrixRef": "I1"
+            }
+          ]
+        }
+      ],
+      "warnings": [
+        {
+          "category": "security-finding",
+          "severity": "warning",
+          "message": "Skill pre-approves sensitive tool \"Bash(git push:*)\" via allowed-tools (K6, K7).",
+          "evidence": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/skills/deployer/SKILL.md",
+              "fieldPath": "frontmatter.allowed-tools[0]"
+            }
+          ],
+          "matrixRef": "K6"
+        },
+        {
+          "category": "security-finding",
+          "severity": "warning",
+          "message": "Skill pre-approves sensitive tool \"Write\" via allowed-tools (K6, K7).",
+          "evidence": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/skills/deployer/SKILL.md",
+              "fieldPath": "frontmatter.allowed-tools[1]"
+            }
+          ],
+          "matrixRef": "K6"
+        }
+      ],
+      "unknownRate": 0
+    }
+  ]
+}

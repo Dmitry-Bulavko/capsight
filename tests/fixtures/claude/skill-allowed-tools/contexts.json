@@ -1,0 +1,6 @@
+[
+  {
+    "agentName": "runner",
+    "preset": "foreground-subagent"
+  }
+]

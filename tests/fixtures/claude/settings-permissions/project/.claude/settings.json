@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "*",
+      "mcp__*",
+      "Bash(npm run test:*)",
+      "Read(/src/**)",
+      "WebFetch(domain:example.com)",
+      "mcp__github(issues)"
+    ],
+    "deny": [
+      "Bash",
+      "Write",
+      "Edit(//etc/secrets/**)",
+      "WebFetch(example.org)"
+    ],
+    "disableBypassPermissionsMode": false
+  }
+}

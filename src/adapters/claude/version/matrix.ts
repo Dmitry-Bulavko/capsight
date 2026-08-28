@@ -95,10 +95,13 @@ const MATRIX_ENTRIES = [
     minVersion: "2.1.0",
     changedIn: ["2.1.172", "2.1.217", "2.1.219"],
     status: "supported",
-    confidence: "doc",
-    pendingFixture: "depth-limit",
+    confidence: "fixture",
+    fixture: "depth-limit",
     notes:
-      "N5 depth values: 2.1.172-2.1.216 = 5 (not configurable), 2.1.217-2.1.218 = 1, 2.1.219+ = 3.",
+      "N5 depth values: 2.1.172-2.1.216 = 5 (not configurable), 2.1.217-2.1.218 = 1, 2.1.219+ = 3. " +
+      "The fixture covers N2 (removal at the limit, fork exempt) and the 2.1.219+ default of 3 " +
+      "including the CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH override (N3); the pre-2.1.219 values " +
+      "of N5 rest on documentation alone until a runtime probe can observe them.",
   },
   {
     id: FACT.P1,

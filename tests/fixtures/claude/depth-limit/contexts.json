@@ -1,0 +1,30 @@
+[
+  {
+    "agentName": "spawner",
+    "preset": "foreground-subagent",
+    "depth": 1,
+    "maxDepth": 3
+  },
+  {
+    "agentName": "spawner",
+    "preset": "foreground-subagent",
+    "depth": 3,
+    "maxDepth": 3
+  },
+  {
+    "agentName": "spawner",
+    "preset": "fork",
+    "depth": 3,
+    "maxDepth": 3
+  },
+  {
+    "agentName": "spawner",
+    "preset": "foreground-subagent",
+    "depth": 0
+  },
+  {
+    "agentName": "spawner",
+    "preset": "foreground-subagent",
+    "depth": 1
+  }
+]

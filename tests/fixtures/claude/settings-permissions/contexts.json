@@ -1,0 +1,6 @@
+[
+  {
+    "agentName": "restricted",
+    "preset": "foreground-subagent"
+  }
+]

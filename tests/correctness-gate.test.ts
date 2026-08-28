@@ -537,13 +537,9 @@ describe("correctness gate fixture corpus", () => {
    */
   const EXPECTED_PENDING_FIXTURES = [
     "add-dir",
-    "depth-limit",
-    "environment",
     "instructions",
     "managed-simulation",
     "plugin-agents",
-    "settings-permissions",
-    "skill-allowed-tools",
     "version-drift",
   ];
 
