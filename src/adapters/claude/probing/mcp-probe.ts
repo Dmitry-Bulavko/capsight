@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import readline from "node:readline";
 import type { PlatformVersion } from "../../../core/model/index.js";
+import type { LocalStateWarning } from "../../../core/warnings/local-state.js";
 import { computeMcpConfigHash, computeMcpServerId } from "../discovery/mcp.js";
 import type { DiscoveredMcpServer } from "../discovery/types.js";
 
@@ -50,6 +51,8 @@ export interface McpProbeResult {
   status: McpProbeStatus;
   tools: McpProbeTool[];
   cached: boolean;
+  /** Set by the caller on the first write into the project's `.agent-manager/` (§12.3). */
+  localStateWarning?: LocalStateWarning;
 }
 
 export type McpProbeResponse = McpProbePreview | McpProbeResult;

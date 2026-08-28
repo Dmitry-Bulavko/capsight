@@ -107,8 +107,8 @@ Order: H1-01 → H1-02 → H1-03 → H1-05 → H1-06 → H1-04 → H1-07 → H1-
 | H1-13 | H1 | McpServer model completeness + probe addressing | done | §5, §7.9, §12.5 | src/adapters/claude/discovery/mcp.ts, types.ts | `name`, `definitionKind`, `configHash`; probe by name |
 | H1-14 | H1 | CLI parity with §12.5 (`explain`, `warnings`) | done | §12.5, §7.5, §7.6 | src/cli/index.ts | Both commands present, read-only |
 | H1-15 | H1 | MCP probe hardening | done | §9.4, §7.9, §12.3 | src/adapters/claude/probing/mcp-probe.ts | Isolated env, SIGKILL escalation, redacted argv |
-| H1-16 | H1 | Warn that `.agent-manager/` must be gitignored on first write | in_progress | §12.3, H1-01 decision | src/adapters/claude/generation/, src/application/ | First write to `.agent-manager/` warns if not ignored |
-| H1-17 | H1 | Decide whether degraded mode downgrades `status` too | todo | §8.3, §11.3, §6 | src/adapters/claude/version/matrix.ts, tests/fixtures/coverage-report.ts | Decision recorded and implemented |
+| H1-16 | H1 | Warn that `.agent-manager/` must be gitignored on first write | done | §12.3, H1-01 decision | src/adapters/claude/generation/, src/application/ | First write to `.agent-manager/` warns if not ignored |
+| H1-17 | H1 | Decide whether degraded mode downgrades `status` too | in_progress | §8.3, §11.3, §6 | src/adapters/claude/version/matrix.ts, tests/fixtures/coverage-report.ts | Decision recorded and implemented |
 | H1-18 | H1 | Gate discovery and simulate verdicts through the matrix | todo | §8.2, inv 11, A3, A4, A10, F8, F9 | src/adapters/claude/discovery/, src/application/simulate.ts | Five inert matrix entries actually consulted |
 | H1-19 | H1 | Version-gate the Agent/Task alias expansion | todo | F11, §8.2 | src/adapters/claude/resolution/tools.ts | Alias-dependent verdicts unknown below 2.1.63 |
 | H1-20 | H1 | Resolving an ambiguous or invalid agent must not be silent | todo | A4, §5, inv 3, 4, 14 | src/adapters/claude/resolution/resolver.ts | ambiguous-collision warning emitted; contested fields unknown |
