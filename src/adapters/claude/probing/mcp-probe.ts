@@ -7,6 +7,8 @@ import { computeMcpConfigHash, computeMcpServerId } from "../discovery/mcp.js";
 import type { DiscoveredMcpServer } from "../discovery/types.js";
 
 const DEFAULT_PROBE_TIMEOUT_MS = 30_000;
+/** Grace period between SIGTERM and SIGKILL for a child that ignores termination (§9.4). */
+const DEFAULT_KILL_GRACE_MS = 5_000;
 const CACHE_DIR = ".agent-manager/cache/mcp";
 
 export type McpProbeStatus = "probed" | "unavailable" | "timeout" | "error";
@@ -31,6 +33,8 @@ export interface McpProbePreview {
   serverName: string;
   message: string;
   commandDisplay: string;
+  /** True when at least one argument value was replaced by `<redacted>` (§0.1.8). */
+  argumentsRedacted: boolean;
   requiresConfirmation: true;
 }
 
@@ -39,6 +43,7 @@ export interface McpProbeResult {
   serverId: string;
   serverName: string;
   commandDisplay: string;
+  argumentsRedacted: boolean;
   configHash: string;
   probedAt: string;
   claudeVersion: string;
@@ -53,6 +58,10 @@ export interface ProbeProcess {
   write(line: string): void;
   readLines(): AsyncIterable<string>;
   close(): void;
+  /** Real child processes only; test doubles may omit it. */
+  readonly pid?: number;
+  /** Resolves once the child has actually exited. Real child processes only. */
+  readonly exited?: Promise<{ code: number | null; signal: NodeJS.Signals | null }>;
 }
 
 export interface ProcessSpawner {
@@ -133,16 +142,216 @@ async function resolveMcpServerConfig(
 
 export { computeMcpConfigHash };
 
-export function formatMcpCommandDisplay(config: Record<string, unknown>): string {
-  const command = typeof config.command === "string" ? config.command : "";
-  const args = Array.isArray(config.args)
-    ? config.args.filter((arg): arg is string => typeof arg === "string")
-    : [];
-  return [command, ...args].filter(Boolean).join(" ");
+/**
+ * Argument redaction for the confirmation prompt.
+ *
+ * §7.9 requires showing `Command: <command> <args>` before running a probe, while
+ * §0.1.8 / §13 invariant 10 forbid secrets in any output. Resolution: show the
+ * command and the argument *shape*, replacing credential-looking values with
+ * `<redacted>`. The executable and flag names are never redacted, so the user
+ * confirming a probe still sees what is about to run.
+ */
+const REDACTED = "<redacted>";
+
+const CREDENTIAL_NAME_SUBSTRINGS = [
+  "apikey",
+  "accesskey",
+  "privatekey",
+  "secret",
+  "password",
+  "passwd",
+  "credential",
+  "token",
+  "auth",
+];
+
+const CREDENTIAL_NAME_WORDS = new Set(["key", "keys", "pat", "pwd", "cred", "creds"]);
+
+/** Well-known credential prefixes, matched anywhere inside an argument. */
+const TOKEN_PREFIX_PATTERN =
+  /gh[pousr]_[A-Za-z0-9]{16,}|github_pat_[A-Za-z0-9_]{16,}|sk-[A-Za-z0-9_-]{16,}|xox[abposr]-[A-Za-z0-9-]{10,}|AKIA[0-9A-Z]{12,}|eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]+/g;
+
+const BEARER_PATTERN = /\b(Bearer|Basic|Token)\s+[A-Za-z0-9._~+/=-]{8,}/gi;
+
+const URL_PATTERN = /^[A-Za-z][A-Za-z0-9+.-]*:\/\//;
+
+function splitNameWords(name: string): string[] {
+  return name
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .split(/[^A-Za-z0-9]+/)
+    .filter(Boolean)
+    .map((word) => word.toLowerCase());
 }
 
+/** True when a flag or query-parameter name looks credential-ish. */
+function isCredentialName(rawName: string): boolean {
+  const name = rawName.replace(/^-+/, "");
+  const compact = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (compact.length === 0) {
+    return false;
+  }
+  if (CREDENTIAL_NAME_SUBSTRINGS.some((needle) => compact.includes(needle))) {
+    return true;
+  }
+  return splitNameWords(name).some((word) => CREDENTIAL_NAME_WORDS.has(word));
+}
+
+function shannonEntropy(value: string): number {
+  const counts = new Map<string, number>();
+  for (const char of value) {
+    counts.set(char, (counts.get(char) ?? 0) + 1);
+  }
+  let entropy = 0;
+  for (const count of counts.values()) {
+    const p = count / value.length;
+    entropy -= p * Math.log2(p);
+  }
+  return entropy;
+}
+
+/** Long, high-entropy opaque strings — token-shaped even without a known prefix. */
+function looksLikeBareToken(value: string): boolean {
+  if (value.length < 24 || !/^[A-Za-z0-9_\-+=.]+$/.test(value)) {
+    return false;
+  }
+  if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) {
+    return false;
+  }
+  return shannonEntropy(value) >= 3.5;
+}
+
+function hasKnownTokenPrefix(value: string): boolean {
+  TOKEN_PREFIX_PATTERN.lastIndex = 0;
+  return TOKEN_PREFIX_PATTERN.test(value);
+}
+
+/** Redact `user:pass@host` credentials and credential-ish query parameters. */
+function redactUrl(value: string): string {
+  const withoutUserInfo = value.replace(
+    /^([A-Za-z][A-Za-z0-9+.-]*:\/\/)([^/?#\s@]+)@/,
+    (_match, scheme: string, userInfo: string) => {
+      const separator = userInfo.indexOf(":");
+      if (separator >= 0) {
+        return `${scheme}${userInfo.slice(0, separator)}:${REDACTED}@`;
+      }
+      const redactUser = looksLikeBareToken(userInfo) || hasKnownTokenPrefix(userInfo);
+      return `${scheme}${redactUser ? REDACTED : userInfo}@`;
+    },
+  );
+
+  return withoutUserInfo.replace(
+    /([?&])([^=&#\s]+)=([^&#\s]*)/g,
+    (match, separator: string, name: string, paramValue: string) => {
+      const secret =
+        isCredentialName(name) ||
+        looksLikeBareToken(paramValue) ||
+        hasKnownTokenPrefix(paramValue);
+      return secret ? `${separator}${name}=${REDACTED}` : match;
+    },
+  );
+}
+
+function redactValue(value: string): string {
+  if (URL_PATTERN.test(value)) {
+    return redactUrl(value);
+  }
+  if (looksLikeBareToken(value)) {
+    return REDACTED;
+  }
+  return value.replace(TOKEN_PREFIX_PATTERN, REDACTED).replace(
+    BEARER_PATTERN,
+    (_match, scheme: string) => `${scheme} ${REDACTED}`,
+  );
+}
+
+/**
+ * Replace credential-shaped argument values with `<redacted>`, keeping flag
+ * names, positional shape and the executable intact.
+ */
+export function redactCommandArgs(args: string[]): { args: string[]; redacted: boolean } {
+  const result: string[] = [];
+  let redacted = false;
+  let expectCredentialValue = false;
+
+  for (const arg of args) {
+    if (expectCredentialValue) {
+      expectCredentialValue = false;
+      if (!arg.startsWith("-")) {
+        result.push(REDACTED);
+        redacted = true;
+        continue;
+      }
+    }
+
+    const equals = arg.startsWith("-") ? arg.indexOf("=") : -1;
+    if (equals > 0) {
+      const name = arg.slice(0, equals);
+      const value = arg.slice(equals + 1);
+      if (isCredentialName(name)) {
+        result.push(`${name}=${REDACTED}`);
+        redacted = true;
+        continue;
+      }
+      const safeValue = redactValue(value);
+      redacted = redacted || safeValue !== value;
+      result.push(`${name}=${safeValue}`);
+      continue;
+    }
+
+    if (arg.startsWith("-") && isCredentialName(arg)) {
+      result.push(arg);
+      expectCredentialValue = true;
+      continue;
+    }
+
+    const safeArg = redactValue(arg);
+    redacted = redacted || safeArg !== arg;
+    result.push(safeArg);
+  }
+
+  return { args: result, redacted };
+}
+
+export interface McpCommandDescription {
+  commandDisplay: string;
+  argumentsRedacted: boolean;
+}
+
+/** Build the §7.9 `Command: …` line with credential-shaped values redacted. */
+export function describeMcpCommand(config: Record<string, unknown>): McpCommandDescription {
+  const command = typeof config.command === "string" ? config.command : "";
+  const rawArgs = Array.isArray(config.args)
+    ? config.args.filter((arg): arg is string => typeof arg === "string")
+    : [];
+  const { args, redacted } = redactCommandArgs(rawArgs);
+  return {
+    commandDisplay: [command, ...args].filter(Boolean).join(" "),
+    argumentsRedacted: redacted,
+  };
+}
+
+export function formatMcpCommandDisplay(config: Record<string, unknown>): string {
+  return describeMcpCommand(config).commandDisplay;
+}
+
+/**
+ * Environment keys inherited by the probed child. §9.4 asks for process
+ * isolation: the child gets what it needs to start plus the keys the server
+ * config declares — never the whole `process.env`.
+ */
+const INHERITED_ENV_KEYS: readonly string[] =
+  process.platform === "win32"
+    ? ["PATH", "PATHEXT", "SystemRoot", "COMSPEC", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "TEMP", "TMP"]
+    : ["PATH", "HOME"];
+
 function buildSpawnEnv(config: Record<string, unknown>): NodeJS.ProcessEnv {
-  const env = { ...process.env };
+  const env: NodeJS.ProcessEnv = {};
+  for (const key of INHERITED_ENV_KEYS) {
+    const value = process.env[key];
+    if (typeof value === "string") {
+      env[key] = value;
+    }
+  }
   if (config.env && typeof config.env === "object" && !Array.isArray(config.env)) {
     for (const [key, value] of Object.entries(config.env)) {
       if (typeof value === "string") {
@@ -156,14 +365,18 @@ function buildSpawnEnv(config: Record<string, unknown>): NodeJS.ProcessEnv {
 function buildPreview(
   serverId: string,
   serverName: string,
-  commandDisplay: string,
+  command: McpCommandDescription,
 ): McpProbePreview {
+  const base = `This starts the MCP server "${serverName}" and runs its initialization logic.`;
   return {
     phase: "preview",
     serverId,
     serverName,
-    message: `This starts the MCP server "${serverName}" and runs its initialization logic.`,
-    commandDisplay,
+    message: command.argumentsRedacted
+      ? `${base} Credential-shaped arguments are shown as ${REDACTED}.`
+      : base,
+    commandDisplay: command.commandDisplay,
+    argumentsRedacted: command.argumentsRedacted,
     requiresConfirmation: true,
   };
 }
@@ -204,18 +417,46 @@ export function isMcpProbeCacheValid(
   return cache.configHash === configHash && cache.status === "probed";
 }
 
-function createDefaultProcessSpawner(timeoutMs: number): ProcessSpawner {
+/** Signal the whole child process group when the platform supports it. */
+function killChild(child: { pid?: number; kill(signal: NodeJS.Signals): boolean }, signal: NodeJS.Signals): void {
+  if (process.platform !== "win32" && child.pid !== undefined) {
+    try {
+      process.kill(-child.pid, signal);
+      return;
+    } catch {
+      // Group already gone, or no group: fall through to the direct signal.
+    }
+  }
+  try {
+    child.kill(signal);
+  } catch {
+    // Child already exited.
+  }
+}
+
+/**
+ * Default spawner. Isolates the child (own process group where supported) and
+ * escalates SIGTERM to SIGKILL after a grace period so a child that ignores
+ * termination is still reaped (§9.4).
+ */
+export function createDefaultProcessSpawner(
+  timeoutMs: number,
+  options: { killGraceMs?: number } = {},
+): ProcessSpawner {
+  const killGraceMs = options.killGraceMs ?? DEFAULT_KILL_GRACE_MS;
   return {
-    spawn(command, args, options) {
+    spawn(command, args, spawnOptions) {
       const child = spawn(command, args, {
-        cwd: options.cwd,
-        env: options.env,
+        cwd: spawnOptions.cwd,
+        env: spawnOptions.env,
         stdio: ["pipe", "pipe", "pipe"],
+        detached: process.platform !== "win32",
       });
 
       const lineQueue: string[] = [];
       const waiters: Array<(line: string | null) => void> = [];
       let closed = false;
+      let spawnError: Error | null = null;
 
       const rl = readline.createInterface({ input: child.stdout! });
       rl.on("line", (line) => {
@@ -227,23 +468,64 @@ function createDefaultProcessSpawner(timeoutMs: number): ProcessSpawner {
         }
       });
 
-      child.on("close", () => {
+      const finish = () => {
         closed = true;
         for (const waiter of waiters.splice(0)) {
           waiter(null);
         }
+      };
+
+      child.on("close", finish);
+      child.on("error", (error) => {
+        spawnError = error;
+        finish();
       });
 
-      const timer = setTimeout(() => {
-        child.kill("SIGTERM");
-      }, timeoutMs);
+      const exited = new Promise<{ code: number | null; signal: NodeJS.Signals | null }>(
+        (resolve) => {
+          child.on("exit", (code, signal) => {
+            resolve({ code, signal });
+          });
+          child.on("error", () => {
+            resolve({ code: null, signal: null });
+          });
+        },
+      );
+
+      let killTimer: NodeJS.Timeout | undefined;
+      /** SIGTERM now, SIGKILL after the grace period if the child is still alive. */
+      const terminate = () => {
+        if (child.exitCode !== null || child.signalCode !== null) {
+          return;
+        }
+        killChild(child, "SIGTERM");
+        if (killTimer !== undefined) {
+          return;
+        }
+        killTimer = setTimeout(() => {
+          killChild(child, "SIGKILL");
+        }, killGraceMs);
+      };
+
+      const timer = setTimeout(terminate, timeoutMs);
+      child.on("exit", () => {
+        clearTimeout(timer);
+        if (killTimer !== undefined) {
+          clearTimeout(killTimer);
+        }
+      });
 
       return {
+        pid: child.pid,
+        exited,
         write(line: string) {
           child.stdin?.write(`${line}\n`);
         },
         async *readLines() {
           while (!closed || lineQueue.length > 0 || waiters.length > 0) {
+            if (spawnError !== null && lineQueue.length === 0) {
+              throw spawnError;
+            }
             if (lineQueue.length > 0) {
               yield lineQueue.shift()!;
               continue;
@@ -262,8 +544,8 @@ function createDefaultProcessSpawner(timeoutMs: number): ProcessSpawner {
         },
         close() {
           clearTimeout(timer);
-          child.kill("SIGTERM");
           child.stdin?.end();
+          terminate();
         },
       };
     },
@@ -336,6 +618,7 @@ function buildResult(
     serverId: string;
     serverName: string;
     commandDisplay: string;
+    argumentsRedacted: boolean;
     configHash: string;
     claudeVersion: PlatformVersion;
     status: McpProbeStatus;
@@ -348,6 +631,7 @@ function buildResult(
     serverId: input.serverId,
     serverName: input.serverName,
     commandDisplay: input.commandDisplay,
+    argumentsRedacted: input.argumentsRedacted,
     configHash: input.configHash,
     probedAt: new Date().toISOString(),
     claudeVersion: input.claudeVersion.version,
@@ -368,11 +652,12 @@ export async function probeMcpServer(input: ProbeMcpServerInput): Promise<McpPro
     throw new Error(`MCP server configuration not found: ${input.serverId}`);
   }
 
-  const commandDisplay = formatMcpCommandDisplay(resolved.config);
+  const command = describeMcpCommand(resolved.config);
+  const commandDisplay = command.commandDisplay;
   const configHash = computeMcpConfigHash(resolved.config);
 
   if (!input.confirmed) {
-    return buildPreview(input.serverId, resolved.name, commandDisplay);
+    return buildPreview(input.serverId, resolved.name, command);
   }
 
   const cached = await readMcpProbeCache(input.projectPath, input.serverId);
@@ -381,6 +666,7 @@ export async function probeMcpServer(input: ProbeMcpServerInput): Promise<McpPro
       serverId: input.serverId,
       serverName: resolved.name,
       commandDisplay,
+      argumentsRedacted: command.argumentsRedacted,
       configHash,
       claudeVersion: input.claudeVersion,
       status: cached.status,
@@ -390,19 +676,13 @@ export async function probeMcpServer(input: ProbeMcpServerInput): Promise<McpPro
   }
 
   if (resolved.transport !== "stdio" || !resolved.config.command) {
-    const entry: McpProbeCacheEntry = {
-      serverId: input.serverId,
-      configHash,
-      probedAt: new Date().toISOString(),
-      claudeVersion: input.claudeVersion.version,
-      status: "unavailable",
-      tools: [],
-    };
-    await writeMcpProbeCache(input.projectPath, entry);
+    // No cache entry: only a successful probe is cacheable (§7.9) — a non-probed
+    // status would never satisfy isMcpProbeCacheValid anyway.
     return buildResult({
       serverId: input.serverId,
       serverName: resolved.name,
       commandDisplay,
+      argumentsRedacted: command.argumentsRedacted,
       configHash,
       claudeVersion: input.claudeVersion,
       status: "unavailable",
@@ -433,6 +713,7 @@ export async function probeMcpServer(input: ProbeMcpServerInput): Promise<McpPro
       serverId: input.serverId,
       serverName: resolved.name,
       commandDisplay,
+      argumentsRedacted: command.argumentsRedacted,
       configHash,
       claudeVersion: input.claudeVersion,
       status: "probed",
@@ -442,19 +723,12 @@ export async function probeMcpServer(input: ProbeMcpServerInput): Promise<McpPro
   } catch (error) {
     const status: McpProbeStatus =
       error instanceof Error && error.message.includes("timeout") ? "timeout" : "error";
-    const entry: McpProbeCacheEntry = {
-      serverId: input.serverId,
-      configHash,
-      probedAt: new Date().toISOString(),
-      claudeVersion: input.claudeVersion.version,
-      status,
-      tools: [],
-    };
-    await writeMcpProbeCache(input.projectPath, entry);
+    // Failed and timed-out probes leave no cache entry behind in the inspected project.
     return buildResult({
       serverId: input.serverId,
       serverName: resolved.name,
       commandDisplay,
+      argumentsRedacted: command.argumentsRedacted,
       configHash,
       claudeVersion: input.claudeVersion,
       status,

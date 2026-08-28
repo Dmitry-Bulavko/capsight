@@ -10,10 +10,13 @@ import {
 import type { DiscoveredMcpServer } from "../../../../src/adapters/claude/discovery/types.js";
 import {
   computeMcpConfigHash,
+  createDefaultProcessSpawner,
+  describeMcpCommand,
   formatMcpCommandDisplay,
   isMcpProbeCacheValid,
   probeMcpServer,
   readMcpProbeCache,
+  redactCommandArgs,
   type ProcessSpawner,
   type ProbeProcess,
 } from "../../../../src/adapters/claude/probing/mcp-probe.js";
@@ -151,6 +154,137 @@ describe("mcp-probe", () => {
       expect(display).not.toContain("secret-token-value");
       expect(display).not.toContain("GITHUB_TOKEN");
     });
+
+    it("keeps the executable and flag names while redacting credential values", () => {
+      const described = describeMcpCommand({
+        command: "npx",
+        args: [
+          "-y",
+          "server-github",
+          "--api-key=sk-abcdefghijklmnopqrstuvwx",
+          "--token",
+          "ghp_abcdefghijklmnopqrstuvwxyz0123456789",
+        ],
+      });
+
+      expect(described.commandDisplay).toBe(
+        "npx -y server-github --api-key=<redacted> --token <redacted>",
+      );
+      expect(described.argumentsRedacted).toBe(true);
+    });
+
+    it("leaves ordinary arguments untouched", () => {
+      const described = describeMcpCommand({
+        command: "node",
+        args: ["--experimental-vm-modules", "./dist/server.js", "--port", "8080"],
+      });
+
+      expect(described.commandDisplay).toBe(
+        "node --experimental-vm-modules ./dist/server.js --port 8080",
+      );
+      expect(described.argumentsRedacted).toBe(false);
+    });
+  });
+
+  describe("redactCommandArgs", () => {
+    it("redacts --flag=VALUE for credential-ish flag names", () => {
+      const { args, redacted } = redactCommandArgs([
+        "--api-key=abc",
+        "--auth-token=abc",
+        "--password=hunter2",
+        "--client-secret=abc",
+        "--credential=abc",
+        "--pat=abc",
+        "--githubToken=abc",
+      ]);
+
+      expect(args).toEqual([
+        "--api-key=<redacted>",
+        "--auth-token=<redacted>",
+        "--password=<redacted>",
+        "--client-secret=<redacted>",
+        "--credential=<redacted>",
+        "--pat=<redacted>",
+        "--githubToken=<redacted>",
+      ]);
+      expect(redacted).toBe(true);
+    });
+
+    it("redacts the value following a credential-ish flag", () => {
+      expect(redactCommandArgs(["--secret", "hunter2", "--port", "8080"]).args).toEqual([
+        "--secret",
+        "<redacted>",
+        "--port",
+        "8080",
+      ]);
+    });
+
+    it("does not swallow the next flag when a credential flag has no value", () => {
+      expect(redactCommandArgs(["--token", "--verbose"]).args).toEqual([
+        "--token",
+        "--verbose",
+      ]);
+    });
+
+    it("redacts bare token-shaped values", () => {
+      const { args } = redactCommandArgs([
+        "ghp_abcdefghijklmnopqrstuvwxyz0123456789",
+        "sk-abcdefghijklmnopqrstuvwxyz",
+        "xoxb-123456789012-abcdefghij",
+        "AKIAIOSFODNN7EXAMPLE",
+        "kJ8s2mQ4vX7pL1zR9tY3wB6nD0aF5gH2",
+      ]);
+
+      expect(args).toEqual([
+        "<redacted>",
+        "<redacted>",
+        "<redacted>",
+        "<redacted>",
+        "<redacted>",
+      ]);
+    });
+
+    it("does not redact ordinary package specs, paths or versions", () => {
+      const { args, redacted } = redactCommandArgs([
+        "-y",
+        "@modelcontextprotocol/server-github",
+        "./dist/index.js",
+        "--protocol-version",
+        "2024-11-05",
+      ]);
+
+      expect(args).toEqual([
+        "-y",
+        "@modelcontextprotocol/server-github",
+        "./dist/index.js",
+        "--protocol-version",
+        "2024-11-05",
+      ]);
+      expect(redacted).toBe(false);
+    });
+
+    it("redacts credentials embedded in URLs", () => {
+      const { args } = redactCommandArgs([
+        "https://user:hunter2@example.com/mcp",
+        "https://example.com/mcp?token=abc123&page=2",
+        "https://example.com/mcp?api_key=abc123",
+      ]);
+
+      expect(args).toEqual([
+        "https://user:<redacted>@example.com/mcp",
+        "https://example.com/mcp?token=<redacted>&page=2",
+        "https://example.com/mcp?api_key=<redacted>",
+      ]);
+    });
+
+    it("redacts a bearer credential inside a header argument", () => {
+      const { args } = redactCommandArgs([
+        "-H",
+        "Authorization: Bearer abcdefghijklmnop",
+      ]);
+
+      expect(args).toEqual(["-H", "Authorization: Bearer <redacted>"]);
+    });
   });
 
   describe("computeMcpConfigHash", () => {
@@ -247,6 +381,7 @@ describe("mcp-probe", () => {
         expect(result.requiresConfirmation).toBe(true);
         expect(result.message).toContain('MCP server "github"');
         expect(result.commandDisplay).toBe("npx -y server");
+        expect(result.argumentsRedacted).toBe(false);
       }
       expect(spawn).not.toHaveBeenCalled();
     });
@@ -562,6 +697,176 @@ describe("mcp-probe", () => {
       expect(serialized).not.toContain("also-secret");
       expect(serialized).not.toContain("GITHUB_TOKEN");
       expect(serialized).not.toContain("Authorization");
+    });
+
+    it("redacts credential-shaped args and says so in the confirmation prompt", async () => {
+      const argSecret = "ghp_abcdefghijklmnopqrstuvwxyz0123456789";
+      const { projectDir, configPath, serverId } = await makeTempProject({
+        command: "npx",
+        args: ["-y", "server-github", "--api-key", argSecret],
+      });
+      const { spawner } = mockSpawner([]);
+
+      const preview = await probeMcpServer({
+        serverId,
+        confirmed: false,
+        projectPath: projectDir,
+        claudeVersion: mockVersion,
+        discoveredServer: makeDiscoveredServer(configPath, serverId),
+        processSpawner: spawner,
+      });
+
+      expect(preview.phase).toBe("preview");
+      if (preview.phase === "preview") {
+        expect(preview.commandDisplay).toBe("npx -y server-github --api-key <redacted>");
+        expect(preview.argumentsRedacted).toBe(true);
+        expect(preview.message).toContain("<redacted>");
+      }
+      expect(JSON.stringify(preview)).not.toContain(argSecret);
+    });
+  });
+
+  describe("process isolation", () => {
+    it("gives the child a minimal environment plus configured keys", async () => {
+      process.env.CAPSIGHT_PROBE_LEAK_CHECK = "leaked-value";
+      try {
+        const { projectDir, configPath, serverId } = await makeTempProject({
+          command: "node",
+          args: ["server.js"],
+          env: { API_KEY: "configured-value" },
+        });
+        const { spawner, spawn } = mockSpawner([
+          JSON.stringify({ jsonrpc: "2.0", id: 2, result: { tools: [] } }),
+        ]);
+
+        await probeMcpServer({
+          serverId,
+          confirmed: true,
+          projectPath: projectDir,
+          claudeVersion: mockVersion,
+          discoveredServer: makeDiscoveredServer(configPath, serverId),
+          processSpawner: spawner,
+        });
+
+        expect(spawn).toHaveBeenCalledOnce();
+        const env = spawn.mock.calls[0]![2].env as NodeJS.ProcessEnv;
+        expect(env.CAPSIGHT_PROBE_LEAK_CHECK).toBeUndefined();
+        expect(env.API_KEY).toBe("configured-value");
+        expect(env.PATH).toBe(process.env.PATH);
+        expect(Object.keys(env).length).toBeLessThan(Object.keys(process.env).length);
+      } finally {
+        delete process.env.CAPSIGHT_PROBE_LEAK_CHECK;
+      }
+    });
+
+    it("escalates SIGTERM to SIGKILL so a stubborn child is reaped", async () => {
+      const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), "capsight-mcp-kill-"));
+      tempDirs.push(projectDir);
+      const scriptPath = path.join(projectDir, "stubborn.js");
+      await fs.writeFile(
+        scriptPath,
+        [
+          "process.on('SIGTERM', () => {});",
+          "process.on('SIGINT', () => {});",
+          "setInterval(() => {}, 1000);",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const spawner = createDefaultProcessSpawner(50, { killGraceMs: 100 });
+      const proc = spawner.spawn(process.execPath, [scriptPath], { cwd: projectDir });
+
+      expect(proc.pid).toBeGreaterThan(0);
+      const exit = await proc.exited!;
+      expect(exit.signal).toBe("SIGKILL");
+      expect(() => process.kill(proc.pid!, 0)).toThrow();
+    }, 10_000);
+  });
+
+  describe("failed probes leave no cache entry", () => {
+    it("writes no cache file on timeout", async () => {
+      const { projectDir, configPath, serverId } = await makeTempProject({
+        command: "node",
+        args: ["slow-server.js"],
+      });
+      const spawner: ProcessSpawner = {
+        spawn: vi.fn(() => ({
+          write: vi.fn(),
+          async *readLines() {
+            await new Promise((resolve) => setTimeout(resolve, 50));
+          },
+          close: vi.fn(),
+        })),
+      };
+
+      const result = await probeMcpServer({
+        serverId,
+        confirmed: true,
+        projectPath: projectDir,
+        claudeVersion: mockVersion,
+        discoveredServer: makeDiscoveredServer(configPath, serverId),
+        processSpawner: spawner,
+        timeoutMs: 10,
+      });
+
+      expect(result.phase === "result" && result.status).toBe("timeout");
+      expect(await readMcpProbeCache(projectDir, serverId)).toBeNull();
+      await expect(
+        fs.stat(path.join(projectDir, ".agent-manager/cache/mcp")),
+      ).rejects.toThrow();
+    });
+
+    it("writes no cache file for a non-stdio transport", async () => {
+      const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), "capsight-mcp-probe-"));
+      tempDirs.push(projectDir);
+      const configPath = path.join(projectDir, ".mcp.json");
+      await fs.writeFile(
+        configPath,
+        JSON.stringify({ mcpServers: { remote: { url: "https://example.com/mcp" } } }),
+        "utf8",
+      );
+      const serverId = computeMcpServerId(configPath, "remote");
+
+      await probeMcpServer({
+        serverId,
+        confirmed: true,
+        projectPath: projectDir,
+        claudeVersion: mockVersion,
+        discoveredServer: {
+          id: serverId,
+          name: "remote",
+          source: { platform: "claude", scope: "project", path: configPath },
+          configPath,
+          transport: "http",
+          definitionKind: "config-file",
+          status: "configured",
+          configHash: "hash",
+        },
+        processSpawner: mockSpawner([]).spawner,
+      });
+
+      expect(await readMcpProbeCache(projectDir, serverId)).toBeNull();
+    });
+
+    it("does not overwrite a valid cache entry when a later probe fails", async () => {
+      const { projectDir, configPath, serverId } = await makeTempProject({
+        command: "node",
+        args: ["server.js"],
+      });
+
+      await probeMcpServer({
+        serverId,
+        confirmed: true,
+        projectPath: projectDir,
+        claudeVersion: mockVersion,
+        discoveredServer: makeDiscoveredServer(configPath, serverId),
+        processSpawner: mockSpawner([
+          JSON.stringify({ jsonrpc: "2.0", id: 2, result: { tools: [{ name: "tool-a" }] } }),
+        ]).spawner,
+      });
+
+      const cached = await readMcpProbeCache(projectDir, serverId);
+      expect(cached?.status).toBe("probed");
     });
   });
 });
