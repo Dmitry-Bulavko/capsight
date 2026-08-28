@@ -138,7 +138,7 @@ program
 program
   .command("probe-mcp")
   .description("Probe an MCP server (requires --yes to run)")
-  .argument("<server>", "MCP server id")
+  .argument("<server>", "MCP server name or discovered id")
   .option("--yes", "Confirm and run the probe")
   .option("--path <path>", "Project path")
   .action(async (serverId: string, options: { yes?: boolean; path?: string }) => {

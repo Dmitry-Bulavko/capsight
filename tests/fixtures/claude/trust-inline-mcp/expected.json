@@ -58,6 +58,7 @@
     ],
     "mcpServers": [
       {
+        "name": "github",
         "source": {
           "platform": "claude",
           "scope": "project",
@@ -65,7 +66,9 @@
         },
         "configPath": ".mcp.json",
         "transport": "stdio",
-        "status": "configured"
+        "definitionKind": "config-file",
+        "status": "configured",
+        "configHash": "395ea227a8034d11"
       }
     ],
     "settings": [],

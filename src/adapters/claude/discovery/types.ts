@@ -22,10 +22,21 @@ export interface DiscoveredInstruction {
 
 export interface DiscoveredMcpServer {
   id: string;
+  /** Server key as written in the config (`mcpServers.<name>`). */
+  name: string;
   source: SourceInfo;
   configPath: string;
   transport: "stdio" | "http" | "sse" | "ws" | "unknown";
-  status: "configured" | "unknown";
+  definitionKind: "inline-agent" | "named-reference" | "config-file";
+  status:
+    | "configured"
+    | "probed"
+    | "unavailable"
+    | "requires_auth"
+    | "blocked_by_trust"
+    | "unknown";
+  /** Key-names-only hash of the server config — never contains values (§7.9). */
+  configHash: string;
 }
 
 export interface SettingsLayer {

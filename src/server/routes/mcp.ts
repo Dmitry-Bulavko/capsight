@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { McpServerNotFoundError, probeMcp } from "../../application/probe-mcp.js";
+import {
+  McpServerAmbiguousError,
+  McpServerNotFoundError,
+  probeMcp,
+} from "../../application/probe-mcp.js";
 import { getLastScan } from "../../application/scan-store.js";
 
 export const mcpRouter = Router();
@@ -20,6 +24,10 @@ mcpRouter.post("/:id/probe", async (req, res) => {
     });
     res.json(result);
   } catch (error) {
+    if (error instanceof McpServerAmbiguousError) {
+      res.status(409).json({ error: error.message, candidates: error.candidates });
+      return;
+    }
     if (error instanceof McpServerNotFoundError) {
       res.status(404).json({ error: error.message });
       return;

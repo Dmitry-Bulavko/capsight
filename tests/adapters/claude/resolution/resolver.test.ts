@@ -81,6 +81,7 @@ function makeSnapshot(overrides: Partial<ProjectSnapshot> = {}): ProjectSnapshot
     mcpServers: [
       {
         id: "mcp-github",
+        name: "github",
         source: {
           platform: "claude",
           scope: "project",
@@ -88,7 +89,9 @@ function makeSnapshot(overrides: Partial<ProjectSnapshot> = {}): ProjectSnapshot
         },
         configPath: ".mcp.json",
         transport: "stdio",
+        definitionKind: "config-file",
         status: "configured",
+        configHash: "hash",
       } satisfies DiscoveredMcpServer,
     ],
     settings: [],

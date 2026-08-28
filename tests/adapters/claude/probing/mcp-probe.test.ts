@@ -2,7 +2,11 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { computeMcpServerId } from "../../../../src/adapters/claude/discovery/mcp.js";
+import {
+  computeMcpConfigHash as computeDiscoveryConfigHash,
+  computeMcpServerId,
+  resolveMcpServerRef,
+} from "../../../../src/adapters/claude/discovery/mcp.js";
 import type { DiscoveredMcpServer } from "../../../../src/adapters/claude/discovery/types.js";
 import {
   computeMcpConfigHash,
@@ -39,13 +43,20 @@ async function writeProjectMcpConfig(
   };
 }
 
-function makeDiscoveredServer(configPath: string, serverId: string): DiscoveredMcpServer {
+function makeDiscoveredServer(
+  configPath: string,
+  serverId: string,
+  name = "github",
+): DiscoveredMcpServer {
   return {
     id: serverId,
+    name,
     source: { platform: "claude", scope: "project", path: configPath },
     configPath,
     transport: "stdio",
+    definitionKind: "config-file",
     status: "configured",
+    configHash: "hash",
   };
 }
 
@@ -86,6 +97,45 @@ describe("mcp-probe", () => {
     const meta = await writeProjectMcpConfig(projectDir, config);
     return { projectDir, ...meta };
   }
+
+  describe("probe addressing", () => {
+    const serverA = makeDiscoveredServer("/p/.mcp.json", "id-a", "github");
+    const serverB = makeDiscoveredServer("/p/nested/.mcp.json", "id-b", "github");
+    const serverC = makeDiscoveredServer("/p/.mcp.json", "id-c", "docs");
+
+    it("resolves a server by its configured name", () => {
+      const resolution = resolveMcpServerRef([serverA, serverC], "docs");
+      expect(resolution).toEqual({ kind: "found", server: serverC });
+    });
+
+    it("still resolves a server by its opaque id", () => {
+      const resolution = resolveMcpServerRef([serverA, serverC], "id-a");
+      expect(resolution).toEqual({ kind: "found", server: serverA });
+    });
+
+    it("reports both candidates when a name is ambiguous across config files", () => {
+      const resolution = resolveMcpServerRef([serverA, serverB, serverC], "github");
+      expect(resolution.kind).toBe("ambiguous");
+      if (resolution.kind === "ambiguous") {
+        expect(resolution.candidates).toEqual([serverA, serverB]);
+      }
+    });
+
+    it("reports not-found for an unknown reference", () => {
+      expect(resolveMcpServerRef([serverA], "nope")).toEqual({ kind: "not-found" });
+    });
+  });
+
+  describe("discovered configHash", () => {
+    it("uses the same key-names-only helper as the probe", () => {
+      const config = {
+        command: "node",
+        args: ["server.js"],
+        env: { API_KEY: "secret" },
+      };
+      expect(computeDiscoveryConfigHash(config)).toBe(computeMcpConfigHash(config));
+    });
+  });
 
   describe("formatMcpCommandDisplay", () => {
     it("shows command and args without env values", () => {
@@ -424,10 +474,13 @@ describe("mcp-probe", () => {
         claudeVersion: mockVersion,
         discoveredServer: {
           id: serverId,
+          name: "remote",
           source: { platform: "claude", scope: "project", path: configPath },
           configPath,
           transport: "http",
+          definitionKind: "config-file",
           status: "configured",
+          configHash: "hash",
         },
         processSpawner: spawner,
       });

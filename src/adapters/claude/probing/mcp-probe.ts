@@ -1,10 +1,9 @@
 import { spawn } from "node:child_process";
-import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import readline from "node:readline";
 import type { PlatformVersion } from "../../../core/model/index.js";
-import { computeMcpServerId } from "../discovery/mcp.js";
+import { computeMcpConfigHash, computeMcpServerId } from "../discovery/mcp.js";
 import type { DiscoveredMcpServer } from "../discovery/types.js";
 
 const DEFAULT_PROBE_TIMEOUT_MS = 30_000;
@@ -132,24 +131,7 @@ async function resolveMcpServerConfig(
   return null;
 }
 
-function sortedKeys(value: unknown): string[] | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  return Object.keys(value).sort();
-}
-
-export function computeMcpConfigHash(config: Record<string, unknown>): string {
-  const hashInput = {
-    command: config.command,
-    args: config.args,
-    url: config.url,
-    type: config.type,
-    envKeys: sortedKeys(config.env),
-    headerKeys: sortedKeys(config.headers),
-  };
-  return createHash("sha256").update(JSON.stringify(hashInput)).digest("hex").slice(0, 16);
-}
+export { computeMcpConfigHash };
 
 export function formatMcpCommandDisplay(config: Record<string, unknown>): string {
   const command = typeof config.command === "string" ? config.command : "";
