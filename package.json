@@ -1,0 +1,48 @@
+{
+  "name": "capsight",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Claude Agent Configuration Inspector",
+  "type": "module",
+  "bin": {
+    "agent-manager": "./dist/cli/index.js"
+  },
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:ui\"",
+    "dev:server": "tsx watch src/server/index.ts",
+    "dev:ui": "vite",
+    "build": "npm run build:server && npm run build:ui && npm run build:cli",
+    "build:server": "tsc -p tsconfig.server.json",
+    "build:cli": "tsc -p tsconfig.server.json",
+    "build:ui": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "cli": "tsx src/cli/index.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.server.json --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.11.5",
+    "commander": "^13.1.0",
+    "express": "^4.21.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "yaml": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.10",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@types/supertest": "^7.2.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.2",
+    "supertest": "^7.2.2",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.1",
+    "vitest": "^3.0.8"
+  }
+}

@@ -1,0 +1,1 @@
+# Managed simulation fixture project

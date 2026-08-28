@@ -1,0 +1,35 @@
+---
+description: Claude adapter invariants — platform-specific code, version matrix, read-only discovery
+globs: src/adapters/claude/**
+alwaysApply: false
+---
+
+# Claude Adapter Rules
+
+All Claude Code platform knowledge lives under `src/adapters/claude/`. Never add `.claude/` paths, frontmatter field names, or version checks to `src/core/`.
+
+## Version matrix
+
+- All version-sensitive behavior goes through `src/adapters/claude/version/matrix.ts`.
+- Every non-trivial resolver rule needs a matrix entry and a fixture (SPEC §0.1 #3).
+- Features without matrix entries resolve as `unknown`.
+
+## Discovery (M0–M2)
+
+- Read-only: never write to the scanned project's `.claude/**`.
+- Only external process allowed in normal scan: `claude --version` (SPEC M0 #7).
+- Register invalid agent files with specific reasons (A7).
+- Mark same-directory name collisions as `ambiguous`; do not pick a winner (A4).
+
+## Trust
+
+- `blocked_by_trust` only for inline MCP in project agent frontmatter (R1) and project agent hooks (R5).
+- Do not apply to `.mcp.json` servers or user-level agents (R4).
+
+## Secrets
+
+- Log and cache **key names** only — never env values, tokens, or MCP credentials (SPEC §0.1 #8).
+
+## When uncertain
+
+Return `unknown` with a reason. A confident wrong answer is worse than a missing feature.

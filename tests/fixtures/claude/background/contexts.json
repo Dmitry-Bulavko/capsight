@@ -1,0 +1,6 @@
+[
+  {
+    "agentName": "worker",
+    "preset": "background-subagent"
+  }
+]

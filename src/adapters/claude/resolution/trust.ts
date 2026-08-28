@@ -1,0 +1,237 @@
+import type {
+  Agent,
+  ResolutionReason,
+  SourceInfo,
+  TrustState,
+} from "../../../core/model/index.js";
+
+export type TrustGatedKind = "inline-mcp" | "agent-hooks";
+
+export interface ResolveTrustInput {
+  agent: Agent;
+  trust: TrustState;
+  kind: TrustGatedKind;
+  /** Entry from frontmatter.mcpServers when kind is inline-mcp. */
+  mcpServerEntry?: string | Record<string, unknown>;
+  mcpServerIndex?: number;
+}
+
+export interface ResolveTrustResult {
+  status: "available" | "blocked_by_trust";
+  /** Whether this resource is subject to project trust rules (R1/R5). */
+  gated: boolean;
+  reasons: ResolutionReason[];
+}
+
+const TRUST_EXEMPT_SCOPES = new Set<SourceInfo["scope"]>([
+  "user",
+  "cli",
+  "managed",
+  "plugin",
+]);
+
+function makeReason(
+  type: ResolutionReason["type"],
+  message: string,
+  source?: SourceInfo,
+  matrixRef?: string,
+): ResolutionReason {
+  return matrixRef
+    ? { type, message, source, matrixRef }
+    : source
+      ? { type, message, source }
+      : { type, message };
+}
+
+function fieldSource(agent: Agent, fieldPath: string): SourceInfo {
+  return { ...agent.source, fieldPath };
+}
+
+/** Inline MCP definition in agent frontmatter (object), not a named reference (string). */
+export function isInlineMcpServerEntry(
+  entry: string | Record<string, unknown>,
+): boolean {
+  return typeof entry === "object" && entry !== null && !Array.isArray(entry);
+}
+
+/** MCP servers discovered from `.mcp.json` are never trust-gated (R1 critical note). */
+export function isMcpConfigFileSource(source: SourceInfo): boolean {
+  const normalized = source.path?.replace(/\\/g, "/") ?? "";
+  return normalized.endsWith(".mcp.json");
+}
+
+/**
+ * Project-scoped agents (and add-dir `.claude/agents/`) require trust for R1/R5.
+ * User, CLI, managed, and plugin scopes are exempt (R4).
+ */
+export function isTrustGatedAgent(agent: Agent): boolean {
+  return !TRUST_EXEMPT_SCOPES.has(agent.source.scope);
+}
+
+function hasDeclaredHooks(agent: Agent): boolean {
+  const hooks = agent.configuration.hooks;
+  if (hooks === undefined || hooks === null) {
+    return false;
+  }
+  if (Array.isArray(hooks)) {
+    return hooks.length > 0;
+  }
+  if (typeof hooks === "object") {
+    return Object.keys(hooks as Record<string, unknown>).length > 0;
+  }
+  return true;
+}
+
+function availableReason(
+  agent: Agent,
+  kind: TrustGatedKind,
+  matrixRef: string,
+  message: string,
+): ResolveTrustResult {
+  const fieldPath =
+    kind === "inline-mcp" ? "frontmatter.mcpServers" : "frontmatter.hooks";
+  return {
+    status: "available",
+    gated: false,
+    reasons: [
+      makeReason("trust", message, fieldSource(agent, fieldPath), matrixRef),
+    ],
+  };
+}
+
+/**
+ * Resolve whether an agent resource is blocked by missing project trust.
+ * @see docs/SPEC.md R1, R4, R5, §7.2
+ */
+export function resolveTrustGate(input: ResolveTrustInput): ResolveTrustResult {
+  const { agent, trust, kind, mcpServerEntry, mcpServerIndex } = input;
+
+  if (kind === "inline-mcp") {
+    if (mcpServerEntry === undefined) {
+      return {
+        status: "available",
+        gated: false,
+        reasons: [
+          makeReason(
+            "unknown",
+            "No MCP server entry provided for inline-mcp trust resolution.",
+            agent.source,
+          ),
+        ],
+      };
+    }
+
+    if (!isInlineMcpServerEntry(mcpServerEntry)) {
+      return availableReason(
+        agent,
+        kind,
+        "R4",
+        "Named MCP server reference does not require project trust (R4).",
+      );
+    }
+
+    if (!isTrustGatedAgent(agent)) {
+      return availableReason(
+        agent,
+        kind,
+        "R4",
+        `Inline MCP from ${agent.source.scope} scope loads without project trust (R4).`,
+      );
+    }
+  }
+
+  if (kind === "agent-hooks") {
+    if (!hasDeclaredHooks(agent)) {
+      return {
+        status: "available",
+        gated: false,
+        reasons: [
+          makeReason(
+            "declared",
+            "No frontmatter hooks declared.",
+            fieldSource(agent, "frontmatter.hooks"),
+          ),
+        ],
+      };
+    }
+
+    if (!isTrustGatedAgent(agent)) {
+      return availableReason(
+        agent,
+        kind,
+        "R4",
+        `Agent hooks from ${agent.source.scope} scope run without project trust (R4).`,
+      );
+    }
+  }
+
+  const fieldPath =
+    kind === "inline-mcp"
+      ? `frontmatter.mcpServers[${mcpServerIndex ?? 0}]`
+      : "frontmatter.hooks";
+  const source = fieldSource(agent, fieldPath);
+  const matrixRef = kind === "inline-mcp" ? "R1" : "R5";
+
+  if (trust.accepted) {
+    return {
+      status: "available",
+      gated: true,
+      reasons: [
+        makeReason(
+          "trust",
+          "Project trust accepted; resource loads normally.",
+          source,
+          matrixRef,
+        ),
+      ],
+    };
+  }
+
+  const blockedMessage =
+    kind === "inline-mcp"
+      ? "Inline MCP server blocked until project trust is accepted (R1)."
+      : "Agent frontmatter hooks blocked until project trust is accepted (R5).";
+
+  return {
+    status: "blocked_by_trust",
+    gated: true,
+    reasons: [
+      makeReason("trust", blockedMessage, source, matrixRef),
+    ],
+  };
+}
+
+/**
+ * Trust never applies to MCP configuration from `.mcp.json`.
+ * @see docs/SPEC.md §7.2
+ */
+export function resolveMcpConfigFileTrust(
+  source: SourceInfo,
+): ResolveTrustResult {
+  if (!isMcpConfigFileSource(source)) {
+    return {
+      status: "available",
+      gated: false,
+      reasons: [
+        makeReason(
+          "unknown",
+          "Source is not an MCP configuration file.",
+          source,
+        ),
+      ],
+    };
+  }
+
+  return {
+    status: "available",
+    gated: false,
+    reasons: [
+      makeReason(
+        "trust",
+        "MCP servers from .mcp.json are not subject to project trust (R4).",
+        source,
+        "R4",
+      ),
+    ],
+  };
+}

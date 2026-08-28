@@ -1,0 +1,111 @@
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import request from "supertest";
+import type { Agent, PlatformVersion, ProjectSnapshot } from "../../src/core/model/index.js";
+import type { ScanResult } from "../../src/application/scan.js";
+import { clearLastScan, setLastScan } from "../../src/application/scan-store.js";
+import { app } from "../../src/server/index.js";
+
+const mockVersion: PlatformVersion = {
+  platform: "claude",
+  version: "2.1.0",
+  raw: "2.1.0",
+  detectedAt: "2026-01-01T00:00:00.000Z",
+};
+
+const mockAgent: Agent = {
+  id: "backend",
+  name: "backend",
+  description: "Backend agent",
+  source: {
+    platform: "claude",
+    scope: "project",
+    path: "/mock/project/.claude/agents/backend.md",
+  },
+  status: "active",
+  configuration: {
+    tools: ["Read", "Write", "Grep", "Bash"],
+    disallowedTools: ["Bash"],
+    unknownFields: {},
+  },
+  isPluginAgent: false,
+};
+
+function makeSnapshot(overrides: Partial<ProjectSnapshot> = {}): ProjectSnapshot {
+  return {
+    id: "abc123",
+    projectPath: "/mock/project",
+    version: mockVersion,
+    environment: { relevant: [] },
+    trust: { accepted: false, projectPath: "/mock/project" },
+    agents: [mockAgent],
+    skills: [],
+    instructions: [],
+    mcpServers: [],
+    settings: [],
+    warnings: [],
+    scannedAt: "2026-01-01T12:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function makeScanResult(overrides: Partial<ProjectSnapshot> = {}): ScanResult {
+  return {
+    snapshot: makeSnapshot(overrides),
+    status: "complete",
+  };
+}
+
+describe("GET /api/graph", () => {
+  beforeEach(() => {
+    clearLastScan();
+  });
+
+  afterEach(() => {
+    clearLastScan();
+  });
+
+  it("returns 404 when no scan exists", async () => {
+    const response = await request(app).get("/api/graph");
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({ error: "No scan available" });
+  });
+
+  it("returns 400 for invalid context preset", async () => {
+    setLastScan(makeScanResult());
+
+    const response = await request(app).get("/api/graph?context=invalid-preset");
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/Invalid context preset/);
+  });
+
+  it("returns inspection graph with nodes and edges", async () => {
+    setLastScan(makeScanResult());
+
+    const response = await request(app).get("/api/graph?context=foreground-subagent");
+
+    expect(response.status).toBe(200);
+    expect(response.body.context.preset).toBe("foreground-subagent");
+    expect(Array.isArray(response.body.nodes)).toBe(true);
+    expect(Array.isArray(response.body.edges)).toBe(true);
+    expect(response.body.nodes.length).toBeGreaterThan(0);
+    expect(response.body.nodes.some((node: { kind: string }) => node.kind === "agent")).toBe(
+      true,
+    );
+    expect(response.body.nodes.some((node: { kind: string }) => node.kind === "tool")).toBe(
+      true,
+    );
+  });
+
+  it("differs between foreground and fork contexts", async () => {
+    setLastScan(makeScanResult());
+
+    const foreground = await request(app).get("/api/graph?context=foreground-subagent");
+    const fork = await request(app).get("/api/graph?context=fork");
+
+    expect(foreground.status).toBe(200);
+    expect(fork.status).toBe(200);
+    expect(foreground.body.edges).not.toEqual(fork.body.edges);
+  });
+});

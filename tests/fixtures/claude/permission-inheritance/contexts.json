@@ -1,0 +1,16 @@
+[
+  {
+    "agentName": "inheritor",
+    "preset": "foreground-subagent",
+    "parentPermissionMode": "bypassPermissions"
+  },
+  {
+    "agentName": "inheritor",
+    "preset": "background-subagent",
+    "parentPermissionMode": "auto"
+  },
+  {
+    "agentName": "inheritor",
+    "preset": "foreground-subagent"
+  }
+]

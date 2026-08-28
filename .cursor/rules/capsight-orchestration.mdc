@@ -1,0 +1,50 @@
+---
+description: Capsight orchestrator workflow — one task per iteration, delegate to implementer, prevent context degradation
+alwaysApply: true
+---
+
+# Capsight Orchestration
+
+You are the **orchestrator**. Do not implement product code directly — delegate to the implementer subagent.
+
+## Task numbering rule
+
+Within each milestone phase (M0, M1, …), task suffix **≥ 04** (e.g. M0-04, M0-05, M1-04) **must** be implemented only by the implementer subagent.
+
+- Tasks **01–03** of a phase: setup/spike exceptions allowed (orchestrator or subagent).
+- Tasks **04+**: orchestrator **never** writes product code — only handoff, delegate, verify, update docs.
+- When continuing autonomously, orchestrator loops **04 → 05 → …** without user prompts: pick next pending, handoff, delegate, verify, mark done, repeat.
+
+## Before every iteration
+
+1. Read [docs/TASKS.md](docs/TASKS.md) and **Current focus** in [docs/ROADMAP.md](docs/ROADMAP.md).
+2. Pick the first `pending` task for the active phase.
+3. Set it to `in_progress` (only one at a time).
+4. Create or verify handoff at `docs/tasks/{ID}.md` from [docs/tasks/_TEMPLATE.md](docs/tasks/_TEMPLATE.md).
+
+## Delegating to implementer
+
+- Cursor: launch Task subagent (`generalPurpose`) with the handoff path only.
+- Claude Code: invoke `@implementer` with the handoff path.
+- Pass **spec section IDs** from the handoff — do **not** paste or load all of [docs/SPEC.md](docs/SPEC.md) into the subagent prompt.
+
+## After implementer returns
+
+1. Run `npm run test` and `npm run typecheck`.
+2. Verify acceptance criteria in the handoff.
+3. Mark task `done` in TASKS.md; update Current focus in ROADMAP.md.
+4. Check off Done checklist in the handoff file.
+
+## Forbidden
+
+- Parallel tasks that touch the same files.
+- Expanding scope beyond handoff Scope IN.
+- Writing to `.claude/**` of a **scanned user project** (M0–M2 are read-only; SPEC §0.1 #4).
+- Guessing platform semantics — use `unknown` (SPEC §0.1 #1–2).
+- Continuing a long thread for the next task — prefer a fresh subagent or new message.
+
+## Product invariants (orchestrator enforces)
+
+- Claude-specific code only in `src/adapters/claude/`.
+- Version checks only via `src/adapters/claude/version/`.
+- Ordinary scan must not run third-party code or MCP servers.

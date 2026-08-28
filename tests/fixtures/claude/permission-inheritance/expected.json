@@ -1,0 +1,2370 @@
+{
+  "discovery": {
+    "agents": [
+      {
+        "name": "inheritor",
+        "description": "Agent for P1/P2 permission inheritance golden fixture",
+        "source": {
+          "platform": "claude",
+          "scope": "project",
+          "path": ".claude/agents/inheritor.md"
+        },
+        "status": "active",
+        "configuration": {
+          "tools": [
+            "Read"
+          ],
+          "permissionMode": "acceptEdits",
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      }
+    ],
+    "skills": [],
+    "instructions": [
+      {
+        "type": "CLAUDE.md",
+        "path": "CLAUDE.md",
+        "scope": "project",
+        "sizeBytes": 41
+      }
+    ],
+    "mcpServers": [],
+    "settings": [],
+    "trust": {
+      "accepted": false,
+      "projectPath": "."
+    },
+    "environment": {
+      "relevant": []
+    }
+  },
+  "resolutions": [
+    {
+      "agentName": "inheritor",
+      "context": {
+        "preset": "foreground-subagent",
+        "isMainSession": false,
+        "isBackground": false,
+        "isFork": false,
+        "isTeammate": false,
+        "depth": 0,
+        "maxDepth": 3,
+        "parentPermissionMode": "bypassPermissions"
+      },
+      "capabilities": [
+        {
+          "capabilityId": "permission:bypassPermissions",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "parent-mode",
+              "message": "Parent session permission mode \"bypassPermissions\" takes precedence; agent frontmatter ignored (P1).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md",
+                "fieldPath": "frontmatter.permissionMode"
+              },
+              "matrixRef": "P1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Agent",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Artifact",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "AskUserQuestion",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Bash",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Edit",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EndConversation",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterWorktree",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitWorktree",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Glob",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Grep",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Monitor",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "NotebookEdit",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "PowerShell",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Read",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md",
+              "fieldPath": "frontmatter.tools[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Allowed by tools pattern \"Read\" (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md",
+                "fieldPath": "frontmatter.tools[0]"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ScheduleWakeup",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "SendMessage",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Skill",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Task",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskOutput",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskStop",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TodoWrite",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ToolSearch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WaitForMcpServers",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebFetch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebSearch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Workflow",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Write",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "instruction:CLAUDE.md",
+          "kind": "instruction",
+          "status": "available",
+          "enforcement": "advisory",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": "CLAUDE.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Instruction source loaded into session context (I1).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": "CLAUDE.md"
+              },
+              "matrixRef": "I1"
+            }
+          ]
+        }
+      ],
+      "warnings": [
+        {
+          "category": "ignored-field",
+          "severity": "warning",
+          "message": "Declared permissionMode \"acceptEdits\" is not effective in this context.",
+          "evidence": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md",
+              "fieldPath": "frontmatter.permissionMode"
+            }
+          ],
+          "matrixRef": "P1"
+        }
+      ],
+      "unknownRate": 0
+    },
+    {
+      "agentName": "inheritor",
+      "context": {
+        "preset": "background-subagent",
+        "isMainSession": false,
+        "isBackground": true,
+        "isFork": false,
+        "isTeammate": false,
+        "depth": 0,
+        "maxDepth": 3,
+        "parentPermissionMode": "auto"
+      },
+      "capabilities": [
+        {
+          "capabilityId": "permission:auto",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "parent-mode",
+              "message": "Parent session is in auto mode; agent permissionMode frontmatter is ignored (P2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md",
+                "fieldPath": "frontmatter.permissionMode"
+              },
+              "matrixRef": "P2"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Agent",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Artifact",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "AskUserQuestion",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Bash",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Edit",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EndConversation",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterWorktree",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitWorktree",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Glob",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Grep",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Monitor",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "NotebookEdit",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "PowerShell",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Read",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md",
+              "fieldPath": "frontmatter.tools[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Allowed by tools pattern \"Read\" (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md",
+                "fieldPath": "frontmatter.tools[0]"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ScheduleWakeup",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "SendMessage",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Skill",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Task",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskOutput",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskStop",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TodoWrite",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ToolSearch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WaitForMcpServers",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebFetch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebSearch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Workflow",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Write",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "instruction:CLAUDE.md",
+          "kind": "instruction",
+          "status": "available",
+          "enforcement": "advisory",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": "CLAUDE.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Instruction source loaded into session context (I1).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": "CLAUDE.md"
+              },
+              "matrixRef": "I1"
+            }
+          ]
+        }
+      ],
+      "warnings": [
+        {
+          "category": "ignored-field",
+          "severity": "warning",
+          "message": "Declared permissionMode \"acceptEdits\" is not effective in this context.",
+          "evidence": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md",
+              "fieldPath": "frontmatter.permissionMode"
+            }
+          ],
+          "matrixRef": "P2"
+        }
+      ],
+      "unknownRate": 0
+    },
+    {
+      "agentName": "inheritor",
+      "context": {
+        "preset": "foreground-subagent",
+        "isMainSession": false,
+        "isBackground": false,
+        "isFork": false,
+        "isTeammate": false,
+        "depth": 0,
+        "maxDepth": 3
+      },
+      "capabilities": [
+        {
+          "capabilityId": "permission:acceptEdits",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Effective permission mode from agent frontmatter \"acceptEdits\" (P5).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md",
+                "fieldPath": "frontmatter.permissionMode"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Agent",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Artifact",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "AskUserQuestion",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Bash",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Edit",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EndConversation",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterWorktree",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitWorktree",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Glob",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Grep",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Monitor",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "NotebookEdit",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "PowerShell",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Read",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md",
+              "fieldPath": "frontmatter.tools[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Allowed by tools pattern \"Read\" (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md",
+                "fieldPath": "frontmatter.tools[0]"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ScheduleWakeup",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "SendMessage",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Skill",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Task",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskOutput",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskStop",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TodoWrite",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ToolSearch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WaitForMcpServers",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebFetch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebSearch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Workflow",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Write",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/inheritor.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/inheritor.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "instruction:CLAUDE.md",
+          "kind": "instruction",
+          "status": "available",
+          "enforcement": "advisory",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": "CLAUDE.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Instruction source loaded into session context (I1).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": "CLAUDE.md"
+              },
+              "matrixRef": "I1"
+            }
+          ]
+        }
+      ],
+      "warnings": [],
+      "unknownRate": 0
+    }
+  ]
+}

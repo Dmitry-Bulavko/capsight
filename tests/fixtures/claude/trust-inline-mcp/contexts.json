@@ -1,0 +1,10 @@
+[
+  {
+    "agentName": "inline-trust",
+    "preset": "foreground-subagent"
+  },
+  {
+    "agentName": "named-ref",
+    "preset": "foreground-subagent"
+  }
+]

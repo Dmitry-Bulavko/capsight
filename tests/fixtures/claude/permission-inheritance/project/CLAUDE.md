@@ -1,0 +1,1 @@
+# Permission inheritance fixture project

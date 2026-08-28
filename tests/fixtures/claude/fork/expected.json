@@ -1,0 +1,849 @@
+{
+  "discovery": {
+    "agents": [
+      {
+        "name": "forked",
+        "description": "Fork context agent for T3 golden fixture",
+        "source": {
+          "platform": "claude",
+          "scope": "project",
+          "path": ".claude/agents/forked.md"
+        },
+        "status": "active",
+        "configuration": {
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": [
+            "Write"
+          ],
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      }
+    ],
+    "skills": [],
+    "instructions": [
+      {
+        "type": "CLAUDE.md",
+        "path": "CLAUDE.md",
+        "scope": "project",
+        "sizeBytes": 23
+      }
+    ],
+    "mcpServers": [],
+    "settings": [],
+    "trust": {
+      "accepted": false,
+      "projectPath": "."
+    },
+    "environment": {
+      "relevant": []
+    }
+  },
+  "resolutions": [
+    {
+      "agentName": "forked",
+      "context": {
+        "preset": "fork",
+        "isMainSession": false,
+        "isBackground": true,
+        "isFork": true,
+        "isTeammate": false,
+        "depth": 0,
+        "maxDepth": 3
+      },
+      "capabilities": [
+        {
+          "capabilityId": "permission:default",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/forked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Fork inherits parent session permission mode (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Agent",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Artifact",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "AskUserQuestion",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Bash",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Edit",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "EndConversation",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterPlanMode",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterWorktree",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitPlanMode",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitWorktree",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Glob",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Grep",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Monitor",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "NotebookEdit",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "PowerShell",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Read",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "ScheduleWakeup",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "SendMessage",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Skill",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Task",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskOutput",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskStop",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "TodoWrite",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "ToolSearch",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "WaitForMcpServers",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebFetch",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebSearch",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Workflow",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Write",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "fieldPath": "parent-session.tool-pool"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "context-filter",
+              "message": "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/forked.md"
+              },
+              "matrixRef": "T3"
+            }
+          ]
+        },
+        {
+          "capabilityId": "instruction:CLAUDE.md",
+          "kind": "instruction",
+          "status": "available",
+          "enforcement": "advisory",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": "CLAUDE.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Instruction source loaded into session context (I1).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": "CLAUDE.md"
+              },
+              "matrixRef": "I1"
+            }
+          ]
+        }
+      ],
+      "warnings": [
+        {
+          "category": "security-finding",
+          "severity": "warning",
+          "message": "Agent has Bash access. Tool-level restrictions are a guardrail, not a complete security boundary.",
+          "evidence": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/forked.md"
+            }
+          ]
+        }
+      ],
+      "unknownRate": 0.9354838709677419
+    }
+  ]
+}

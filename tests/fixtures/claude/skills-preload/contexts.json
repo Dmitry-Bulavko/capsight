@@ -1,0 +1,6 @@
+[
+  {
+    "agentName": "preloader",
+    "preset": "foreground-subagent"
+  }
+]
