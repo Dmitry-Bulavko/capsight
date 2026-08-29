@@ -59,6 +59,7 @@ function makeSnapshot(overrides: Partial<ProjectSnapshot> = {}): ProjectSnapshot
 
 function makeScanResult(overrides: Partial<ProjectSnapshot> = {}): ScanResult {
   return {
+    platform: "claude",
     snapshot: makeSnapshot(overrides),
     status: "complete",
   };

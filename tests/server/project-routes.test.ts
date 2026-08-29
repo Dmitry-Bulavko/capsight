@@ -1,3 +1,4 @@
+import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import type { PlatformVersion } from "../../src/core/model/index.js";
@@ -9,7 +10,7 @@ import type { ScanResult } from "../../src/application/scan.js";
 import { getDefaultProjectPath } from "../../src/application/default-project-path.js";
 import { clearLastScan, setLastScan } from "../../src/application/scan-store.js";
 import { app } from "../../src/server/index.js";
-import { resetBrowseInFlightForTests, pickNativeFolder } from "../../src/server/routes/project.js";
+import { resetBrowseInFlightForTests, pickNativeFolder, validateScanProjectPath } from "../../src/server/routes/project.js";
 
 vi.mock("../../src/application/scan.js", () => ({
   scan: vi.fn(),
@@ -133,6 +134,7 @@ function makeSnapshot(overrides: Partial<ProjectSnapshot> = {}): ProjectSnapshot
 
 function makeScanResult(overrides: Partial<ProjectSnapshot> = {}): ScanResult {
   return {
+    platform: "claude",
     snapshot: makeSnapshot(overrides),
     status: "complete",
   };
@@ -312,17 +314,19 @@ describe("project API routes", () => {
   });
 
   describe("POST /api/project/scan", () => {
+    const validProjectPath = process.cwd();
+
     it("scans project path from body and stores result", async () => {
-      const result = makeScanResult({ agents: mockAgents });
+      const result = makeScanResult({ projectPath: validProjectPath, agents: mockAgents });
       mockScan.mockResolvedValue(result);
 
       const response = await request(app)
         .post("/api/project/scan")
-        .send({ projectPath: "/mock/project" });
+        .send({ projectPath: validProjectPath });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(result);
-      expect(mockScan).toHaveBeenCalledWith({ projectPath: "/mock/project" });
+      expect(mockScan).toHaveBeenCalledWith({ projectPath: validProjectPath });
 
       const projectResponse = await request(app).get("/api/project");
       expect(projectResponse.status).toBe(200);
@@ -349,12 +353,55 @@ describe("project API routes", () => {
       expect(mockScan).toHaveBeenCalledWith({ projectPath: getDefaultProjectPath() });
     });
 
+    it("returns 400 when project path does not exist", async () => {
+      const response = await request(app)
+        .post("/api/project/scan")
+        .send({ projectPath: "D:\\nonexistent-capsight-path-000" });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/does not exist/);
+      expect(mockScan).not.toHaveBeenCalled();
+    });
+
+    it("returns 400 when project path is a file", async () => {
+      const filePath = path.join(process.cwd(), "package.json");
+      const response = await request(app)
+        .post("/api/project/scan")
+        .send({ projectPath: filePath });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/not a directory/);
+      expect(mockScan).not.toHaveBeenCalled();
+    });
+
+    it("returns 400 when platform id is invalid", async () => {
+      await validateScanProjectPath(process.cwd());
+      const response = await request(app)
+        .post("/api/project/scan")
+        .send({ projectPath: process.cwd(), platform: "not-a-platform" });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/Unknown platform/);
+      expect(mockScan).not.toHaveBeenCalled();
+    });
+
+    it("returns 500 when scan fails after path validation", async () => {
+      mockScan.mockRejectedValue(new Error("internal resolver crash"));
+
+      const response = await request(app)
+        .post("/api/project/scan")
+        .send({ projectPath: process.cwd() });
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({ error: "Project scan failed" });
+    });
+
     it("returns 500 when scan fails", async () => {
       mockScan.mockRejectedValue(new Error("ENOENT: no such directory"));
 
       const response = await request(app)
         .post("/api/project/scan")
-        .send({ projectPath: "/missing/project" });
+        .send({ projectPath: process.cwd() });
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({ error: "Project scan failed" });

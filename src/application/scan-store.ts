@@ -1,3 +1,4 @@
+import type { PlatformId } from "../adapters/platform.js";
 import type { Agent, PlatformVersion } from "../core/model/index.js";
 import { scan, type ScanResult } from "./scan.js";
 
@@ -15,8 +16,14 @@ export function clearLastScan(): void {
   lastScan = null;
 }
 
-export async function scanAndStore(projectPath: string): Promise<ScanResult> {
-  const result = await scan({ projectPath });
+export async function scanAndStore(
+  projectPath: string,
+  platform?: PlatformId,
+): Promise<ScanResult> {
+  const result = await scan({
+    projectPath,
+    ...(platform !== undefined ? { platform } : {}),
+  });
   setLastScan(result);
   return result;
 }

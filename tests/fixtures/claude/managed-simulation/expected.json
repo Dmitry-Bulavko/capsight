@@ -850,7 +850,8 @@
             "fieldPath": "frontmatter.model"
           },
           "matrixRef": "F8",
-          "enforcement": "enforced"
+          "enforcement": "enforced",
+          "effectiveEnforcement": "unknown"
         }
       ],
       "ignoredFields": [

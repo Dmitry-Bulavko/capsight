@@ -120,12 +120,55 @@ Order: H1-01 → H1-02 → H1-03 → H1-05 → H1-06 → H1-04 → H1-07 → H1-
 | H1-26 | H1 | Cross-scope shadowing (A1) is the last ungated collision rule | done | A1, §8.2, §6, inv 3 | src/adapters/claude/version/matrix.ts, discovery/agents.ts | A1 gated like A3/A4 |
 | H1-27 | H1 | Security findings contradict F9 for plugin agents | done | F9, §7.6, inv 3, 12, 14 | src/adapters/claude/resolution/security-findings.ts | No finding whose premise F9 nullifies |
 | H1-28 | H1 | `confidence: "fixture"` means three different things across entries | done | §8.1, §8.2, §11.4, §0.1.3 | src/adapters/claude/version/matrix.ts, tests/fixtures/coverage-report.ts | One stated rule, applied uniformly |
-| H1-29 | H1 | F8 model substitution asserts an undocumented value | todo | F8, §0.1.1, §7.8, inv 14 | src/application/simulate.ts | Substitute identity unknown unless established |
+| H1-29 | H1 | F8 model substitution asserts an undocumented value | done | F8, §0.1.1, §7.8, inv 14 | src/application/simulate.ts | Substitute identity unknown unless established |
 
 ## V0 — v0.1 UX polish
 
 | ID | Phase | Title | Status | Spec refs | Files | Acceptance |
 |----|-------|-------|--------|-----------|-------|------------|
 | V0-01 | V0 | UI project folder selection | done | §12.4 M0 | src/ui/, src/server/routes/project.ts | Browse + Rescan + headless fallback |
-| V0-02 | V0 | Bad project path is indistinguishable from a server failure | todo | §12.4 M0 | src/server/routes/project.ts, src/ui/App.tsx | 400 + actionable message for a bad path; 500 stays generic |
-| V0-03 | V0 | Agent dropdown lost its status badge | todo | §12.4 M0 | src/ui/components/AgentSelector.tsx, src/ui/styles.css | Status visible again, valid `<option>` markup, tested |
+| V0-02 | V0 | Bad project path is indistinguishable from a server failure | done | §12.4 M0 | src/server/routes/project.ts, src/ui/App.tsx | 400 + actionable message for a bad path; 500 stays generic |
+| V0-03 | V0 | Agent dropdown lost its status badge | done | §12.4 M0 | src/ui/components/AgentSelector.tsx, src/ui/styles.css | Status visible again, valid `<option>` markup, tested |
+
+## MP — Multi-platform (Cursor + Codex)
+
+Per-platform scan (`platform=claude|cursor|codex`). Facts: [CURSOR-FACTS.md](./CURSOR-FACTS.md), [CODEX-FACTS.md](./CODEX-FACTS.md).
+
+Order: MP-01 → MP-03 → MP-04 → MP-C01..C15 → MP-X01..X15.
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| MP-01 | MP | Cursor platform spike | done | MP plan | docs/CURSOR-FACTS.md | Facts corpus documented |
+| MP-02 | MP | Codex platform spike | done | MP plan | docs/CODEX-FACTS.md | Facts corpus documented |
+| MP-03 | MP | Backlog + SPEC + adapter rules | done | §12.2 | docs/TASKS.md, .cursor/rules/ | MP phase in backlog |
+| MP-04 | MP | Adapter registry + scan routing | done | §12.2 | src/adapters/registry.ts, src/application/ | platform param; Claude unchanged |
+| MP-C01 | MP | Cursor version detection | done | CV1–CV3 | src/adapters/cursor/version/ | Version or unknown |
+| MP-C02 | MP | Cursor scope walk | done | CW1–CW3 | src/adapters/cursor/discovery/ | `.cursor/` walk |
+| MP-C03 | MP | Cursor agents discovery | done | CA1–CA4 | src/adapters/cursor/discovery/agents.ts | Agents listed |
+| MP-C04 | MP | Cursor skills + rules | done | CS1–CR3 | src/adapters/cursor/discovery/ | Skills, rules, AGENTS.md |
+| MP-C05 | MP | Cursor MCP discovery | done | CM1–CM4 | src/adapters/cursor/discovery/mcp.ts | Read-only MCP |
+| MP-C06 | MP | Cursor settings layers | done | CSet1–CSet3 | src/adapters/cursor/discovery/settings.ts | Settings listed |
+| MP-C07 | MP | Cursor snapshot assembly | done | — | src/adapters/cursor/discovery/snapshot.ts | ProjectSnapshot platform=cursor |
+| MP-C08 | MP | Cursor model + parsing | done | — | src/adapters/cursor/model/, parsing/ | Adapter-only types |
+| MP-C09 | MP | Cursor version matrix + facts | done | — | src/adapters/cursor/version/ | Matrix + facts.ts |
+| MP-C10 | MP | Cursor resolver | done | — | src/adapters/cursor/resolution/ | EffectiveConfiguration |
+| MP-C11 | MP | Cursor security findings | done | — | src/adapters/cursor/resolution/ | Warnings honest |
+| MP-C12 | MP | API/CLI/UI platform selector | done | §12.4 | server/, cli/, ui/ | Scan with platform |
+| MP-C13 | MP | Cursor graph builder | done | §7.10 | adapters/cursor/resolution/ | Uses core graph |
+| MP-C14 | MP | Cursor golden fixture basic | done | §11.1 | tests/fixtures/cursor/basic/ | Golden passes |
+| MP-C15 | MP | Cursor correctness gate | done | §11.3 | tests/fixtures/run-cursor-golden.test.ts | Cursor golden runner |
+| MP-X01 | MP | Codex version detection | done | XV1–XV3 | src/adapters/codex/version/ | Version or unknown |
+| MP-X02 | MP | Codex scope walk + trust | done | XR1–XT3 | src/adapters/codex/discovery/ | `.codex/` + trust |
+| MP-X03 | MP | Codex instructions discovery | done | XI1–XI5 | src/adapters/codex/discovery/instructions.ts | AGENTS.md chain |
+| MP-X04 | MP | Codex skills discovery | done | XS1–XS3 | src/adapters/codex/discovery/skills.ts | Skills listed |
+| MP-X05 | MP | Codex MCP discovery | done | XM1–XM3 | src/adapters/codex/discovery/mcp.ts | TOML MCP read-only |
+| MP-X06 | MP | Codex settings layers | done | XSet1–XSet4 | src/adapters/codex/discovery/settings.ts | TOML layers |
+| MP-X07 | MP | Codex snapshot assembly | done | — | src/adapters/codex/discovery/snapshot.ts | platform=codex |
+| MP-X08 | MP | Codex model + parsing | done | — | src/adapters/codex/model/, parsing/ | Adapter-only |
+| MP-X09 | MP | Codex version matrix + facts | done | — | src/adapters/codex/version/ | Matrix + facts |
+| MP-X10 | MP | Codex resolver | done | — | src/adapters/codex/resolution/ | EffectiveConfiguration |
+| MP-X11 | MP | Codex security findings | done | — | src/adapters/codex/resolution/ | Warnings |
+| MP-X12 | MP | Codex API/CLI/UI (shared MP-C12) | done | §12.4 | (with MP-C12) | Codex scan works |
+| MP-X13 | MP | Codex graph builder | done | §7.10 | adapters/codex/resolution/ | Uses core graph |
+| MP-X14 | MP | Codex golden fixture basic | done | §11.1 | tests/fixtures/codex/basic/ | Golden passes |
+| MP-X15 | MP | Codex correctness gate | done | §11.3 | tests/fixtures/run-codex-golden.test.ts | Codex golden runner |

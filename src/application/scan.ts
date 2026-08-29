@@ -1,13 +1,15 @@
-import path from "node:path";
-import type { ProjectSnapshot } from "../core/model/index.js";
-import { detectClaudeVersion } from "../adapters/claude/version/index.js";
 import {
-  buildProjectSnapshot,
-  walkProjectScopes,
-} from "../adapters/claude/discovery/index.js";
+  DEFAULT_PLATFORM_ID,
+  getAdapter,
+  type PlatformId,
+} from "../adapters/registry.js";
+import type { ProjectSnapshot } from "../core/model/index.js";
+
+export type { PlatformId } from "../adapters/platform.js";
 
 export interface ScanOptions {
   projectPath: string;
+  platform?: PlatformId;
   addDirs?: string[];
   /**
    * Directories of installed plugins whose `agents/` are attached at the
@@ -18,27 +20,22 @@ export interface ScanOptions {
 }
 
 export interface ScanResult {
+  platform: PlatformId;
   snapshot: ProjectSnapshot;
   status: "complete";
 }
 
 export async function scan(options: ScanOptions): Promise<ScanResult> {
-  const projectPath = path.resolve(options.projectPath);
-  const [version, walk] = await Promise.all([
-    detectClaudeVersion(),
-    walkProjectScopes(projectPath),
-  ]);
-
-  const snapshot = await buildProjectSnapshot({
-    projectPath,
-    version,
-    walk,
+  const platform = options.platform ?? DEFAULT_PLATFORM_ID;
+  const adapter = getAdapter(platform);
+  const result = await adapter.scan({
+    projectPath: options.projectPath,
     addDirs: options.addDirs,
     pluginRoots: options.pluginRoots,
   });
 
   return {
-    snapshot,
-    status: "complete",
+    platform,
+    ...result,
   };
 }

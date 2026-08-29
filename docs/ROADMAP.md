@@ -4,7 +4,7 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**V0-01 merged** — UI project folder picker shipped (PR #2). Review of it left two open follow-ups, V0-02 and V0-03. Next: decide the rest of the follow-ups (H1-29, S6/S7/S11, real-repo audit).
+**MP + V0 follow-ups complete** — Cursor/Codex adapters, path validation (V0-02), agent status badge (V0-03), F8 substitute honesty (H1-29). v0.1 gate: H1 phase fully closed.
 
 ## Phase status
 
@@ -16,8 +16,9 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 | M1 — Resolver + Explainability | `done` | M1-15 correctness gate |
 | M2 — Probe, Graph, Simulation | `done` | M2-06 complete |
 | M3 — Editor (v0.2) | `done` | M3-03 complete |
-| H1 — Correctness hardening | `done` | 28 tasks closed; corpus 20/20; H1-29 open as follow-up |
-| V0 — v0.1 UX polish | `in progress` | V0-01 merged; V0-02, V0-03 open |
+| H1 — Correctness hardening | `done` | H1-29 closed; corpus 20/20 |
+| V0 — v0.1 UX polish | `done` | V0-01..V0-03 complete |
+| MP — Multi-platform | `done` | MP-C15 + MP-X15 golden gates |
 
 ## H1 outcome
 
