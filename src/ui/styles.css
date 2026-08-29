@@ -119,42 +119,8 @@ body {
 }
 
 .agent-select option {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.65rem;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid transparent;
-  border-radius: 6px;
   background: #22252d;
   color: #e8eaed;
-}
-
-.agent-select option:not(:last-of-type) {
-  margin-bottom: 0.25rem;
-}
-
-.agent-select option:hover,
-.agent-select option:focus {
-  background: #2a2d36;
-}
-
-.agent-select option:checked {
-  border-color: #5c7cfa;
-  background: #252a38;
-}
-
-.agent-select option::checkmark {
-  display: none;
-}
-
-.agent-select selectedcontent .status-badge {
-  display: none;
-}
-
-.agent-option-name {
-  flex: 1;
-  min-width: 0;
 }
 
 @supports not (appearance: base-select) {
@@ -186,6 +152,8 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
+  box-sizing: border-box;
+  min-height: 2.5rem;
   max-width: 11rem;
   padding: 0.5rem 0.75rem;
   border: 1px solid #5f6368;
@@ -210,9 +178,10 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  padding: 0;
+  box-sizing: border-box;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0.5rem;
   border: 1px solid #5f6368;
   border-radius: 6px;
   background: #303134;
@@ -231,11 +200,17 @@ body {
   cursor: not-allowed;
 }
 
-.scan-folder-icon,
-.scan-rescan-icon {
+.scan-folder-icon {
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
+}
+
+.scan-rescan-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  display: block;
 }
 
 .scan-folder-icon {
