@@ -86,7 +86,35 @@ describe("managed simulation fixture", () => {
 
     expect(managedBackend?.status).toBe("active");
     expect(projectBackendAfter?.status).toBe("shadowed");
+    // The managed-over-project winner is A1, gated on the matrix like every
+    // other collision rule (§8.2).
+    expect(projectBackendAfter?.collision?.rule).toBe("A1");
+    expect(projectBackendAfter?.collision?.matrixRef).toBe(
+      "agent.collisionCrossScope",
+    );
+    expect(projectBackendAfter?.collision?.enforcement).toBe("enforced");
     expect((simulated.settings[0] as { scope: string }).scope).toBe("managed");
+  });
+
+  it("names no managed-over-project winner in degraded mode (§8.4)", async () => {
+    const snapshot = await buildProjectSnapshot({
+      projectPath: PROJECT_PATH,
+      version: { ...VERSION, version: "unknown", raw: "" },
+      walk: WALK,
+    });
+
+    const bundle = await loadManagedBundle(BUNDLE_PATH);
+    const simulated = applyManagedOverlay(snapshot, bundle);
+
+    const group = simulated.agents.filter((entry) => entry.name === "backend");
+    expect(group).toHaveLength(2);
+    for (const agent of group) {
+      expect(agent.status).toBe("ambiguous");
+      expect(agent.collision?.rule).toBe("A1");
+      expect(agent.collision?.matrixRef).toBe("agent.collisionCrossScope");
+      expect(agent.collision?.enforcement).toBe("unknown");
+      expect(agent.collision?.effective).toBeUndefined();
+    }
   });
 
   it("returns delta for shadowing, denied tools, and model changes", async () => {

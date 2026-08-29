@@ -101,7 +101,9 @@
             "scope": "project",
             "path": ".claude/agents/reviewer.md"
           },
-          "rule": "A1"
+          "rule": "A1",
+          "matrixRef": "agent.collisionCrossScope",
+          "enforcement": "enforced"
         }
       },
       {

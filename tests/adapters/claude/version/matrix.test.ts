@@ -39,6 +39,7 @@ const M1_MATRIX_IDS = [
   FACT.P4,
   FACT.P5,
   "agent.collisionSameDir",
+  "agent.collisionCrossScope",
   "agent.collisionNested",
   "agent.descriptionBudget",
   "agent.modelAllowlist",
@@ -68,6 +69,7 @@ const M1_MATRIX_IDS = [
 
 /** Facts behind resolver rules that emit `enforcement: "enforced"` (§0.1.3). */
 const ENFORCED_RULE_FACTS: readonly FactId[] = [
+  FACT.A1,
   FACT.A3,
   FACT.A9,
   FACT.A4,
@@ -551,10 +553,29 @@ describe("gateCollision", () => {
     expect(gateCollision(FACT.A3, "unknown").winnerUnfounded).toBe(true);
   });
 
-  it("does not pretend an unregistered rule was gated", () => {
-    // A1 has no matrix entry yet, so no confidence is claimed for it either
-    // way — the record simply never passed through the matrix.
-    expect(gateCollision(FACT.A1, "2.1.240")).toEqual({ winnerUnfounded: false });
+  it("founds the A1 cross-scope winner on a supported version", () => {
+    expect(gateCollision(FACT.A1, "2.1.240")).toEqual({
+      matrixRef: "agent.collisionCrossScope",
+      enforcement: "enforced",
+      winnerUnfounded: false,
+    });
+  });
+
+  it("leaves the A1 cross-scope winner unfounded in degraded mode (§8.3)", () => {
+    const gate = gateCollision(FACT.A1, "unknown");
+    expect(gate.matrixRef).toBe("agent.collisionCrossScope");
+    expect(gate.enforcement).toBe("unknown");
+    expect(gate.winnerUnfounded).toBe(true);
+  });
+
+  it("gates every collision rule it can be called with", () => {
+    // The rule parameter is the CollisionRule union, so there is no argument
+    // for which the gate can return without a matrix entry behind it.
+    for (const rule of [FACT.A1, FACT.A3, FACT.A4] as const) {
+      const gate = gateCollision(rule, "2.1.240");
+      expect(isMatrixId(gate.matrixRef), rule).toBe(true);
+      expect(gate.enforcement, rule).toBeDefined();
+    }
   });
 });
 

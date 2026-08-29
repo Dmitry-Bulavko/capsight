@@ -255,10 +255,8 @@ function reconcileAgentCollisions(agents: Agent[], version: string): Agent[] {
         collision: {
           candidates: group.map((entry) => entry.source),
           rule: FACT.A4,
-          ...(sameDirGate.matrixRef ? { matrixRef: sameDirGate.matrixRef } : {}),
-          ...(sameDirGate.enforcement
-            ? { enforcement: sameDirGate.enforcement }
-            : {}),
+          matrixRef: sameDirGate.matrixRef,
+          enforcement: sameDirGate.enforcement,
         },
       });
     }
@@ -303,10 +301,8 @@ function reconcileAgentCollisions(agents: Agent[], version: string): Agent[] {
           collision: {
             candidates,
             rule: decidingRule,
-            ...(decidingGate.matrixRef ? { matrixRef: decidingGate.matrixRef } : {}),
-            ...(decidingGate.enforcement
-              ? { enforcement: decidingGate.enforcement }
-              : {}),
+            matrixRef: decidingGate.matrixRef,
+            enforcement: decidingGate.enforcement,
           },
         });
       }
@@ -328,8 +324,8 @@ function reconcileAgentCollisions(agents: Agent[], version: string): Agent[] {
           candidates,
           effective: winner.source,
           rule,
-          ...(gate.matrixRef ? { matrixRef: gate.matrixRef } : {}),
-          ...(gate.enforcement ? { enforcement: gate.enforcement } : {}),
+          matrixRef: gate.matrixRef,
+          enforcement: gate.enforcement,
         },
       });
     }

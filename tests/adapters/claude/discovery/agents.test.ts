@@ -263,6 +263,63 @@ description: Plugin agent of the same name
     ).toBe("active");
   });
 
+  it("shadows a user agent with the project one and gates the record on A1", async () => {
+    const project = await makeTempProject({
+      ".claude/agents/reviewer.md": `---
+name: reviewer
+description: Project agent
+---
+`,
+    });
+    const home = await makeTempProject({
+      ".claude/agents/reviewer.md": `---
+name: reviewer
+description: User agent of the same name
+---
+`,
+    });
+    const agentsPath = path.join(project, ".claude", "agents");
+    const previousHome = process.env.HOME;
+    process.env.HOME = home;
+
+    try {
+      const { agents } = await discoverAgents(
+        [scopeLevel(project, agentsPath)],
+        project,
+        [],
+        "2.1.240",
+      );
+
+      const fromUser = agents.find((a: Agent) => a.source.scope === "user");
+      expect(fromUser?.status).toBe("shadowed");
+      expect(fromUser?.collision?.rule).toBe("A1");
+      expect(fromUser?.collision?.matrixRef).toBe("agent.collisionCrossScope");
+      expect(fromUser?.collision?.enforcement).toBe("enforced");
+      expect(fromUser?.collision?.effective?.scope).toBe("project");
+      expect(agents.find((a: Agent) => a.source.scope === "project")?.status).toBe(
+        "active",
+      );
+
+      // §8.4: without a detected version A1 is unfounded, so no file is named
+      // effective and the whole group stays ambiguous.
+      const degraded = await discoverAgents([scopeLevel(project, agentsPath)], project);
+      expect(degraded.agents).toHaveLength(2);
+      for (const agent of degraded.agents) {
+        expect(agent.status).toBe("ambiguous");
+        expect(agent.collision?.rule).toBe("A1");
+        expect(agent.collision?.matrixRef).toBe("agent.collisionCrossScope");
+        expect(agent.collision?.enforcement).toBe("unknown");
+        expect(agent.collision?.effective).toBeUndefined();
+      }
+    } finally {
+      if (previousHome === undefined) {
+        delete process.env.HOME;
+      } else {
+        process.env.HOME = previousHome;
+      }
+    }
+  });
+
   it("puts the subfolder into a plugin agent's scoped id (A6)", async () => {
     const project = await makeTempProject({});
     const plugin = await makeTempProject({

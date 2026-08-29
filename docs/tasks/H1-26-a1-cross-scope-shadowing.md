@@ -45,3 +45,15 @@ A1 is not a safe omission. It decides which of two same-named agents a user actu
 ## Notes
 
 Surfaced by H1-18 precisely because that task made every other collision rule gated — the one remaining bare call became obvious. That is the intended effect of making a rule uniform.
+
+## Orchestrator verification (post-implementation)
+
+`gateCollision` now takes a `CollisionRule` union over a total record, so an unregistered rule is a typecheck error rather than a silent un-gated return, and `matrixRef` / `enforcement` are required on the gate result. All six collision emitters in `src/` route through it. Only `plugin-agents/expected.json` moved: the shadowed plugin `reviewer` gains `matrixRef: agent.collisionCrossScope` and `enforcement: "enforced"` while `rule`, `effective` and `status` are unchanged — the project file still beats the plugin file at 2.1.240, and the record now says what backs that. Suite 463 passed. Accepted.
+
+**The A4/A1 distinction is right:** at an unfounded version A1 leaves the group ambiguous with no `effective` (§8.4), but at a supported version the winner stands, because A1 *does* define one. A4 is `unknown` by construction and never names a winner. Those are different situations and the code now treats them differently.
+
+**Coverage across the whole H1 phase, from the report:** `fixture-verified` 0 → 15, `unverified` 66 → 52, denominator fixed at 92 throughout.
+
+**The `fixture` claim is ratified, narrowly, and it exposed something bigger.** `plugin-agents` genuinely pins the project-over-plugin edge of A1, and the same standard was already applied to `agent.collisionNested` for one edge of A3, so the call is consistent with precedent. The entry's note says which edge is pinned and which ranks rest on documentation.
+
+But raising the question showed that `confidence: "fixture"` currently means three different things across the matrix — one edge of a rule here, "a fixture verifies the product not the platform" for F9, and "the fixture must make the rule the operative cause" as enforced during H1-21. Filed as **H1-28**: the numerator of the §11.4 metric has no stated admission criterion, which is the same class of problem H1-08 fixed for the denominator.

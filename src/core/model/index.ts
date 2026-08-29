@@ -106,9 +106,13 @@ export interface Agent<
      */
     effective?: SourceInfo;
     rule: string;
-    /** Matrix entry the rule was gated on. Absent when no entry backs it. */
+    /**
+     * Matrix entry the rule was gated on. Optional in the core model because
+     * an adapter may have none; the Claude adapter gates every collision rule
+     * it emits (A1, A3, A4), so both fields are always present there.
+     */
     matrixRef?: string;
-    /** Confidence in this record (§6). Absent when the rule was not gated. */
+    /** Confidence in this record (§6). */
     enforcement?: Enforcement;
   };
   invalidReason?: "no-name" | "no-description" | "bad-yaml" | "bad-name-chars";

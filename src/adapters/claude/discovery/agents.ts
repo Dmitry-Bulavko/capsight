@@ -263,10 +263,8 @@ function resolveCollisions(parsed: ParsedAgent[], version: string): Agent[] {
       collision: {
         candidates: group.map((g) => fileSource(g.file)),
         rule: FACT.A4,
-        ...(sameDirGate.matrixRef ? { matrixRef: sameDirGate.matrixRef } : {}),
-        ...(sameDirGate.enforcement
-          ? { enforcement: sameDirGate.enforcement }
-          : {}),
+        matrixRef: sameDirGate.matrixRef,
+        enforcement: sameDirGate.enforcement,
       },
     });
   }
@@ -310,10 +308,8 @@ function resolveCollisions(parsed: ParsedAgent[], version: string): Agent[] {
           collision: {
             candidates,
             rule: decidingRule,
-            ...(decidingGate.matrixRef ? { matrixRef: decidingGate.matrixRef } : {}),
-            ...(decidingGate.enforcement
-              ? { enforcement: decidingGate.enforcement }
-              : {}),
+            matrixRef: decidingGate.matrixRef,
+            enforcement: decidingGate.enforcement,
           },
         });
       }
@@ -333,8 +329,8 @@ function resolveCollisions(parsed: ParsedAgent[], version: string): Agent[] {
           candidates,
           effective: fileSource(winner.file),
           rule,
-          ...(gate.matrixRef ? { matrixRef: gate.matrixRef } : {}),
-          ...(gate.enforcement ? { enforcement: gate.enforcement } : {}),
+          matrixRef: gate.matrixRef,
+          enforcement: gate.enforcement,
         },
       });
     }

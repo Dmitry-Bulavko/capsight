@@ -171,6 +171,22 @@ const MATRIX_ENTRIES = [
       "Only the single-load behaviour is documented; which file wins follows FS read order (A4), so the winner stays unknown.",
   },
   {
+    id: "agent.collisionCrossScope",
+    feature:
+      "Name collision across scopes: managed > --agents CLI > project > user > plugin",
+    factRefs: [FACT.A1],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "plugin-agents",
+    notes:
+      "A1 names a full order, but the corpus pins one edge of it: the plugin-agents fixture " +
+      "has a project and a plugin agent share a name and records the project file as " +
+      "effective. The managed and `--agents` CLI ranks are not pinned here — discovery reads " +
+      "a managed layer only through a §7.8 bundle and never reads a CLI layer at all — so " +
+      "those two ranks rest on documentation alone.",
+  },
+  {
     id: "agent.collisionNested",
     feature: "Nested project agent directories: closest to cwd wins",
     factRefs: [FACT.A3],
@@ -726,25 +742,31 @@ export function gateWarning(
   };
 }
 
-/** Matrix entry backing a name-collision rule, when one is registered. */
-const COLLISION_MATRIX_IDS: Partial<Record<FactId, MatrixId>> = {
+/**
+ * Name-collision rules discovery can attach to a record. The map is total, so
+ * every rule that reaches `gateCollision` has a matrix entry behind it and no
+ * collision record can be emitted un-gated; a new rule cannot be spelled here
+ * until its entry exists.
+ */
+export type CollisionRule = typeof FACT.A1 | typeof FACT.A3 | typeof FACT.A4;
+
+const COLLISION_MATRIX_IDS: Record<CollisionRule, MatrixId> = {
+  [FACT.A1]: "agent.collisionCrossScope",
   [FACT.A3]: "agent.collisionNested",
   [FACT.A4]: "agent.collisionSameDir",
 };
 
 export interface CollisionGate {
-  /** Matrix entry the rule was gated on; absent when no entry backs the rule. */
-  matrixRef?: MatrixId;
-  /** Confidence in the collision record (§6); absent when it was not gated. */
-  enforcement?: Enforcement;
+  /** Matrix entry the rule was gated on. */
+  matrixRef: MatrixId;
+  /** Confidence in the collision record (§6). */
+  enforcement: Enforcement;
   /**
    * `true` when the matrix does not found a winner for this rule on this
-   * version — the entry is missing, unsupported, or `unknown` (A4 always is,
-   * because A4 documents that one file loads but not which). The record must
-   * then stay winner-free: a winner is never guessed (§8.2, §8.4).
-   *
-   * `false` for a rule with no registered entry: such a record was never gated
-   * at all, and this function does not silently claim it was.
+   * version — the entry is unsupported on it, the version was not detected, or
+   * the entry is `unknown` by construction (A4 always is, because A4 documents
+   * that one file loads but not which). The record must then stay winner-free:
+   * a winner is never guessed (§8.2, §8.4).
    */
   winnerUnfounded: boolean;
 }
@@ -754,12 +776,11 @@ export interface CollisionGate {
  * verdict lands on the record rather than on a `ResolvedCapability`, but the
  * version arithmetic stays here (§13 invariant 11).
  */
-export function gateCollision(rule: string, version: string): CollisionGate {
-  const matrixRef = COLLISION_MATRIX_IDS[rule as FactId];
-  if (!matrixRef) {
-    return { winnerUnfounded: false };
-  }
-
+export function gateCollision(
+  rule: CollisionRule,
+  version: string,
+): CollisionGate {
+  const matrixRef = COLLISION_MATRIX_IDS[rule];
   const decision = resolveEnforcement({ matrixId: matrixRef, version });
   return {
     matrixRef,
