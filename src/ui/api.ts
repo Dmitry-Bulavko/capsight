@@ -39,6 +39,28 @@ export async function fetchProject(): Promise<ScanStatusSummary> {
   return request<ScanStatusSummary>("/api/project");
 }
 
+export interface ProjectConfig {
+  defaultProjectPath: string;
+}
+
+export async function fetchProjectConfig(): Promise<ProjectConfig> {
+  return request<ProjectConfig>("/api/project/config");
+}
+
+export type BrowseProjectFolderCancelReason = "dismissed" | "unavailable" | "busy" | "timeout";
+
+export type BrowseProjectFolderResult =
+  | { cancelled: false; path: string }
+  | { cancelled: true; reason?: BrowseProjectFolderCancelReason };
+
+export async function browseProjectFolder(): Promise<BrowseProjectFolderResult> {
+  return request<BrowseProjectFolderResult>("/api/project/browse", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({}),
+  });
+}
+
 export async function fetchAgents(): Promise<Agent[]> {
   const body = await request<{ agents: Agent[] }>("/api/agents");
   return body.agents;
@@ -77,10 +99,11 @@ export async function fetchGraph(context: ContextPreset): Promise<InspectionGrap
 }
 
 export async function scanProject(projectPath?: string): Promise<ScanResult> {
+  const trimmed = projectPath?.trim();
   return request<ScanResult>("/api/project/scan", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(projectPath ? { projectPath } : {}),
+    body: JSON.stringify(trimmed ? { projectPath: trimmed } : {}),
   });
 }
 

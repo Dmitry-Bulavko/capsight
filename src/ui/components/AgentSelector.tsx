@@ -35,18 +35,12 @@ export function AgentSelector({
         onChange={(event) => onAgentChange(event.target.value)}
         disabled={sortedAgents.length === 0}
       >
-        <button type="button">
-          <selectedcontent />
-        </button>
         {sortedAgents.length === 0 ? (
           <option value="">No agents</option>
         ) : (
           sortedAgents.map((agent) => (
             <option key={agent.id} value={agent.id}>
-              <span className="agent-option-name">{agent.name}</span>
-              <span className={`status-badge status-${agent.status}`}>
-                {STATUS_LABELS[agent.status]}
-              </span>
+              {compact ? agent.name : `${agent.name} — ${STATUS_LABELS[agent.status]}`}
             </option>
           ))
         )}

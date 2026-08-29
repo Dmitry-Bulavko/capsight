@@ -12,13 +12,19 @@ import { graphRouter } from "./routes/graph.js";
 import { simulateRouter } from "./routes/simulate.js";
 import { planRouter } from "./routes/plan.js";
 import { applyRouter, historyRouter, rollbackRouter } from "./routes/apply.js";
+import {
+  buildAllowedApiOrigins,
+  createApiMutationGuard,
+} from "./middleware/api-guard.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT ?? 3847);
+const HOST = process.env.HOST ?? "127.0.0.1";
 
 export function createApp(): express.Express {
   const app = express();
   app.use(express.json());
+  app.use(createApiMutationGuard(buildAllowedApiOrigins(PORT)));
 
   app.get("/api/health", (_req, res) => {
     res.json({ ok: true, service: "capsight" });
@@ -54,7 +60,7 @@ const isMainModule =
   import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
 
 if (isMainModule) {
-  app.listen(PORT, () => {
-    console.log(`Capsight server listening on http://localhost:${PORT}`);
+  app.listen(PORT, HOST, () => {
+    console.log(`Capsight server listening on http://${HOST}:${PORT}`);
   });
 }

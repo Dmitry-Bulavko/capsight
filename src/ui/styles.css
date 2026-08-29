@@ -119,42 +119,8 @@ body {
 }
 
 .agent-select option {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.65rem;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid transparent;
-  border-radius: 6px;
   background: #22252d;
   color: #e8eaed;
-}
-
-.agent-select option:not(:last-of-type) {
-  margin-bottom: 0.25rem;
-}
-
-.agent-select option:hover,
-.agent-select option:focus {
-  background: #2a2d36;
-}
-
-.agent-select option:checked {
-  border-color: #5c7cfa;
-  background: #252a38;
-}
-
-.agent-select option::checkmark {
-  display: none;
-}
-
-.agent-select selectedcontent .status-badge {
-  display: none;
-}
-
-.agent-option-name {
-  flex: 1;
-  min-width: 0;
 }
 
 @supports not (appearance: base-select) {
@@ -169,18 +135,27 @@ body {
 
 .scan-toolbar {
   display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.scan-toolbar-row {
+  display: flex;
   align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
+  gap: 0.35rem;
+  flex-wrap: nowrap;
 }
 
-.scan-toolbar-note {
-  color: #bdc1c6;
-  font-size: 0.9rem;
-}
-
-.scan-toolbar button {
-  padding: 0.5rem 1rem;
+.scan-project-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  box-sizing: border-box;
+  min-height: 2.5rem;
+  max-width: 11rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid #5f6368;
   border-radius: 6px;
   background: #303134;
@@ -190,17 +165,130 @@ body {
   white-space: nowrap;
 }
 
-.scan-toolbar button:hover:not(:disabled) {
+.scan-project-button:hover:not(:disabled) {
   background: #3c4043;
 }
 
-.scan-toolbar button:disabled {
+.scan-project-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.scan-toolbar .error-message {
+.scan-rescan-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0.5rem;
+  border: 1px solid #5f6368;
+  border-radius: 6px;
+  background: #303134;
+  color: #bdc1c6;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.scan-rescan-button:hover:not(:disabled) {
+  background: #3c4043;
+  color: #e8eaed;
+}
+
+.scan-rescan-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.scan-folder-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.scan-rescan-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  display: block;
+}
+
+.scan-folder-icon {
+  color: #bdc1c6;
+}
+
+.scan-project-button-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.scan-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  max-width: min(24rem, 100%);
+}
+
+.scan-fallback-note {
   margin: 0;
+  font-size: 0.8rem;
+  color: #bdc1c6;
+  text-align: right;
+}
+
+.scan-fallback-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.scan-fallback-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid #3c4043;
+  border-radius: 6px;
+  background: #22252d;
+  color: #e8eaed;
+  font: inherit;
+}
+
+.scan-fallback-input:focus {
+  outline: none;
+  border-color: #5c7cfa;
+}
+
+.scan-fallback-row button {
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #5f6368;
+  border-radius: 6px;
+  background: #303134;
+  color: #e8eaed;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.scan-fallback-row button:hover:not(:disabled) {
+  background: #3c4043;
+}
+
+.scan-fallback-row button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.scan-toolbar-error {
+  margin: 0;
+  color: #f28b82;
+  font-size: 0.85rem;
+  text-align: right;
+  max-width: min(24rem, 100%);
+  word-break: break-word;
 }
 
 .dashboard-stats {
@@ -407,30 +495,6 @@ body {
 .empty-state {
   margin: 0;
   color: #9aa0a6;
-}
-
-.scan-prompt {
-  margin: 0 0 1rem;
-  color: #bdc1c6;
-}
-
-.scan-actions button {
-  padding: 0.5rem 1rem;
-  border: 1px solid #5f6368;
-  border-radius: 6px;
-  background: #303134;
-  color: #e8eaed;
-  font: inherit;
-  cursor: pointer;
-}
-
-.scan-actions button:hover:not(:disabled) {
-  background: #3c4043;
-}
-
-.scan-actions button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 .error-message {

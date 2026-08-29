@@ -1,12 +1,14 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Agent, ContextPreset, EffectiveConfiguration } from "../core/model/index.js";
 import type { ScanStatusSummary } from "../application/scan-store.js";
 import {
   ApiError,
+  browseProjectFolder,
   fetchAgents,
   fetchEffectiveConfig,
   fetchExplain,
   fetchProject,
+  fetchProjectConfig,
   resourceCountsFromScan,
   scanProject,
 } from "./api.js";
@@ -17,7 +19,11 @@ import {
   DEFAULT_CONTEXT_PRESET,
 } from "./components/ContextSelector.js";
 import { ProjectSummary, type ResourceCounts } from "./components/ProjectSummary.js";
-import { ScanPanel } from "./components/ScanPanel.js";
+import {
+  loadStoredProjectPath,
+  saveStoredProjectPath,
+  ScanPanel,
+} from "./components/ScanPanel.js";
 import { GraphView } from "./components/GraphView.js";
 import { WhyPanel } from "./components/WhyPanel.js";
 import { AgentEditor } from "./components/AgentEditor.js";
@@ -47,6 +53,15 @@ export function App() {
   const [summary, setSummary] = useState<ScanStatusSummary | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [resourceCounts, setResourceCounts] = useState<ResourceCounts | null>(null);
+  const [projectPath, setProjectPath] = useState("");
+  const [fallbackPath, setFallbackPath] = useState("");
+  const [browseUnavailable, setBrowseUnavailable] = useState(false);
+  const [browsing, setBrowsing] = useState(false);
+  const projectPathRef = useRef(projectPath);
+
+  useEffect(() => {
+    projectPathRef.current = projectPath;
+  }, [projectPath]);
   const [scanning, setScanning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,11 +119,16 @@ export function App() {
   const editorPendingCount = totalPendingChanges(agents, editorPending);
 
   const runScan = useCallback(
-    async (projectPath?: string) => {
+    async (overridePath?: string) => {
+      const pathToScan = (overridePath ?? projectPathRef.current).trim();
       setScanning(true);
       setError(null);
       try {
-        const result = await scanProject(projectPath);
+        const result = await scanProject(pathToScan || undefined);
+        if (pathToScan) {
+          setProjectPath(pathToScan);
+          saveStoredProjectPath(pathToScan);
+        }
         setResourceCounts(resourceCountsFromScan(result));
         await loadDiscovery();
       } catch (err) {
@@ -118,6 +138,54 @@ export function App() {
       }
     },
     [loadDiscovery],
+  );
+
+  const handleBrowse = useCallback(async () => {
+    setBrowsing(true);
+    setError(null);
+    try {
+      const result = await browseProjectFolder();
+      if (!result.cancelled) {
+        setBrowseUnavailable(false);
+        await runScan(result.path);
+        return;
+      }
+
+      if (result.reason === "unavailable") {
+        setBrowseUnavailable(true);
+        setError(
+          "Folder picker is unavailable on this machine. Enter a project path below or set CAPSIGHT_PROJECT_PATH.",
+        );
+        return;
+      }
+
+      if (result.reason === "busy") {
+        setError("Folder picker is already open.");
+        return;
+      }
+
+      if (result.reason === "timeout") {
+        setError("Folder picker timed out. Try again or enter a path manually.");
+        setBrowseUnavailable(true);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Browse failed");
+    } finally {
+      setBrowsing(false);
+    }
+  }, [runScan]);
+
+  const handleRescan = useCallback(() => {
+    void runScan();
+  }, [runScan]);
+
+  const handleFallbackScan = useCallback(
+    (path: string) => {
+      const trimmed = path.trim();
+      if (!trimmed) return;
+      void runScan(trimmed);
+    },
+    [runScan],
   );
 
   useEffect(() => {
@@ -221,13 +289,23 @@ export function App() {
     async function init() {
       setLoading(true);
       setError(null);
+      let initialPath = loadStoredProjectPath() ?? "";
       try {
+        if (!initialPath) {
+          const config = await fetchProjectConfig();
+          initialPath = config.defaultProjectPath;
+        }
+        if (!cancelled) {
+          setProjectPath(initialPath);
+          setFallbackPath(initialPath);
+        }
+
         await loadDiscovery();
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 404) {
           setNeedsScan(true);
-          await runScan();
+          await runScan(initialPath.trim() || undefined);
         } else {
           setError(err instanceof Error ? err.message : "Failed to load discovery data");
         }
@@ -261,11 +339,16 @@ export function App() {
           )}
           {(needsScan || summary) && (
             <ScanPanel
-              compact
+              projectPath={projectPath}
+              onBrowse={handleBrowse}
+              onRescan={handleRescan}
+              onFallbackScan={handleFallbackScan}
+              browsing={browsing}
               scanning={scanning}
+              browseUnavailable={browseUnavailable}
+              fallbackPath={fallbackPath}
+              onFallbackPathChange={setFallbackPath}
               error={error}
-              onScan={runScan}
-              showPrompt={needsScan && !summary}
             />
           )}
         </div>

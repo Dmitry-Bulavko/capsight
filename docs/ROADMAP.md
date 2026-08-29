@@ -4,7 +4,7 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**H1 complete.** The audit findings and everything they surfaced are closed; see the H1 outcome below. One follow-up stayed open by choice — [H1-29](tasks/H1-29-model-substitution-claim.md), raised on the last day of the phase. Next: decide whether S6/S7 argument matching and S11 belong in v0.1, and re-run the audit against a real third-party repository rather than the fixture corpus.
+**V0-01 done** — UI project folder picker shipped. Next: decide follow-ups (H1-29, S6/S7/S11, real-repo audit).
 
 ## Phase status
 
@@ -17,6 +17,7 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 | M2 — Probe, Graph, Simulation | `done` | M2-06 complete |
 | M3 — Editor (v0.2) | `done` | M3-03 complete |
 | H1 — Correctness hardening | `done` | 28 tasks closed; corpus 20/20; H1-29 open as follow-up |
+| V0 — v0.1 UX polish | `done` | V0-01 project folder picker |
 
 ## H1 outcome
 
