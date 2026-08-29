@@ -15,6 +15,14 @@ vi.mock("../../src/application/scan.js", () => ({
   scan: vi.fn(),
 }));
 
+const mockPlatform = vi.hoisted(() =>
+  vi.fn((): NodeJS.Platform => process.platform as NodeJS.Platform),
+);
+
+vi.mock("node:os", () => ({
+  platform: () => mockPlatform(),
+}));
+
 vi.mock("node:child_process", () => ({
   spawn: vi.fn(),
 }));
@@ -157,6 +165,7 @@ describe("project API routes", () => {
     clearLastScan();
     mockScan.mockReset();
     mockSpawn.mockReset();
+    mockPlatform.mockImplementation(() => process.platform as NodeJS.Platform);
     resetBrowseInFlightForTests();
   });
 
@@ -201,6 +210,32 @@ describe("project API routes", () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ cancelled: true, reason: "unavailable" });
+    });
+
+    it("returns unavailable when zenity exits with stderr (no DISPLAY)", async () => {
+      mockPlatform.mockReturnValue("linux");
+      mockSpawn.mockImplementation(() => {
+        return {
+          stdout: { on: vi.fn() },
+          stderr: {
+            on(event: string, handler: (chunk: Buffer) => void) {
+              if (event === "data") {
+                queueMicrotask(() => handler(Buffer.from("Error: cannot open display\n")));
+              }
+            },
+          },
+          on(event: string, handler: (code: number) => void) {
+            if (event === "close") {
+              queueMicrotask(() => handler(1));
+            }
+          },
+          kill: vi.fn(),
+        } as unknown as ReturnType<typeof spawn>;
+      });
+
+      const result = await pickNativeFolder();
+
+      expect(result).toEqual({ cancelled: true, reason: "unavailable" });
     });
 
     it("returns busy when a browse dialog is already in flight", async () => {
@@ -322,7 +357,7 @@ describe("project API routes", () => {
         .send({ projectPath: "/missing/project" });
 
       expect(response.status).toBe(500);
-      expect(response.body).toEqual({ error: "ENOENT: no such directory" });
+      expect(response.body).toEqual({ error: "Project scan failed" });
     });
   });
 });

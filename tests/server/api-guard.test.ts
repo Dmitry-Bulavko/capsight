@@ -84,4 +84,49 @@ describe("api mutation guard", () => {
     });
     expect(next).toHaveBeenCalledOnce();
   });
+
+  it("allows vite dev Origin from VITE_PORT env", () => {
+    const original = process.env.VITE_PORT;
+    process.env.VITE_PORT = "5174";
+    try {
+      const origins = buildAllowedApiOrigins(3847);
+      const guard = createApiMutationGuard(origins);
+      const res = mockResponse();
+      const next = vi.fn() as NextFunction;
+      guard(
+        {
+          method: "POST",
+          path: "/api/project/browse",
+          headers: {
+            origin: "http://localhost:5174",
+            "content-type": "application/json",
+          },
+        } as Request,
+        res,
+        next,
+      );
+      expect(next).toHaveBeenCalledOnce();
+    } finally {
+      if (original === undefined) {
+        delete process.env.VITE_PORT;
+      } else {
+        process.env.VITE_PORT = original;
+      }
+    }
+  });
+
+  it("allows custom CAPSIGHT_DEV_ORIGIN", () => {
+    const original = process.env.CAPSIGHT_DEV_ORIGIN;
+    process.env.CAPSIGHT_DEV_ORIGIN = "http://127.0.0.1:3000";
+    try {
+      const origins = buildAllowedApiOrigins(3847);
+      expect(origins.has("http://127.0.0.1:3000")).toBe(true);
+    } finally {
+      if (original === undefined) {
+        delete process.env.CAPSIGHT_DEV_ORIGIN;
+      } else {
+        process.env.CAPSIGHT_DEV_ORIGIN = original;
+      }
+    }
+  });
 });

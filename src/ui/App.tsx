@@ -146,7 +146,6 @@ export function App() {
     try {
       const result = await browseProjectFolder();
       if (!result.cancelled) {
-        setProjectPath(result.path);
         setBrowseUnavailable(false);
         await runScan(result.path);
         return;
@@ -184,7 +183,6 @@ export function App() {
     (path: string) => {
       const trimmed = path.trim();
       if (!trimmed) return;
-      setProjectPath(trimmed);
       void runScan(trimmed);
     },
     [runScan],
@@ -307,21 +305,7 @@ export function App() {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 404) {
           setNeedsScan(true);
-          const pathToScan = initialPath.trim();
-          if (pathToScan) {
-            setScanning(true);
-            try {
-              const result = await scanProject(pathToScan);
-              setProjectPath(pathToScan);
-              saveStoredProjectPath(pathToScan);
-              setResourceCounts(resourceCountsFromScan(result));
-              await loadDiscovery();
-            } catch (scanErr) {
-              setError(scanErr instanceof Error ? scanErr.message : "Scan failed");
-            } finally {
-              setScanning(false);
-            }
-          }
+          await runScan(initialPath.trim() || undefined);
         } else {
           setError(err instanceof Error ? err.message : "Failed to load discovery data");
         }
@@ -334,7 +318,7 @@ export function App() {
     return () => {
       cancelled = true;
     };
-  }, [loadDiscovery]);
+  }, [loadDiscovery, runScan]);
 
   return (
     <div className="dashboard">

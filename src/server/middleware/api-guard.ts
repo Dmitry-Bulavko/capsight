@@ -2,12 +2,27 @@ import type { NextFunction, Request, Response } from "express";
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
-export function buildAllowedApiOrigins(port: number): ReadonlySet<string> {
+function devUiOrigins(): string[] {
+  const origins: string[] = [];
+
+  const customOrigin = process.env.CAPSIGHT_DEV_ORIGIN?.trim();
+  if (customOrigin) {
+    origins.push(customOrigin);
+  }
+
+  const vitePort = Number(process.env.VITE_PORT ?? 5173);
+  if (Number.isFinite(vitePort)) {
+    origins.push(`http://localhost:${vitePort}`, `http://127.0.0.1:${vitePort}`);
+  }
+
+  return origins;
+}
+
+export function buildAllowedApiOrigins(apiPort: number): ReadonlySet<string> {
   return new Set([
-    `http://localhost:${port}`,
-    `http://127.0.0.1:${port}`,
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
+    `http://localhost:${apiPort}`,
+    `http://127.0.0.1:${apiPort}`,
+    ...devUiOrigins(),
   ]);
 }
 

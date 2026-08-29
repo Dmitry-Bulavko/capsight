@@ -1,6 +1,6 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { platform } from "node:os";
-import { Router } from "express";
+import { Router, type Response } from "express";
 import { getDefaultProjectPath } from "../../application/default-project-path.js";
 import {
   buildStatusSummary,
@@ -33,11 +33,16 @@ class BrowseCommandTimeoutError extends Error {
   }
 }
 
-function errorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
+function respondServerError(res: Response, err: unknown, clientMessage: string): void {
+  const detail = err instanceof Error ? err.message : String(err);
+  console.error(`[capsight] ${clientMessage}:`, detail);
+  res.status(500).json({ error: clientMessage });
 }
 
-function runCommand(command: string, args: string[]): Promise<{ stdout: string; code: number }> {
+function runCommand(
+  command: string,
+  args: string[],
+): Promise<{ stdout: string; stderr: string; code: number }> {
   return new Promise((resolve, reject) => {
     let child: ChildProcess;
     let stdout = "";
@@ -85,7 +90,7 @@ function runCommand(command: string, args: string[]): Promise<{ stdout: string; 
         reject(new BrowseCommandTimeoutError());
         return;
       }
-      resolve({ stdout, code: code ?? 1 });
+      resolve({ stdout, stderr, code: code ?? 1 });
     });
   });
 }
@@ -124,13 +129,13 @@ async function pickNativeFolderInternal(): Promise<FolderPickResult> {
         : { cancelled: true, reason: "dismissed" };
     }
 
-    const { stdout, code } = await runCommand("zenity", [
+    const { stdout, code, stderr } = await runCommand("zenity", [
       "--file-selection",
       "--directory",
       "--title=Select project folder",
     ]);
     if (code !== 0) {
-      return { cancelled: true, reason: "dismissed" };
+      return { cancelled: true, reason: stderr.trim() ? "unavailable" : "dismissed" };
     }
     const pickedPath = stdout.trim();
     return pickedPath
@@ -173,7 +178,7 @@ projectRouter.post("/browse", async (_req, res) => {
     const result = await pickNativeFolder();
     res.json(result);
   } catch (err) {
-    res.status(500).json({ error: errorMessage(err) });
+    respondServerError(res, err, "Folder browse failed");
   }
 });
 
@@ -183,7 +188,7 @@ projectRouter.post("/scan", async (req, res) => {
     const result = await scanAndStore(projectPath);
     res.json(result);
   } catch (err) {
-    res.status(500).json({ error: errorMessage(err) });
+    respondServerError(res, err, "Project scan failed");
   }
 });
 
