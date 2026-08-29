@@ -38,12 +38,18 @@ export function computeMcpConfigHash(config: Record<string, unknown>): string {
 }
 
 function inferTransport(config: Record<string, unknown>): DiscoveredMcpServer["transport"] {
+  if (typeof config.type === "string") {
+    const type = config.type.toLowerCase();
+    if (type === "stdio" || type === "sse" || type === "ws" || type === "http") {
+      return type;
+    }
+  }
   if (typeof config.command === "string") {
     return "stdio";
   }
   if (typeof config.url === "string") {
     const url = config.url.toLowerCase();
-    if (url.includes("sse")) {
+    if (/\/sse(?:\/|$|\?|#)/.test(url) || url.endsWith("/sse")) {
       return "sse";
     }
     if (url.startsWith("ws")) {

@@ -19,6 +19,7 @@ import {
   type LocalStateWarning,
 } from "./local-state-notice.js";
 import { getOrScan, scanAndStore } from "./scan-store.js";
+import { assertClaudePlatform } from "./platform-guard.js";
 import type { ProjectSnapshot } from "../core/model/index.js";
 
 export const APPLY_SUCCESS_MESSAGE =

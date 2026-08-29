@@ -1,5 +1,6 @@
 import { Router, type Response } from "express";
 import { resolve } from "../../application/resolve.js";
+import { UnsupportedPlatformError, assertClaudePlatform } from "../../application/platform-guard.js";
 import { getLastScan } from "../../application/scan-store.js";
 import { buildInspectionGraph } from "../../core/graph/build-graph.js";
 import { CLAUDE_TOOL_TABLES } from "../../adapters/claude/resolution/tool-tables.js";
@@ -20,6 +21,16 @@ graphRouter.get("/", async (req, res) => {
   const lastScan = requireLastScan(res);
   if (!lastScan) {
     return;
+  }
+
+  try {
+    assertClaudePlatform(lastScan.snapshot, "Inspection graph");
+  } catch (error) {
+    if (error instanceof UnsupportedPlatformError) {
+      res.status(501).json({ error: error.message });
+      return;
+    }
+    throw error;
   }
 
   const parsed = parseContextFromQuery(req);

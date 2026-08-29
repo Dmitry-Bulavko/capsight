@@ -188,102 +188,6 @@
           ]
         },
         {
-          "capabilityId": "instruction:D:/projects/capsight/.cursor/rules/capsight-claude-adapter.mdc",
-          "kind": "instruction",
-          "status": "unknown",
-          "enforcement": "unknown",
-          "sources": [
-            {
-              "platform": "cursor",
-              "scope": "nested-project",
-              "path": "D:/projects/capsight/.cursor/rules/capsight-claude-adapter.mdc"
-            }
-          ],
-          "reasons": [
-            {
-              "type": "unknown",
-              "message": "Instruction \"rule\" application semantics are not verified for Cursor.",
-              "source": {
-                "platform": "cursor",
-                "scope": "nested-project",
-                "path": "D:/projects/capsight/.cursor/rules/capsight-claude-adapter.mdc"
-              }
-            }
-          ]
-        },
-        {
-          "capabilityId": "instruction:D:/projects/capsight/.cursor/rules/capsight-codex-adapter.mdc",
-          "kind": "instruction",
-          "status": "unknown",
-          "enforcement": "unknown",
-          "sources": [
-            {
-              "platform": "cursor",
-              "scope": "nested-project",
-              "path": "D:/projects/capsight/.cursor/rules/capsight-codex-adapter.mdc"
-            }
-          ],
-          "reasons": [
-            {
-              "type": "unknown",
-              "message": "Instruction \"rule\" application semantics are not verified for Cursor.",
-              "source": {
-                "platform": "cursor",
-                "scope": "nested-project",
-                "path": "D:/projects/capsight/.cursor/rules/capsight-codex-adapter.mdc"
-              }
-            }
-          ]
-        },
-        {
-          "capabilityId": "instruction:D:/projects/capsight/.cursor/rules/capsight-cursor-adapter.mdc",
-          "kind": "instruction",
-          "status": "unknown",
-          "enforcement": "unknown",
-          "sources": [
-            {
-              "platform": "cursor",
-              "scope": "nested-project",
-              "path": "D:/projects/capsight/.cursor/rules/capsight-cursor-adapter.mdc"
-            }
-          ],
-          "reasons": [
-            {
-              "type": "unknown",
-              "message": "Instruction \"rule\" application semantics are not verified for Cursor.",
-              "source": {
-                "platform": "cursor",
-                "scope": "nested-project",
-                "path": "D:/projects/capsight/.cursor/rules/capsight-cursor-adapter.mdc"
-              }
-            }
-          ]
-        },
-        {
-          "capabilityId": "instruction:D:/projects/capsight/.cursor/rules/capsight-orchestration.mdc",
-          "kind": "instruction",
-          "status": "unknown",
-          "enforcement": "unknown",
-          "sources": [
-            {
-              "platform": "cursor",
-              "scope": "nested-project",
-              "path": "D:/projects/capsight/.cursor/rules/capsight-orchestration.mdc"
-            }
-          ],
-          "reasons": [
-            {
-              "type": "unknown",
-              "message": "Instruction \"rule\" application semantics are not verified for Cursor.",
-              "source": {
-                "platform": "cursor",
-                "scope": "nested-project",
-                "path": "D:/projects/capsight/.cursor/rules/capsight-orchestration.mdc"
-              }
-            }
-          ]
-        },
-        {
           "capabilityId": "skill:example",
           "kind": "skill",
           "status": "unknown",
@@ -303,30 +207,6 @@
                 "platform": "cursor",
                 "scope": "project",
                 "path": ".cursor/skills/example/SKILL.md"
-              }
-            }
-          ]
-        },
-        {
-          "capabilityId": "skill:capsight-implementer",
-          "kind": "skill",
-          "status": "unknown",
-          "enforcement": "unknown",
-          "sources": [
-            {
-              "platform": "cursor",
-              "scope": "nested-project",
-              "path": "D:/projects/capsight/.cursor/skills/capsight-implementer/SKILL.md"
-            }
-          ],
-          "reasons": [
-            {
-              "type": "unknown",
-              "message": "Skill \"capsight-implementer\" (skill) attachment semantics are not verified (CS2).",
-              "source": {
-                "platform": "cursor",
-                "scope": "nested-project",
-                "path": "D:/projects/capsight/.cursor/skills/capsight-implementer/SKILL.md"
               }
             }
           ]

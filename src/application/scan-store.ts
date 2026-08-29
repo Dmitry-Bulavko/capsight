@@ -37,6 +37,7 @@ export async function getOrScan(projectPath: string = process.cwd()): Promise<Sc
 
 export interface ScanStatusSummary {
   projectPath: string;
+  platform: PlatformId;
   scannedAt: string;
   version: PlatformVersion;
   agents: {
@@ -61,6 +62,7 @@ export function buildStatusSummary(result: ScanResult): ScanStatusSummary {
 
   return {
     projectPath: result.snapshot.projectPath,
+    platform: result.platform,
     scannedAt: result.snapshot.scannedAt,
     version: result.snapshot.version,
     agents: counts,

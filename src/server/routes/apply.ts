@@ -8,6 +8,7 @@ import {
   RollbackNotConfirmedError,
   SnapshotChangedError,
 } from "../../application/apply.js";
+import { UnsupportedPlatformError } from "../../application/platform-guard.js";
 import { getLastScan } from "../../application/scan-store.js";
 
 export const applyRouter = Router();
@@ -60,6 +61,10 @@ applyRouter.post("/", async (req, res) => {
         warnings: error.warnings,
         plan: error.plan,
       });
+      return;
+    }
+    if (error instanceof UnsupportedPlatformError) {
+      res.status(501).json({ error: error.message });
       return;
     }
     throw error;

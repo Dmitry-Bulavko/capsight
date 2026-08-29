@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { plan } from "../../application/plan.js";
+import { UnsupportedPlatformError } from "../../application/platform-guard.js";
 import { getLastScan } from "../../application/scan-store.js";
 
 export const planRouter = Router();
@@ -30,10 +31,18 @@ planRouter.post("/", async (req, res) => {
     return;
   }
 
-  const result = await plan({
-    pending,
-    editSnapshotId,
-    snapshot: lastScan.snapshot,
-  });
-  res.json(result);
+  try {
+    const result = await plan({
+      pending,
+      editSnapshotId,
+      snapshot: lastScan.snapshot,
+    });
+    res.json(result);
+  } catch (error) {
+    if (error instanceof UnsupportedPlatformError) {
+      res.status(501).json({ error: error.message });
+      return;
+    }
+    throw error;
+  }
 });

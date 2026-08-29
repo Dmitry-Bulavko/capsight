@@ -23,6 +23,7 @@ import {
   resolveEnforcement,
 } from "../adapters/claude/version/matrix.js";
 import { getLastScan, getOrScan } from "./scan-store.js";
+import { assertClaudePlatform } from "./platform-guard.js";
 
 export { ManagedBundleError } from "../adapters/claude/discovery/managed-overlay.js";
 
@@ -363,6 +364,8 @@ export async function simulateManagedOverlay(
     const scanResult = getLastScan() ?? (await getOrScan());
     baselineSnapshot = scanResult.snapshot;
   }
+
+  assertClaudePlatform(baselineSnapshot, "Managed simulation");
 
   const simulatedSnapshot = applyManagedOverlay(baselineSnapshot, bundle);
   const context = buildExecutionContext("main-session");

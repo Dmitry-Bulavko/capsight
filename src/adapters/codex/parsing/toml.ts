@@ -173,8 +173,12 @@ function parseTableHeader(line: string): string[] | null {
 export function parseToml(content: string): Record<string, TomlValue> {
   const root: Record<string, TomlValue> = {};
   let currentTable = root;
+  const lines = content.split(/\r?\n/);
+  let lineIndex = 0;
 
-  for (const rawLine of content.split(/\r?\n/)) {
+  while (lineIndex < lines.length) {
+    const rawLine = lines[lineIndex]!;
+    lineIndex += 1;
     const line = stripComment(rawLine).trim();
     if (!line) {
       continue;
@@ -192,7 +196,22 @@ export function parseToml(content: string): Record<string, TomlValue> {
     }
 
     const key = line.slice(0, eqIndex).trim();
-    const valueRaw = line.slice(eqIndex + 1).trim();
+    let valueRaw = line.slice(eqIndex + 1).trim();
+
+    if (valueRaw.startsWith("[") && !valueRaw.endsWith("]")) {
+      const parts = [valueRaw];
+      while (lineIndex < lines.length) {
+        const nextRaw = lines[lineIndex]!;
+        lineIndex += 1;
+        const nextLine = stripComment(nextRaw).trim();
+        parts.push(nextLine);
+        if (nextLine.endsWith("]")) {
+          break;
+        }
+      }
+      valueRaw = parts.join("\n");
+    }
+
     currentTable[key] = parseValueToken(valueRaw);
   }
 

@@ -45,12 +45,18 @@ export function computeMcpConfigHash(config: Record<string, unknown>): string {
 }
 
 function inferTransport(config: Record<string, unknown>): DiscoveredMcpServer["transport"] {
+  if (typeof config.type === "string") {
+    const type = config.type.toLowerCase();
+    if (type === "stdio" || type === "sse" || type === "ws" || type === "http") {
+      return type;
+    }
+  }
   if (typeof config.command === "string") {
     return "stdio";
   }
   if (typeof config.url === "string") {
     const url = config.url.toLowerCase();
-    if (url.includes("sse")) {
+    if (/\/sse(?:\/|$|\?|#)/.test(url) || url.endsWith("/sse")) {
       return "sse";
     }
     if (url.startsWith("ws")) {
@@ -89,7 +95,11 @@ export async function discoverMcpServers(
     const mcpServers =
       json.mcpServers && typeof json.mcpServers === "object" && !Array.isArray(json.mcpServers)
         ? (json.mcpServers as Record<string, Record<string, unknown>>)
-        : json;
+        : undefined;
+
+    if (!mcpServers) {
+      return;
+    }
 
     for (const [name, config] of Object.entries(mcpServers)) {
       if (!config || typeof config !== "object" || Array.isArray(config)) {

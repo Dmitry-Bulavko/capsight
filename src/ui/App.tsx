@@ -96,6 +96,16 @@ export function App() {
     setSummary(project);
     setAgents(agentList);
     setResourceCounts(countsFromSummary(project));
+    const scannedPlatform = project.version.platform;
+    if (
+      scannedPlatform === "claude" ||
+      scannedPlatform === "cursor" ||
+      scannedPlatform === "codex"
+    ) {
+      setPlatform(scannedPlatform);
+      platformRef.current = scannedPlatform;
+      saveStoredPlatform(scannedPlatform);
+    }
     setNeedsScan(false);
   }, []);
 
@@ -156,7 +166,6 @@ export function App() {
     (nextPlatform: string) => {
       const parsed = nextPlatform as PlatformId;
       setPlatform(parsed);
-      saveStoredPlatform(parsed);
       if (projectPathRef.current.trim()) {
         void runScan(undefined, parsed);
       }

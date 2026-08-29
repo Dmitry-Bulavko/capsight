@@ -279,6 +279,7 @@ describe("project API routes", () => {
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
         projectPath: "/mock/project",
+        platform: "claude",
         scannedAt: "2026-01-01T12:00:00.000Z",
         version: mockVersion,
         agents: {
