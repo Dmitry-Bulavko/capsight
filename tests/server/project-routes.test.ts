@@ -6,6 +6,7 @@ import type {
   ClaudeProjectSnapshot as ProjectSnapshot,
 } from "../../src/adapters/claude/model/index.js";
 import type { ScanResult } from "../../src/application/scan.js";
+import { getDefaultProjectPath } from "../../src/application/default-project-path.js";
 import { clearLastScan, setLastScan } from "../../src/application/scan-store.js";
 import { app } from "../../src/server/index.js";
 
@@ -13,9 +14,55 @@ vi.mock("../../src/application/scan.js", () => ({
   scan: vi.fn(),
 }));
 
+vi.mock("node:child_process", () => ({
+  spawn: vi.fn(),
+}));
+
+import { spawn } from "node:child_process";
 import { scan } from "../../src/application/scan.js";
 
+const mockSpawn = vi.mocked(spawn);
+
 const mockScan = vi.mocked(scan);
+
+function mockFolderDialog(path: string): void {
+  mockSpawn.mockImplementation((_command, _args, _options) => {
+    const stdoutHandlers: Array<(chunk: Buffer) => void> = [];
+    const closeHandlers: Array<(code: number) => void> = [];
+
+    return {
+      stdout: {
+        on(event: string, handler: (chunk: Buffer) => void) {
+          if (event === "data") {
+            stdoutHandlers.push(handler);
+            handler(Buffer.from(path));
+          }
+        },
+      },
+      stderr: { on: vi.fn() },
+      on(event: string, handler: (code: number) => void) {
+        if (event === "close") {
+          closeHandlers.push(handler);
+          handler(0);
+        }
+      },
+    } as unknown as ReturnType<typeof spawn>;
+  });
+}
+
+function mockFolderDialogCancelled(): void {
+  mockSpawn.mockImplementation((_command, _args, _options) => {
+    return {
+      stdout: { on: vi.fn() },
+      stderr: { on: vi.fn() },
+      on(event: string, handler: (code: number) => void) {
+        if (event === "close") {
+          handler(0);
+        }
+      },
+    } as unknown as ReturnType<typeof spawn>;
+  });
+}
 
 const mockVersion: PlatformVersion = {
   platform: "claude",
@@ -75,10 +122,41 @@ describe("project API routes", () => {
   beforeEach(() => {
     clearLastScan();
     mockScan.mockReset();
+    mockSpawn.mockReset();
   });
 
   afterEach(() => {
     clearLastScan();
+  });
+
+  describe("GET /api/project/config", () => {
+    it("returns default project path", async () => {
+      const response = await request(app).get("/api/project/config");
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ defaultProjectPath: getDefaultProjectPath() });
+    });
+  });
+
+  describe("POST /api/project/browse", () => {
+    it("returns chosen folder path", async () => {
+      mockFolderDialog("D:\\picked\\project");
+
+      const response = await request(app).post("/api/project/browse");
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ cancelled: false, path: "D:\\picked\\project" });
+      expect(mockSpawn).toHaveBeenCalledOnce();
+    });
+
+    it("returns cancelled when dialog is dismissed", async () => {
+      mockFolderDialogCancelled();
+
+      const response = await request(app).post("/api/project/browse");
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ cancelled: true });
+    });
   });
 
   describe("GET /api/project", () => {
@@ -153,14 +231,24 @@ describe("project API routes", () => {
       expect(projectResponse.body.agents.active).toBe(1);
     });
 
-    it("defaults project path to cwd when body omits projectPath", async () => {
+    it("defaults project path via getDefaultProjectPath when body omits projectPath", async () => {
       const result = makeScanResult();
       mockScan.mockResolvedValue(result);
 
       const response = await request(app).post("/api/project/scan").send({});
 
       expect(response.status).toBe(200);
-      expect(mockScan).toHaveBeenCalledWith({ projectPath: process.cwd() });
+      expect(mockScan).toHaveBeenCalledWith({ projectPath: getDefaultProjectPath() });
+    });
+
+    it("defaults project path when body contains blank projectPath", async () => {
+      const result = makeScanResult();
+      mockScan.mockResolvedValue(result);
+
+      const response = await request(app).post("/api/project/scan").send({ projectPath: "   " });
+
+      expect(response.status).toBe(200);
+      expect(mockScan).toHaveBeenCalledWith({ projectPath: getDefaultProjectPath() });
     });
   });
 });

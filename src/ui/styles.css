@@ -170,17 +170,17 @@ body {
 .scan-toolbar {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 
-.scan-toolbar-note {
-  color: #bdc1c6;
-  font-size: 0.9rem;
-}
-
-.scan-toolbar button {
-  padding: 0.5rem 1rem;
+.scan-project-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  max-width: 11rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid #5f6368;
   border-radius: 6px;
   background: #303134;
@@ -190,17 +190,36 @@ body {
   white-space: nowrap;
 }
 
-.scan-toolbar button:hover:not(:disabled) {
+.scan-project-button:hover:not(:disabled) {
   background: #3c4043;
 }
 
-.scan-toolbar button:disabled {
+.scan-project-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.scan-toolbar .error-message {
-  margin: 0;
+.scan-folder-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: #bdc1c6;
+}
+
+.scan-project-button-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.scan-toolbar-error {
+  color: #f28b82;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 12rem;
 }
 
 .dashboard-stats {
@@ -414,23 +433,11 @@ body {
   color: #bdc1c6;
 }
 
-.scan-actions button {
-  padding: 0.5rem 1rem;
-  border: 1px solid #5f6368;
-  border-radius: 6px;
-  background: #303134;
-  color: #e8eaed;
-  font: inherit;
-  cursor: pointer;
-}
-
-.scan-actions button:hover:not(:disabled) {
-  background: #3c4043;
-}
-
-.scan-actions button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.scan-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
 }
 
 .error-message {

@@ -3,10 +3,12 @@ import type { Agent, ContextPreset, EffectiveConfiguration } from "../core/model
 import type { ScanStatusSummary } from "../application/scan-store.js";
 import {
   ApiError,
+  browseProjectFolder,
   fetchAgents,
   fetchEffectiveConfig,
   fetchExplain,
   fetchProject,
+  fetchProjectConfig,
   resourceCountsFromScan,
   scanProject,
 } from "./api.js";
@@ -17,7 +19,11 @@ import {
   DEFAULT_CONTEXT_PRESET,
 } from "./components/ContextSelector.js";
 import { ProjectSummary, type ResourceCounts } from "./components/ProjectSummary.js";
-import { ScanPanel } from "./components/ScanPanel.js";
+import {
+  loadStoredProjectPath,
+  saveStoredProjectPath,
+  ScanPanel,
+} from "./components/ScanPanel.js";
 import { GraphView } from "./components/GraphView.js";
 import { WhyPanel } from "./components/WhyPanel.js";
 import { AgentEditor } from "./components/AgentEditor.js";
@@ -47,6 +53,8 @@ export function App() {
   const [summary, setSummary] = useState<ScanStatusSummary | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [resourceCounts, setResourceCounts] = useState<ResourceCounts | null>(null);
+  const [projectPath, setProjectPath] = useState("");
+  const [browsing, setBrowsing] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,11 +112,15 @@ export function App() {
   const editorPendingCount = totalPendingChanges(agents, editorPending);
 
   const runScan = useCallback(
-    async (projectPath?: string) => {
+    async (overridePath?: string) => {
+      const pathToScan = (overridePath ?? projectPath).trim();
       setScanning(true);
       setError(null);
       try {
-        const result = await scanProject(projectPath);
+        const result = await scanProject(pathToScan || undefined);
+        if (pathToScan) {
+          saveStoredProjectPath(pathToScan);
+        }
         setResourceCounts(resourceCountsFromScan(result));
         await loadDiscovery();
       } catch (err) {
@@ -117,8 +129,25 @@ export function App() {
         setScanning(false);
       }
     },
-    [loadDiscovery],
+    [loadDiscovery, projectPath],
   );
+
+  const handleBrowse = useCallback(async () => {
+    setBrowsing(true);
+    setError(null);
+    try {
+      const result = await browseProjectFolder();
+      if (!result.cancelled) {
+        setProjectPath(result.path);
+        saveStoredProjectPath(result.path);
+        await runScan(result.path);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Browse failed");
+    } finally {
+      setBrowsing(false);
+    }
+  }, [runScan]);
 
   useEffect(() => {
     if (agents.length === 0) {
@@ -221,13 +250,22 @@ export function App() {
     async function init() {
       setLoading(true);
       setError(null);
+      let initialPath = loadStoredProjectPath() ?? "";
       try {
+        if (!initialPath) {
+          const config = await fetchProjectConfig();
+          initialPath = config.defaultProjectPath;
+        }
+        if (!cancelled) {
+          setProjectPath(initialPath);
+        }
+
         await loadDiscovery();
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 404) {
           setNeedsScan(true);
-          await runScan();
+          await runScan(initialPath);
         } else {
           setError(err instanceof Error ? err.message : "Failed to load discovery data");
         }
@@ -262,10 +300,11 @@ export function App() {
           {(needsScan || summary) && (
             <ScanPanel
               compact
+              projectPath={projectPath}
+              onBrowse={handleBrowse}
+              browsing={browsing}
               scanning={scanning}
               error={error}
-              onScan={runScan}
-              showPrompt={needsScan && !summary}
             />
           )}
         </div>

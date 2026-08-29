@@ -121,3 +121,9 @@ Order: H1-01 → H1-02 → H1-03 → H1-05 → H1-06 → H1-04 → H1-07 → H1-
 | H1-27 | H1 | Security findings contradict F9 for plugin agents | done | F9, §7.6, inv 3, 12, 14 | src/adapters/claude/resolution/security-findings.ts | No finding whose premise F9 nullifies |
 | H1-28 | H1 | `confidence: "fixture"` means three different things across entries | done | §8.1, §8.2, §11.4, §0.1.3 | src/adapters/claude/version/matrix.ts, tests/fixtures/coverage-report.ts | One stated rule, applied uniformly |
 | H1-29 | H1 | F8 model substitution asserts an undocumented value | todo | F8, §0.1.1, §7.8, inv 14 | src/application/simulate.ts | Substitute identity unknown unless established |
+
+## V0 — v0.1 UX polish
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| V0-01 | V0 | UI project folder selection | done | §12.4 M0 | src/ui/, src/server/routes/project.ts | Path field + Browse + localStorage |
