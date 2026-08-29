@@ -54,23 +54,6 @@
       },
       {
         "name": "shared",
-        "description": "Service level declaration of shared, nearer to cwd than the repository copy (A3)",
-        "source": {
-          "platform": "claude",
-          "scope": "nested-project",
-          "path": "svc/.claude/agents/shared.md"
-        },
-        "status": "active",
-        "configuration": {
-          "tools": [
-            "Grep"
-          ],
-          "unknownFields": {}
-        },
-        "isPluginAgent": false
-      },
-      {
-        "name": "shared",
         "description": "Repository level declaration of shared, farthest from cwd",
         "source": {
           "platform": "claude",
@@ -90,12 +73,12 @@
             {
               "platform": "claude",
               "scope": "nested-project",
-              "path": "svc/.claude/agents/shared.md"
+              "path": ".claude/agents/shared.md"
             },
             {
               "platform": "claude",
               "scope": "nested-project",
-              "path": ".claude/agents/shared.md"
+              "path": "svc/.claude/agents/shared.md"
             }
           ],
           "effective": {
@@ -107,6 +90,23 @@
           "matrixRef": "agent.collisionNested",
           "enforcement": "enforced"
         }
+      },
+      {
+        "name": "shared",
+        "description": "Service level declaration of shared, nearer to cwd than the repository copy (A3)",
+        "source": {
+          "platform": "claude",
+          "scope": "nested-project",
+          "path": "svc/.claude/agents/shared.md"
+        },
+        "status": "active",
+        "configuration": {
+          "tools": [
+            "Grep"
+          ],
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
       }
     ],
     "skills": [],

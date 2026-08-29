@@ -1,6 +1,7 @@
 [
   {
     "agentName": "reviewer",
+    "agentSourcePath": "app/.claude/agents/reviewer.md",
     "preset": "foreground-subagent"
   }
 ]

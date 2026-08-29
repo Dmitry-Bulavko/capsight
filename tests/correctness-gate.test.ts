@@ -34,6 +34,12 @@ import {
   normalizeGoldenOutput,
   type NormalizedGoldenOutput,
 } from "./fixtures/golden-normalize.js";
+import {
+  cleanupFixtureHome,
+  fixtureHomeDir,
+  restoreProcessEnv,
+  selectFixtureAgent,
+} from "./fixtures/fixture-runtime.js";
 
 const { mockDetectClaudeVersion } = vi.hoisted(() => ({
   mockDetectClaudeVersion: vi.fn<() => Promise<PlatformVersion>>(),
@@ -46,6 +52,8 @@ vi.mock("../src/adapters/claude/version/index.js", () => ({
 
 interface FixtureContextSpec {
   agentName: string;
+  /** Disambiguator for a name carried by more than one entry (A4). */
+  agentSourcePath?: string;
   preset: ContextPreset;
   depth?: number;
   maxDepth?: number;
@@ -81,6 +89,13 @@ function applyFixtureEnv(env: Record<string, string>): void {
   for (const [key, value] of Object.entries(env)) {
     vi.stubEnv(key, value);
   }
+  // User-level settings (`~/.claude/settings.json`) and trust
+  // (`~/.claude.json`) reach a golden through `discovery.environment` and
+  // `discovery.trust`. A fixture run reads an empty home instead of the
+  // developer's, so the corpus depends on the input only (§13 invariant 2).
+  const home = fixtureHomeDir();
+  vi.stubEnv("HOME", home);
+  vi.stubEnv("USERPROFILE", home);
 }
 
 async function runFixtureToGolden(
@@ -113,10 +128,11 @@ async function runFixtureToGolden(
     [];
 
   for (const contextSpec of contract.contexts) {
-    const agent = scanResult.snapshot.agents.find(
-      (entry) => entry.name === contextSpec.agentName,
+    const agent = selectFixtureAgent(
+      scanResult.snapshot.agents,
+      contextSpec,
+      projectRoot,
     );
-    expect(agent, `agent ${contextSpec.agentName} should exist`).toBeDefined();
 
     const context = buildExecutionContext(contextSpec.preset, {
       ...(contextSpec.depth !== undefined ? { depth: contextSpec.depth } : {}),
@@ -128,7 +144,7 @@ async function runFixtureToGolden(
 
     const resolution = await resolve({
       snapshot: scanResult.snapshot,
-      agentId: agent!.id,
+      agentId: agent.id,
       context,
     });
 
@@ -422,8 +438,8 @@ describe("correctness gate", () => {
   const envSnapshot = { ...process.env };
 
   afterEach(() => {
-    process.env = { ...envSnapshot };
     vi.unstubAllEnvs();
+    restoreProcessEnv(envSnapshot);
     mockDetectClaudeVersion.mockReset();
   });
 

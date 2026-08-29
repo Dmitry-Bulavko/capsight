@@ -3,23 +3,6 @@
     "agents": [
       {
         "name": "reviewer",
-        "description": "Inner declaration, nearest to cwd (A3 winner)",
-        "source": {
-          "platform": "claude",
-          "scope": "project",
-          "path": "app/.claude/agents/reviewer.md"
-        },
-        "status": "active",
-        "configuration": {
-          "tools": [
-            "Read"
-          ],
-          "unknownFields": {}
-        },
-        "isPluginAgent": false
-      },
-      {
-        "name": "reviewer",
         "description": "Outer project declaration, farther from cwd (A3 loser)",
         "source": {
           "platform": "claude",
@@ -39,13 +22,13 @@
           "candidates": [
             {
               "platform": "claude",
-              "scope": "project",
-              "path": "app/.claude/agents/reviewer.md"
+              "scope": "nested-project",
+              "path": ".claude/agents/reviewer.md"
             },
             {
               "platform": "claude",
-              "scope": "nested-project",
-              "path": ".claude/agents/reviewer.md"
+              "scope": "project",
+              "path": "app/.claude/agents/reviewer.md"
             }
           ],
           "effective": {
@@ -57,6 +40,23 @@
           "matrixRef": "agent.collisionNested",
           "enforcement": "enforced"
         }
+      },
+      {
+        "name": "reviewer",
+        "description": "Inner declaration, nearest to cwd (A3 winner)",
+        "source": {
+          "platform": "claude",
+          "scope": "project",
+          "path": "app/.claude/agents/reviewer.md"
+        },
+        "status": "active",
+        "configuration": {
+          "tools": [
+            "Read"
+          ],
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
       }
     ],
     "skills": [],

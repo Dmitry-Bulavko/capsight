@@ -79,6 +79,49 @@ function sortByKey<T>(items: T[], keyFn: (item: T) => string): T[] {
   return [...items].sort((left, right) => keyFn(left).localeCompare(keyFn(right)));
 }
 
+/**
+ * Sort on a tuple of keys, so entries that tie on the first key still have a
+ * total order. A name alone is not a key: an A4 collision puts two agents
+ * under one name, and a stable sort would then leave them in directory read
+ * order — which A4 has no rule for (§13 invariant 2).
+ */
+function sortByKeys<T>(items: T[], keyFn: (item: T) => string[]): T[] {
+  return [...items].sort((left, right) => {
+    const leftKeys = keyFn(left);
+    const rightKeys = keyFn(right);
+    const length = Math.max(leftKeys.length, rightKeys.length);
+    for (let index = 0; index < length; index += 1) {
+      const comparison = (leftKeys[index] ?? "").localeCompare(
+        rightKeys[index] ?? "",
+      );
+      if (comparison !== 0) {
+        return comparison;
+      }
+    }
+    return 0;
+  });
+}
+
+/** Total order over sources, used to normalize every source list. */
+function sourceKey(source: SourceInfo): string[] {
+  return [
+    source.platform,
+    source.scope,
+    source.path ?? "",
+    source.fieldPath ?? "",
+    source.matrixRef ?? "",
+  ];
+}
+
+/**
+ * A resolution cites the colliding candidates of an ambiguous agent, and their
+ * order follows the directory walk. Ordering them here keeps a differently
+ * ordered walk from producing a golden diff.
+ */
+function sortSources<T extends SourceInfo>(sources: readonly T[]): T[] {
+  return sortByKeys([...sources], sourceKey);
+}
+
 function isWithinProject(projectRoot: string, candidatePath: string | undefined): boolean {
   if (candidatePath === undefined) {
     return false;
@@ -108,7 +151,7 @@ function normalizeDiscovery(
   snapshot: ProjectSnapshot,
   projectRoot: string,
 ): NormalizedDiscovery {
-  const agents = sortByKey(
+  const agents = sortByKeys(
     snapshot.agents
       .filter((agent) => isWithinProject(projectRoot, agent.source.path))
       .map((agent) => {
@@ -121,9 +164,11 @@ function normalizeDiscovery(
             ? {
                 collision: {
                   ...agent.collision,
-                  candidates: agent.collision.candidates.map(
-                    (candidate) =>
-                      normalizeSource(projectRoot, candidate) ?? candidate,
+                  candidates: sortSources(
+                    agent.collision.candidates.map(
+                      (candidate) =>
+                        normalizeSource(projectRoot, candidate) ?? candidate,
+                    ),
                   ),
                   ...(agent.collision.effective
                     ? {
@@ -138,7 +183,10 @@ function normalizeDiscovery(
             : {}),
         };
       }),
-    (agent) => (agent as { name: string }).name,
+    (agent) => [
+      (agent as { name: string }).name,
+      String((agent as { source?: SourceInfo }).source?.path ?? ""),
+    ],
   );
 
   const skills = sortByKey(
@@ -249,12 +297,15 @@ function normalizeCapability(
   capability: ResolvedCapability,
   projectRoot: string,
 ): ResolvedCapability {
-  return {
-    ...capability,
-    capabilityId: normalizeCapabilityId(capability, projectRoot),
-    sources: capability.sources.map(
+  const sources = sortSources(
+    capability.sources.map(
       (source) => normalizeSource(projectRoot, source) ?? source,
     ),
+  );
+  return {
+    ...capability,
+    capabilityId: normalizeCapabilityId({ ...capability, sources }, projectRoot),
+    sources,
     reasons: capability.reasons.map((reason) => ({
       ...reason,
       ...(reason.source
@@ -278,8 +329,10 @@ function normalizeResolution(
     ),
     warnings: sortByKey(rest.warnings, (warning) => warning.message).map((warning) => ({
       ...warning,
-      evidence: warning.evidence.map(
-        (source) => normalizeSource(projectRoot, source) ?? source,
+      evidence: sortSources(
+        warning.evidence.map(
+          (source) => normalizeSource(projectRoot, source) ?? source,
+        ),
       ),
     })),
     unknownRate: rest.unknownRate,

@@ -52,3 +52,19 @@ The golden runner resolves a fixture's agent by `name`. For an A4 collision two 
 - [ ] The runner resolves a fixture agent unambiguously — by id, or by name plus an explicit disambiguator in `contexts.json`
 - [ ] `sources` ordering in a resolution is normalized, so a differently-ordered directory walk cannot produce a golden diff
 - [ ] A test proves it: resolving the same ambiguous fixture with the candidate order reversed yields an identical golden
+
+## Orchestrator verification (post-implementation)
+
+Verified against the real developer home rather than the test's own temp one: planted `~/.claude/settings.json` with an `env` block and `~/.claude.json` trust records for four fixture projects, then ran the full suite five times. All green, so the corpus genuinely does not see the developer's configuration. Home restored afterwards and confirmed clean.
+
+One run out of the five failed a single test — the H1-25 probe reaping flake, which then passed six times out of six in isolation. Worth noting because it is the second time that flake has muddied a verification: an intermittent failure does not only waste a run, it makes every unrelated result harder to trust. H1-25 is the right priority.
+
+Suite 449 passed | 1 todo. Accepted.
+
+**A latent bug in the runners, found and fixed here, is the more valuable half of this task.** Both runners restored the environment with `process.env = { ...snapshot }`. Reassigning `process.env` replaces Node's live environment binding with an ordinary object, after which `os.homedir()` — which reads the real environment — stops seeing writes to `$HOME`. With that in place the home isolation would have worked for the first fixture and silently done nothing for every one after it, and the failure would only ever appear in a full-file run, never under `-t`. In other words the isolation this task adds would have looked correct while being inert.
+
+**Ambiguous agent selection is now explicit.** Requiring `agentSourcePath` when a name matches more than one entry caught not just `collision-same-dir` (A4) but `collision-nested` (A3) too — both had been silently resolving whichever entry the directory walk yielded first. The reversal proof reverses `snapshot.agents` and every `collision.candidates` list and gets a byte-identical golden.
+
+**Three goldens rewrote by ordering only**, from applying the new sort keys to existing values. `reasons` is deliberately left unsorted: its order is the narrative of how the verdict was reached (declared, then denied), which is content rather than presentation.
+
+**Production untouched:** no `src/` change was needed. The product still reads the real `~/.claude/` when scanning a real project, which is correct per S1.
