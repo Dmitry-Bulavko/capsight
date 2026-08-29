@@ -188,9 +188,14 @@ function normalizeDiscovery(
     (server) => String((server as { configPath?: string }).configPath ?? ""),
   );
 
+  // Every layer inside the project, not just `scope: "project"`: the S1
+  // outcome is decided by `.claude/settings.local.json` outranking
+  // `.claude/settings.json`, and a golden that hid the local layer could not
+  // show which layer a verdict came from. The user layer stays out because it
+  // is machine-specific, which `isWithinProject` already handles.
   const settings = sortByKey(
     (snapshot.settings as Array<Record<string, unknown>>)
-      .filter((layer) => layer.scope === "project")
+      .filter((layer) => isWithinProject(projectRoot, pathFromRecord(layer)))
       .map((layer) => ({
         ...layer,
         ...(typeof layer.path === "string"

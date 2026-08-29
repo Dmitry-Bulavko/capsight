@@ -46,10 +46,35 @@ export interface DiscoveredMcpServer {
   configHash: string;
 }
 
+/** `permissions.<action>` list a rule was written in (§3.5). */
+export type SettingsPermissionAction = "allow" | "deny" | "ask";
+
+/**
+ * One entry of a `permissions.allow` / `deny` / `ask` array, kept verbatim.
+ * Discovery does not interpret the rule text — S3–S8 semantics belong to
+ * resolution — it only records what the layer says and where it says it.
+ */
+export interface SettingsPermissionRule {
+  action: SettingsPermissionAction;
+  /** Position in its `permissions.<action>` array; the rule's `fieldPath`. */
+  index: number;
+  /** Rule text exactly as written in the settings file. */
+  raw: string;
+}
+
+export interface SettingsPermissions {
+  rules: SettingsPermissionRule[];
+  /** Present only when the layer sets the key; absent is not `false` (P4, S1). */
+  disableBypassPermissionsMode?: boolean;
+}
+
 export interface SettingsLayer {
   scope: Scope;
   path: string;
+  /** Layer rank for S1 precedence: higher wins. */
   priority: number;
+  /** Parsed `permissions` block; absent when the layer declares none. */
+  permissions?: SettingsPermissions;
 }
 
 export interface RawAgentFile {

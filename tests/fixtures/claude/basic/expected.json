@@ -59,7 +59,21 @@
       {
         "scope": "project",
         "path": ".claude/settings.json",
-        "priority": 30
+        "priority": 30,
+        "permissions": {
+          "rules": [
+            {
+              "action": "allow",
+              "index": 0,
+              "raw": "Read"
+            },
+            {
+              "action": "allow",
+              "index": 1,
+              "raw": "Grep"
+            }
+          ]
+        }
       }
     ],
     "trust": {
@@ -104,6 +118,70 @@
                 "scope": "project",
                 "path": ".claude/agents/backend.md"
               }
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:Grep",
+          "kind": "permission",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[1]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "permissions.allow entry \"Grep\" pre-approves what it names rather than adding it to the session; §3.5 documents no effect on the resolved capability set, so the effect of this rule is unknown.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.allow[1]"
+              },
+              "matrixRef": "settings.ruleScope"
+            },
+            {
+              "type": "version",
+              "message": "Version matrix reports \"settings.ruleScope\" as unknown on Claude Code 2.1.0; the feature resolves as unknown (SPEC §8.2).",
+              "matrixRef": "settings.ruleScope"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:Read",
+          "kind": "permission",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "permissions.allow entry \"Read\" pre-approves what it names rather than adding it to the session; §3.5 documents no effect on the resolved capability set, so the effect of this rule is unknown.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.allow[0]"
+              },
+              "matrixRef": "settings.ruleScope"
+            },
+            {
+              "type": "version",
+              "message": "Version matrix reports \"settings.ruleScope\" as unknown on Claude Code 2.1.0; the feature resolves as unknown (SPEC §8.2).",
+              "matrixRef": "settings.ruleScope"
             }
           ]
         },
@@ -859,7 +937,7 @@
         }
       ],
       "warnings": [],
-      "unknownRate": 0
+      "unknownRate": 0.058823529411764705
     }
   ]
 }

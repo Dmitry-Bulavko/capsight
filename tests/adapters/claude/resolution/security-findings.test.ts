@@ -18,6 +18,7 @@ import type {
   ClaudeProjectSnapshot as ProjectSnapshot,
 } from "../../../../src/adapters/claude/model/index.js";
 import type { DiscoveredSkill, SettingsLayer } from "../../../../src/adapters/claude/discovery/types.js";
+import { readSettingsPermissions } from "../../../../src/adapters/claude/discovery/settings.js";
 
 const tempDirs: string[] = [];
 
@@ -120,7 +121,15 @@ async function makeSettingsLayer(content: Record<string, unknown>): Promise<Sett
   tempDirs.push(dir);
   const filePath = path.join(dir, "settings.json");
   await fs.writeFile(filePath, JSON.stringify(content, null, 2));
-  return { scope: "project", path: filePath, priority: 30 };
+  // Layers carry their parsed `permissions` block from discovery onwards, so
+  // the fake layer is built by the same reader the scanner uses.
+  const permissions = await readSettingsPermissions(filePath);
+  return {
+    scope: "project",
+    path: filePath,
+    priority: 30,
+    ...(permissions ? { permissions } : {}),
+  };
 }
 
 describe("security-findings helpers", () => {
@@ -225,8 +234,13 @@ describe("resolveSecurityFindings", () => {
       toolCapabilities: [],
     });
 
-    const s4Warnings = warnings.filter((warning) => warning.matrixRef === "S4");
+    // The finding is a platform claim, so it carries the matrix entry it was
+    // gated on rather than the bare fact id.
+    const s4Warnings = warnings.filter(
+      (warning) => warning.matrixRef === "settings.allowGlobIneffective",
+    );
     expect(s4Warnings).toHaveLength(2);
+    expect(s4Warnings.every((warning) => warning.enforcement === "enforced")).toBe(true);
     expect(s4Warnings.some((warning) => warning.message.includes('"*"'))).toBe(true);
     expect(s4Warnings.some((warning) => warning.message.includes('"mcp__*"'))).toBe(true);
   });

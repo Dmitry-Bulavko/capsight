@@ -16,6 +16,7 @@ import type {
   ClaudeProjectSnapshot as ProjectSnapshot,
 } from "../../../../src/adapters/claude/model/index.js";
 import type { DiscoveredInstruction, DiscoveredMcpServer, SettingsLayer } from "../../../../src/adapters/claude/discovery/types.js";
+import { readSettingsPermissions } from "../../../../src/adapters/claude/discovery/settings.js";
 
 const tempDirs: string[] = [];
 
@@ -126,7 +127,15 @@ async function makeSettingsLayer(content: Record<string, unknown>): Promise<Sett
   tempDirs.push(dir);
   const filePath = path.join(dir, "settings.json");
   await fs.writeFile(filePath, JSON.stringify(content, null, 2));
-  return { scope: "project", path: filePath, priority: 30 };
+  // Layers carry their parsed `permissions` block from discovery onwards, so
+  // the fake layer is built by the same reader the scanner uses.
+  const permissions = await readSettingsPermissions(filePath);
+  return {
+    scope: "project",
+    path: filePath,
+    priority: 30,
+    ...(permissions ? { permissions } : {}),
+  };
 }
 
 describe("resolveEffectiveConfiguration", () => {
@@ -473,6 +482,66 @@ describe("resolveEffectiveConfiguration", () => {
     const permission = result.capabilities.find((capability) => capability.kind === "permission");
     expect(permission?.capabilityId).toBe("permission:default");
     expect(result.warnings.some((warning) => warning.category === "ignored-field")).toBe(true);
+  });
+
+  it("applies permissions.deny last, over a permitting frontmatter (§4.4.7, S2)", async () => {
+    const settingsLayer = await makeSettingsLayer({
+      permissions: { deny: ["Bash"], allow: ["Bash(npm run test:*)"] },
+    });
+    const snapshot = makeSnapshot({
+      settings: [settingsLayer],
+      agents: [
+        makeAgent({
+          configuration: {
+            tools: ["Read", "Bash"],
+            permissionMode: "bypassPermissions",
+            unknownFields: {},
+          },
+        }),
+      ],
+    });
+
+    const result = await resolveEffectiveConfiguration(
+      snapshot,
+      "backend",
+      buildExecutionContext("foreground-subagent"),
+    );
+
+    const bash = result.capabilities.find(
+      (capability) => capability.capabilityId === "Bash",
+    );
+    expect(bash).toMatchObject({ status: "denied", enforcement: "enforced" });
+    expect(
+      bash?.reasons.some((reason) => reason.matrixRef === "settings.denyBareTool"),
+    ).toBe(true);
+    // The rule that could not be acted on is still a visible line.
+    expect(
+      result.capabilities.some((capability) =>
+        capability.capabilityId.startsWith("settings-permission:"),
+      ),
+    ).toBe(true);
+  });
+
+  it("applies permissions.deny in a fork too, where agent configuration is skipped (T3, S2)", async () => {
+    const settingsLayer = await makeSettingsLayer({ permissions: { deny: ["Bash"] } });
+    const snapshot = makeSnapshot({
+      settings: [settingsLayer],
+      agents: [
+        makeAgent({
+          configuration: { tools: ["Read", "Bash"], unknownFields: {} },
+        }),
+      ],
+    });
+
+    const result = await resolveEffectiveConfiguration(
+      snapshot,
+      "backend",
+      buildExecutionContext("fork"),
+    );
+
+    expect(
+      result.capabilities.find((capability) => capability.capabilityId === "Bash"),
+    ).toMatchObject({ status: "denied", enforcement: "enforced" });
   });
 
   it("degrades every version-sensitive capability to unknown without a CLI version (§8.3)", async () => {

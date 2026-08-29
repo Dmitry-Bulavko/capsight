@@ -10,6 +10,7 @@ import type {
   RedactedMcpServer,
 } from "../model/index.js";
 import { FACT, type FactId } from "../version/facts.js";
+import { MATRIX, gateWarning } from "../version/matrix.js";
 import type { DiscoveredSkill, SettingsLayer } from "../discovery/types.js";
 import { parseFrontmatter } from "../parsing/frontmatter.js";
 import { isInlineMcpServerEntry } from "./trust.js";
@@ -161,48 +162,42 @@ async function findSkillAllowedToolsWarnings(
   return warnings;
 }
 
-async function readFalseAllowGlobWarnings(
+/**
+ * S4 findings, read from the permission rules discovery already parsed. The
+ * claim is about platform behaviour — the glob grants nothing — so it goes
+ * through the matrix gate like any other §6 claim.
+ */
+function findFalseAllowGlobWarnings(
   settingsLayers: unknown[],
-): Promise<Warning[]> {
+  version: string,
+): Warning[] {
   const layers = settingsLayers as SettingsLayer[];
   const warnings: Warning[] = [];
 
   for (const layer of layers) {
-    try {
-      const raw = await fs.readFile(layer.path, "utf8");
-      const parsed: unknown = JSON.parse(raw);
-      if (typeof parsed !== "object" || parsed === null) {
+    for (const rule of layer.permissions?.rules ?? []) {
+      if (rule.action !== "allow" || !isIneffectiveAllowGlob(rule.raw)) {
         continue;
       }
 
-      const permissions = (parsed as { permissions?: { allow?: unknown } }).permissions;
-      if (!permissions || !Array.isArray(permissions.allow)) {
-        continue;
-      }
-
-      for (const [index, entry] of permissions.allow.entries()) {
-        const pattern = String(entry);
-        if (!isIneffectiveAllowGlob(pattern)) {
-          continue;
-        }
-
-        warnings.push(
+      warnings.push(
+        gateWarning(
           securityWarning(
-            `permissions.allow entry "${pattern}" is an unanchored glob and does not grant access (S4).`,
+            `permissions.allow entry "${rule.raw}" is an unanchored glob and does not grant access (S4).`,
             [
               {
                 platform: "claude",
                 scope: layer.scope,
                 path: layer.path,
-                fieldPath: `permissions.allow[${index}]`,
+                fieldPath: `permissions.allow[${rule.index}]`,
               },
             ],
             FACT.S4,
           ),
-        );
-      }
-    } catch {
-      continue;
+          MATRIX["settings.allowGlobIneffective"],
+          version,
+        ),
+      );
     }
   }
 
@@ -231,7 +226,9 @@ export async function resolveSecurityFindings(
 
   warnings.push(...findInlineMcpCommandWarnings(agent));
   warnings.push(...await findSkillAllowedToolsWarnings(snapshot));
-  warnings.push(...await readFalseAllowGlobWarnings(snapshot.settings));
+  warnings.push(
+    ...findFalseAllowGlobWarnings(snapshot.settings, snapshot.version.version),
+  );
 
   return warnings;
 }

@@ -25,6 +25,15 @@ export {
   type ResolvePermissionModeResult,
 } from "./permissions.js";
 export {
+  indexSettingsRules,
+  parseSettingsPermissionRule,
+  resolveDisableBypassPermissionsMode,
+  resolveSettingsPermissions,
+  type IndexedSettingsRule,
+  type ResolveSettingsPermissionsInput,
+  type ResolveSettingsPermissionsResult,
+} from "./settings-permissions.js";
+export {
   PLUGIN_INEFFECTIVE_FIELDS,
   isPluginIneffectiveField,
   resolvePluginFieldLimitations,

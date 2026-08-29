@@ -1,4 +1,3 @@
-import fs from "node:fs/promises";
 import type {
   EffectiveConfiguration,
   ExecutionContext,
@@ -37,6 +36,10 @@ import {
   type PermissionSettings,
 } from "./permissions.js";
 import { resolvePluginFieldLimitations } from "./plugin.js";
+import {
+  resolveDisableBypassPermissionsMode,
+  resolveSettingsPermissions,
+} from "./settings-permissions.js";
 import {
   resolveMcpConfigFileTrust,
   resolveTrustGate,
@@ -123,36 +126,22 @@ function buildParentToolPool(agents: readonly Agent[]): string[] {
   );
 }
 
-async function readPermissionSettings(
-  settingsLayers: unknown[],
-): Promise<PermissionSettings> {
-  const layers = settingsLayers as SettingsLayer[];
-  const sorted = [...layers].sort((a, b) => b.priority - a.priority);
-
-  for (const layer of sorted) {
-    try {
-      const raw = await fs.readFile(layer.path, "utf8");
-      const parsed: unknown = JSON.parse(raw);
-      if (
-        typeof parsed === "object" &&
-        parsed !== null &&
-        (parsed as Record<string, unknown>).permissions &&
-        typeof (parsed as Record<string, { disableBypassPermissionsMode?: boolean }>)
-          .permissions === "object"
-      ) {
-        const permissions = (
-          parsed as { permissions: { disableBypassPermissionsMode?: boolean } }
-        ).permissions;
-        if (permissions.disableBypassPermissionsMode === true) {
-          return { disableBypassPermissionsMode: true };
-        }
-      }
-    } catch {
-      continue;
-    }
-  }
-
-  return {};
+/**
+ * Effective permission settings for the resolver. `disableBypassPermissionsMode`
+ * comes from the highest-priority layer that sets it (S1) — a lower layer
+ * setting it to `false` neither lifts nor confirms a `true` above it.
+ */
+function readPermissionSettings(settingsLayers: unknown[]): PermissionSettings {
+  const resolved = resolveDisableBypassPermissionsMode(
+    settingsLayers as SettingsLayer[],
+  );
+  return {
+    ...(resolved.value !== undefined
+      ? { disableBypassPermissionsMode: resolved.value }
+      : {}),
+    ...(resolved.source ? { disableBypassPermissionsModeSource: resolved.source } : {}),
+    layerPrecedenceDecided: resolved.contested,
+  };
 }
 
 function agentForPermissionResolution(agent: Agent): Agent {
@@ -331,9 +320,10 @@ function buildPermissionCapability(
   agent: Agent,
   context: ExecutionContext,
   permissionResult: ReturnType<typeof resolvePermissionMode>,
+  settings: PermissionSettings,
   version: string,
 ): ResolvedCapability {
-  return gateCapability(
+  const capability = gateCapability(
     {
       capabilityId: `permission:${permissionResult.effective}`,
       kind: "permission",
@@ -345,6 +335,13 @@ function buildPermissionCapability(
     permissionMatrixId(context, permissionResult),
     version,
   );
+
+  // When the layers disagree, the verdict rests on the S1 order as well as on
+  // the rule that fired, so it is gated on both entries.
+  return settings.layerPrecedenceDecided === true &&
+    permissionResult.reasons[0]?.matrixRef === FACT.P4
+    ? gateCapability(capability, MATRIX["settings.layerPrecedence"], version)
+    : capability;
 }
 
 function buildInstructionCapabilities(
@@ -558,7 +555,11 @@ function agentDerivedFields(capability: ResolvedCapability): readonly string[] {
     case "mcp_tool":
       return ["tools", "disallowedTools"];
     case "permission":
-      return ["permissionMode"];
+      // A settings rule is declared in a settings file, not in the agent file,
+      // so a name collision between two agent files cannot change it.
+      return capability.capabilityId.startsWith("settings-permission:")
+        ? []
+        : ["permissionMode"];
     case "skill":
       return ["skills"];
     case "mcp_server":
@@ -891,7 +892,7 @@ export async function resolveEffectiveConfiguration(
   const ambiguity = analyzeAmbiguity(snapshot, requested);
   const agent = shadowing?.winner ?? requested;
 
-  const permissionSettings = await readPermissionSettings(snapshot.settings);
+  const permissionSettings = readPermissionSettings(snapshot.settings);
   const permissionResult = resolvePermissionMode(
     agentForPermissionResolution(agent),
     context,
@@ -944,13 +945,32 @@ export async function resolveEffectiveConfiguration(
     context,
   );
 
+  // §4.4 rule 7: settings permission rules are applied last, after the context
+  // filters and after every agent-level filter, and in every context — a fork
+  // skips the agent's own configuration (T3) but not a settings deny (S2).
+  // Skills go through the same stage because S10 denies them by name too.
+  const settingsPermissions = resolveSettingsPermissions({
+    layers: snapshot.settings as SettingsLayer[],
+    capabilities: [...toolCapabilities, ...skillCapabilities],
+    version,
+  });
+  toolCapabilities = settingsPermissions.capabilities.filter(
+    (capability) => capability.kind === "tool" || capability.kind === "mcp_tool",
+  );
+
   const resolved = [
-    buildPermissionCapability(agent, context, permissionResult, version),
-    ...toolCapabilities,
+    buildPermissionCapability(
+      agent,
+      context,
+      permissionResult,
+      permissionSettings,
+      version,
+    ),
+    ...settingsPermissions.capabilities,
+    ...settingsPermissions.ruleCapabilities,
     ...buildMcpServerCapabilities(snapshot, version),
     ...buildTrustCapabilities(agent, snapshot, version),
     ...buildInstructionCapabilities(snapshot, context, version),
-    ...skillCapabilities,
   ];
 
   const capabilities = sortCapabilities(

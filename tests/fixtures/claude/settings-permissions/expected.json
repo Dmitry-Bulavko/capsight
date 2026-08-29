@@ -2,6 +2,25 @@
   "discovery": {
     "agents": [
       {
+        "name": "permissive",
+        "description": "Agent whose frontmatter permits the tools the settings deny",
+        "source": {
+          "platform": "claude",
+          "scope": "project",
+          "path": ".claude/agents/permissive.md"
+        },
+        "status": "active",
+        "configuration": {
+          "tools": [
+            "Read",
+            "Bash",
+            "Write"
+          ],
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      },
+      {
         "name": "restricted",
         "description": "Agent whose settings layers carry the S1-S8 permission rules",
         "source": {
@@ -34,9 +53,84 @@
     "mcpServers": [],
     "settings": [
       {
+        "scope": "local",
+        "path": ".claude/settings.local.json",
+        "priority": 35,
+        "permissions": {
+          "rules": [
+            {
+              "action": "allow",
+              "index": 0,
+              "raw": "Write"
+            },
+            {
+              "action": "allow",
+              "index": 1,
+              "raw": "Bash(npm run test:unit)"
+            }
+          ],
+          "disableBypassPermissionsMode": true
+        }
+      },
+      {
         "scope": "project",
         "path": ".claude/settings.json",
-        "priority": 30
+        "priority": 30,
+        "permissions": {
+          "rules": [
+            {
+              "action": "allow",
+              "index": 0,
+              "raw": "*"
+            },
+            {
+              "action": "allow",
+              "index": 1,
+              "raw": "mcp__*"
+            },
+            {
+              "action": "allow",
+              "index": 2,
+              "raw": "Bash(npm run test:*)"
+            },
+            {
+              "action": "allow",
+              "index": 3,
+              "raw": "Read(/src/**)"
+            },
+            {
+              "action": "allow",
+              "index": 4,
+              "raw": "WebFetch(domain:example.com)"
+            },
+            {
+              "action": "allow",
+              "index": 5,
+              "raw": "mcp__github(issues)"
+            },
+            {
+              "action": "deny",
+              "index": 0,
+              "raw": "Bash"
+            },
+            {
+              "action": "deny",
+              "index": 1,
+              "raw": "Write"
+            },
+            {
+              "action": "deny",
+              "index": 2,
+              "raw": "Edit(//etc/secrets/**)"
+            },
+            {
+              "action": "deny",
+              "index": 3,
+              "raw": "WebFetch(example.org)"
+            }
+          ],
+          "disableBypassPermissionsMode": false
+        }
       }
     ],
     "trust": {
@@ -83,6 +177,379 @@
                 "fieldPath": "frontmatter.permissionMode"
               },
               "matrixRef": "P4"
+            },
+            {
+              "type": "declared",
+              "message": "Settings layers disagree on permissions.disableBypassPermissionsMode; the value comes from the highest-priority layer that sets it (S1). See this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "local",
+                "path": ".claude/settings.local.json",
+                "fieldPath": "permissions.disableBypassPermissionsMode"
+              },
+              "matrixRef": "settings.layerPrecedence"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:local:allow:Bash(npm run test:unit)",
+          "kind": "permission",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "local",
+              "path": ".claude/settings.local.json",
+              "fieldPath": "permissions.allow[1]"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.allow entry \"Bash(npm run test:unit)\" has no effect: a settings layer denies \"Bash\", and a deny rule is not overridden at any level (S2, S5). See this reason's source for the deny entry.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[0]"
+              },
+              "matrixRef": "settings.denyPrecedence"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:local:allow:Write",
+          "kind": "permission",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "local",
+              "path": ".claude/settings.local.json",
+              "fieldPath": "permissions.allow[0]"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[1]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.allow entry \"Write\" has no effect: a settings layer denies \"Write\", and a deny rule is not overridden at any level (S2, S5). See this reason's source for the deny entry.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[1]"
+              },
+              "matrixRef": "settings.denyPrecedence"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:*",
+          "kind": "permission",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.allow entry \"*\" is an unanchored glob and grants nothing (S4).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.allow[0]"
+              },
+              "matrixRef": "settings.allowGlobIneffective"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:Bash(npm run test:*)",
+          "kind": "permission",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[2]"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.allow entry \"Bash(npm run test:*)\" has no effect: a settings layer denies \"Bash\", and a deny rule is not overridden at any level (S2, S5). See this reason's source for the deny entry.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[0]"
+              },
+              "matrixRef": "settings.denyPrecedence"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:mcp__*",
+          "kind": "permission",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[1]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.allow entry \"mcp__*\" is an unanchored glob and grants nothing (S4).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.allow[1]"
+              },
+              "matrixRef": "settings.allowGlobIneffective"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:mcp__github(issues)",
+          "kind": "permission",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[5]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.allow entry \"mcp__github(issues)\" uses the bracket syntax, which MCP permission rules do not support, so it grants nothing (S3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.allow[5]"
+              },
+              "matrixRef": "settings.mcpRuleSyntax"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:Read(/src/**)",
+          "kind": "permission",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[3]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "permissions.allow entry \"Read(/src/**)\" narrows individual invocations of Read rather than the tool itself; this product resolves what the platform applies and does not evaluate rule arguments (§2.3), so the effect of this rule is unknown.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.allow[3]"
+              },
+              "matrixRef": "settings.pathRules"
+            },
+            {
+              "type": "version",
+              "message": "Matrix entry \"settings.pathRules\" rests on non-[doc] fact(s) S7 but has no fixture-level evidence; enforcement is unknown (SPEC §8.2).",
+              "matrixRef": "settings.pathRules"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:WebFetch(domain:example.com)",
+          "kind": "permission",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[4]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "permissions.allow entry \"WebFetch(domain:example.com)\" narrows individual invocations of WebFetch rather than the tool itself; this product resolves what the platform applies and does not evaluate rule arguments (§2.3), so the effect of this rule is unknown.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.allow[4]"
+              },
+              "matrixRef": "settings.webFetchRules"
+            },
+            {
+              "type": "version",
+              "message": "Matrix entry \"settings.webFetchRules\" rests on non-[doc] fact(s) S8 but has no fixture-level evidence; enforcement is unknown (SPEC §8.2).",
+              "matrixRef": "settings.webFetchRules"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:deny:Bash",
+          "kind": "permission",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.deny entry \"Bash\" removes the tool from the session entirely (S5); settings deny rules are applied last and are not overridden by agent frontmatter or by a bypass permission mode (S2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[0]"
+              },
+              "matrixRef": "settings.denyBareTool"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:deny:Edit(//etc/secrets/**)",
+          "kind": "permission",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[2]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "permissions.deny entry \"Edit(//etc/secrets/**)\" narrows individual invocations of Edit rather than the tool itself; this product resolves what the platform applies and does not evaluate rule arguments (§2.3), so the effect of this rule is unknown.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[2]"
+              },
+              "matrixRef": "settings.pathRules"
+            },
+            {
+              "type": "version",
+              "message": "Matrix entry \"settings.pathRules\" rests on non-[doc] fact(s) S7 but has no fixture-level evidence; enforcement is unknown (SPEC §8.2).",
+              "matrixRef": "settings.pathRules"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:deny:WebFetch(example.org)",
+          "kind": "permission",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[3]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "permissions.deny entry \"WebFetch(example.org)\" lacks the \"domain:\" prefix WebFetch rules require (S8); whether the platform ignores this deny rule or reads it some other way is not determined.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[3]"
+              },
+              "matrixRef": "settings.webFetchRules"
+            },
+            {
+              "type": "version",
+              "message": "Matrix entry \"settings.webFetchRules\" rests on non-[doc] fact(s) S8 but has no fixture-level evidence; enforcement is unknown (SPEC §8.2).",
+              "matrixRef": "settings.webFetchRules"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:deny:Write",
+          "kind": "permission",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[1]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.deny entry \"Write\" removes the tool from the session entirely (S5); settings deny rules are applied last and are not overridden by agent frontmatter or by a bypass permission mode (S2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[1]"
+              },
+              "matrixRef": "settings.denyBareTool"
             }
           ]
         },
@@ -168,6 +635,12 @@
               "platform": "claude",
               "scope": "project",
               "path": ".claude/agents/restricted.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[0]"
             }
           ],
           "reasons": [
@@ -179,6 +652,17 @@
                 "scope": "project",
                 "path": ".claude/agents/restricted.md"
               }
+            },
+            {
+              "type": "denied",
+              "message": "permissions.deny entry \"Bash\" removes the tool from the session entirely (S5); settings deny rules are applied last and are not overridden by agent frontmatter or by a bypass permission mode (S2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[0]"
+              },
+              "matrixRef": "settings.denyBareTool"
             }
           ]
         },
@@ -774,6 +1258,12 @@
               "platform": "claude",
               "scope": "project",
               "path": ".claude/agents/restricted.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[1]"
             }
           ],
           "reasons": [
@@ -785,6 +1275,17 @@
                 "scope": "project",
                 "path": ".claude/agents/restricted.md"
               }
+            },
+            {
+              "type": "denied",
+              "message": "permissions.deny entry \"Write\" removes the tool from the session entirely (S5); settings deny rules are applied last and are not overridden by agent frontmatter or by a bypass permission mode (S2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[1]"
+              },
+              "matrixRef": "settings.denyBareTool"
             }
           ]
         },
@@ -855,7 +1356,8 @@
               "fieldPath": "permissions.allow[0]"
             }
           ],
-          "matrixRef": "S4"
+          "matrixRef": "settings.allowGlobIneffective",
+          "enforcement": "enforced"
         },
         {
           "category": "security-finding",
@@ -869,10 +1371,1207 @@
               "fieldPath": "permissions.allow[1]"
             }
           ],
-          "matrixRef": "S4"
+          "matrixRef": "settings.allowGlobIneffective",
+          "enforcement": "enforced"
         }
       ],
-      "unknownRate": 0
+      "unknownRate": 0.09302325581395349
+    },
+    {
+      "agentName": "permissive",
+      "context": {
+        "preset": "foreground-subagent",
+        "isMainSession": false,
+        "isBackground": false,
+        "isFork": false,
+        "isTeammate": false,
+        "depth": 0,
+        "maxDepth": 3,
+        "parentPermissionMode": "bypassPermissions"
+      },
+      "capabilities": [
+        {
+          "capabilityId": "permission:bypassPermissions",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited parent session permission mode \"bypassPermissions\" (P1).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              },
+              "matrixRef": "P1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:local:allow:Bash(npm run test:unit)",
+          "kind": "permission",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "local",
+              "path": ".claude/settings.local.json",
+              "fieldPath": "permissions.allow[1]"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.allow entry \"Bash(npm run test:unit)\" has no effect: a settings layer denies \"Bash\", and a deny rule is not overridden at any level (S2, S5). See this reason's source for the deny entry.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[0]"
+              },
+              "matrixRef": "settings.denyPrecedence"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:local:allow:Write",
+          "kind": "permission",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "local",
+              "path": ".claude/settings.local.json",
+              "fieldPath": "permissions.allow[0]"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[1]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.allow entry \"Write\" has no effect: a settings layer denies \"Write\", and a deny rule is not overridden at any level (S2, S5). See this reason's source for the deny entry.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[1]"
+              },
+              "matrixRef": "settings.denyPrecedence"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:*",
+          "kind": "permission",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.allow entry \"*\" is an unanchored glob and grants nothing (S4).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.allow[0]"
+              },
+              "matrixRef": "settings.allowGlobIneffective"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:Bash(npm run test:*)",
+          "kind": "permission",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[2]"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.allow entry \"Bash(npm run test:*)\" has no effect: a settings layer denies \"Bash\", and a deny rule is not overridden at any level (S2, S5). See this reason's source for the deny entry.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[0]"
+              },
+              "matrixRef": "settings.denyPrecedence"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:mcp__*",
+          "kind": "permission",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[1]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.allow entry \"mcp__*\" is an unanchored glob and grants nothing (S4).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.allow[1]"
+              },
+              "matrixRef": "settings.allowGlobIneffective"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:mcp__github(issues)",
+          "kind": "permission",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[5]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.allow entry \"mcp__github(issues)\" uses the bracket syntax, which MCP permission rules do not support, so it grants nothing (S3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.allow[5]"
+              },
+              "matrixRef": "settings.mcpRuleSyntax"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:Read(/src/**)",
+          "kind": "permission",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[3]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "permissions.allow entry \"Read(/src/**)\" narrows individual invocations of Read rather than the tool itself; this product resolves what the platform applies and does not evaluate rule arguments (§2.3), so the effect of this rule is unknown.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.allow[3]"
+              },
+              "matrixRef": "settings.pathRules"
+            },
+            {
+              "type": "version",
+              "message": "Matrix entry \"settings.pathRules\" rests on non-[doc] fact(s) S7 but has no fixture-level evidence; enforcement is unknown (SPEC §8.2).",
+              "matrixRef": "settings.pathRules"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:WebFetch(domain:example.com)",
+          "kind": "permission",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[4]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "permissions.allow entry \"WebFetch(domain:example.com)\" narrows individual invocations of WebFetch rather than the tool itself; this product resolves what the platform applies and does not evaluate rule arguments (§2.3), so the effect of this rule is unknown.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.allow[4]"
+              },
+              "matrixRef": "settings.webFetchRules"
+            },
+            {
+              "type": "version",
+              "message": "Matrix entry \"settings.webFetchRules\" rests on non-[doc] fact(s) S8 but has no fixture-level evidence; enforcement is unknown (SPEC §8.2).",
+              "matrixRef": "settings.webFetchRules"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:deny:Bash",
+          "kind": "permission",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.deny entry \"Bash\" removes the tool from the session entirely (S5); settings deny rules are applied last and are not overridden by agent frontmatter or by a bypass permission mode (S2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[0]"
+              },
+              "matrixRef": "settings.denyBareTool"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:deny:Edit(//etc/secrets/**)",
+          "kind": "permission",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[2]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "permissions.deny entry \"Edit(//etc/secrets/**)\" narrows individual invocations of Edit rather than the tool itself; this product resolves what the platform applies and does not evaluate rule arguments (§2.3), so the effect of this rule is unknown.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[2]"
+              },
+              "matrixRef": "settings.pathRules"
+            },
+            {
+              "type": "version",
+              "message": "Matrix entry \"settings.pathRules\" rests on non-[doc] fact(s) S7 but has no fixture-level evidence; enforcement is unknown (SPEC §8.2).",
+              "matrixRef": "settings.pathRules"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:deny:WebFetch(example.org)",
+          "kind": "permission",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[3]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "permissions.deny entry \"WebFetch(example.org)\" lacks the \"domain:\" prefix WebFetch rules require (S8); whether the platform ignores this deny rule or reads it some other way is not determined.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[3]"
+              },
+              "matrixRef": "settings.webFetchRules"
+            },
+            {
+              "type": "version",
+              "message": "Matrix entry \"settings.webFetchRules\" rests on non-[doc] fact(s) S8 but has no fixture-level evidence; enforcement is unknown (SPEC §8.2).",
+              "matrixRef": "settings.webFetchRules"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:deny:Write",
+          "kind": "permission",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[1]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.deny entry \"Write\" removes the tool from the session entirely (S5); settings deny rules are applied last and are not overridden by agent frontmatter or by a bypass permission mode (S2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[1]"
+              },
+              "matrixRef": "settings.denyBareTool"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Agent",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Artifact",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "AskUserQuestion",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Bash",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md",
+              "fieldPath": "frontmatter.tools[1]"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Allowed by tools pattern \"Bash\" (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md",
+                "fieldPath": "frontmatter.tools[1]"
+              }
+            },
+            {
+              "type": "denied",
+              "message": "permissions.deny entry \"Bash\" removes the tool from the session entirely (S5); settings deny rules are applied last and are not overridden by agent frontmatter or by a bypass permission mode (S2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[0]"
+              },
+              "matrixRef": "settings.denyBareTool"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Edit",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EndConversation",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterWorktree",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitWorktree",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Glob",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Grep",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Monitor",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "NotebookEdit",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "PowerShell",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Read",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md",
+              "fieldPath": "frontmatter.tools[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Allowed by tools pattern \"Read\" (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md",
+                "fieldPath": "frontmatter.tools[0]"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ScheduleWakeup",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "SendMessage",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Skill",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Task",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskOutput",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskStop",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TodoWrite",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ToolSearch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WaitForMcpServers",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebFetch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebSearch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Workflow",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Write",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/permissive.md",
+              "fieldPath": "frontmatter.tools[2]"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[1]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Allowed by tools pattern \"Write\" (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/permissive.md",
+                "fieldPath": "frontmatter.tools[2]"
+              }
+            },
+            {
+              "type": "denied",
+              "message": "permissions.deny entry \"Write\" removes the tool from the session entirely (S5); settings deny rules are applied last and are not overridden by agent frontmatter or by a bypass permission mode (S2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[1]"
+              },
+              "matrixRef": "settings.denyBareTool"
+            }
+          ]
+        },
+        {
+          "capabilityId": "instruction:CLAUDE.md",
+          "kind": "instruction",
+          "status": "available",
+          "enforcement": "advisory",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": "CLAUDE.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Instruction source loaded into session context (I1).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": "CLAUDE.md"
+              },
+              "matrixRef": "I1"
+            }
+          ]
+        }
+      ],
+      "warnings": [
+        {
+          "category": "security-finding",
+          "severity": "warning",
+          "message": "permissions.allow entry \"*\" is an unanchored glob and does not grant access (S4).",
+          "evidence": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[0]"
+            }
+          ],
+          "matrixRef": "settings.allowGlobIneffective",
+          "enforcement": "enforced"
+        },
+        {
+          "category": "security-finding",
+          "severity": "warning",
+          "message": "permissions.allow entry \"mcp__*\" is an unanchored glob and does not grant access (S4).",
+          "evidence": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[1]"
+            }
+          ],
+          "matrixRef": "settings.allowGlobIneffective",
+          "enforcement": "enforced"
+        }
+      ],
+      "unknownRate": 0.09302325581395349
     }
   ]
 }

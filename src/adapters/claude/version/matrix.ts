@@ -302,6 +302,138 @@ const MATRIX_ENTRIES = [
       "fixture is what lifts it above documentation (§8.2).",
   },
   {
+    id: "settings.layerPrecedence",
+    feature: "Settings layer precedence for permission rules and flags",
+    factRefs: [FACT.S1],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "settings-permissions",
+    notes:
+      "The fixture pins the .claude/settings.local.json > .claude/settings.json order: the two " +
+      "layers set disableBypassPermissionsMode to different values and the local layer wins. " +
+      "The managed and command-line ranks of S1 are not pinned here — discovery reads a managed " +
+      "layer only through a §7.8 bundle and never reads a CLI layer at all.",
+  },
+  {
+    id: "settings.denyPrecedence",
+    feature: "permissions.deny is applied last and is not overridden at any level",
+    factRefs: [FACT.S2],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "settings-permissions",
+    notes:
+      "The fixture denies Bash and Write in .claude/settings.json while the higher-priority " +
+      "local layer allows Write and Bash(npm run test:unit); both allow entries resolve inert. " +
+      "Its `permissive` agent whitelists Bash and Write in frontmatter and runs under an " +
+      "inherited bypassPermissions parent mode, and both tools still resolve denied — the " +
+      "deny-over-frontmatter and deny-over-bypass halves of S2.",
+  },
+  {
+    id: "settings.mcpRuleSyntax",
+    feature: "MCP permission rules reject the bracket syntax",
+    factRefs: [FACT.S3],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "settings-permissions",
+    notes:
+      "S3 states mcp__server(pattern) is invalid, so the fixture's allow entry grants nothing. " +
+      "What a *valid* mcp rule grants is a different claim and is not founded by S3: a deny in " +
+      "that form only makes the MCP tools it names undetermined, never a confident verdict.",
+  },
+  {
+    id: "settings.allowGlobIneffective",
+    feature: "Unanchored globs in permissions.allow grant nothing",
+    factRefs: [FACT.S4],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "settings-permissions",
+  },
+  {
+    id: "settings.denyBareTool",
+    feature: "permissions.deny on a bare tool name removes the tool entirely",
+    factRefs: [FACT.S5, FACT.S2],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "settings-permissions",
+    notes:
+      "Pinned by the `permissive` agent of the fixture, whose frontmatter whitelists Bash and " +
+      "Write: without S5 both would resolve available, and in the golden both are denied. A " +
+      "tool the frontmatter already excluded would not have pinned anything.",
+  },
+  {
+    id: "settings.bashPrefixRules",
+    feature: "Bash(cmd:*) prefix matching in permission rules",
+    factRefs: [FACT.S6],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    pendingFixture: "settings-permissions",
+    notes:
+      "The fixture carries Bash(...) rules, but every one of them is inert behind the bare " +
+      "Bash deny, so nothing there pins the prefix semantics themselves.",
+  },
+  {
+    id: "settings.pathRules",
+    feature: "Read/Edit permission rules use gitignore-like globs",
+    factRefs: [FACT.S7],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    pendingFixture: "settings-permissions",
+    notes:
+      "The resolver does not evaluate rule arguments, so a path-scoped rule resolves unknown; " +
+      "a fixture pinning / vs // would need per-invocation resolution to assert against.",
+  },
+  {
+    id: "settings.webFetchRules",
+    feature: "WebFetch permission rules require the domain: prefix",
+    factRefs: [FACT.S8],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    pendingFixture: "settings-permissions",
+    notes:
+      "S8 states the prefix is required but not what the platform does with a rule that omits " +
+      "it, so such a deny entry resolves unknown rather than inert.",
+  },
+  {
+    id: "settings.denySubagents",
+    feature: "permissions.deny Agent(<name>) blocks a named subagent",
+    factRefs: [FACT.S9],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    pendingFixture: "settings-permissions",
+  },
+  {
+    id: "settings.denySkills",
+    feature: "permissions.deny Skill(<name>) blocks a named skill",
+    factRefs: [FACT.S10],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    pendingFixture: "settings-permissions",
+  },
+  {
+    id: "settings.ruleScope",
+    feature:
+      "Effect of an allow/ask rule, or of any argument-scoped rule, on the resolved capability set",
+    factRefs: [],
+    status: "unknown",
+    confidence: "doc",
+    pendingFixture: "settings-permissions",
+    notes:
+      "§3.5 documents which rule syntaxes exist, not what an allow entry adds to a session or " +
+      "which invocations an argument narrows. The product resolves what the platform applies " +
+      "rather than running its own permission engine (§2.3), so a rule of this shape is " +
+      "recorded and left unknown instead of being turned into an availability verdict.",
+  },
+  {
     id: "builtin.readOnly",
     feature: "Explore and Plan built-in agents deny Write and Edit",
     factRefs: [FACT.B2],

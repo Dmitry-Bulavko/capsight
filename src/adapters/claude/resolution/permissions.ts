@@ -12,6 +12,13 @@ import { FACT, type FactId } from "../version/facts.js";
 /** Effective permissions settings relevant to resolution (P4). */
 export interface PermissionSettings {
   disableBypassPermissionsMode?: boolean;
+  /** Layer the value was taken from — the highest-priority one that sets it (S1). */
+  disableBypassPermissionsModeSource?: SourceInfo;
+  /**
+   * `true` when settings layers disagree on the value, so the outcome rests on
+   * the S1 layer order rather than on a single declaration.
+   */
+  layerPrecedenceDecided?: boolean;
 }
 
 export interface ResolvePermissionModeResult {
@@ -149,6 +156,19 @@ export function resolvePermissionMode(
         FACT.P4,
       ),
     );
+    if (settings.disableBypassPermissionsModeSource) {
+      // Which layer supplied the value is a claim of its own once layers
+      // disagree, so it is stated with its source rather than folded silently
+      // into the P4 verdict (S1).
+      reasons.push({
+        type: "declared",
+        message: settings.layerPrecedenceDecided
+          ? "Settings layers disagree on permissions.disableBypassPermissionsMode; the value comes from the highest-priority layer that sets it (S1). See this reason's source."
+          : "permissions.disableBypassPermissionsMode is set by the settings layer named in this reason's source (S1).",
+        source: settings.disableBypassPermissionsModeSource,
+        matrixRef: "settings.layerPrecedence",
+      });
+    }
     return {
       declared,
       effective,

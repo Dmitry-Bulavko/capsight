@@ -2,5 +2,10 @@
   {
     "agentName": "restricted",
     "preset": "foreground-subagent"
+  },
+  {
+    "agentName": "permissive",
+    "preset": "foreground-subagent",
+    "parentPermissionMode": "bypassPermissions"
   }
 ]

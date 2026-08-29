@@ -15,6 +15,7 @@ import {
   parseFrontmatter,
 } from "../parsing/frontmatter.js";
 import type { SettingsLayer } from "./types.js";
+import { parseSettingsPermissions } from "./settings.js";
 import { FACT } from "../version/facts.js";
 import { gateCollision } from "../version/matrix.js";
 import {
@@ -369,12 +370,16 @@ async function readManagedSettings(bundlePath: string): Promise<{
     const availableModels = Array.isArray(record.availableModels)
       ? record.availableModels.map(String)
       : undefined;
+    // The managed layer outranks every project layer (S1), so its permission
+    // rules have to reach resolution like any other layer's.
+    const managedPermissions = parseSettingsPermissions(record);
 
     return {
       settingsLayer: {
         scope: "managed",
         path: settingsPath,
         priority: 60,
+        ...(managedPermissions ? { permissions: managedPermissions } : {}),
       },
       availableModels,
     };

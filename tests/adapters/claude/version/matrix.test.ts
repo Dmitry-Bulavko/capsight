@@ -52,6 +52,17 @@ const M1_MATRIX_IDS = [
   "instructions.builtinKind",
   "discovery.addDirAgents",
   "discovery.addDirSkills",
+  "settings.layerPrecedence",
+  "settings.denyPrecedence",
+  "settings.mcpRuleSyntax",
+  "settings.allowGlobIneffective",
+  "settings.denyBareTool",
+  "settings.bashPrefixRules",
+  "settings.pathRules",
+  "settings.webFetchRules",
+  "settings.denySubagents",
+  "settings.denySkills",
+  "settings.ruleScope",
   "builtin.readOnly",
 ] as const;
 
@@ -74,6 +85,13 @@ const ENFORCED_RULE_FACTS: readonly FactId[] = [
   FACT.R4,
   FACT.R5,
   FACT.N2,
+  // §4.4 rule 7: a settings deny rule is an enforced verdict (S5, S2), and the
+  // rules S3/S4 call inert are enforced claims of their own.
+  FACT.S1,
+  FACT.S2,
+  FACT.S3,
+  FACT.S4,
+  FACT.S5,
 ];
 
 const FIXTURES_ROOT = path.resolve(
