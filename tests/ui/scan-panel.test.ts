@@ -30,8 +30,8 @@ describe("ScanPanel project path storage", () => {
     expect(loadStoredProjectPath()).toBeNull();
   });
 
-  it("loads a stored project path", () => {
-    storage[PROJECT_PATH_STORAGE_KEY] = "D:\\projects\\demo";
+  it("loads a stored project path trimmed", () => {
+    storage[PROJECT_PATH_STORAGE_KEY] = "  D:\\projects\\demo  ";
     expect(loadStoredProjectPath()).toBe("D:\\projects\\demo");
   });
 

@@ -9,6 +9,7 @@ import type { ScanResult } from "../../src/application/scan.js";
 import { getDefaultProjectPath } from "../../src/application/default-project-path.js";
 import { clearLastScan, setLastScan } from "../../src/application/scan-store.js";
 import { app } from "../../src/server/index.js";
+import { resetBrowseInFlightForTests, pickNativeFolder } from "../../src/server/routes/project.js";
 
 vi.mock("../../src/application/scan.js", () => ({
   scan: vi.fn(),
@@ -26,42 +27,75 @@ const mockSpawn = vi.mocked(spawn);
 const mockScan = vi.mocked(scan);
 
 function mockFolderDialog(path: string): void {
-  mockSpawn.mockImplementation((_command, _args, _options) => {
-    const stdoutHandlers: Array<(chunk: Buffer) => void> = [];
-    const closeHandlers: Array<(code: number) => void> = [];
-
+  mockSpawn.mockImplementation(() => {
     return {
       stdout: {
         on(event: string, handler: (chunk: Buffer) => void) {
           if (event === "data") {
-            stdoutHandlers.push(handler);
-            handler(Buffer.from(path));
+            queueMicrotask(() => handler(Buffer.from(path)));
           }
         },
       },
       stderr: { on: vi.fn() },
       on(event: string, handler: (code: number) => void) {
         if (event === "close") {
-          closeHandlers.push(handler);
-          handler(0);
+          queueMicrotask(() => handler(0));
         }
       },
+      kill: vi.fn(),
     } as unknown as ReturnType<typeof spawn>;
   });
 }
 
 function mockFolderDialogCancelled(): void {
-  mockSpawn.mockImplementation((_command, _args, _options) => {
+  mockSpawn.mockImplementation(() => {
     return {
       stdout: { on: vi.fn() },
       stderr: { on: vi.fn() },
       on(event: string, handler: (code: number) => void) {
         if (event === "close") {
-          handler(0);
+          queueMicrotask(() => handler(0));
         }
       },
+      kill: vi.fn(),
     } as unknown as ReturnType<typeof spawn>;
   });
+}
+
+function mockFolderDialogUnavailable(): void {
+  mockSpawn.mockImplementation(() => {
+    return {
+      stdout: { on: vi.fn() },
+      stderr: { on: vi.fn() },
+      on(event: string, handler: (err: Error) => void) {
+        if (event === "error") {
+          queueMicrotask(() => handler(new Error("spawn ENOENT")));
+        }
+      },
+      kill: vi.fn(),
+    } as unknown as ReturnType<typeof spawn>;
+  });
+}
+
+function mockFolderDialogPending(): { complete: () => void } {
+  let closeHandler: ((code: number) => void) | undefined;
+
+  mockSpawn.mockImplementation(() => {
+    return {
+      stdout: { on: vi.fn() },
+      stderr: { on: vi.fn() },
+      on(event: string, handler: (code: number) => void) {
+        if (event === "close") {
+          closeHandler = handler;
+        }
+      },
+      kill: vi.fn(),
+    } as unknown as ReturnType<typeof spawn>;
+  });
+
+  return {
+    complete: () => closeHandler?.(0),
+  };
 }
 
 const mockVersion: PlatformVersion = {
@@ -123,10 +157,12 @@ describe("project API routes", () => {
     clearLastScan();
     mockScan.mockReset();
     mockSpawn.mockReset();
+    resetBrowseInFlightForTests();
   });
 
   afterEach(() => {
     clearLastScan();
+    resetBrowseInFlightForTests();
   });
 
   describe("GET /api/project/config", () => {
@@ -142,20 +178,47 @@ describe("project API routes", () => {
     it("returns chosen folder path", async () => {
       mockFolderDialog("D:\\picked\\project");
 
-      const response = await request(app).post("/api/project/browse");
+      const response = await request(app).post("/api/project/browse").send({});
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ cancelled: false, path: "D:\\picked\\project" });
       expect(mockSpawn).toHaveBeenCalledOnce();
     });
 
-    it("returns cancelled when dialog is dismissed", async () => {
+    it("returns dismissed when dialog is closed without a selection", async () => {
       mockFolderDialogCancelled();
 
-      const response = await request(app).post("/api/project/browse");
+      const response = await request(app).post("/api/project/browse").send({});
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({ cancelled: true });
+      expect(response.body).toEqual({ cancelled: true, reason: "dismissed" });
+    });
+
+    it("returns unavailable when the picker cannot be spawned", async () => {
+      mockFolderDialogUnavailable();
+
+      const response = await request(app).post("/api/project/browse").send({});
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ cancelled: true, reason: "unavailable" });
+    });
+
+    it("returns busy when a browse dialog is already in flight", async () => {
+      const pending = mockFolderDialogPending();
+
+      const first = pickNativeFolder();
+      const second = await pickNativeFolder();
+
+      expect(second).toEqual({ cancelled: true, reason: "busy" });
+
+      pending.complete();
+      await expect(first).resolves.toEqual({ cancelled: true, reason: "dismissed" });
+    });
+
+    it("rejects requests without application/json Content-Type", async () => {
+      const response = await request(app).post("/api/project/browse");
+
+      expect(response.status).toBe(415);
     });
   });
 
@@ -249,6 +312,17 @@ describe("project API routes", () => {
 
       expect(response.status).toBe(200);
       expect(mockScan).toHaveBeenCalledWith({ projectPath: getDefaultProjectPath() });
+    });
+
+    it("returns 500 when scan fails", async () => {
+      mockScan.mockRejectedValue(new Error("ENOENT: no such directory"));
+
+      const response = await request(app)
+        .post("/api/project/scan")
+        .send({ projectPath: "/missing/project" });
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({ error: "ENOENT: no such directory" });
     });
   });
 });

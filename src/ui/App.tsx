@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Agent, ContextPreset, EffectiveConfiguration } from "../core/model/index.js";
 import type { ScanStatusSummary } from "../application/scan-store.js";
 import {
@@ -54,7 +54,14 @@ export function App() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [resourceCounts, setResourceCounts] = useState<ResourceCounts | null>(null);
   const [projectPath, setProjectPath] = useState("");
+  const [fallbackPath, setFallbackPath] = useState("");
+  const [browseUnavailable, setBrowseUnavailable] = useState(false);
   const [browsing, setBrowsing] = useState(false);
+  const projectPathRef = useRef(projectPath);
+
+  useEffect(() => {
+    projectPathRef.current = projectPath;
+  }, [projectPath]);
   const [scanning, setScanning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -113,12 +120,13 @@ export function App() {
 
   const runScan = useCallback(
     async (overridePath?: string) => {
-      const pathToScan = (overridePath ?? projectPath).trim();
+      const pathToScan = (overridePath ?? projectPathRef.current).trim();
       setScanning(true);
       setError(null);
       try {
         const result = await scanProject(pathToScan || undefined);
         if (pathToScan) {
+          setProjectPath(pathToScan);
           saveStoredProjectPath(pathToScan);
         }
         setResourceCounts(resourceCountsFromScan(result));
@@ -129,7 +137,7 @@ export function App() {
         setScanning(false);
       }
     },
-    [loadDiscovery, projectPath],
+    [loadDiscovery],
   );
 
   const handleBrowse = useCallback(async () => {
@@ -139,8 +147,27 @@ export function App() {
       const result = await browseProjectFolder();
       if (!result.cancelled) {
         setProjectPath(result.path);
-        saveStoredProjectPath(result.path);
+        setBrowseUnavailable(false);
         await runScan(result.path);
+        return;
+      }
+
+      if (result.reason === "unavailable") {
+        setBrowseUnavailable(true);
+        setError(
+          "Folder picker is unavailable on this machine. Enter a project path below or set CAPSIGHT_PROJECT_PATH.",
+        );
+        return;
+      }
+
+      if (result.reason === "busy") {
+        setError("Folder picker is already open.");
+        return;
+      }
+
+      if (result.reason === "timeout") {
+        setError("Folder picker timed out. Try again or enter a path manually.");
+        setBrowseUnavailable(true);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Browse failed");
@@ -148,6 +175,20 @@ export function App() {
       setBrowsing(false);
     }
   }, [runScan]);
+
+  const handleRescan = useCallback(() => {
+    void runScan();
+  }, [runScan]);
+
+  const handleFallbackScan = useCallback(
+    (path: string) => {
+      const trimmed = path.trim();
+      if (!trimmed) return;
+      setProjectPath(trimmed);
+      void runScan(trimmed);
+    },
+    [runScan],
+  );
 
   useEffect(() => {
     if (agents.length === 0) {
@@ -258,6 +299,7 @@ export function App() {
         }
         if (!cancelled) {
           setProjectPath(initialPath);
+          setFallbackPath(initialPath);
         }
 
         await loadDiscovery();
@@ -265,7 +307,21 @@ export function App() {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 404) {
           setNeedsScan(true);
-          await runScan(initialPath);
+          const pathToScan = initialPath.trim();
+          if (pathToScan) {
+            setScanning(true);
+            try {
+              const result = await scanProject(pathToScan);
+              setProjectPath(pathToScan);
+              saveStoredProjectPath(pathToScan);
+              setResourceCounts(resourceCountsFromScan(result));
+              await loadDiscovery();
+            } catch (scanErr) {
+              setError(scanErr instanceof Error ? scanErr.message : "Scan failed");
+            } finally {
+              setScanning(false);
+            }
+          }
         } else {
           setError(err instanceof Error ? err.message : "Failed to load discovery data");
         }
@@ -278,7 +334,7 @@ export function App() {
     return () => {
       cancelled = true;
     };
-  }, [loadDiscovery, runScan]);
+  }, [loadDiscovery]);
 
   return (
     <div className="dashboard">
@@ -299,11 +355,15 @@ export function App() {
           )}
           {(needsScan || summary) && (
             <ScanPanel
-              compact
               projectPath={projectPath}
               onBrowse={handleBrowse}
+              onRescan={handleRescan}
+              onFallbackScan={handleFallbackScan}
               browsing={browsing}
               scanning={scanning}
+              browseUnavailable={browseUnavailable}
+              fallbackPath={fallbackPath}
+              onFallbackPathChange={setFallbackPath}
               error={error}
             />
           )}

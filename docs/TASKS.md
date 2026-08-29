@@ -126,4 +126,4 @@ Order: H1-01 → H1-02 → H1-03 → H1-05 → H1-06 → H1-04 → H1-07 → H1-
 
 | ID | Phase | Title | Status | Spec refs | Files | Acceptance |
 |----|-------|-------|--------|-----------|-------|------------|
-| V0-01 | V0 | UI project folder selection | done | §12.4 M0 | src/ui/, src/server/routes/project.ts | Path field + Browse + localStorage |
+| V0-01 | V0 | UI project folder selection | done | §12.4 M0 | src/ui/, src/server/routes/project.ts | Browse + Rescan + headless fallback |

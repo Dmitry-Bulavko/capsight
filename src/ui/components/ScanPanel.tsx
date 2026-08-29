@@ -12,7 +12,8 @@ export function loadStoredProjectPath(): string | null {
   const storage = getStorage();
   if (!storage) return null;
   const value = storage.getItem(PROJECT_PATH_STORAGE_KEY);
-  return value?.trim() ? value : null;
+  if (!value?.trim()) return null;
+  return value.trim();
 }
 
 export function saveStoredProjectPath(path: string): void {
@@ -50,13 +51,28 @@ function FolderIcon() {
   );
 }
 
+function RescanIcon() {
+  return (
+    <svg className="scan-rescan-icon" viewBox="0 0 16 16" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M8 2.5a5.5 5.5 0 1 0 4.03 9.26l.71-.71A6.5 6.5 0 1 1 8 1.5V0l3 2.5L8 5V3.5a4.5 4.5 0 1 1-3.18 7.68l-.71.71A5.5 5.5 0 1 0 8 2.5Z"
+      />
+    </svg>
+  );
+}
+
 interface ScanPanelProps {
   projectPath: string;
   onBrowse: () => void;
+  onRescan: () => void;
+  onFallbackScan: (path: string) => void;
   browsing?: boolean;
   scanning: boolean;
+  browseUnavailable?: boolean;
+  fallbackPath: string;
+  onFallbackPathChange: (path: string) => void;
   error: string | null;
-  compact?: boolean;
 }
 
 function projectButtonLabel(
@@ -70,62 +86,84 @@ function projectButtonLabel(
   return folderName || "Browse";
 }
 
-function ScanControls({
-  projectPath,
-  onBrowse,
-  browsing = false,
-  scanning,
-}: Pick<ScanPanelProps, "projectPath" | "onBrowse" | "browsing" | "scanning">) {
-  const label = projectButtonLabel(projectPath, browsing, scanning);
-
-  return (
-    <button
-      type="button"
-      className="scan-project-button"
-      disabled={scanning || browsing}
-      title={projectPath.trim() || "Choose project folder"}
-      onClick={onBrowse}
-    >
-      <FolderIcon />
-      <span className="scan-project-button-label">{label}</span>
-    </button>
-  );
-}
-
 export function ScanPanel({
   projectPath,
   onBrowse,
+  onRescan,
+  onFallbackScan,
   browsing = false,
   scanning,
+  browseUnavailable = false,
+  fallbackPath,
+  onFallbackPathChange,
   error,
-  compact = false,
 }: ScanPanelProps) {
-  if (compact) {
-    return (
-      <div className="scan-toolbar">
-        <ScanControls
-          projectPath={projectPath}
-          onBrowse={onBrowse}
-          browsing={browsing}
-          scanning={scanning}
-        />
-        {error && <span className="scan-toolbar-error">{error}</span>}
-      </div>
-    );
-  }
+  const busy = scanning || browsing;
+  const canRescan = Boolean(projectPath.trim()) && !busy;
+  const label = projectButtonLabel(projectPath, browsing, scanning);
 
   return (
-    <section className="panel scan-panel">
-      <h2>Scan project</h2>
-      <div className="scan-actions">
-        <ScanControls
-          projectPath={projectPath}
-          onBrowse={onBrowse}
-          browsing={browsing}
-          scanning={scanning}
-        />
+    <div className="scan-toolbar">
+      <div className="scan-toolbar-row">
+        <button
+          type="button"
+          className="scan-project-button"
+          disabled={busy}
+          title={projectPath.trim() || "Choose project folder"}
+          onClick={onBrowse}
+        >
+          <FolderIcon />
+          <span className="scan-project-button-label">{label}</span>
+        </button>
+        <button
+          type="button"
+          className="scan-rescan-button"
+          disabled={!canRescan}
+          title="Rescan current project"
+          aria-label="Rescan current project"
+          onClick={onRescan}
+        >
+          <RescanIcon />
+        </button>
       </div>
-      {error && <p className="error-message">{error}</p>}
-    </section>
+
+      {browseUnavailable && (
+        <div className="scan-fallback">
+          <p className="scan-fallback-note">
+            Folder picker unavailable (headless). Enter path manually or set CAPSIGHT_PROJECT_PATH.
+          </p>
+          <div className="scan-fallback-row">
+            <input
+              type="text"
+              className="scan-fallback-input"
+              value={fallbackPath}
+              placeholder="D:\projects\your-project"
+              disabled={busy}
+              spellCheck={false}
+              aria-label="Project path"
+              onChange={(event) => onFallbackPathChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !busy && fallbackPath.trim()) {
+                  onFallbackScan(fallbackPath);
+                }
+              }}
+            />
+            <button
+              type="button"
+              disabled={busy || !fallbackPath.trim()}
+              onClick={() => onFallbackScan(fallbackPath)}
+            >
+              Scan
+            </button>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <p className="scan-toolbar-error" title={error}>
+          {error}
+        </p>
+      )}
+    </div>
   );
 }

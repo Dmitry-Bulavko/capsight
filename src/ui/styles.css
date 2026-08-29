@@ -169,10 +169,17 @@ body {
 
 .scan-toolbar {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: nowrap;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
   min-width: 0;
+}
+
+.scan-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: nowrap;
 }
 
 .scan-project-button {
@@ -199,10 +206,39 @@ body {
   cursor: not-allowed;
 }
 
-.scan-folder-icon {
+.scan-rescan-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid #5f6368;
+  border-radius: 6px;
+  background: #303134;
+  color: #bdc1c6;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.scan-rescan-button:hover:not(:disabled) {
+  background: #3c4043;
+  color: #e8eaed;
+}
+
+.scan-rescan-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.scan-folder-icon,
+.scan-rescan-icon {
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
+}
+
+.scan-folder-icon {
   color: #bdc1c6;
 }
 
@@ -213,13 +249,71 @@ body {
   min-width: 0;
 }
 
+.scan-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  max-width: min(24rem, 100%);
+}
+
+.scan-fallback-note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #bdc1c6;
+  text-align: right;
+}
+
+.scan-fallback-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.scan-fallback-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid #3c4043;
+  border-radius: 6px;
+  background: #22252d;
+  color: #e8eaed;
+  font: inherit;
+}
+
+.scan-fallback-input:focus {
+  outline: none;
+  border-color: #5c7cfa;
+}
+
+.scan-fallback-row button {
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #5f6368;
+  border-radius: 6px;
+  background: #303134;
+  color: #e8eaed;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.scan-fallback-row button:hover:not(:disabled) {
+  background: #3c4043;
+}
+
+.scan-fallback-row button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .scan-toolbar-error {
+  margin: 0;
   color: #f28b82;
   font-size: 0.85rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 12rem;
+  text-align: right;
+  max-width: min(24rem, 100%);
+  word-break: break-word;
 }
 
 .dashboard-stats {
@@ -426,18 +520,6 @@ body {
 .empty-state {
   margin: 0;
   color: #9aa0a6;
-}
-
-.scan-prompt {
-  margin: 0 0 1rem;
-  color: #bdc1c6;
-}
-
-.scan-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: nowrap;
 }
 
 .error-message {

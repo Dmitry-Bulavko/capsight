@@ -47,11 +47,17 @@ export async function fetchProjectConfig(): Promise<ProjectConfig> {
   return request<ProjectConfig>("/api/project/config");
 }
 
-export type BrowseProjectFolderResult = { cancelled: true } | { cancelled: false; path: string };
+export type BrowseProjectFolderCancelReason = "dismissed" | "unavailable" | "busy" | "timeout";
+
+export type BrowseProjectFolderResult =
+  | { cancelled: false; path: string }
+  | { cancelled: true; reason?: BrowseProjectFolderCancelReason };
 
 export async function browseProjectFolder(): Promise<BrowseProjectFolderResult> {
   return request<BrowseProjectFolderResult>("/api/project/browse", {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({}),
   });
 }
 
