@@ -1,10 +1,21 @@
 import type { ScanStatusSummary } from "../../application/scan-store.js";
+import type { PlatformId } from "../../adapters/platform.js";
 import { formatVersion } from "../api.js";
 
 export interface ResourceCounts {
   skills: number;
   instructions: number;
   mcpServers: number;
+}
+
+const PLATFORM_VERSION_LABELS: Record<PlatformId, string> = {
+  claude: "Claude version",
+  cursor: "Cursor version",
+  codex: "Codex version",
+};
+
+function platformVersionLabel(platform: PlatformId): string {
+  return PLATFORM_VERSION_LABELS[platform];
 }
 
 interface ProjectSummaryProps {
@@ -30,7 +41,7 @@ export function ProjectSummary({
           </span>
         </article>
         <article className="stat-card">
-          <span className="stat-label">Claude version</span>
+          <span className="stat-label">{platformVersionLabel(summary.platform)}</span>
           <span className="stat-value">{formatVersion(summary.version)}</span>
         </article>
         <article className="stat-card">
@@ -79,7 +90,7 @@ export function ProjectSummary({
           </dd>
         </div>
         <div>
-          <dt>Claude version</dt>
+          <dt>{platformVersionLabel(summary.platform)}</dt>
           <dd>{formatVersion(summary.version)}</dd>
         </div>
         <div>

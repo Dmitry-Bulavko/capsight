@@ -125,6 +125,9 @@ describe("capsight-select CSS contract", () => {
     expect(css).toContain(".capsight-select-option-label");
     expect(css).toMatch(/\.capsight-select-menu[\s\S]*gap:\s*0\.25rem/);
     expect(css).toMatch(/\.capsight-select-menu[\s\S]*margin-top:\s*0\.35rem/);
+    expect(css).toMatch(/\.capsight-select-menu[\s\S]*min-width:\s*100%/);
+    expect(css).toMatch(/\.capsight-select-menu[\s\S]*width:\s*max-content/);
+    expect(css).toContain(".capsight-select-menu .capsight-select-option-label");
     expect(css).toMatch(/\.capsight-select-option[\s\S]*border:\s*1px solid #3c4043/);
     expect(css).toMatch(/\.capsight-select-option[\s\S]*border-radius:\s*4px/);
   });

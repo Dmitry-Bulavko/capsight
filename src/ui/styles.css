@@ -152,8 +152,10 @@ body {
   position: absolute;
   top: 100%;
   left: 0;
-  right: 0;
   z-index: 20;
+  min-width: 100%;
+  width: max-content;
+  max-width: min(24rem, calc(100vw - 2rem));
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -164,6 +166,16 @@ body {
   background: #1a1d24;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   color: #e8eaed;
+}
+
+.capsight-select-menu .capsight-select-option-row {
+  min-width: max-content;
+}
+
+.capsight-select-menu .capsight-select-option-label {
+  flex: 0 1 auto;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .capsight-select-option {
