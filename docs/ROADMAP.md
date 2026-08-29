@@ -4,7 +4,9 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**V0-04 done** — custom `CapsightSelect` listbox with in-row status badges. Native MDN `<select>` abandoned (see `docs/tasks/V0-04-select-styling.md`).
+**EC phase opened** — ecosystem visualization of the declared layer (SPEC §7.4) across all detected platforms; replaces the Overview tab. Handoffs written for EC-01…EC-08; **EC-01 (compat facts corpus) is next** and blocks every badge in EC-05.
+
+Previous: **V0-04 done** — custom `CapsightSelect` listbox with in-row status badges. Native MDN `<select>` abandoned (see `docs/tasks/V0-04-select-styling.md`).
 
 ## Phase status
 
@@ -19,6 +21,18 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 | H1 — Correctness hardening | `done` | H1-29 closed; corpus 20/20 |
 | V0 — v0.1 UX polish | `done` | V0-01..V0-04 complete |
 | MP — Multi-platform | `done` | MP-C15 + MP-X15 golden gates |
+| EC — Ecosystem visualization | `todo` | EC-08 mixed-project golden gate |
+
+## EC scope note
+
+The Graph tab visualizes the **effective** layer: one platform, one execution context, edges recomputed per context. The Ecosystem screen visualizes the **declared** layer: every detected platform at once, no context, no resolver. SPEC §7.4 names both halves; only the effective one had a surface until now.
+
+Two rules constrain the phase:
+
+- A compatibility badge is a claim about platform behaviour and is gated like any other (§8.2). `unknown` is the default verdict and is expected to dominate at v1.
+- Platform detection is evidence-based and honours shared artifacts: `AGENTS.md` is consumed by both Cursor and Codex, so its presence alone enables both. Undetected platforms remain selectable in the filter — "what would this project lose under platform X" is the question the assessment use case asks.
+
+The canvas stays read-only: no dragging, no connecting, no persisted positions (§2.3).
 
 ## H1 outcome
 

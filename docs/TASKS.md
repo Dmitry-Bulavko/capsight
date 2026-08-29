@@ -173,3 +173,20 @@ Order: MP-01 → MP-03 → MP-04 → MP-C01..C15 → MP-X01..X15.
 | MP-X13 | MP | Codex graph builder | done | §7.10 | adapters/codex/resolution/ | Uses core graph |
 | MP-X14 | MP | Codex golden fixture basic | done | §11.1 | tests/fixtures/codex/basic/ | Golden passes |
 | MP-X15 | MP | Codex correctness gate | done | §11.3 | tests/fixtures/run-codex-golden.test.ts | Codex golden runner |
+
+## EC — Ecosystem visualization
+
+Declared-layer visualization across all detected platforms (SPEC §7.4). Replaces the Overview tab. Compat facts: [COMPAT-FACTS.md](./COMPAT-FACTS.md) (produced by EC-01).
+
+Order: EC-01 → EC-02 → EC-03 → EC-04 → EC-05 → EC-06 → EC-07 → EC-08.
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| EC-01 | EC | Cross-platform compatibility facts corpus | todo | §3, §6, §8.1–8.2, §2.4 | docs/COMPAT-FACTS.md, src/core/compat/ | Three-valued verdict; every non-unknown gated by a matrix entry |
+| EC-02 | EC | Multi-platform detection + merged inventory | todo | §7.1, §7.4, §5, §12.2 | src/application/detect-platforms.ts, ecosystem.ts, scan-store.ts | `AGENTS.md` alone detects Cursor + Codex; overlaps linked, not merged |
+| EC-03 | EC | Ecosystem API + guarded content endpoint | todo | §12.4, §7.1, inv 10 | src/server/routes/ecosystem.ts, src/application/resource-content.ts | Id-addressed reads only; markdown classes only; no secret in any response |
+| EC-04 | EC | Ecosystem canvas replaces Overview | todo | §7.4, §7.10, §2.3 | src/ui/components/EcosystemView.tsx, ecosystem-layout.ts, DashboardNav.tsx | Four blocks, `overlaps` edge only, read-only canvas, side rail keeps scan controls |
+| EC-05 | EC | Platform filter + compat badges | todo | §6, §8.2, §2.4, §14 | src/ui/components/PlatformFilter.tsx, CompatBadges.tsx | Three states; badge traceable to a fact; filter dims, never removes |
+| EC-06 | EC | Resource detail panel + rendered markdown | todo | §7.5, §12.4, inv 10 | src/ui/components/ResourceDetailPanel.tsx, MarkdownBody.tsx | Sanitized render; MCP/settings show redacted model, no body |
+| EC-07 | EC | Ecosystem health readout | todo | §11.4, §6, §2.4 | src/application/ecosystem-health.ts, src/ui/components/EcosystemHealth.tsx | Counts and conditions, no score; every count filters the canvas |
+| EC-08 | EC | Mixed-project golden fixture | todo | §11.1–11.3, inv 2 | tests/fixtures/ecosystem/mixed/, run-ecosystem-golden.test.ts | Hermetic; pins unknowns as well as confident verdicts |
