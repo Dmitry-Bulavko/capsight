@@ -124,6 +124,7 @@ Highest to lowest `[doc]`:
 | XR1 | Default project root: directory containing `.git` | `[doc]` |
 | XR2 | Customizable via `project_root_markers` in config | `[doc]` |
 | XR3 | Walk `.codex/config.toml` from root toward cwd for layered overrides | `[doc]` |
+| XR4 | Unlike Cursor (CW5), ancestor `AGENTS.md` files above the scanned path are included on purpose: Codex merges instructions root → cwd (XI2), not workspace-bounded | `[doc]` |
 
 ---
 
