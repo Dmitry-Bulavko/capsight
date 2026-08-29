@@ -121,3 +121,15 @@ Order: H1-01 → H1-02 → H1-03 → H1-05 → H1-06 → H1-04 → H1-07 → H1-
 | H1-27 | H1 | Security findings contradict F9 for plugin agents | done | F9, §7.6, inv 3, 12, 14 | src/adapters/claude/resolution/security-findings.ts | No finding whose premise F9 nullifies |
 | H1-28 | H1 | `confidence: "fixture"` means three different things across entries | done | §8.1, §8.2, §11.4, §0.1.3 | src/adapters/claude/version/matrix.ts, tests/fixtures/coverage-report.ts | One stated rule, applied uniformly |
 | H1-29 | H1 | F8 model substitution asserts an undocumented value | todo | F8, §0.1.1, §7.8, inv 14 | src/application/simulate.ts | Substitute identity unknown unless established |
+
+## M4 — Project selection
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| M4-01 | M4 | Choose the project folder to analyse | todo | §12.4, §12.5, §10 M0, inv 6, 8 | src/ui/components/ScanPanel.tsx, src/server/routes/project.ts, src/application/scan-store.ts | UI picks any path; scan entry point validates it; snapshot swaps atomically |
+
+## P1 — Multi-platform (decision pending, see ROADMAP)
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| P1-01 | P1 | Platform switcher + Cursor and Codex adapters | todo | §12.2, §3, §8.2, §11.4, inv 1, 4, 14 | src/core/platform/, src/adapters/registry.ts, src/adapters/{cursor,codex}/ | Port + switcher with goldens unchanged; each new adapter has a §3 fact corpus before any verdict |
