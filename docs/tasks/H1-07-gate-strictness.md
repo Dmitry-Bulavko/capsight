@@ -47,3 +47,17 @@ The gate fails on a missing fixture, on a missing resolution and on a wrong `enf
 ## Notes
 
 Landing this before H1-09..H1-11 will turn the suite red until the fixtures are written. That is the intended sequencing — the empty corpus is the finding. If a staged landing is needed, print the missing fixtures as a failing-but-listed set rather than hiding them.
+
+## Orchestrator verification (post-implementation)
+
+The new checks were verified by mutation rather than by reading the tests — each mutation was applied, the gate run, and the fixture restored:
+
+| Mutation | Result |
+|---|---|
+| flip one golden capability's `enforcement` from `enforced` to `advisory` | gate fails on `claude/basic` — previously passed, since only `status` was compared |
+| add a stray `tests/fixtures/claude/stray-dir/` | fails: `has no fixture directory outside the declared §11.1 corpus` |
+| add a golden resolution the resolver does not produce | fails with `kind: "missing-resolution"` — previously `continue`d over |
+
+Suite is 296 passed | 13 todo. The 13 incomplete fixtures are reported by name with their missing contract entries, and `EXPECTED_PENDING_FIXTURES` is asserted against the on-disk classification, so the corpus can neither stay silently incomplete nor lose a fixture unnoticed. The tautological completeness test is gone.
+
+**Accepted deviation from the handoff's Notes:** the handoff predicted a red suite until H1-09..H1-11 land. Reporting the gap as counted todos instead is the better outcome — a permanently red suite trains everyone to ignore it, while the declared pending list fails the moment it stops matching reality. H1-09, H1-10 and H1-11 must each shrink `EXPECTED_PENDING_FIXTURES` as they land.

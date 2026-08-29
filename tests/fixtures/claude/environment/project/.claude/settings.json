@@ -1,0 +1,6 @@
+{
+  "env": {
+    "DEPLOY_API_TOKEN": "capsight-fixture-secret-value",
+    "ANTHROPIC_BASE_URL": "https://internal.example/capsight-fixture-secret-value"
+  }
+}

@@ -1,7 +1,7 @@
 /**
  * Platform-agnostic domain types.
- * Claude-specific types live in src/adapters/claude/.
- * @see docs/SPEC.md §5
+ * Claude-specific types live in src/adapters/claude/model/.
+ * @see docs/SPEC.md §5, §12.2
  */
 
 export type Scope =
@@ -13,14 +13,6 @@ export type Scope =
   | "local"
   | "nested-project"
   | "unknown";
-
-export type PermissionMode =
-  | "default"
-  | "acceptEdits"
-  | "auto"
-  | "dontAsk"
-  | "bypassPermissions"
-  | "plan";
 
 export type ContextPreset =
   | "main-session"
@@ -37,14 +29,24 @@ export interface ExecutionContext {
   isBackground: boolean;
   isFork: boolean;
   isTeammate: boolean;
-  builtinKind?: "explore" | "plan" | "general-purpose" | "claude";
+  /** Platform-defined builtin agent kind, when the preset denotes one. */
+  builtinKind?: string;
   depth: number;
   maxDepth: number;
-  parentPermissionMode?: PermissionMode;
+  /** Platform-defined parent permission mode identifier. */
+  parentPermissionMode?: string;
 }
 
+/**
+ * Confidence axis every product claim carries (§6). `unknown` is not a weaker
+ * claim but the absence of one: the platform behaviour behind it is not founded
+ * on the detected version.
+ */
+export type Enforcement = "enforced" | "advisory" | "unknown";
+
 export interface SourceInfo {
-  platform: "claude";
+  /** Platform adapter identifier that produced this source. */
+  platform: string;
   path?: string;
   scope: Scope;
   fieldPath?: string;
@@ -52,7 +54,7 @@ export interface SourceInfo {
 }
 
 export interface PlatformVersion {
-  platform: "claude";
+  platform: string;
   version: string;
   raw: string;
   detectedAt: string;
@@ -67,25 +69,29 @@ export interface PlatformEnvironment {
   }>;
 }
 
+/** Value type of an unrecognized field; contents are never retained. */
+export type UnknownFieldType =
+  | "string"
+  | "number"
+  | "boolean"
+  | "null"
+  | "array"
+  | "object"
+  | "unknown";
+
+/**
+ * Platform-neutral agent configuration. Field names of a platform's agent
+ * definition live in that platform's adapter, which extends this type
+ * (§12.2, §13 invariant 1).
+ */
 export interface AgentConfiguration {
-  tools?: string[];
-  disallowedTools?: string[];
-  mcpServers?: Array<string | Record<string, unknown>>;
-  model?: string;
-  permissionMode?: PermissionMode;
-  maxTurns?: number;
-  skills?: string[];
-  hooks?: unknown;
-  memory?: "user" | "project" | "local";
-  background?: boolean;
-  effort?: string;
-  isolation?: "worktree";
-  initialPrompt?: string;
-  color?: string;
-  unknownFields: Record<string, unknown>;
+  /** Unrecognized configuration keys mapped to value types (§8.2) — never values. */
+  unknownFields: Record<string, UnknownFieldType>;
 }
 
-export interface Agent {
+export interface Agent<
+  TConfiguration extends AgentConfiguration = AgentConfiguration,
+> {
   id: string;
   name: string;
   description: string;
@@ -93,12 +99,31 @@ export interface Agent {
   status: "active" | "shadowed" | "ambiguous" | "invalid" | "unknown";
   collision?: {
     candidates: SourceInfo[];
+    /**
+     * The candidate that loads. Absent whenever the collision rule does not
+     * name a winner (A4) or the matrix does not found the winner rule on the
+     * detected version — a winner is never guessed (§8.2, §8.4).
+     */
     effective?: SourceInfo;
     rule: string;
+    /**
+     * Matrix entry the rule was gated on. Optional in the core model because
+     * an adapter may have none; the Claude adapter gates every collision rule
+     * it emits (A1, A3, A4), so both fields are always present there.
+     */
+    matrixRef?: string;
+    /** Confidence in this record (§6). */
+    enforcement?: Enforcement;
   };
   invalidReason?: "no-name" | "no-description" | "bad-yaml" | "bad-name-chars";
-  configuration: AgentConfiguration;
+  configuration: TConfiguration;
   isPluginAgent: boolean;
+  /**
+   * Scoped id a plugin agent is addressed by, subfolder included:
+   * `my-plugin:review:security` (A6). Absent for non-plugin agents, whose
+   * identity is the `name` alone (A5).
+   */
+  pluginScopedId?: string;
 }
 
 export interface ResolutionReason {
@@ -126,7 +151,7 @@ export interface ResolvedCapability {
   capabilityId: string;
   kind: "tool" | "mcp_server" | "mcp_tool" | "skill" | "instruction" | "permission";
   status: "available" | "denied" | "preloaded" | "blocked" | "unknown";
-  enforcement: "enforced" | "advisory" | "unknown";
+  enforcement: Enforcement;
   sources: SourceInfo[];
   reasons: ResolutionReason[];
 }
@@ -149,6 +174,17 @@ export interface Warning {
   message: string;
   evidence: SourceInfo[];
   matrixRef?: string;
+  /**
+   * Confidence in the platform claim the warning makes (§6). Set by
+   * `gateWarning`; `unknown` means the backing matrix entry is missing or not
+   * supported on the detected version, so the warning is undetermined rather
+   * than asserted, and its message carries the reason.
+   *
+   * Absent on findings that make no platform claim — a §7.9 security finding
+   * reports configuration we read directly, not behaviour the platform
+   * guarantees, so there is no version-sensitive claim to gate.
+   */
+  enforcement?: Enforcement;
 }
 
 export interface EffectiveConfiguration {
@@ -161,17 +197,25 @@ export interface EffectiveConfiguration {
 }
 
 export interface TrustState {
-  accepted: boolean;
+  /**
+   * `true` / `false` when the platform trust record could be read; `"unknown"`
+   * when trust itself could not be determined (unreadable or malformed record).
+   */
+  accepted: boolean | "unknown";
   projectPath: string;
+  /** Why trust could not be determined. Set only when `accepted === "unknown"`. */
+  unknownReason?: string;
 }
 
-export interface ProjectSnapshot {
+export interface ProjectSnapshot<
+  TConfiguration extends AgentConfiguration = AgentConfiguration,
+> {
   id: string;
   projectPath: string;
   version: PlatformVersion;
   environment: PlatformEnvironment;
   trust: TrustState;
-  agents: Agent[];
+  agents: Array<Agent<TConfiguration>>;
   skills: unknown[];
   instructions: unknown[];
   mcpServers: unknown[];

@@ -1,25 +1,46 @@
 import fs from "node:fs";
 import fsPromises from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type {
   EffectiveConfiguration,
   PlatformVersion,
 } from "../src/core/model/index.js";
-import { buildExecutionContext } from "../src/core/resolver/context.js";
+import type { ManagedSimulationResult } from "../src/application/simulate.js";
+import { buildExecutionContext } from "../src/adapters/claude/resolution/context.js";
 import type { ContextPreset } from "../src/core/model/index.js";
+import type { PermissionMode } from "../src/adapters/claude/model/index.js";
+import { FACTS } from "../src/adapters/claude/version/facts.js";
+import { VERSION_MATRIX } from "../src/adapters/claude/version/matrix.js";
 import {
   buildCoverageReport,
+  classifyFactCoverage,
   discoverFixtureNames,
   findConfidentCapabilityMismatches,
+  findUndeclaredFixtureDirectories,
   formatCoverageReport,
+  formatPendingFixtures,
+  inspectFixtureCorpus,
   isConfidentCapabilityStatus,
+  pendingFixtureNames,
+  resolveFixtureAddDirs,
+  resolveFixturePluginRoots,
+  resolveFixtureManagedBundle,
+  resolveFixtureScanPath,
   FIXTURES_ROOT,
+  SPEC_FIXTURE_NAMES,
 } from "./fixtures/coverage-report.js";
 import {
   normalizeGoldenOutput,
   type NormalizedGoldenOutput,
 } from "./fixtures/golden-normalize.js";
+import {
+  cleanupFixtureHome,
+  fixtureHomeDir,
+  restoreProcessEnv,
+  selectFixtureAgent,
+} from "./fixtures/fixture-runtime.js";
 
 const { mockDetectClaudeVersion } = vi.hoisted(() => ({
   mockDetectClaudeVersion: vi.fn<() => Promise<PlatformVersion>>(),
@@ -32,10 +53,12 @@ vi.mock("../src/adapters/claude/version/index.js", () => ({
 
 interface FixtureContextSpec {
   agentName: string;
+  /** Disambiguator for a name carried by more than one entry (A4). */
+  agentSourcePath?: string;
   preset: ContextPreset;
   depth?: number;
   maxDepth?: number;
-  parentPermissionMode?: EffectiveConfiguration["context"]["parentPermissionMode"];
+  parentPermissionMode?: PermissionMode;
 }
 
 interface FixtureContract {
@@ -67,6 +90,13 @@ function applyFixtureEnv(env: Record<string, string>): void {
   for (const [key, value] of Object.entries(env)) {
     vi.stubEnv(key, value);
   }
+  // User-level settings (`~/.claude/settings.json`) and trust
+  // (`~/.claude.json`) reach a golden through `discovery.environment` and
+  // `discovery.trust`. A fixture run reads an empty home instead of the
+  // developer's, so the corpus depends on the input only (§13 invariant 2).
+  const home = fixtureHomeDir();
+  vi.stubEnv("HOME", home);
+  vi.stubEnv("USERPROFILE", home);
 }
 
 async function runFixtureToGolden(
@@ -90,15 +120,22 @@ async function runFixtureToGolden(
   const { scan } = await import("../src/application/scan.js");
   const { resolve } = await import("../src/application/resolve.js");
 
-  const scanResult = await scan({ projectPath: projectRoot });
+  const addDirs = resolveFixtureAddDirs(fixtureDir);
+  const pluginRoots = resolveFixturePluginRoots(fixtureDir);
+  const scanResult = await scan({
+    projectPath: resolveFixtureScanPath(fixtureDir),
+    ...(addDirs.length > 0 ? { addDirs } : {}),
+    ...(pluginRoots.length > 0 ? { pluginRoots } : {}),
+  });
   const resolutions: Array<{ agentName: string; resolution: EffectiveConfiguration }> =
     [];
 
   for (const contextSpec of contract.contexts) {
-    const agent = scanResult.snapshot.agents.find(
-      (entry) => entry.name === contextSpec.agentName,
+    const agent = selectFixtureAgent(
+      scanResult.snapshot.agents,
+      contextSpec,
+      projectRoot,
     );
-    expect(agent, `agent ${contextSpec.agentName} should exist`).toBeDefined();
 
     const context = buildExecutionContext(contextSpec.preset, {
       ...(contextSpec.depth !== undefined ? { depth: contextSpec.depth } : {}),
@@ -110,14 +147,32 @@ async function runFixtureToGolden(
 
     const resolution = await resolve({
       snapshot: scanResult.snapshot,
-      agentId: agent!.id,
+      agentId: agent.id,
       context,
     });
 
     resolutions.push({ agentName: contextSpec.agentName, resolution });
   }
 
-  const actual = normalizeGoldenOutput(scanResult.snapshot, resolutions, projectRoot);
+  // A fixture that ships a `managed-bundle/` also records the §7.8 delta.
+  const managedBundlePath = resolveFixtureManagedBundle(fixtureDir);
+  let simulation: ManagedSimulationResult | undefined;
+  if (managedBundlePath) {
+    const { simulateManagedOverlay } = await import(
+      "../src/application/simulate.js"
+    );
+    simulation = await simulateManagedOverlay({
+      managedBundlePath,
+      snapshot: scanResult.snapshot,
+    });
+  }
+
+  const actual = normalizeGoldenOutput(
+    scanResult.snapshot,
+    resolutions,
+    projectRoot,
+    simulation,
+  );
   return { actual, expected };
 }
 
@@ -231,11 +286,14 @@ describe("correctness gate rules", () => {
       findConfidentCapabilityMismatches(actual, expected, "sample"),
     ).toEqual([
       {
+        kind: "capability-mismatch",
         fixtureName: "sample",
         agentName: "agent",
         capabilityId: "Read",
         actualStatus: "available",
         expectedStatus: "denied",
+        actualEnforcement: "enforced",
+        expectedEnforcement: "enforced",
       },
     ]);
   });
@@ -258,21 +316,124 @@ describe("correctness gate rules", () => {
       findConfidentCapabilityMismatches(actual, expected, "sample"),
     ).toEqual([
       {
+        kind: "capability-mismatch",
         fixtureName: "sample",
         agentName: "agent",
         capabilityId: "Grep",
         actualStatus: "available",
         expectedStatus: undefined,
+        actualEnforcement: "enforced",
+        expectedEnforcement: undefined,
       },
     ]);
   });
 
+  it("fails when confident enforcement differs from golden expectation", () => {
+    const expected = emptyGolden("agent");
+    expected.resolutions[0]!.capabilities = [
+      {
+        capabilityId: "Read",
+        kind: "tool",
+        status: "available",
+        enforcement: "advisory",
+        sources: [],
+        reasons: [],
+      },
+    ];
+
+    const actual = emptyGolden("agent");
+    actual.resolutions[0]!.capabilities = [
+      {
+        capabilityId: "Read",
+        kind: "tool",
+        status: "available",
+        enforcement: "enforced",
+        sources: [],
+        reasons: [],
+      },
+    ];
+
+    expect(
+      findConfidentCapabilityMismatches(actual, expected, "sample"),
+    ).toEqual([
+      {
+        kind: "capability-mismatch",
+        fixtureName: "sample",
+        agentName: "agent",
+        capabilityId: "Read",
+        actualStatus: "available",
+        expectedStatus: "available",
+        actualEnforcement: "enforced",
+        expectedEnforcement: "advisory",
+      },
+    ]);
+  });
+
+  it("treats unknown actual enforcement as non-blocking", () => {
+    const expected = emptyGolden("agent");
+    expected.resolutions[0]!.capabilities = [
+      {
+        capabilityId: "Read",
+        kind: "tool",
+        status: "available",
+        enforcement: "advisory",
+        sources: [],
+        reasons: [],
+      },
+    ];
+
+    const actual = emptyGolden("agent");
+    actual.resolutions[0]!.capabilities = [
+      {
+        capabilityId: "Read",
+        kind: "tool",
+        status: "available",
+        enforcement: "unknown",
+        sources: [],
+        reasons: [],
+      },
+    ];
+
+    expect(
+      findConfidentCapabilityMismatches(actual, expected, "sample"),
+    ).toEqual([]);
+  });
+
+  it("fails when an expected resolution has no matching actual resolution", () => {
+    const expected = emptyGolden("agent");
+    const actual = emptyGolden("agent");
+    actual.resolutions = [];
+
+    const mismatches = findConfidentCapabilityMismatches(
+      actual,
+      expected,
+      "sample",
+    );
+
+    expect(mismatches).toHaveLength(1);
+    expect(mismatches[0]).toMatchObject({
+      kind: "missing-resolution",
+      fixtureName: "sample",
+      agentName: "agent",
+    });
+  });
+
   it("classifies confident vs unknown statuses explicitly", () => {
-    expect(isConfidentCapabilityStatus("unknown")).toBe(false);
-    expect(isConfidentCapabilityStatus("denied")).toBe(true);
-    expect(isConfidentCapabilityStatus("available")).toBe(true);
-    expect(isConfidentCapabilityStatus("preloaded")).toBe(true);
-    expect(isConfidentCapabilityStatus("blocked")).toBe(true);
+    const enforced = { enforcement: "enforced" } as const;
+    expect(isConfidentCapabilityStatus({ status: "unknown", ...enforced })).toBe(false);
+    expect(isConfidentCapabilityStatus({ status: "denied", ...enforced })).toBe(true);
+    expect(isConfidentCapabilityStatus({ status: "available", ...enforced })).toBe(true);
+    expect(isConfidentCapabilityStatus({ status: "preloaded", ...enforced })).toBe(true);
+    expect(isConfidentCapabilityStatus({ status: "blocked", ...enforced })).toBe(true);
+  });
+
+  it("does not treat a claim the product disowns as confident (H1-17)", () => {
+    expect(
+      isConfidentCapabilityStatus({ status: "denied", enforcement: "unknown" }),
+    ).toBe(false);
+    expect(
+      isConfidentCapabilityStatus({ status: "denied", enforcement: "advisory" }),
+    ).toBe(true);
   });
 });
 
@@ -280,8 +441,8 @@ describe("correctness gate", () => {
   const envSnapshot = { ...process.env };
 
   afterEach(() => {
-    process.env = { ...envSnapshot };
     vi.unstubAllEnvs();
+    restoreProcessEnv(envSnapshot);
     mockDetectClaudeVersion.mockReset();
   });
 
@@ -298,29 +459,214 @@ describe("correctness gate", () => {
     });
   }
 
-  it("reports fixture-verified vs documentation-only coverage counts", () => {
+  it("counts coverage over the fixed §3 fact corpus, not the registered subset", () => {
     const fixtures = discoverFixtureNames();
     expect(fixtures.length).toBeGreaterThan(0);
 
     const report = buildCoverageReport(fixtures);
-    expect(report.runtimeObserved).toBe(0);
-    expect(report.fixtureVerified).toBeGreaterThan(0);
+
+    // §11.4: the denominator is the whole §3 registry and cannot shrink.
+    expect(report.total).toBe(FACTS.length);
     expect(
-      report.fixtureVerified + report.documentationOnly + report.unverified,
-    ).toBeGreaterThan(0);
+      report.runtimeObserved +
+        report.fixtureVerified +
+        report.documentationOnly +
+        report.unverified,
+    ).toBe(FACTS.length);
+
+    // No runtime probing exists while the S0 fallback holds (§9.5).
+    expect(report.runtimeObserved).toBe(0);
+
+    // A fact no matrix entry references is unverified — recomputed here from
+    // the registries so the report cannot quietly reclassify it.
+    const referenced = new Set<string>(
+      VERSION_MATRIX.flatMap((entry) => [...entry.factRefs]),
+    );
+    const unreferenced = FACTS.filter((fact) => !referenced.has(fact.id));
+    expect(unreferenced.length).toBeGreaterThan(0);
+    expect(report.unverified).toBe(unreferenced.length);
+    for (const fact of unreferenced) {
+      expect(classifyFactCoverage(fact.id, new Set(fixtures))).toBe("unverified");
+    }
+
+    // Every fact a matrix entry references is at least documentation-only.
+    expect(report.fixtureVerified + report.documentationOnly).toBe(
+      FACTS.length - unreferenced.length,
+    );
 
     const formatted = formatCoverageReport(report);
-    expect(formatted).toContain("fixture-verified");
-    expect(formatted).toContain("documentation-only");
+    expect(formatted).toContain("SPEC §3 facts       : " + FACTS.length);
+    expect(formatted).toContain("fixture-verified    : " + report.fixtureVerified);
+    expect(formatted).toContain("unverified          : " + report.unverified);
+  });
+
+  it("counts a fact as fixture evidence only when the entry exercises it entire", () => {
+    const fixtures = ["tools-filters"];
+    const factId = FACTS[0]!.id;
+    const facts = [{ id: factId }] as const;
+
+    const docEntryWithFixture = [
+      {
+        id: "probe",
+        feature: "probe",
+        factRefs: [factId],
+        status: "supported",
+        confidence: "doc",
+        fixture: "tools-filters",
+        verifiedFacts: [factId],
+      },
+    ] as const;
+
+    // Fixture directory exists, but the entry never claimed fixture evidence.
+    expect(
+      buildCoverageReport(fixtures, { facts, matrix: docEntryWithFixture }),
+    ).toMatchObject({ fixtureVerified: 0, documentationOnly: 1 });
+
+    // Entry claims fixture evidence, but the named fixture is not available.
+    expect(
+      buildCoverageReport([], {
+        facts,
+        matrix: [{ ...docEntryWithFixture[0], confidence: "fixture" }],
+      }),
+    ).toMatchObject({ fixtureVerified: 0, documentationOnly: 1 });
+
+    // Entry is fixture-confident and its fixture exists, but the fixture pins
+    // only one edge of the fact, so the fact is not claimed (H1-28). This is
+    // the case the count used to round upward.
+    expect(
+      buildCoverageReport(fixtures, {
+        facts,
+        matrix: [
+          { ...docEntryWithFixture[0], confidence: "fixture", verifiedFacts: [] },
+        ],
+      }),
+    ).toMatchObject({ fixtureVerified: 0, documentationOnly: 1 });
+
+    // An entry cannot claim a fact it does not even reference.
+    expect(
+      buildCoverageReport(fixtures, {
+        facts,
+        matrix: [
+          {
+            ...docEntryWithFixture[0],
+            confidence: "fixture",
+            factRefs: [FACTS[1]!.id],
+          },
+        ],
+      }),
+    ).toMatchObject({ fixtureVerified: 0, unverified: 1 });
+
+    // All three conditions hold.
+    expect(
+      buildCoverageReport(fixtures, {
+        facts,
+        matrix: [{ ...docEntryWithFixture[0], confidence: "fixture" }],
+      }),
+    ).toMatchObject({ fixtureVerified: 1, documentationOnly: 0 });
+
+    // `runtime-observed` stays structurally reachable, and is 0 in the real
+    // matrix only because no entry carries runtime evidence yet (§9.5).
+    expect(
+      buildCoverageReport(fixtures, {
+        facts,
+        matrix: [{ ...docEntryWithFixture[0], confidence: "runtime-observed" }],
+      }),
+    ).toMatchObject({ runtimeObserved: 1, fixtureVerified: 0 });
+  });
+
+  it("keeps the coverage report out of every route and UI component", () => {
+    // §13 invariant 13: the suite metric is a property of the test suite, not
+    // of the scanned project, so no shipped source may import or render it.
+    const srcRoot = path.join(
+      path.dirname(fileURLToPath(import.meta.url)),
+      "..",
+      "src",
+    );
+
+    const offenders: string[] = [];
+    const walk = (dir: string): void => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          walk(full);
+          continue;
+        }
+        if (!/\.(ts|tsx)$/.test(entry.name)) {
+          continue;
+        }
+        const source = fs.readFileSync(full, "utf8");
+        if (
+          /coverage-report|buildCoverageReport|formatCoverageReport|fixture-verified|documentation-only/.test(
+            source,
+          )
+        ) {
+          offenders.push(path.relative(srcRoot, full));
+        }
+      }
+    };
+    walk(srcRoot);
+
+    expect(offenders, offenders.join(", ")).toEqual([]);
   });
 });
 
 describe("correctness gate fixture corpus", () => {
-  it("includes expected.json for every discovered fixture", () => {
-    for (const fixtureName of discoverFixtureNames()) {
-      expect(
-        fs.existsSync(path.join(FIXTURES_ROOT, fixtureName, "expected.json")),
-      ).toBe(true);
+  /**
+   * Fixtures from SPEC §11.1 that are not yet authored. The corpus is complete
+   * (20/20) since `plugin-agents` landed with plugin agent discovery (H1-23),
+   * so this list is empty. It stays here because the test below fails until it
+   * matches reality: a fixture that stops being runnable has to be declared
+   * rather than silently skipped.
+   */
+  const EXPECTED_PENDING_FIXTURES: string[] = [];
+
+  it("declares exactly the 20 SPEC §11.1 fixture names", () => {
+    expect(SPEC_FIXTURE_NAMES).toHaveLength(20);
+    expect([...SPEC_FIXTURE_NAMES]).toEqual([...SPEC_FIXTURE_NAMES].sort());
+  });
+
+  it("has no fixture directory outside the declared §11.1 corpus", () => {
+    const undeclared = findUndeclaredFixtureDirectories(FIXTURES_ROOT);
+    expect(undeclared, undeclared.join(", ")).toEqual([]);
+  });
+
+  it("classifies every declared fixture and names its missing contract files", () => {
+    const corpus = inspectFixtureCorpus(FIXTURES_ROOT);
+    expect(corpus.map((status) => status.name)).toEqual([...SPEC_FIXTURE_NAMES]);
+
+    for (const status of corpus) {
+      expect(status.completeness, status.name).not.toBe("missing");
+      if (status.completeness === "complete") {
+        expect(status.missingEntries, status.name).toEqual([]);
+      } else {
+        expect(status.missingEntries.length, status.name).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it("matches the registered pending-fixture list", () => {
+    const pending = pendingFixtureNames(FIXTURES_ROOT);
+    expect(
+      pending,
+      formatPendingFixtures(inspectFixtureCorpus(FIXTURES_ROOT)),
+    ).toEqual(EXPECTED_PENDING_FIXTURES);
+  });
+
+  it("runs the gate over every complete fixture and nothing else", () => {
+    const complete = discoverFixtureNames(FIXTURES_ROOT);
+    const pending = pendingFixtureNames(FIXTURES_ROOT);
+
+    expect([...complete, ...pending].sort()).toEqual([...SPEC_FIXTURE_NAMES]);
+    expect(complete.length).toBe(SPEC_FIXTURE_NAMES.length - pending.length);
+  });
+
+  it("prints the pending fixtures with a count", () => {
+    const formatted = formatPendingFixtures(inspectFixtureCorpus(FIXTURES_ROOT));
+    expect(formatted).toContain(
+      "pending fixtures (SPEC §11.1): " + EXPECTED_PENDING_FIXTURES.length + " of 20",
+    );
+    for (const name of EXPECTED_PENDING_FIXTURES) {
+      expect(formatted).toContain(name);
     }
   });
 });

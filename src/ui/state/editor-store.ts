@@ -1,4 +1,5 @@
-import type { Agent, EffectiveConfiguration } from "../../core/model/index.js";
+import type { EffectiveConfiguration } from "../../core/model/index.js";
+import type { ClaudeAgent as Agent } from "../../adapters/claude/model/index.js";
 
 /** In-memory pending edits only — never persisted (SPEC M3 #9). */
 export interface EditorPendingState {

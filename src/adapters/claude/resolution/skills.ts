@@ -1,12 +1,16 @@
 import fs from "node:fs/promises";
 import type {
-  Agent,
   ExecutionContext,
-  ProjectSnapshot,
   ResolutionReason,
   ResolvedCapability,
   SourceInfo,
 } from "../../../core/model/index.js";
+import type {
+  ClaudeAgent as Agent,
+  ClaudeProjectSnapshot as ProjectSnapshot,
+} from "../model/index.js";
+import { FACT, type FactId } from "../version/facts.js";
+import { MATRIX, gateCapability } from "../version/matrix.js";
 import type { DiscoveredSkill } from "../discovery/types.js";
 import { parseFrontmatter } from "../parsing/frontmatter.js";
 
@@ -14,7 +18,7 @@ function makeReason(
   type: ResolutionReason["type"],
   message: string,
   source?: SourceInfo,
-  matrixRef?: string,
+  matrixRef?: FactId,
 ): ResolutionReason {
   return matrixRef
     ? { type, message, source, matrixRef }
@@ -59,6 +63,7 @@ export async function buildSkillPreloadCapabilities(
   }
 
   const discovered = snapshot.skills as DiscoveredSkill[];
+  const version = snapshot.version.version;
   const capabilities: ResolvedCapability[] = [];
 
   for (const [index, skillName] of skillNames.entries()) {
@@ -66,20 +71,26 @@ export async function buildSkillPreloadCapabilities(
     const agentFieldSource = fieldSource(agent, index);
 
     if (!skill) {
-      capabilities.push({
-        capabilityId: `skill:${skillName}`,
-        kind: "skill",
-        status: "unknown",
-        enforcement: "advisory",
-        sources: [agentFieldSource],
-        reasons: [
-          makeReason(
-            "unknown",
-            `Skill "${skillName}" listed in frontmatter but not discovered (K5).`,
-            agentFieldSource,
-          ),
-        ],
-      });
+      capabilities.push(
+        gateCapability(
+          {
+            capabilityId: `skill:${skillName}`,
+            kind: "skill",
+            status: "unknown",
+            enforcement: "advisory",
+            sources: [agentFieldSource],
+            reasons: [
+              makeReason(
+                "unknown",
+                `Skill "${skillName}" listed in frontmatter but not discovered (K5).`,
+                agentFieldSource,
+              ),
+            ],
+          },
+          MATRIX["skills.missing"],
+          version,
+        ),
+      );
       continue;
     }
 
@@ -90,39 +101,51 @@ export async function buildSkillPreloadCapabilities(
     };
 
     if (await hasDisableModelInvocation(skill.path)) {
-      capabilities.push({
-        capabilityId: `skill:${skillName}`,
-        kind: "skill",
-        status: "denied",
-        enforcement: "enforced",
-        sources: [agentFieldSource, skillSource],
-        reasons: [
-          makeReason(
-            "denied",
-            "Skill cannot be preloaded because disable-model-invocation is set (K4).",
-            skillSource,
-            "K4",
-          ),
-        ],
-      });
+      capabilities.push(
+        gateCapability(
+          {
+            capabilityId: `skill:${skillName}`,
+            kind: "skill",
+            status: "denied",
+            enforcement: "enforced",
+            sources: [agentFieldSource, skillSource],
+            reasons: [
+              makeReason(
+                "denied",
+                "Skill cannot be preloaded because disable-model-invocation is set (K4).",
+                skillSource,
+                FACT.K4,
+              ),
+            ],
+          },
+          MATRIX["skills.disableModelInvocation"],
+          version,
+        ),
+      );
       continue;
     }
 
-    capabilities.push({
-      capabilityId: `skill:${skillName}`,
-      kind: "skill",
-      status: "preloaded",
-      enforcement: "enforced",
-      sources: [agentFieldSource, skillSource],
-      reasons: [
-        makeReason(
-          "declared",
-          "Skill content preloaded into agent context from frontmatter skills list (K1).",
-          agentFieldSource,
-          "K1",
-        ),
-      ],
-    });
+    capabilities.push(
+      gateCapability(
+        {
+          capabilityId: `skill:${skillName}`,
+          kind: "skill",
+          status: "preloaded",
+          enforcement: "enforced",
+          sources: [agentFieldSource, skillSource],
+          reasons: [
+            makeReason(
+              "declared",
+              "Skill content preloaded into agent context from frontmatter skills list (K1).",
+              agentFieldSource,
+              FACT.K1,
+            ),
+          ],
+        },
+        MATRIX["skills.preload"],
+        version,
+      ),
+    );
   }
 
   return capabilities;

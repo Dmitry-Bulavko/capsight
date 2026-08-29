@@ -1,0 +1,4 @@
+{
+  "name": "my-plugin",
+  "description": "Fixture plugin: its agents/ directory is attached at the lowest priority (A1)"
+}

@@ -4,15 +4,19 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { resolveEffectiveConfiguration } from "../../../../src/adapters/claude/resolution/resolver.js";
 import { resolve } from "../../../../src/application/resolve.js";
-import { buildExecutionContext } from "../../../../src/core/resolver/context.js";
+import { buildExecutionContext } from "../../../../src/adapters/claude/resolution/context.js";
+import { FACT } from "../../../../src/adapters/claude/version/facts.js";
 import type {
-  Agent,
   PlatformVersion,
-  ProjectSnapshot,
   SourceInfo,
   TrustState,
 } from "../../../../src/core/model/index.js";
+import type {
+  ClaudeAgent as Agent,
+  ClaudeProjectSnapshot as ProjectSnapshot,
+} from "../../../../src/adapters/claude/model/index.js";
 import type { DiscoveredInstruction, DiscoveredMcpServer, SettingsLayer } from "../../../../src/adapters/claude/discovery/types.js";
+import { readSettingsPermissions } from "../../../../src/adapters/claude/discovery/settings.js";
 
 const tempDirs: string[] = [];
 
@@ -78,6 +82,7 @@ function makeSnapshot(overrides: Partial<ProjectSnapshot> = {}): ProjectSnapshot
     mcpServers: [
       {
         id: "mcp-github",
+        name: "github",
         source: {
           platform: "claude",
           scope: "project",
@@ -85,7 +90,9 @@ function makeSnapshot(overrides: Partial<ProjectSnapshot> = {}): ProjectSnapshot
         },
         configPath: ".mcp.json",
         transport: "stdio",
+        definitionKind: "config-file",
         status: "configured",
+        configHash: "hash",
       } satisfies DiscoveredMcpServer,
     ],
     settings: [],
@@ -120,7 +127,15 @@ async function makeSettingsLayer(content: Record<string, unknown>): Promise<Sett
   tempDirs.push(dir);
   const filePath = path.join(dir, "settings.json");
   await fs.writeFile(filePath, JSON.stringify(content, null, 2));
-  return { scope: "project", path: filePath, priority: 30 };
+  // Layers carry their parsed `permissions` block from discovery onwards, so
+  // the fake layer is built by the same reader the scanner uses.
+  const permissions = await readSettingsPermissions(filePath);
+  return {
+    scope: "project",
+    path: filePath,
+    priority: 30,
+    ...(permissions ? { permissions } : {}),
+  };
 }
 
 describe("resolveEffectiveConfiguration", () => {
@@ -194,7 +209,7 @@ describe("resolveEffectiveConfiguration", () => {
     expect(result.unknownRate).toBeGreaterThan(0);
   });
 
-  it("returns zero instruction capabilities for explore and plan contexts (I2)", async () => {
+  it("resolves zero instruction sources with an I2 reason for explore and plan (I2)", async () => {
     const snapshot = makeSnapshot();
 
     const explore = await resolveEffectiveConfiguration(
@@ -208,8 +223,18 @@ describe("resolveEffectiveConfiguration", () => {
       buildExecutionContext("plan"),
     );
 
-    expect(explore.capabilities.filter((capability) => capability.kind === "instruction")).toHaveLength(0);
-    expect(plan.capabilities.filter((capability) => capability.kind === "instruction")).toHaveLength(0);
+    // §4.4 item 4: one instruction capability carrying zero sources and the
+    // I2 reason, not a silently empty capability list.
+    for (const result of [explore, plan]) {
+      const instructions = result.capabilities.filter(
+        (capability) => capability.kind === "instruction",
+      );
+      expect(instructions).toHaveLength(1);
+      expect(instructions[0]?.capabilityId).toBe("instructions");
+      expect(instructions[0]?.status).toBe("denied");
+      expect(instructions[0]?.sources).toHaveLength(0);
+      expect(instructions[0]?.reasons[0]?.matrixRef).toBe(FACT.I2);
+    }
     expect(toolCapability(explore, "Write")?.status).toBe("denied");
     expect(toolCapability(plan, "Edit")?.status).toBe("denied");
   });
@@ -230,7 +255,7 @@ describe("resolveEffectiveConfiguration", () => {
           configuration: {
             tools: ["Read"],
             permissionMode: "acceptEdits",
-            hooks: { PreToolUse: [] },
+            hooks: { form: "object", events: ["PreToolUse"], count: 1 },
             mcpServers: ["github"],
             unknownFields: {},
           },
@@ -245,7 +270,11 @@ describe("resolveEffectiveConfiguration", () => {
     );
 
     expect(result.warnings.filter((warning) => warning.category === "ignored-field").length).toBeGreaterThanOrEqual(2);
-    expect(result.warnings.some((warning) => warning.matrixRef === "F9")).toBe(true);
+    const pluginWarning = result.warnings.find(
+      (warning) => warning.matrixRef === "agent.pluginFieldLimits",
+    );
+    expect(pluginWarning).toBeDefined();
+    expect(pluginWarning!.enforcement).toBe("enforced");
   });
 
   it("emits Bash guardrail warning when restrictions coexist with Bash access", async () => {
@@ -308,7 +337,7 @@ describe("resolveEffectiveConfiguration", () => {
         makeAgent({
           configuration: {
             tools: ["Read"],
-            mcpServers: [{ command: "node", args: ["server.js"] }],
+            mcpServers: [{ transport: "stdio", commandName: "node", envKeys: [], headerKeys: [] }],
             unknownFields: {},
           },
         }),
@@ -336,8 +365,8 @@ describe("resolveEffectiveConfiguration", () => {
         makeAgent({
           configuration: {
             tools: ["Read"],
-            mcpServers: [{ command: "node", args: ["server.js"] }],
-            hooks: { PreToolUse: [{ matcher: "Bash", hooks: [] }] },
+            mcpServers: [{ transport: "stdio", commandName: "node", envKeys: [], headerKeys: [] }],
+            hooks: { form: "object", events: ["PreToolUse"], count: 1 },
             unknownFields: {},
           },
         }),
@@ -357,6 +386,60 @@ describe("resolveEffectiveConfiguration", () => {
     expect(hooks?.status).toBe("blocked");
     expect(inlineMcp?.reasons[0]?.matrixRef).toBe("R1");
     expect(hooks?.reasons[0]?.matrixRef).toBe("R5");
+  });
+
+  it("resolves inline MCP and hooks as unknown when the trust record is undetermined", async () => {
+    const snapshot = makeSnapshot({
+      trust: {
+        accepted: "unknown",
+        projectPath: "/workspace/project",
+        unknownReason: "Could not read /home/user/.claude.json: EACCES.",
+      },
+      agents: [
+        makeAgent({
+          configuration: {
+            tools: ["Read"],
+            mcpServers: [{ transport: "stdio", commandName: "node", envKeys: [], headerKeys: [] }],
+            hooks: { form: "object", events: ["PreToolUse"], count: 1 },
+            unknownFields: {},
+          },
+        }),
+      ],
+    });
+
+    const result = await resolveEffectiveConfiguration(
+      snapshot,
+      "backend",
+      buildExecutionContext("foreground-subagent"),
+    );
+
+    const inlineMcp = result.capabilities.find((capability) => capability.capabilityId === "inline-mcp:0");
+    const hooks = result.capabilities.find((capability) => capability.capabilityId === "agent-hooks");
+
+    expect(inlineMcp).toMatchObject({ status: "unknown", enforcement: "unknown" });
+    expect(hooks).toMatchObject({ status: "unknown", enforcement: "unknown" });
+    expect(
+      result.capabilities.some((capability) => capability.status === "blocked"),
+    ).toBe(false);
+    expect(result.unknownRate).toBeGreaterThan(0);
+  });
+
+  it("never blocks .mcp.json servers when the trust record is undetermined (M1 #7)", async () => {
+    const snapshot = makeSnapshot({
+      trust: { accepted: "unknown", projectPath: "/workspace/project" },
+    });
+
+    const result = await resolveEffectiveConfiguration(
+      snapshot,
+      "backend",
+      buildExecutionContext("foreground-subagent"),
+    );
+
+    const mcpServer = result.capabilities.find((capability) =>
+      capability.capabilityId.startsWith("mcp-server:"),
+    );
+
+    expect(mcpServer).toMatchObject({ status: "available", enforcement: "enforced" });
   });
 
   it("does not block MCP servers discovered from .mcp.json", async () => {
@@ -401,6 +484,164 @@ describe("resolveEffectiveConfiguration", () => {
     expect(result.warnings.some((warning) => warning.category === "ignored-field")).toBe(true);
   });
 
+  it("applies permissions.deny last, over a permitting frontmatter (§4.4.7, S2)", async () => {
+    const settingsLayer = await makeSettingsLayer({
+      permissions: { deny: ["Bash"], allow: ["Bash(npm run test:*)"] },
+    });
+    const snapshot = makeSnapshot({
+      settings: [settingsLayer],
+      agents: [
+        makeAgent({
+          configuration: {
+            tools: ["Read", "Bash"],
+            permissionMode: "bypassPermissions",
+            unknownFields: {},
+          },
+        }),
+      ],
+    });
+
+    const result = await resolveEffectiveConfiguration(
+      snapshot,
+      "backend",
+      buildExecutionContext("foreground-subagent"),
+    );
+
+    const bash = result.capabilities.find(
+      (capability) => capability.capabilityId === "Bash",
+    );
+    expect(bash).toMatchObject({ status: "denied", enforcement: "enforced" });
+    expect(
+      bash?.reasons.some((reason) => reason.matrixRef === "settings.denyBareTool"),
+    ).toBe(true);
+    // The rule that could not be acted on is still a visible line.
+    expect(
+      result.capabilities.some((capability) =>
+        capability.capabilityId.startsWith("settings-permission:"),
+      ),
+    ).toBe(true);
+  });
+
+  it("applies permissions.deny in a fork too, where agent configuration is skipped (T3, S2)", async () => {
+    const settingsLayer = await makeSettingsLayer({ permissions: { deny: ["Bash"] } });
+    const snapshot = makeSnapshot({
+      settings: [settingsLayer],
+      agents: [
+        makeAgent({
+          configuration: { tools: ["Read", "Bash"], unknownFields: {} },
+        }),
+      ],
+    });
+
+    const result = await resolveEffectiveConfiguration(
+      snapshot,
+      "backend",
+      buildExecutionContext("fork"),
+    );
+
+    expect(
+      result.capabilities.find((capability) => capability.capabilityId === "Bash"),
+    ).toMatchObject({ status: "denied", enforcement: "enforced" });
+  });
+
+  it("degrades every version-sensitive capability to unknown without a CLI version (§8.3)", async () => {
+    const snapshot = makeSnapshot({
+      version: {
+        platform: "claude",
+        version: "unknown",
+        raw: "",
+        detectedAt: "2026-01-01T00:00:00.000Z",
+      },
+    });
+
+    const result = await resolveEffectiveConfiguration(
+      snapshot,
+      "backend",
+      buildExecutionContext("background-subagent"),
+    );
+
+    assertCapabilityContract(result.capabilities);
+    expect(result.capabilities.length).toBeGreaterThan(0);
+    for (const capability of result.capabilities) {
+      expect(capability.enforcement).toBe("unknown");
+      expect(
+        capability.reasons.some((reason) => reason.type === "version"),
+        `${capability.capabilityId} needs a version-typed reason`,
+      ).toBe(true);
+    }
+    expect(result.unknownRate).toBe(1);
+  });
+
+  it("keeps enforcement enforced when the CLI version is detected", async () => {
+    const result = await resolveEffectiveConfiguration(
+      makeSnapshot(),
+      "backend",
+      buildExecutionContext("background-subagent"),
+    );
+
+    expect(toolCapability(result, "Read")?.enforcement).toBe("enforced");
+    const versionGated = result.capabilities.filter((capability) =>
+      capability.reasons.some((reason) => reason.type === "version"),
+    );
+    // The snapshot pins 2.1.0, below the 2.1.63 Task -> Agent rename, so a
+    // verdict reached only through the alias is legitimately version-gated
+    // (F11, H1-19). Nothing else is.
+    expect(
+      versionGated.every((capability) =>
+        capability.reasons.some(
+          (reason) =>
+            reason.type === "version" && reason.matrixRef === "agent.toolAliases",
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it("leaves a rule below its matrix minVersion unknown (P4 needs 2.1.223)", async () => {
+    const settings = await makeSettingsLayer({
+      permissions: { disableBypassPermissionsMode: true },
+    });
+    const agents = [
+      makeAgent({
+        configuration: {
+          tools: ["Read"],
+          permissionMode: "bypassPermissions",
+          unknownFields: {},
+        },
+      }),
+    ];
+    const context = buildExecutionContext("foreground-subagent");
+
+    const old = await resolveEffectiveConfiguration(
+      makeSnapshot({ agents, settings: [settings] }),
+      "backend",
+      context,
+    );
+    const current = await resolveEffectiveConfiguration(
+      makeSnapshot({
+        agents,
+        settings: [settings],
+        version: {
+          platform: "claude",
+          version: "2.1.223",
+          raw: "2.1.223",
+          detectedAt: "2026-01-01T00:00:00.000Z",
+        },
+      }),
+      "backend",
+      context,
+    );
+
+    const permissionOf = (
+      result: Awaited<ReturnType<typeof resolveEffectiveConfiguration>>,
+    ) => result.capabilities.find((capability) => capability.kind === "permission");
+
+    expect(permissionOf(old)?.enforcement).toBe("unknown");
+    expect(
+      permissionOf(old)?.reasons.some((reason) => reason.type === "version"),
+    ).toBe(true);
+    expect(permissionOf(current)?.enforcement).toBe("enforced");
+  });
+
   it("computes unknownRate from capabilities with unknown status or enforcement", async () => {
     const fork = await resolveEffectiveConfiguration(
       makeSnapshot(),
@@ -415,7 +656,199 @@ describe("resolveEffectiveConfiguration", () => {
 
     expect(fork.unknownRate).toBeGreaterThan(foreground.unknownRate);
     expect(fork.unknownRate).toBeGreaterThan(0);
-    expect(foreground.unknownRate).toBe(0);
+    // The snapshot pins 2.1.0: the only unknown left in the foreground run is
+    // the `Task` verdict, which the whitelisted `Agent` reaches only through
+    // the alias the 2.1.63 rename introduced (F11, H1-19).
+    const foregroundUnknown = foreground.capabilities.filter(
+      (capability) =>
+        capability.status === "unknown" || capability.enforcement === "unknown",
+    );
+    expect(foregroundUnknown.map((capability) => capability.capabilityId)).toEqual([
+      "Task",
+    ]);
+  });
+});
+
+describe("resolving an agent whose declaration is not settled", () => {
+  const CANDIDATE_A: SourceInfo = {
+    platform: "claude",
+    scope: "project",
+    path: ".claude/agents/reviewer.md",
+  };
+  const CANDIDATE_B: SourceInfo = {
+    platform: "claude",
+    scope: "project",
+    path: ".claude/agents/extra/reviewer.md",
+  };
+
+  function ambiguousPair(
+    configA: Partial<Agent["configuration"]>,
+    configB: Partial<Agent["configuration"]>,
+  ): Agent[] {
+    const collision = {
+      candidates: [CANDIDATE_A, CANDIDATE_B],
+      rule: FACT.A4,
+      matrixRef: "agent.collisionSameDir",
+      enforcement: "unknown" as const,
+    };
+    return [
+      makeAgent({
+        id: "reviewer-a",
+        name: "reviewer",
+        source: CANDIDATE_A,
+        status: "ambiguous",
+        collision,
+        configuration: { unknownFields: {}, ...configA },
+      }),
+      makeAgent({
+        id: "reviewer-b",
+        name: "reviewer",
+        source: CANDIDATE_B,
+        status: "ambiguous",
+        collision,
+        configuration: { unknownFields: {}, ...configB },
+      }),
+    ];
+  }
+
+  it("emits an ambiguous-collision warning naming both candidate files (A4)", async () => {
+    const result = await resolveEffectiveConfiguration(
+      makeSnapshot({ agents: ambiguousPair({ tools: ["Read"] }, { tools: ["Grep"] }) }),
+      "reviewer-a",
+      buildExecutionContext("foreground-subagent"),
+    );
+
+    const warning = result.warnings.find(
+      (entry) => entry.category === "ambiguous-collision",
+    );
+    expect(warning).toBeDefined();
+    expect(warning!.evidence.map((source) => source.path)).toEqual([
+      CANDIDATE_A.path,
+      CANDIDATE_B.path,
+    ]);
+    // A4 documents that one file loads but not which, so the claim itself is
+    // undetermined on every version (H1-18).
+    expect(warning!.enforcement).toBe("unknown");
+  });
+
+  it("resolves a contested field as unknown on both axes without picking a candidate", async () => {
+    const result = await resolveEffectiveConfiguration(
+      makeSnapshot({ agents: ambiguousPair({ tools: ["Read"] }, { tools: ["Grep"] }) }),
+      "reviewer-a",
+      buildExecutionContext("foreground-subagent"),
+    );
+
+    for (const toolName of ["Read", "Grep"]) {
+      const capability = toolCapability(result, toolName);
+      expect(capability?.status).toBe("unknown");
+      expect(capability?.enforcement).toBe("unknown");
+      expect(
+        capability?.reasons.some((reason) => reason.type === "ambiguous"),
+      ).toBe(true);
+      // Both candidate files stay visible as evidence.
+      expect(capability?.sources.map((source) => source.path)).toContain(
+        CANDIDATE_B.path,
+      );
+    }
+  });
+
+  it("keeps a field both candidates agree on confident, with the agreement as the reason", async () => {
+    const result = await resolveEffectiveConfiguration(
+      makeSnapshot({ agents: ambiguousPair({ tools: ["Read"] }, { tools: ["Grep"] }) }),
+      "reviewer-a",
+      buildExecutionContext("foreground-subagent"),
+    );
+
+    const permission = result.capabilities.find(
+      (capability) => capability.kind === "permission",
+    );
+    expect(permission?.capabilityId).toBe("permission:default");
+    expect(permission?.status).toBe("available");
+    expect(permission?.enforcement).toBe("enforced");
+    expect(
+      permission?.reasons.some((reason) =>
+        reason.message.includes("declare the same permissionMode"),
+      ),
+    ).toBe(true);
+  });
+
+  it("does not name a contested permission mode in the capability id", async () => {
+    const result = await resolveEffectiveConfiguration(
+      makeSnapshot({
+        agents: ambiguousPair(
+          { permissionMode: "acceptEdits" },
+          { permissionMode: "default" },
+        ),
+      }),
+      "reviewer-a",
+      buildExecutionContext("foreground-subagent"),
+    );
+
+    const permission = result.capabilities.find(
+      (capability) => capability.kind === "permission",
+    );
+    expect(permission?.capabilityId).toBe("permission:unknown");
+    expect(permission?.status).toBe("unknown");
+    expect(permission?.enforcement).toBe("unknown");
+  });
+
+  it("refuses to resolve an invalid agent as if the file had loaded (A7)", async () => {
+    const result = await resolveEffectiveConfiguration(
+      makeSnapshot({
+        agents: [
+          makeAgent({
+            status: "invalid",
+            invalidReason: "no-description",
+            configuration: { unknownFields: {} },
+          }),
+        ],
+      }),
+      "backend",
+      buildExecutionContext("foreground-subagent"),
+    );
+
+    expect(result.capabilities).toEqual([]);
+    expect(result.unknownRate).toBe(1);
+    expect(result.warnings[0]?.message).toContain("A7");
+  });
+
+  it("resolves a shadowed agent through the winner and records the shadowing (A3)", async () => {
+    const winner = makeAgent({
+      id: "reviewer-winner",
+      name: "reviewer",
+      source: CANDIDATE_A,
+      configuration: { tools: ["Read"], unknownFields: {} },
+    });
+    const shadowed = makeAgent({
+      id: "reviewer-shadowed",
+      name: "reviewer",
+      source: CANDIDATE_B,
+      status: "shadowed",
+      collision: {
+        candidates: [CANDIDATE_A, CANDIDATE_B],
+        effective: CANDIDATE_A,
+        rule: FACT.A3,
+      },
+      configuration: { tools: ["Bash"], unknownFields: {} },
+    });
+
+    const result = await resolveEffectiveConfiguration(
+      makeSnapshot({ agents: [winner, shadowed] }),
+      "reviewer-shadowed",
+      buildExecutionContext("foreground-subagent"),
+    );
+
+    // The winner's `tools` decides, not the shadowed file's.
+    expect(toolCapability(result, "Read")?.status).toBe("available");
+    expect(toolCapability(result, "Bash")?.status).toBe("denied");
+    expect(
+      toolCapability(result, "Read")?.reasons.some(
+        (reason) => reason.type === "shadowed",
+      ),
+    ).toBe(true);
+    expect(
+      result.warnings.some((warning) => warning.category === "shadowing"),
+    ).toBe(true);
   });
 });
 

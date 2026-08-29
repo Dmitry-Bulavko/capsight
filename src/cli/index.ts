@@ -2,8 +2,25 @@
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { Command } from "commander";
-import type { Agent } from "../core/model/index.js";
+import type {
+  Agent,
+  ContextPreset,
+  ExecutionContext,
+  ResolvedCapability,
+  Warning,
+} from "../core/model/index.js";
 import type { ScanResult } from "../application/scan.js";
+import { PERMISSION_MODES, type PermissionMode } from "../adapters/claude/model/index.js";
+import { buildExecutionContext } from "../adapters/claude/resolution/context.js";
+import {
+  CONTEXT_PRESETS,
+  DEFAULT_CONTEXT_PRESET,
+  DEFAULT_CONTEXT_NOTICE,
+  DEFAULT_CONTEXT_REASON,
+  invalidContextPresetMessage,
+  isContextPreset,
+} from "../core/model/context-presets.js";
+import { resolve } from "../application/resolve.js";
 import {
   buildStatusSummary,
   getAgentsFromResult,
@@ -37,6 +54,153 @@ export async function runStatus(): Promise<ScanStatusSummary> {
 export async function runAgents(): Promise<Agent[]> {
   const result = await getOrScan();
   return getAgentsFromResult(result);
+}
+
+/** Re-exported from the single source of truth so both surfaces cannot drift (§4.3). */
+export { CONTEXT_PRESETS, DEFAULT_CONTEXT_PRESET, DEFAULT_CONTEXT_REASON };
+
+export interface ContextOptions {
+  context?: string;
+  depth?: number;
+  parentMode?: string;
+}
+
+export class InvalidContextPresetError extends Error {
+  constructor(preset: string) {
+    super(invalidContextPresetMessage(preset));
+    this.name = "InvalidContextPresetError";
+  }
+}
+
+export class InvalidParentModeError extends Error {
+  constructor(mode: string) {
+    super(`Invalid parentMode: ${mode}. Expected one of: ${PERMISSION_MODES.join(", ")}`);
+    this.name = "InvalidParentModeError";
+  }
+}
+
+/**
+ * Resolve the CLI `--context` option into an ExecutionContext.
+ * @see docs/SPEC.md §4.3
+ */
+export function resolveContextOption(options: ContextOptions = {}): {
+  context: ExecutionContext;
+  /** Present only when `--context` was omitted, so callers can print the §4.3 caption. */
+  contextDefault?: { preset: ContextPreset; reason: string };
+} {
+  const preset = options.context ?? DEFAULT_CONTEXT_PRESET;
+  if (!isContextPreset(preset)) {
+    throw new InvalidContextPresetError(preset);
+  }
+
+  if (
+    options.parentMode !== undefined &&
+    !PERMISSION_MODES.includes(options.parentMode as PermissionMode)
+  ) {
+    throw new InvalidParentModeError(options.parentMode);
+  }
+
+  const context = buildExecutionContext(preset, {
+    ...(options.depth !== undefined ? { depth: options.depth } : {}),
+    ...(options.parentMode !== undefined
+      ? { parentPermissionMode: options.parentMode as PermissionMode }
+      : {}),
+  });
+
+  return options.context === undefined
+    ? {
+        context,
+        contextDefault: DEFAULT_CONTEXT_NOTICE,
+      }
+    : { context };
+}
+
+export class CapabilityNotFoundError extends Error {
+  constructor(capabilityId: string) {
+    super(`Capability not found: ${capabilityId}`);
+    this.name = "CapabilityNotFoundError";
+  }
+}
+
+/** Mirrors `GET /api/capabilities/:id/explain`, plus the §4.3 default caption. */
+export interface ExplainResult {
+  agentId: string;
+  context: ExecutionContext;
+  capability: ResolvedCapability;
+  contextDefault?: { preset: ContextPreset; reason: string };
+}
+
+/**
+ * Explain one capability for one agent (read-only). §7.5
+ */
+export async function runExplain(
+  capabilityId: string,
+  options: ContextOptions & { agentId: string; projectPath?: string },
+): Promise<ExplainResult> {
+  const { context, contextDefault } = resolveContextOption(options);
+  const scanResult = await getOrScan(options.projectPath);
+
+  const effective = await resolve({
+    snapshot: scanResult.snapshot,
+    agentId: options.agentId,
+    context,
+  });
+
+  const capability = effective.capabilities.find(
+    (entry) => entry.capabilityId === capabilityId,
+  );
+  if (!capability) {
+    throw new CapabilityNotFoundError(capabilityId);
+  }
+
+  return {
+    agentId: options.agentId,
+    context: effective.context,
+    capability,
+    ...(contextDefault ? { contextDefault } : {}),
+  };
+}
+
+/** Mirrors `AgentWarning` from the `/api/warnings` response. */
+export interface CliAgentWarning extends Warning {
+  agentId: string;
+}
+
+/** Mirrors `GET /api/warnings`, plus the §4.3 default caption. */
+export interface WarningsResult {
+  warnings: CliAgentWarning[];
+  contextDefault?: { preset: ContextPreset; reason: string };
+}
+
+/**
+ * List warnings across active agents (read-only). §7.6
+ */
+export async function runWarnings(
+  options: ContextOptions & { projectPath?: string } = {},
+): Promise<WarningsResult> {
+  const { context, contextDefault } = resolveContextOption(options);
+  const scanResult = await getOrScan(options.projectPath);
+
+  const warnings: CliAgentWarning[] = [];
+  const activeAgents = scanResult.snapshot.agents.filter(
+    (agent) => agent.status === "active",
+  );
+
+  for (const agent of activeAgents) {
+    const effective = await resolve({
+      snapshot: scanResult.snapshot,
+      agentId: agent.id,
+      context,
+    });
+    for (const warning of effective.warnings) {
+      warnings.push({ ...warning, agentId: agent.id });
+    }
+  }
+
+  return {
+    warnings,
+    ...(contextDefault ? { contextDefault } : {}),
+  };
 }
 
 export async function runProbeMcp(
@@ -135,10 +299,81 @@ program
     console.log(JSON.stringify(agents, null, 2));
   });
 
+function parseDepthOption(raw: string | undefined): number | undefined {
+  if (raw === undefined) {
+    return undefined;
+  }
+  const depth = Number.parseInt(raw, 10);
+  if (Number.isNaN(depth)) {
+    throw new Error(`Invalid depth: ${raw}`);
+  }
+  return depth;
+}
+
+interface ContextCliOptions {
+  context?: string;
+  depth?: string;
+  parentMode?: string;
+  path?: string;
+}
+
+program
+  .command("explain")
+  .description("Explain how a capability resolves for an agent (read-only)")
+  .argument("<capability>", "Capability id, e.g. mcp__github__merge_pr")
+  .requiredOption("--agent <id>", "Agent id")
+  .option(
+    "--context <preset>",
+    `Execution context preset (${CONTEXT_PRESETS.join(" | ")})`,
+  )
+  .option("--depth <n>", "Subagent depth override")
+  .option("--parent-mode <mode>", "Parent session permission mode override")
+  .option("--path <path>", "Project path")
+  .action(async (capability: string, options: ContextCliOptions & { agent: string }) => {
+    try {
+      const result = await runExplain(capability, {
+        agentId: options.agent,
+        context: options.context,
+        depth: parseDepthOption(options.depth),
+        parentMode: options.parentMode,
+        projectPath: options.path,
+      });
+      console.log(JSON.stringify(result, null, 2));
+    } catch (error) {
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exitCode = 1;
+    }
+  });
+
+program
+  .command("warnings")
+  .description("List warnings across active agents (read-only)")
+  .option(
+    "--context <preset>",
+    `Execution context preset (${CONTEXT_PRESETS.join(" | ")})`,
+  )
+  .option("--depth <n>", "Subagent depth override")
+  .option("--parent-mode <mode>", "Parent session permission mode override")
+  .option("--path <path>", "Project path")
+  .action(async (options: ContextCliOptions) => {
+    try {
+      const result = await runWarnings({
+        context: options.context,
+        depth: parseDepthOption(options.depth),
+        parentMode: options.parentMode,
+        projectPath: options.path,
+      });
+      console.log(JSON.stringify(result, null, 2));
+    } catch (error) {
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exitCode = 1;
+    }
+  });
+
 program
   .command("probe-mcp")
   .description("Probe an MCP server (requires --yes to run)")
-  .argument("<server>", "MCP server id")
+  .argument("<server>", "MCP server name or discovered id")
   .option("--yes", "Confirm and run the probe")
   .option("--path <path>", "Project path")
   .action(async (serverId: string, options: { yes?: boolean; path?: string }) => {

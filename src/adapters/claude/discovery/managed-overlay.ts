@@ -2,17 +2,27 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import type {
-  Agent,
-  AgentConfiguration,
-  ProjectSnapshot,
   Scope,
   SourceInfo,
 } from "../../../core/model/index.js";
+import type {
+  ClaudeAgent as Agent,
+  ClaudeAgentConfiguration as AgentConfiguration,
+  ClaudeProjectSnapshot as ProjectSnapshot,
+} from "../model/index.js";
 import {
   getStringField,
   parseFrontmatter,
 } from "../parsing/frontmatter.js";
 import type { SettingsLayer } from "./types.js";
+import { parseSettingsPermissions } from "./settings.js";
+import { FACT } from "../version/facts.js";
+import { gateCollision } from "../version/matrix.js";
+import {
+  redactMcpServers,
+  redactUnknownFields,
+  summarizeHooks,
+} from "./redact.js";
 
 const SCOPE_PRIORITY: Record<Scope, number> = {
   managed: 50,
@@ -67,24 +77,19 @@ function sourceInfo(scope: Scope, filePath: string): SourceInfo {
 }
 
 function buildConfiguration(data: Record<string, unknown>): AgentConfiguration {
-  const unknownFields: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(data)) {
-    if (!KNOWN_FRONTMATTER_KEYS.has(key)) {
-      unknownFields[key] = value;
-    }
-  }
+  const unknownFields = redactUnknownFields(data, KNOWN_FRONTMATTER_KEYS);
 
   return {
     tools: Array.isArray(data.tools) ? data.tools.map(String) : undefined,
     disallowedTools: Array.isArray(data.disallowedTools)
       ? data.disallowedTools.map(String)
       : undefined,
-    mcpServers: Array.isArray(data.mcpServers) ? data.mcpServers : undefined,
+    mcpServers: redactMcpServers(data.mcpServers),
     model: getStringField(data, "model"),
     permissionMode: getStringField(data, "permissionMode") as AgentConfiguration["permissionMode"],
     maxTurns: typeof data.maxTurns === "number" ? data.maxTurns : undefined,
     skills: Array.isArray(data.skills) ? data.skills.map(String) : undefined,
-    hooks: data.hooks,
+    hooks: summarizeHooks(data.hooks),
     memory: getStringField(data, "memory") as AgentConfiguration["memory"],
     background: typeof data.background === "boolean" ? data.background : undefined,
     effort: getStringField(data, "effort"),
@@ -208,7 +213,7 @@ function agentsRootFor(filePath: string): string {
   return path.dirname(filePath);
 }
 
-function reconcileAgentCollisions(agents: Agent[]): Agent[] {
+function reconcileAgentCollisions(agents: Agent[], version: string): Agent[] {
   const invalidAgents = agents.filter((agent) => agent.status === "invalid");
   const validAgents = agents.filter((agent) => agent.status !== "invalid");
 
@@ -236,6 +241,10 @@ function reconcileAgentCollisions(agents: Agent[]): Agent[] {
     }
   }
 
+  // A4's entry is `unknown` by construction: one file loads, but which is not
+  // documented, so the record stays winner-free whatever the version.
+  const sameDirGate = gateCollision(FACT.A4, version);
+
   const resolved: Agent[] = [];
   for (const agent of validAgents) {
     if (ambiguousIds.has(agent.id)) {
@@ -245,7 +254,9 @@ function reconcileAgentCollisions(agents: Agent[]): Agent[] {
         status: "ambiguous",
         collision: {
           candidates: group.map((entry) => entry.source),
-          rule: "A4",
+          rule: FACT.A4,
+          matrixRef: sameDirGate.matrixRef,
+          enforcement: sameDirGate.enforcement,
         },
       });
     }
@@ -271,19 +282,50 @@ function reconcileAgentCollisions(agents: Agent[]): Agent[] {
     });
 
     const winner = sorted[0]!;
+    const runnerUp = sorted[1];
+    const candidates = sorted.map((entry) => entry.source);
+
+    // The winner is decided by the rule separating the top two candidates.
+    const decidingRule =
+      runnerUp &&
+      SCOPE_PRIORITY[runnerUp.source.scope] === SCOPE_PRIORITY[winner.source.scope]
+        ? FACT.A3
+        : FACT.A1;
+    const decidingGate = gateCollision(decidingRule, version);
+
+    if (runnerUp && decidingGate.winnerUnfounded) {
+      for (const agent of sorted) {
+        resolved.push({
+          ...agent,
+          status: "ambiguous",
+          collision: {
+            candidates,
+            rule: decidingRule,
+            matrixRef: decidingGate.matrixRef,
+            enforcement: decidingGate.enforcement,
+          },
+        });
+      }
+      continue;
+    }
+
     resolved.push({ ...winner, status: "active", collision: undefined });
 
     for (const loser of sorted.slice(1)) {
+      const rule =
+        SCOPE_PRIORITY[loser.source.scope] === SCOPE_PRIORITY[winner.source.scope]
+          ? FACT.A3
+          : FACT.A1;
+      const gate = gateCollision(rule, version);
       resolved.push({
         ...loser,
         status: "shadowed",
         collision: {
-          candidates: sorted.map((entry) => entry.source),
+          candidates,
           effective: winner.source,
-          rule:
-            SCOPE_PRIORITY[loser.source.scope] === SCOPE_PRIORITY[winner.source.scope]
-              ? "A3"
-              : "A1",
+          rule,
+          matrixRef: gate.matrixRef,
+          enforcement: gate.enforcement,
         },
       });
     }
@@ -324,12 +366,16 @@ async function readManagedSettings(bundlePath: string): Promise<{
     const availableModels = Array.isArray(record.availableModels)
       ? record.availableModels.map(String)
       : undefined;
+    // The managed layer outranks every project layer (S1), so its permission
+    // rules have to reach resolution like any other layer's.
+    const managedPermissions = parseSettingsPermissions(record);
 
     return {
       settingsLayer: {
         scope: "managed",
         path: settingsPath,
         priority: 60,
+        ...(managedPermissions ? { permissions: managedPermissions } : {}),
       },
       availableModels,
     };
@@ -385,7 +431,10 @@ export function applyManagedOverlay(
   snapshot: ProjectSnapshot,
   bundle: ManagedBundle,
 ): ProjectSnapshot {
-  const mergedAgents = reconcileAgentCollisions([...snapshot.agents, ...bundle.agents]);
+  const mergedAgents = reconcileAgentCollisions(
+    [...snapshot.agents, ...bundle.agents],
+    snapshot.version.version,
+  );
 
   const existingSettings = snapshot.settings as SettingsLayer[];
   const settings = bundle.settingsLayer

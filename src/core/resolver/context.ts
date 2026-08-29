@@ -1,13 +1,15 @@
-import type {
-  ContextPreset,
-  ExecutionContext,
-  PermissionMode,
-} from "../model/index.js";
+import type { ContextPreset, ExecutionContext } from "../model/index.js";
 
 export interface ExecutionContextOverrides {
   depth?: number;
   maxDepth?: number;
-  parentPermissionMode?: PermissionMode;
+  /** Platform-defined parent permission mode identifier. */
+  parentPermissionMode?: string;
+}
+
+/** Platform-supplied defaults; the adapter owns their interpretation (§4.3). */
+export interface ExecutionContextDefaults {
+  maxDepth: number;
 }
 
 type PresetFlags = Pick<
@@ -62,21 +64,13 @@ const PRESET_FLAGS: Record<ContextPreset, PresetFlags> = {
   },
 };
 
-/** @see docs/SPEC.md §4.3 — default from CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH or 3 */
-export function getDefaultMaxDepth(
-  env: NodeJS.ProcessEnv = process.env,
-): number {
-  const raw = env.CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH;
-  if (raw === undefined || raw === "") {
-    return 3;
-  }
-  const parsed = Number.parseInt(raw, 10);
-  return Number.isNaN(parsed) ? 3 : parsed;
-}
-
-/** Build ExecutionContext from preset and optional overrides. @see docs/SPEC.md §4.2–§4.3 */
+/**
+ * Build ExecutionContext from preset, platform defaults and optional overrides.
+ * @see docs/SPEC.md §4.2–§4.3
+ */
 export function buildExecutionContext(
   preset: ContextPreset,
+  defaults: ExecutionContextDefaults,
   overrides: ExecutionContextOverrides = {},
 ): ExecutionContext {
   const flags = PRESET_FLAGS[preset];
@@ -84,7 +78,7 @@ export function buildExecutionContext(
     preset,
     ...flags,
     depth: overrides.depth ?? 0,
-    maxDepth: overrides.maxDepth ?? getDefaultMaxDepth(),
+    maxDepth: overrides.maxDepth ?? defaults.maxDepth,
     ...(overrides.parentPermissionMode !== undefined
       ? { parentPermissionMode: overrides.parentPermissionMode }
       : {}),

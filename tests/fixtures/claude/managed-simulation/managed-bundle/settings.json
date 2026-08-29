@@ -1,3 +1,6 @@
 {
-  "availableModels": ["claude-sonnet-4"]
+  "availableModels": ["claude-sonnet-4"],
+  "permissions": {
+    "disableBypassPermissionsMode": true
+  }
 }

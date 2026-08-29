@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { resolvePermissionMode } from "../../../../src/adapters/claude/resolution/permissions.js";
-import { buildExecutionContext } from "../../../../src/core/resolver/context.js";
-import type { Agent, SourceInfo } from "../../../../src/core/model/index.js";
+import { buildExecutionContext } from "../../../../src/adapters/claude/resolution/context.js";
+import type { SourceInfo } from "../../../../src/core/model/index.js";
+import type { ClaudeAgent as Agent } from "../../../../src/adapters/claude/model/index.js";
 
 const AGENT_SOURCE: SourceInfo = {
   platform: "claude",

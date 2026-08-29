@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Write",
+      "Bash(npm run test:unit)"
+    ],
+    "disableBypassPermissionsMode": true
+  }
+}

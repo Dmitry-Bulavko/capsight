@@ -8,14 +8,17 @@ import {
   resolveSecurityFindings,
 } from "../../../../src/adapters/claude/resolution/security-findings.js";
 import type {
-  Agent,
   PlatformVersion,
-  ProjectSnapshot,
   ResolvedCapability,
   SourceInfo,
   TrustState,
 } from "../../../../src/core/model/index.js";
+import type {
+  ClaudeAgent as Agent,
+  ClaudeProjectSnapshot as ProjectSnapshot,
+} from "../../../../src/adapters/claude/model/index.js";
 import type { DiscoveredSkill, SettingsLayer } from "../../../../src/adapters/claude/discovery/types.js";
+import { readSettingsPermissions } from "../../../../src/adapters/claude/discovery/settings.js";
 
 const tempDirs: string[] = [];
 
@@ -118,7 +121,15 @@ async function makeSettingsLayer(content: Record<string, unknown>): Promise<Sett
   tempDirs.push(dir);
   const filePath = path.join(dir, "settings.json");
   await fs.writeFile(filePath, JSON.stringify(content, null, 2));
-  return { scope: "project", path: filePath, priority: 30 };
+  // Layers carry their parsed `permissions` block from discovery onwards, so
+  // the fake layer is built by the same reader the scanner uses.
+  const permissions = await readSettingsPermissions(filePath);
+  return {
+    scope: "project",
+    path: filePath,
+    priority: 30,
+    ...(permissions ? { permissions } : {}),
+  };
 }
 
 describe("security-findings helpers", () => {
@@ -178,7 +189,7 @@ describe("resolveSecurityFindings", () => {
     const agent = makeAgent({
       configuration: {
         tools: ["Read"],
-        mcpServers: [{ command: "node", args: ["server.js"] }],
+        mcpServers: [{ transport: "stdio", commandName: "node", envKeys: [], headerKeys: [] }],
         unknownFields: {},
       },
     });
@@ -191,6 +202,67 @@ describe("resolveSecurityFindings", () => {
 
     expect(warnings.some((warning) => warning.message.includes("arbitrary command"))).toBe(true);
     expect(warnings.some((warning) => warning.matrixRef === "R1")).toBe(true);
+  });
+
+  // F9: the same declaration is a real finding for a project agent and an
+  // ignored field for a plugin one. Asserting both halves is what keeps the
+  // finding from drifting back into contradicting the `ignored-field` warning.
+  it("drops F9-nullified findings for a plugin agent but keeps them for a project agent", async () => {
+    const configuration = {
+      tools: ["Read"],
+      permissionMode: "bypassPermissions" as const,
+      mcpServers: [
+        {
+          transport: "stdio" as const,
+          commandName: "audit-server",
+          envKeys: [],
+          headerKeys: [],
+        },
+      ],
+      unknownFields: {},
+    };
+
+    const projectWarnings = await resolveSecurityFindings({
+      agent: makeAgent({ configuration }),
+      snapshot: makeSnapshot(),
+      toolCapabilities: [],
+    });
+    const pluginWarnings = await resolveSecurityFindings({
+      agent: makeAgent({ configuration, isPluginAgent: true }),
+      snapshot: makeSnapshot(),
+      toolCapabilities: [],
+    });
+
+    expect(projectWarnings.map((warning) => warning.matrixRef)).toEqual(["P5", "R1"]);
+    expect(pluginWarnings).toEqual([]);
+  });
+
+  it("keeps findings a plugin agent cannot nullify (K6, S4)", async () => {
+    const skill = await writeSkill("git-helper", {
+      name: "git-helper",
+      "allowed-tools": ["Bash(git *)"],
+    });
+    const settingsLayer = await makeSettingsLayer({ permissions: { allow: ["*"] } });
+    const snapshot = makeSnapshot({ skills: [skill], settings: [settingsLayer] });
+
+    const warnings = await resolveSecurityFindings({
+      agent: makeAgent({
+        configuration: {
+          tools: ["Read", "Bash"],
+          disallowedTools: ["Write"],
+          unknownFields: {},
+        },
+        isPluginAgent: true,
+      }),
+      snapshot,
+      toolCapabilities: [toolCapability("Bash", "available")],
+    });
+
+    expect(warnings.some((warning) => warning.message.includes("guardrail"))).toBe(true);
+    expect(warnings.some((warning) => warning.matrixRef === "K6")).toBe(true);
+    expect(
+      warnings.some((warning) => warning.matrixRef === "settings.allowGlobIneffective"),
+    ).toBe(true);
   });
 
   it("flags skill allowed-tools that pre-approve sensitive tools (K6, K7)", async () => {
@@ -223,8 +295,13 @@ describe("resolveSecurityFindings", () => {
       toolCapabilities: [],
     });
 
-    const s4Warnings = warnings.filter((warning) => warning.matrixRef === "S4");
+    // The finding is a platform claim, so it carries the matrix entry it was
+    // gated on rather than the bare fact id.
+    const s4Warnings = warnings.filter(
+      (warning) => warning.matrixRef === "settings.allowGlobIneffective",
+    );
     expect(s4Warnings).toHaveLength(2);
+    expect(s4Warnings.every((warning) => warning.enforcement === "enforced")).toBe(true);
     expect(s4Warnings.some((warning) => warning.message.includes('"*"'))).toBe(true);
     expect(s4Warnings.some((warning) => warning.message.includes('"mcp__*"'))).toBe(true);
   });

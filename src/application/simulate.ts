@@ -1,11 +1,14 @@
 import path from "node:path";
 import type {
-  Agent,
   EffectiveConfiguration,
-  ProjectSnapshot,
+  Enforcement,
   SourceInfo,
 } from "../core/model/index.js";
-import { buildExecutionContext } from "../core/resolver/context.js";
+import type {
+  ClaudeAgent as Agent,
+  ClaudeProjectSnapshot as ProjectSnapshot,
+} from "../adapters/claude/model/index.js";
+import { buildExecutionContext } from "../adapters/claude/resolution/context.js";
 import {
   applyManagedOverlay,
   loadManagedBundle,
@@ -14,6 +17,11 @@ import {
   type ManagedBundle,
 } from "../adapters/claude/discovery/managed-overlay.js";
 import { resolveEffectiveConfiguration } from "../adapters/claude/resolution/resolver.js";
+import { FACT } from "../adapters/claude/version/facts.js";
+import {
+  MATRIX,
+  resolveEnforcement,
+} from "../adapters/claude/version/matrix.js";
 import { getLastScan, getOrScan } from "./scan-store.js";
 
 export { ManagedBundleError } from "../adapters/claude/discovery/managed-overlay.js";
@@ -38,9 +46,21 @@ export interface ModelChangeDelta {
   agentId: string;
   agentName: string;
   declared: string;
+  /**
+   * Model the simulation reports after the block — the first `availableModels`
+   * entry. F8 documents that a substitution happens, not which model wins, so
+   * this value is never more than the allowlist order we read.
+   */
   effective: string;
   source: SourceInfo;
-  matrixRef: "F8";
+  matrixRef: typeof FACT.F8;
+  /**
+   * Matrix verdict on F8 for the scanned version (§6). `unknown` means the
+   * block itself is not founded on this version, not merely the substitution.
+   */
+  enforcement: Enforcement;
+  /** Reason the verdict was downgraded, when it was (§8.2, §8.3). */
+  enforcementReason?: string;
 }
 
 export interface IgnoredFieldDelta {
@@ -147,6 +167,7 @@ function findDeniedTools(
 function findModelChanges(
   agent: Agent,
   availableModels: readonly string[] | undefined,
+  version: string,
 ): ModelChangeDelta[] {
   const declared = agent.configuration.model;
   if (!declared) {
@@ -158,6 +179,13 @@ function findModelChanges(
     return [];
   }
 
+  // The allowlist block is a platform claim, so the F8 entry decides how
+  // confidently the simulation may report it (§8.2, §8.3).
+  const decision = resolveEnforcement({
+    matrixId: MATRIX["agent.modelAllowlist"],
+    version,
+  });
+
   return [
     {
       agentId: agent.id,
@@ -165,7 +193,9 @@ function findModelChanges(
       declared: resolved.declared!,
       effective: resolved.effective,
       source: { ...agent.source, fieldPath: "frontmatter.model" },
-      matrixRef: "F8",
+      matrixRef: FACT.F8,
+      enforcement: decision.enforcement,
+      ...(decision.reason ? { enforcementReason: decision.reason.message } : {}),
     },
   ];
 }
@@ -236,6 +266,10 @@ function buildDelta(
     simulatedSnapshot.agents,
   );
 
+  // §8.3: `"unknown"` in degraded mode, and every version-sensitive verdict
+  // in the delta degrades with it.
+  const version = baselineSnapshot.version.version;
+
   const baselineActiveByName = indexActiveAgentsByName(baselineSnapshot.agents);
   const baselineEffectiveByAgentId = new Map(
     baselineEffective.map((effective) => [effective.agentId, effective]),
@@ -268,7 +302,9 @@ function buildDelta(
       );
     }
 
-    modelChanges.push(...findModelChanges(simulatedAgent, bundle.availableModels));
+    modelChanges.push(
+      ...findModelChanges(simulatedAgent, bundle.availableModels, version),
+    );
   }
 
   for (const [name, baselineAgent] of baselineActiveByName) {
@@ -279,7 +315,9 @@ function buildDelta(
     if (!baselineConfig) {
       continue;
     }
-    modelChanges.push(...findModelChanges(baselineAgent, bundle.availableModels));
+    modelChanges.push(
+      ...findModelChanges(baselineAgent, bundle.availableModels, version),
+    );
   }
 
   deniedTools.sort((left, right) =>

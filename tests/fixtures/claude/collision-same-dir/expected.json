@@ -1,0 +1,1895 @@
+{
+  "discovery": {
+    "agents": [
+      {
+        "name": "planner",
+        "description": "Unambiguous agent used as the resolution subject for this fixture",
+        "source": {
+          "platform": "claude",
+          "scope": "project",
+          "path": ".claude/agents/planner.md"
+        },
+        "status": "active",
+        "configuration": {
+          "tools": [
+            "Read"
+          ],
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      },
+      {
+        "name": "reviewer",
+        "description": "A4 candidate with the same name in a subfolder of the same agents directory",
+        "source": {
+          "platform": "claude",
+          "scope": "project",
+          "path": ".claude/agents/extra/reviewer-duplicate.md"
+        },
+        "status": "ambiguous",
+        "configuration": {
+          "tools": [
+            "Grep"
+          ],
+          "unknownFields": {}
+        },
+        "isPluginAgent": false,
+        "collision": {
+          "candidates": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "rule": "A4",
+          "matrixRef": "agent.collisionSameDir",
+          "enforcement": "unknown"
+        }
+      },
+      {
+        "name": "reviewer",
+        "description": "A4 candidate declared at the root of the agents directory",
+        "source": {
+          "platform": "claude",
+          "scope": "project",
+          "path": ".claude/agents/reviewer.md"
+        },
+        "status": "ambiguous",
+        "configuration": {
+          "tools": [
+            "Read"
+          ],
+          "unknownFields": {}
+        },
+        "isPluginAgent": false,
+        "collision": {
+          "candidates": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "rule": "A4",
+          "matrixRef": "agent.collisionSameDir",
+          "enforcement": "unknown"
+        }
+      }
+    ],
+    "skills": [],
+    "instructions": [],
+    "mcpServers": [],
+    "settings": [],
+    "trust": {
+      "accepted": false,
+      "projectPath": "."
+    },
+    "environment": {
+      "relevant": []
+    }
+  },
+  "resolutions": [
+    {
+      "agentName": "planner",
+      "context": {
+        "preset": "foreground-subagent",
+        "isMainSession": false,
+        "isBackground": false,
+        "isFork": false,
+        "isTeammate": false,
+        "depth": 0,
+        "maxDepth": 3
+      },
+      "capabilities": [
+        {
+          "capabilityId": "permission:default",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "No permissionMode declared; using default (manual) mode (P5).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Agent",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Artifact",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "AskUserQuestion",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Bash",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Edit",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EndConversation",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterWorktree",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitWorktree",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Glob",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Grep",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Monitor",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "NotebookEdit",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "PowerShell",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Read",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md",
+              "fieldPath": "frontmatter.tools[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Allowed by tools pattern \"Read\" (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md",
+                "fieldPath": "frontmatter.tools[0]"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ScheduleWakeup",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "SendMessage",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Skill",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Task",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskOutput",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskStop",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TodoWrite",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ToolSearch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WaitForMcpServers",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebFetch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebSearch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Workflow",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Write",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/planner.md"
+              }
+            }
+          ]
+        }
+      ],
+      "warnings": [],
+      "unknownRate": 0
+    },
+    {
+      "agentName": "reviewer",
+      "context": {
+        "preset": "foreground-subagent",
+        "isMainSession": false,
+        "isBackground": false,
+        "isFork": false,
+        "isTeammate": false,
+        "depth": 0,
+        "maxDepth": 3
+      },
+      "capabilities": [
+        {
+          "capabilityId": "permission:default",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "No permissionMode declared; using default (manual) mode (P5).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "declared",
+              "message": "All 2 colliding declarations of agent \"reviewer\" declare the same permissionMode, so this capability holds whichever candidate the platform loads (A4).",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Agent",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Artifact",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "AskUserQuestion",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Bash",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Edit",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "EndConversation",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterPlanMode",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterWorktree",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitPlanMode",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitWorktree",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Glob",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Grep",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md",
+              "fieldPath": "frontmatter.tools[0]"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Allowed by tools pattern \"Grep\" (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md",
+                "fieldPath": "frontmatter.tools[0]"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Monitor",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "NotebookEdit",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "PowerShell",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Read",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "ScheduleWakeup",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "SendMessage",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Skill",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Task",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskOutput",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskStop",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "TodoWrite",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "ToolSearch",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "WaitForMcpServers",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebFetch",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebSearch",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Workflow",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Write",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/extra/reviewer-duplicate.md"
+              }
+            },
+            {
+              "type": "ambiguous",
+              "message": "Agent \"reviewer\" is declared in 2 colliding files that disagree on tools, and no candidate is effective (A4); this capability is unknown. See sources for the candidate files.",
+              "matrixRef": "A4"
+            }
+          ]
+        }
+      ],
+      "warnings": [
+        {
+          "category": "ambiguous-collision",
+          "severity": "warning",
+          "message": "Agent \"reviewer\" is declared in 2 colliding files (see evidence) and no candidate is effective (A4). The candidates disagree on tools; capabilities derived from those fields resolve unknown. Version matrix reports \"agent.collisionSameDir\" as unknown on Claude Code 2.1.0 (requires >= 2.1.0); the feature resolves as unknown (SPEC §8.2).",
+          "evidence": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "matrixRef": "agent.collisionSameDir",
+          "enforcement": "unknown"
+        }
+      ],
+      "unknownRate": 0.9666666666666667
+    }
+  ]
+}

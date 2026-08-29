@@ -1,38 +1,9 @@
-import { Router, type Request, type Response } from "express";
+import { Router, type Response } from "express";
 import { resolve } from "../../application/resolve.js";
 import { getLastScan } from "../../application/scan-store.js";
 import { buildInspectionGraph } from "../../core/graph/build-graph.js";
-import type { ContextPreset, PermissionMode } from "../../core/model/index.js";
-import { buildExecutionContext } from "../../core/resolver/context.js";
-
-const CONTEXT_PRESETS = new Set<ContextPreset>([
-  "main-session",
-  "foreground-subagent",
-  "background-subagent",
-  "fork",
-  "explore",
-  "plan",
-  "teammate",
-]);
-
-const PERMISSION_MODES = new Set<PermissionMode>([
-  "default",
-  "acceptEdits",
-  "auto",
-  "dontAsk",
-  "bypassPermissions",
-  "plan",
-]);
-
-function getQueryString(value: unknown): string | undefined {
-  if (typeof value === "string") {
-    return value;
-  }
-  if (Array.isArray(value) && typeof value[0] === "string") {
-    return value[0];
-  }
-  return undefined;
-}
+import { CLAUDE_TOOL_TABLES } from "../../adapters/claude/resolution/tool-tables.js";
+import { parseContextFromQuery } from "../context-query.js";
 
 function requireLastScan(res: Response) {
   const lastScan = getLastScan();
@@ -41,46 +12,6 @@ function requireLastScan(res: Response) {
     return null;
   }
   return lastScan;
-}
-
-function parseContextFromQuery(
-  req: Request,
-): { context: ReturnType<typeof buildExecutionContext> } | { error: string } {
-  const preset =
-    getQueryString(req.query.context) ?? ("main-session" satisfies ContextPreset);
-
-  if (!CONTEXT_PRESETS.has(preset as ContextPreset)) {
-    return { error: `Invalid context preset: ${preset}` };
-  }
-
-  const overrides: {
-    depth?: number;
-    parentPermissionMode?: PermissionMode;
-  } = {};
-
-  if (req.query.depth !== undefined) {
-    const depthRaw = getQueryString(req.query.depth);
-    if (depthRaw === undefined) {
-      return { error: "Invalid depth" };
-    }
-    const depth = Number.parseInt(depthRaw, 10);
-    if (Number.isNaN(depth)) {
-      return { error: "Invalid depth" };
-    }
-    overrides.depth = depth;
-  }
-
-  const parentMode = getQueryString(req.query.parentMode);
-  if (parentMode !== undefined) {
-    if (!PERMISSION_MODES.has(parentMode as PermissionMode)) {
-      return { error: `Invalid parentMode: ${parentMode}` };
-    }
-    overrides.parentPermissionMode = parentMode as PermissionMode;
-  }
-
-  return {
-    context: buildExecutionContext(preset as ContextPreset, overrides),
-  };
 }
 
 export const graphRouter = Router();
@@ -113,7 +44,11 @@ graphRouter.get("/", async (req, res) => {
     snapshot: lastScan.snapshot,
     context: parsed.context,
     effectiveByAgent,
+    toolTables: CLAUDE_TOOL_TABLES,
   });
 
-  res.json(graph);
+  res.json({
+    ...graph,
+    ...(parsed.contextDefault ? { contextDefault: parsed.contextDefault } : {}),
+  });
 });

@@ -7,7 +7,11 @@ import {
   resolveTrustGate,
 } from "../../../../src/adapters/claude/resolution/trust.js";
 import { resolvePluginFieldLimitations } from "../../../../src/adapters/claude/resolution/plugin.js";
-import type { Agent, SourceInfo, TrustState } from "../../../../src/core/model/index.js";
+import type {
+  SourceInfo,
+  TrustState,
+} from "../../../../src/core/model/index.js";
+import type { ClaudeAgent as Agent } from "../../../../src/adapters/claude/model/index.js";
 
 const PROJECT_AGENT_SOURCE: SourceInfo = {
   platform: "claude",
@@ -55,7 +59,7 @@ function makeAgent(
 
 describe("isInlineMcpServerEntry", () => {
   it("treats object entries as inline definitions", () => {
-    expect(isInlineMcpServerEntry({ command: "node", args: ["server.js"] })).toBe(
+    expect(isInlineMcpServerEntry({ transport: "stdio", commandName: "node", envKeys: [], headerKeys: [] })).toBe(
       true,
     );
   });
@@ -123,7 +127,7 @@ describe("isTrustGatedAgent", () => {
 describe("resolveTrustGate", () => {
   it("blocks project inline MCP when trust is not accepted (R1)", () => {
     const agent = makeAgent(PROJECT_AGENT_SOURCE, {
-      mcpServers: [{ command: "node", args: ["mcp.js"] }],
+      mcpServers: [{ transport: "stdio", commandName: "node", envKeys: [], headerKeys: [] }],
       unknownFields: {},
     });
 
@@ -145,7 +149,7 @@ describe("resolveTrustGate", () => {
 
   it("allows project inline MCP when trust is accepted (R1)", () => {
     const agent = makeAgent(PROJECT_AGENT_SOURCE, {
-      mcpServers: [{ command: "node", args: ["mcp.js"] }],
+      mcpServers: [{ transport: "stdio", commandName: "node", envKeys: [], headerKeys: [] }],
       unknownFields: {},
     });
 
@@ -187,7 +191,7 @@ describe("resolveTrustGate", () => {
 
   it("does not gate inline MCP from user-level agents (R4)", () => {
     const agent = makeAgent(USER_AGENT_SOURCE, {
-      mcpServers: [{ command: "node", args: ["mcp.js"] }],
+      mcpServers: [{ transport: "stdio", commandName: "node", envKeys: [], headerKeys: [] }],
       unknownFields: {},
     });
 
@@ -208,7 +212,7 @@ describe("resolveTrustGate", () => {
 
   it("blocks project agent hooks when trust is not accepted (R5)", () => {
     const agent = makeAgent(PROJECT_AGENT_SOURCE, {
-      hooks: { PreToolUse: [{ matcher: "Bash", hooks: [] }] },
+      hooks: { form: "object", events: ["PreToolUse"], count: 1 },
       unknownFields: {},
     });
 
@@ -227,7 +231,7 @@ describe("resolveTrustGate", () => {
 
   it("allows user-level agent hooks without trust (R4)", () => {
     const agent = makeAgent(USER_AGENT_SOURCE, {
-      hooks: { PreToolUse: [{ matcher: "Bash", hooks: [] }] },
+      hooks: { form: "object", events: ["PreToolUse"], count: 1 },
       unknownFields: {},
     });
 
@@ -268,7 +272,7 @@ describe("resolvePluginFieldLimitations", () => {
     const agent = makeAgent(
       pluginSource,
       {
-        hooks: { PreToolUse: [] },
+        hooks: { form: "object", events: ["PreToolUse"], count: 1 },
         mcpServers: ["github"],
         permissionMode: "acceptEdits",
         unknownFields: {},
@@ -276,7 +280,7 @@ describe("resolvePluginFieldLimitations", () => {
       true,
     );
 
-    const results = resolvePluginFieldLimitations(agent);
+    const results = resolvePluginFieldLimitations(agent, "2.1.240");
 
     expect(results.map((entry) => entry.field).sort()).toEqual([
       "hooks",
@@ -287,15 +291,37 @@ describe("resolvePluginFieldLimitations", () => {
       expect(entry).toMatchObject({
         ineffective: true,
         effective: undefined,
+        enforcement: "enforced",
       });
       expect(entry.reasons[0]?.type).toBe("plugin-limitation");
       expect(entry.reasons[0]?.matrixRef).toBe("F9");
     }
   });
 
+  it("reports F9 as undetermined without a detected version (§8.3)", () => {
+    const agent = makeAgent(
+      pluginSource,
+      {
+        mcpServers: ["github"],
+        unknownFields: {},
+      },
+      true,
+    );
+
+    const results = resolvePluginFieldLimitations(agent);
+
+    expect(results[0]?.enforcement).toBe("unknown");
+    expect(
+      results[0]?.reasons.some(
+        (reason) =>
+          reason.type === "version" && reason.message.includes("SPEC §8.3"),
+      ),
+    ).toBe(true);
+  });
+
   it("returns no limitations for non-plugin agents", () => {
     const agent = makeAgent(PROJECT_AGENT_SOURCE, {
-      hooks: { PreToolUse: [] },
+      hooks: { form: "object", events: ["PreToolUse"], count: 1 },
       mcpServers: ["github"],
       permissionMode: "acceptEdits",
       unknownFields: {},
@@ -318,5 +344,113 @@ describe("resolvePluginFieldLimitations", () => {
 
     expect(results).toHaveLength(1);
     expect(results[0]?.field).toBe("permissionMode");
+  });
+});
+
+describe("resolveTrustGate with undetermined trust", () => {
+  const TRUST_UNKNOWN: TrustState = {
+    accepted: "unknown",
+    projectPath: "/workspace/project",
+    unknownReason: "Could not read /home/user/.claude.json: EACCES.",
+  };
+
+  it("resolves project inline MCP as unknown, never blocked (R1)", () => {
+    const agent = makeAgent(PROJECT_AGENT_SOURCE, {
+      mcpServers: [{ transport: "stdio", commandName: "node", envKeys: [], headerKeys: [] }],
+      unknownFields: {},
+    });
+
+    const result = resolveTrustGate({
+      agent,
+      trust: TRUST_UNKNOWN,
+      kind: "inline-mcp",
+      mcpServerEntry: agent.configuration.mcpServers![0],
+      mcpServerIndex: 0,
+    });
+
+    expect(result).toMatchObject({ status: "unknown", gated: true });
+    expect(result.reasons[0]?.type).toBe("unknown");
+    expect(result.reasons[0]?.matrixRef).toBe("R1");
+    expect(result.reasons[0]?.message).toContain("EACCES");
+  });
+
+  it("resolves project agent hooks as unknown, never blocked (R5)", () => {
+    const agent = makeAgent(PROJECT_AGENT_SOURCE, {
+      hooks: { form: "object", events: ["PreToolUse"], count: 1 },
+      unknownFields: {},
+    });
+
+    const result = resolveTrustGate({
+      agent,
+      trust: TRUST_UNKNOWN,
+      kind: "agent-hooks",
+    });
+
+    expect(result).toMatchObject({ status: "unknown", gated: true });
+    expect(result.reasons[0]?.matrixRef).toBe("R5");
+  });
+
+  it("still resolves R4 sources as available when trust is undetermined", () => {
+    const namedRef = resolveTrustGate({
+      agent: makeAgent(PROJECT_AGENT_SOURCE, {
+        mcpServers: ["github"],
+        unknownFields: {},
+      }),
+      trust: TRUST_UNKNOWN,
+      kind: "inline-mcp",
+      mcpServerEntry: "github",
+      mcpServerIndex: 0,
+    });
+    expect(namedRef).toMatchObject({ status: "available", gated: false });
+    expect(namedRef.reasons[0]?.matrixRef).toBe("R4");
+
+    const userInline = resolveTrustGate({
+      agent: makeAgent(USER_AGENT_SOURCE, {
+        mcpServers: [{ transport: "stdio", commandName: "node", envKeys: [], headerKeys: [] }],
+        unknownFields: {},
+      }),
+      trust: TRUST_UNKNOWN,
+      kind: "inline-mcp",
+      mcpServerEntry: { transport: "stdio", commandName: "node", envKeys: [], headerKeys: [] },
+      mcpServerIndex: 0,
+    });
+    expect(userInline).toMatchObject({ status: "available", gated: false });
+    expect(userInline.reasons[0]?.matrixRef).toBe("R4");
+
+    const userHooks = resolveTrustGate({
+      agent: makeAgent(USER_AGENT_SOURCE, {
+        hooks: { form: "object", events: ["PreToolUse"], count: 1 },
+        unknownFields: {},
+      }),
+      trust: TRUST_UNKNOWN,
+      kind: "agent-hooks",
+    });
+    expect(userHooks).toMatchObject({ status: "available", gated: false });
+    expect(userHooks.reasons[0]?.matrixRef).toBe("R4");
+  });
+
+  it("never marks .mcp.json servers blocked_by_trust when trust is undetermined", () => {
+    expect(resolveMcpConfigFileTrust(MCP_CONFIG_SOURCE)).toMatchObject({
+      status: "available",
+      gated: false,
+    });
+  });
+
+  it("reports unknown (not available) for sources the .mcp.json rule does not cover", () => {
+    const result = resolveMcpConfigFileTrust(PROJECT_AGENT_SOURCE);
+
+    expect(result).toMatchObject({ status: "unknown", gated: false });
+    expect(result.reasons[0]?.type).toBe("unknown");
+  });
+
+  it("reports unknown when no inline MCP entry is supplied", () => {
+    const result = resolveTrustGate({
+      agent: makeAgent(PROJECT_AGENT_SOURCE),
+      trust: TRUST_DENIED,
+      kind: "inline-mcp",
+    });
+
+    expect(result).toMatchObject({ status: "unknown", gated: false });
+    expect(result.reasons[0]?.type).toBe("unknown");
   });
 });

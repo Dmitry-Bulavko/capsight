@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import type { PlatformVersion, ProjectSnapshot } from "../../../core/model/index.js";
+import type { PlatformVersion } from "../../../core/model/index.js";
+import type { ClaudeProjectSnapshot as ProjectSnapshot } from "../model/index.js";
 import { buildPlatformEnvironment } from "../environment/index.js";
 import { discoverAgents } from "./agents.js";
 import { discoverInstructions } from "./instructions.js";
@@ -15,6 +16,8 @@ export interface BuildSnapshotInput {
   version: PlatformVersion;
   walk: WalkProjectScopesResult;
   addDirs?: string[];
+  /** Configured plugin roots; see `discovery/plugins.ts` for why they are input. */
+  pluginRoots?: string[];
 }
 
 function computeSnapshotId(payload: string): string {
@@ -24,12 +27,18 @@ function computeSnapshotId(payload: string): string {
 export async function buildProjectSnapshot(
   input: BuildSnapshotInput,
 ): Promise<ProjectSnapshot> {
-  const { projectPath, version, walk, addDirs = [] } = input;
+  const { projectPath, version, walk, addDirs = [], pluginRoots = [] } = input;
 
   const [agentResult, skills, instructions, mcpServers, settings, trust] =
     await Promise.all([
-      discoverAgents(walk.scopes, projectPath, addDirs),
-      discoverSkills(walk.scopes, projectPath, addDirs),
+      discoverAgents(
+        walk.scopes,
+        projectPath,
+        addDirs,
+        version.version,
+        pluginRoots,
+      ),
+      discoverSkills(walk.scopes, projectPath, addDirs, version.version),
       discoverInstructions(walk.scopes, projectPath),
       discoverMcpServers(walk.scopes, projectPath, walk.repoRoot),
       discoverSettingsLayers(walk.scopes),
@@ -37,7 +46,7 @@ export async function buildProjectSnapshot(
     ]);
 
   const environment = await buildPlatformEnvironment({ settingsLayers: settings });
-  const budget = computeDescriptionBudget(agentResult.agents);
+  const budget = computeDescriptionBudget(agentResult.agents, version.version);
   const scannedAt = new Date().toISOString();
 
   const snapshotBody = JSON.stringify({

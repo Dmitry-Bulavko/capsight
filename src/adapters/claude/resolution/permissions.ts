@@ -1,14 +1,24 @@
 import type {
-  Agent,
   ExecutionContext,
-  PermissionMode,
   ResolutionReason,
   SourceInfo,
 } from "../../../core/model/index.js";
+import type {
+  ClaudeAgent as Agent,
+  PermissionMode,
+} from "../model/index.js";
+import { FACT, type FactId } from "../version/facts.js";
 
 /** Effective permissions settings relevant to resolution (P4). */
 export interface PermissionSettings {
   disableBypassPermissionsMode?: boolean;
+  /** Layer the value was taken from — the highest-priority one that sets it (S1). */
+  disableBypassPermissionsModeSource?: SourceInfo;
+  /**
+   * `true` when settings layers disagree on the value, so the outcome rests on
+   * the S1 layer order rather than on a single declaration.
+   */
+  layerPrecedenceDecided?: boolean;
 }
 
 export interface ResolvePermissionModeResult {
@@ -26,7 +36,7 @@ function makeReason(
   type: ResolutionReason["type"],
   message: string,
   source?: SourceInfo,
-  matrixRef?: string,
+  matrixRef?: FactId,
 ): ResolutionReason {
   return matrixRef
     ? { type, message, source, matrixRef }
@@ -47,7 +57,8 @@ export function resolvePermissionMode(
   const declared = agent.configuration.permissionMode;
   const reasons: ResolutionReason[] = [];
   const agentSource = agent.source;
-  const parentMode = context.parentPermissionMode;
+  // Core carries the parent mode as an opaque platform string (§12.2).
+  const parentMode = context.parentPermissionMode as PermissionMode | undefined;
 
   if (context.isFork) {
     const effective = parentMode ?? "default";
@@ -83,7 +94,7 @@ export function resolvePermissionMode(
           "parent-mode",
           `Parent session permission mode "${parentMode}" takes precedence; agent frontmatter ignored (P1).`,
           permissionModeSource(agentSource),
-          "P1",
+          FACT.P1,
         ),
       );
     } else {
@@ -92,7 +103,7 @@ export function resolvePermissionMode(
           "inherited",
           `Inherited parent session permission mode "${parentMode}" (P1).`,
           agentSource,
-          "P1",
+          FACT.P1,
         ),
       );
     }
@@ -111,7 +122,7 @@ export function resolvePermissionMode(
           "parent-mode",
           "Parent session is in auto mode; agent permissionMode frontmatter is ignored (P2).",
           permissionModeSource(agentSource),
-          "P2",
+          FACT.P2,
         ),
       );
     } else {
@@ -120,7 +131,7 @@ export function resolvePermissionMode(
           "inherited",
           "Inherited auto permission mode from parent session (P2).",
           agentSource,
-          "P2",
+          FACT.P2,
         ),
       );
     }
@@ -142,9 +153,22 @@ export function resolvePermissionMode(
         "denied",
         "bypassPermissions in agent frontmatter ignored because permissions.disableBypassPermissionsMode is set (P4).",
         permissionModeSource(agentSource),
-        "P4",
+        FACT.P4,
       ),
     );
+    if (settings.disableBypassPermissionsModeSource) {
+      // Which layer supplied the value is a claim of its own once layers
+      // disagree, so it is stated with its source rather than folded silently
+      // into the P4 verdict (S1).
+      reasons.push({
+        type: "declared",
+        message: settings.layerPrecedenceDecided
+          ? "Settings layers disagree on permissions.disableBypassPermissionsMode; the value comes from the highest-priority layer that sets it (S1). See this reason's source."
+          : "permissions.disableBypassPermissionsMode is set by the settings layer named in this reason's source (S1).",
+        source: settings.disableBypassPermissionsModeSource,
+        matrixRef: "settings.layerPrecedence",
+      });
+    }
     return {
       declared,
       effective,

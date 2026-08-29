@@ -9,6 +9,12 @@ import {
 export interface ScanOptions {
   projectPath: string;
   addDirs?: string[];
+  /**
+   * Directories of installed plugins whose `agents/` are attached at the
+   * lowest priority (A1). SPEC §3 establishes no install location, so the
+   * caller names the roots rather than the scan guessing them.
+   */
+  pluginRoots?: string[];
 }
 
 export interface ScanResult {
@@ -28,6 +34,7 @@ export async function scan(options: ScanOptions): Promise<ScanResult> {
     version,
     walk,
     addDirs: options.addDirs,
+    pluginRoots: options.pluginRoots,
   });
 
   return {

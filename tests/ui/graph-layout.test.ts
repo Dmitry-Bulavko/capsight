@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { InspectionGraph } from "../../src/core/graph/build-graph.js";
-import { buildExecutionContext } from "../../src/core/resolver/context.js";
+import { buildExecutionContext } from "../../src/adapters/claude/resolution/context.js";
 import { layoutInspectionGraph } from "../../src/ui/graph-layout.js";
 
 function makeGraph(overrides: Partial<InspectionGraph> = {}): InspectionGraph {

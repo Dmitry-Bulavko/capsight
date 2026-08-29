@@ -91,3 +91,8 @@ async function readSettingsEnvKeys(settingsPath: string): Promise<string[]> {
     return [];
   }
 }
+
+export {
+  DEFAULT_MAX_SUBAGENT_SPAWN_DEPTH,
+  getDefaultMaxDepth,
+} from "./depth.js";

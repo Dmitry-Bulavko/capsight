@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { Agent, EffectiveConfiguration } from "../../src/core/model/index.js";
+import type { EffectiveConfiguration } from "../../src/core/model/index.js";
+import type { ClaudeAgent as Agent } from "../../src/adapters/claude/model/index.js";
 import {
   baselineToolEnabled,
   clearAgentPending,

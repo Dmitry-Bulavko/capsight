@@ -1,10 +1,11 @@
 import path from "node:path";
+import type { ManagedSimulationResult } from "../../src/application/simulate.js";
 import type {
   EffectiveConfiguration,
-  ProjectSnapshot,
   ResolvedCapability,
   SourceInfo,
 } from "../../src/core/model/index.js";
+import type { ClaudeProjectSnapshot as ProjectSnapshot } from "../../src/adapters/claude/model/index.js";
 
 export interface NormalizedDiscovery {
   agents: unknown[];
@@ -24,9 +25,26 @@ export interface NormalizedResolution {
   unknownRate: number;
 }
 
+/**
+ * Managed simulation delta (§7.8), with agent ids and absolute paths removed
+ * so the golden records only which agents become shadowed, which tools are
+ * denied, which fields are ignored and which models are substituted (F8).
+ */
+export interface NormalizedSimulation {
+  context: EffectiveConfiguration["context"];
+  delta: {
+    shadowedAgents: unknown[];
+    deniedTools: unknown[];
+    modelChanges: unknown[];
+    ignoredFields: unknown[];
+  };
+}
+
 export interface NormalizedGoldenOutput {
   discovery: NormalizedDiscovery;
   resolutions: NormalizedResolution[];
+  /** Present only for fixtures that ship a `managed-bundle/` (§7.8). */
+  simulation?: NormalizedSimulation;
 }
 
 function toPosixRelative(projectRoot: string, value: string | undefined): string | undefined {
@@ -61,6 +79,49 @@ function sortByKey<T>(items: T[], keyFn: (item: T) => string): T[] {
   return [...items].sort((left, right) => keyFn(left).localeCompare(keyFn(right)));
 }
 
+/**
+ * Sort on a tuple of keys, so entries that tie on the first key still have a
+ * total order. A name alone is not a key: an A4 collision puts two agents
+ * under one name, and a stable sort would then leave them in directory read
+ * order — which A4 has no rule for (§13 invariant 2).
+ */
+function sortByKeys<T>(items: T[], keyFn: (item: T) => string[]): T[] {
+  return [...items].sort((left, right) => {
+    const leftKeys = keyFn(left);
+    const rightKeys = keyFn(right);
+    const length = Math.max(leftKeys.length, rightKeys.length);
+    for (let index = 0; index < length; index += 1) {
+      const comparison = (leftKeys[index] ?? "").localeCompare(
+        rightKeys[index] ?? "",
+      );
+      if (comparison !== 0) {
+        return comparison;
+      }
+    }
+    return 0;
+  });
+}
+
+/** Total order over sources, used to normalize every source list. */
+function sourceKey(source: SourceInfo): string[] {
+  return [
+    source.platform,
+    source.scope,
+    source.path ?? "",
+    source.fieldPath ?? "",
+    source.matrixRef ?? "",
+  ];
+}
+
+/**
+ * A resolution cites the colliding candidates of an ambiguous agent, and their
+ * order follows the directory walk. Ordering them here keeps a differently
+ * ordered walk from producing a golden diff.
+ */
+function sortSources<T extends SourceInfo>(sources: readonly T[]): T[] {
+  return sortByKeys([...sources], sourceKey);
+}
+
 function isWithinProject(projectRoot: string, candidatePath: string | undefined): boolean {
   if (candidatePath === undefined) {
     return false;
@@ -90,7 +151,7 @@ function normalizeDiscovery(
   snapshot: ProjectSnapshot,
   projectRoot: string,
 ): NormalizedDiscovery {
-  const agents = sortByKey(
+  const agents = sortByKeys(
     snapshot.agents
       .filter((agent) => isWithinProject(projectRoot, agent.source.path))
       .map((agent) => {
@@ -98,9 +159,34 @@ function normalizeDiscovery(
         return {
           ...rest,
           source: normalizeSource(projectRoot, agent.source),
+          // Collision evidence carries absolute paths too (A3/A4 fixtures).
+          ...(agent.collision
+            ? {
+                collision: {
+                  ...agent.collision,
+                  candidates: sortSources(
+                    agent.collision.candidates.map(
+                      (candidate) =>
+                        normalizeSource(projectRoot, candidate) ?? candidate,
+                    ),
+                  ),
+                  ...(agent.collision.effective
+                    ? {
+                        effective: normalizeSource(
+                          projectRoot,
+                          agent.collision.effective,
+                        ),
+                      }
+                    : {}),
+                },
+              }
+            : {}),
         };
       }),
-    (agent) => (agent as { name: string }).name,
+    (agent) => [
+      (agent as { name: string }).name,
+      String((agent as { source?: SourceInfo }).source?.path ?? ""),
+    ],
   );
 
   const skills = sortByKey(
@@ -150,9 +236,14 @@ function normalizeDiscovery(
     (server) => String((server as { configPath?: string }).configPath ?? ""),
   );
 
+  // Every layer inside the project, not just `scope: "project"`: the S1
+  // outcome is decided by `.claude/settings.local.json` outranking
+  // `.claude/settings.json`, and a golden that hid the local layer could not
+  // show which layer a verdict came from. The user layer stays out because it
+  // is machine-specific, which `isWithinProject` already handles.
   const settings = sortByKey(
     (snapshot.settings as Array<Record<string, unknown>>)
-      .filter((layer) => layer.scope === "project")
+      .filter((layer) => isWithinProject(projectRoot, pathFromRecord(layer)))
       .map((layer) => ({
         ...layer,
         ...(typeof layer.path === "string"
@@ -206,12 +297,15 @@ function normalizeCapability(
   capability: ResolvedCapability,
   projectRoot: string,
 ): ResolvedCapability {
-  return {
-    ...capability,
-    capabilityId: normalizeCapabilityId(capability, projectRoot),
-    sources: capability.sources.map(
+  const sources = sortSources(
+    capability.sources.map(
       (source) => normalizeSource(projectRoot, source) ?? source,
     ),
+  );
+  return {
+    ...capability,
+    capabilityId: normalizeCapabilityId({ ...capability, sources }, projectRoot),
+    sources,
     reasons: capability.reasons.map((reason) => ({
       ...reason,
       ...(reason.source
@@ -235,11 +329,52 @@ function normalizeResolution(
     ),
     warnings: sortByKey(rest.warnings, (warning) => warning.message).map((warning) => ({
       ...warning,
-      evidence: warning.evidence.map(
-        (source) => normalizeSource(projectRoot, source) ?? source,
+      evidence: sortSources(
+        warning.evidence.map(
+          (source) => normalizeSource(projectRoot, source) ?? source,
+        ),
       ),
     })),
     unknownRate: rest.unknownRate,
+  };
+}
+
+/**
+ * Strip the ids and absolute paths from a §7.8 simulation result. Bundle path
+ * and snapshot id are dropped: they are machine-specific and say nothing about
+ * the delta the fixture asserts.
+ */
+function normalizeSimulation(
+  simulation: ManagedSimulationResult,
+  projectRoot: string,
+): NormalizedSimulation {
+  // The managed bundle sits next to `project/`, so its paths are normalized
+  // against the fixture directory and stay relative in the golden.
+  const fixtureRoot = path.dirname(path.resolve(projectRoot));
+  const stripAgentId = <T extends { agentId: string }>(entry: T): Omit<T, "agentId"> => {
+    const { agentId: _agentId, ...rest } = entry;
+    return rest;
+  };
+
+  return {
+    context: simulation.context,
+    delta: {
+      shadowedAgents: simulation.delta.shadowedAgents.map((entry) => ({
+        ...stripAgentId(entry),
+        shadowedBy: normalizeSource(fixtureRoot, entry.shadowedBy),
+      })),
+      deniedTools: simulation.delta.deniedTools.map(stripAgentId),
+      modelChanges: simulation.delta.modelChanges.map((entry) => ({
+        ...stripAgentId(entry),
+        source: normalizeSource(fixtureRoot, entry.source),
+      })),
+      ignoredFields: simulation.delta.ignoredFields.map((entry) => ({
+        ...stripAgentId(entry),
+        evidence: entry.evidence.map(
+          (source) => normalizeSource(fixtureRoot, source) ?? source,
+        ),
+      })),
+    },
   };
 }
 
@@ -247,11 +382,15 @@ export function normalizeGoldenOutput(
   snapshot: ProjectSnapshot,
   resolutions: Array<{ agentName: string; resolution: EffectiveConfiguration }>,
   projectRoot: string,
+  simulation?: ManagedSimulationResult,
 ): NormalizedGoldenOutput {
   return {
     discovery: normalizeDiscovery(snapshot, projectRoot),
     resolutions: resolutions.map(({ agentName, resolution }) =>
       normalizeResolution(resolution, agentName, projectRoot),
     ),
+    ...(simulation
+      ? { simulation: normalizeSimulation(simulation, projectRoot) }
+      : {}),
   };
 }

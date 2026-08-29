@@ -1,0 +1,6 @@
+[
+  {
+    "agentName": "observer",
+    "preset": "foreground-subagent"
+  }
+]

@@ -1,14 +1,20 @@
 import fs from "node:fs/promises";
 import type {
-  Agent,
-  ProjectSnapshot,
   ResolvedCapability,
   SourceInfo,
   Warning,
 } from "../../../core/model/index.js";
+import type {
+  ClaudeAgent as Agent,
+  ClaudeProjectSnapshot as ProjectSnapshot,
+  RedactedMcpServer,
+} from "../model/index.js";
+import { FACT, type FactId } from "../version/facts.js";
+import { MATRIX, gateWarning } from "../version/matrix.js";
 import type { DiscoveredSkill, SettingsLayer } from "../discovery/types.js";
 import { parseFrontmatter } from "../parsing/frontmatter.js";
 import { isInlineMcpServerEntry } from "./trust.js";
+import { isPluginIneffectiveField } from "./plugin.js";
 
 const SENSITIVE_ALLOWED_TOOL_BASES = new Set(["Bash", "Write", "Edit", "Agent"]);
 const INEFFECTIVE_ALLOW_GLOBS = new Set(["*", "mcp__*"]);
@@ -22,7 +28,7 @@ export interface ResolveSecurityFindingsInput {
 function securityWarning(
   message: string,
   evidence: SourceInfo[],
-  matrixRef?: string,
+  matrixRef?: FactId,
 ): Warning {
   return {
     category: "security-finding",
@@ -67,7 +73,22 @@ function findBashGuardrailWarning(
   );
 }
 
+/**
+ * A finding about a frontmatter field the platform ignores for plugin agents
+ * (F9) would contradict the `ignored-field` warning the same resolution emits.
+ * The warning still reports that the field was written; only the claim about
+ * its effect is dropped (§2.4). Findings not premised on an F9 field — a skill
+ * pre-approving sensitive tools, an unanchored `allow` glob — are unaffected.
+ */
+function isNullifiedByPluginLimits(agent: Agent, field: string): boolean {
+  return agent.isPluginAgent && isPluginIneffectiveField(field);
+}
+
 function findBypassPermissionsWarning(agent: Agent): Warning | undefined {
+  if (isNullifiedByPluginLimits(agent, "permissionMode")) {
+    return undefined;
+  }
+
   if (agent.configuration.permissionMode !== "bypassPermissions") {
     return undefined;
   }
@@ -75,11 +96,15 @@ function findBypassPermissionsWarning(agent: Agent): Warning | undefined {
   return securityWarning(
     "Agent declares permissionMode bypassPermissions, which skips permission prompts.",
     [{ ...agent.source, fieldPath: "frontmatter.permissionMode" }],
-    "P5",
+    FACT.P5,
   );
 }
 
 function findInlineMcpCommandWarnings(agent: Agent): Warning[] {
+  if (isNullifiedByPluginLimits(agent, "mcpServers")) {
+    return [];
+  }
+
   const warnings: Warning[] = [];
 
   for (const [index, entry] of (agent.configuration.mcpServers ?? []).entries()) {
@@ -87,16 +112,16 @@ function findInlineMcpCommandWarnings(agent: Agent): Warning[] {
       continue;
     }
 
-    const record = entry as Record<string, unknown>;
-    if (typeof record.command !== "string" || record.command.length === 0) {
+    const record = entry as RedactedMcpServer;
+    if (typeof record.commandName !== "string" || record.commandName.length === 0) {
       continue;
     }
 
     warnings.push(
       securityWarning(
-        `Inline MCP server runs arbitrary command "${record.command}" from agent frontmatter.`,
+        `Inline MCP server runs arbitrary command "${record.commandName}" from agent frontmatter.`,
         [{ ...agent.source, fieldPath: `frontmatter.mcpServers[${index}]` }],
-        "R1",
+        FACT.R1,
       ),
     );
   }
@@ -148,7 +173,7 @@ async function findSkillAllowedToolsWarnings(
               fieldPath: `frontmatter.allowed-tools[${index}]`,
             },
           ],
-          "K6",
+          FACT.K6,
         ),
       );
     }
@@ -157,48 +182,42 @@ async function findSkillAllowedToolsWarnings(
   return warnings;
 }
 
-async function readFalseAllowGlobWarnings(
+/**
+ * S4 findings, read from the permission rules discovery already parsed. The
+ * claim is about platform behaviour — the glob grants nothing — so it goes
+ * through the matrix gate like any other §6 claim.
+ */
+function findFalseAllowGlobWarnings(
   settingsLayers: unknown[],
-): Promise<Warning[]> {
+  version: string,
+): Warning[] {
   const layers = settingsLayers as SettingsLayer[];
   const warnings: Warning[] = [];
 
   for (const layer of layers) {
-    try {
-      const raw = await fs.readFile(layer.path, "utf8");
-      const parsed: unknown = JSON.parse(raw);
-      if (typeof parsed !== "object" || parsed === null) {
+    for (const rule of layer.permissions?.rules ?? []) {
+      if (rule.action !== "allow" || !isIneffectiveAllowGlob(rule.raw)) {
         continue;
       }
 
-      const permissions = (parsed as { permissions?: { allow?: unknown } }).permissions;
-      if (!permissions || !Array.isArray(permissions.allow)) {
-        continue;
-      }
-
-      for (const [index, entry] of permissions.allow.entries()) {
-        const pattern = String(entry);
-        if (!isIneffectiveAllowGlob(pattern)) {
-          continue;
-        }
-
-        warnings.push(
+      warnings.push(
+        gateWarning(
           securityWarning(
-            `permissions.allow entry "${pattern}" is an unanchored glob and does not grant access (S4).`,
+            `permissions.allow entry "${rule.raw}" is an unanchored glob and does not grant access (S4).`,
             [
               {
                 platform: "claude",
                 scope: layer.scope,
                 path: layer.path,
-                fieldPath: `permissions.allow[${index}]`,
+                fieldPath: `permissions.allow[${rule.index}]`,
               },
             ],
-            "S4",
+            FACT.S4,
           ),
-        );
-      }
-    } catch {
-      continue;
+          MATRIX["settings.allowGlobIneffective"],
+          version,
+        ),
+      );
     }
   }
 
@@ -227,7 +246,9 @@ export async function resolveSecurityFindings(
 
   warnings.push(...findInlineMcpCommandWarnings(agent));
   warnings.push(...await findSkillAllowedToolsWarnings(snapshot));
-  warnings.push(...await readFalseAllowGlobWarnings(snapshot.settings));
+  warnings.push(
+    ...findFalseAllowGlobWarnings(snapshot.settings, snapshot.version.version),
+  );
 
   return warnings;
 }

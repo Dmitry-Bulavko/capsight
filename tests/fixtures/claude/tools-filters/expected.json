@@ -454,13 +454,13 @@
               "platform": "claude",
               "scope": "project",
               "path": ".claude/agents/filtered.md",
-              "fieldPath": "frontmatter.tools[0]"
+              "fieldPath": "frontmatter.disallowedTools[0]"
             },
             {
               "platform": "claude",
               "scope": "project",
               "path": ".claude/agents/filtered.md",
-              "fieldPath": "frontmatter.disallowedTools[0]"
+              "fieldPath": "frontmatter.tools[0]"
             }
           ],
           "reasons": [

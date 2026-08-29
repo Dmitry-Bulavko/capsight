@@ -4,7 +4,7 @@ import type {
   ProjectSnapshot,
   ResolvedCapability,
 } from "../model/index.js";
-import { AGENT_TOOL_NAMES, isAgentTool, isMcpTool } from "../resolver/builtin-tools.js";
+import type { PlatformToolTables } from "../resolver/tool-tables.js";
 
 export type GraphNodeKind =
   | "agent"
@@ -45,6 +45,8 @@ export interface BuildGraphInput {
   snapshot: ProjectSnapshot;
   context: ExecutionContext;
   effectiveByAgent: ReadonlyMap<string, EffectiveConfiguration>;
+  /** Tool tables supplied by the platform adapter (§12.2). */
+  toolTables: PlatformToolTables;
 }
 
 function agentNodeId(agentId: string): string {
@@ -77,21 +79,6 @@ function isLinkedCapability(capability: ResolvedCapability): boolean {
     capability.status === "preloaded" ||
     capability.status === "unknown"
   );
-}
-
-function parseMcpToolServerId(toolName: string): string | undefined {
-  if (!isMcpTool(toolName)) {
-    return undefined;
-  }
-
-  const rest = toolName.slice("mcp__".length);
-  const separator = rest.indexOf("__");
-  if (separator === -1) {
-    return rest.length > 0 ? rest : undefined;
-  }
-
-  const serverId = rest.slice(0, separator);
-  return serverId.length > 0 ? serverId : undefined;
 }
 
 function mcpServerLabel(capabilityId: string): string {
@@ -139,7 +126,8 @@ class GraphBuilder {
  * @see docs/SPEC.md §7.10
  */
 export function buildInspectionGraph(input: BuildGraphInput): InspectionGraph {
-  const { snapshot, context, effectiveByAgent } = input;
+  const { snapshot, context, effectiveByAgent, toolTables } = input;
+  const agentToolNames = new Set(toolTables.agentToolNames);
   const builder = new GraphBuilder();
   const activeAgents = snapshot.agents.filter((agent) => agent.status === "active");
 
@@ -182,7 +170,7 @@ export function buildInspectionGraph(input: BuildGraphInput): InspectionGraph {
             kind: "agent-tool",
           });
 
-          if (isAgentTool(toolName)) {
+          if (agentToolNames.has(toolName)) {
             canSpawnAgents = true;
           }
           break;
@@ -202,7 +190,7 @@ export function buildInspectionGraph(input: BuildGraphInput): InspectionGraph {
             kind: "agent-tool",
           });
 
-          const serverId = parseMcpToolServerId(toolName);
+          const serverId = toolTables.namespacedToolOwner(toolName);
           if (serverId) {
             const serverNodeId = mcpServerNodeId(serverId);
             builder.addNode({
@@ -308,5 +296,3 @@ export const graphNodeIds = {
   skill: skillNodeId,
   instruction: instructionNodeId,
 };
-
-export const graphSpawnTools = AGENT_TOOL_NAMES;

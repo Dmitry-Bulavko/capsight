@@ -3,14 +3,15 @@ import type {
   EffectiveConfiguration,
   ExecutionContext,
   PlatformVersion,
-  ProjectSnapshot,
   ResolvedCapability,
 } from "../../../src/core/model/index.js";
+import type { ClaudeProjectSnapshot as ProjectSnapshot } from "../../../src/adapters/claude/model/index.js";
 import {
   buildInspectionGraph,
   graphNodeIds,
 } from "../../../src/core/graph/build-graph.js";
-import { buildExecutionContext } from "../../../src/core/resolver/context.js";
+import { buildExecutionContext } from "../../../src/adapters/claude/resolution/context.js";
+import { CLAUDE_TOOL_TABLES } from "../../../src/adapters/claude/resolution/tool-tables.js";
 
 const mockVersion: PlatformVersion = {
   platform: "claude",
@@ -123,6 +124,7 @@ describe("buildInspectionGraph", () => {
       snapshot: makeSnapshot(),
       context: mainContext,
       effectiveByAgent,
+      toolTables: CLAUDE_TOOL_TABLES,
     });
 
     const nodeKinds = new Set(graph.nodes.map((node) => node.kind));
@@ -182,6 +184,7 @@ describe("buildInspectionGraph", () => {
       }),
       context: mainContext,
       effectiveByAgent,
+      toolTables: CLAUDE_TOOL_TABLES,
     });
 
     expect(graph.nodes.some((node) => node.id === graphNodeIds.tool("Read"))).toBe(false);
@@ -211,12 +214,14 @@ describe("buildInspectionGraph", () => {
       snapshot,
       context: foreground,
       effectiveByAgent: new Map([["backend", foregroundEffective]]),
+      toolTables: CLAUDE_TOOL_TABLES,
     });
 
     const forkGraph = buildInspectionGraph({
       snapshot,
       context: fork,
       effectiveByAgent: new Map([["backend", forkEffective]]),
+      toolTables: CLAUDE_TOOL_TABLES,
     });
 
     expect(foregroundGraph.context.preset).toBe("foreground-subagent");

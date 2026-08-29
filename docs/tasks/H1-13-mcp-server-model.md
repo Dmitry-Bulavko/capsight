@@ -45,3 +45,25 @@ A discovered MCP server carries the fields §5 requires and can be addressed by 
 ## Notes
 
 `configHash` on the discovered server is what §7.9 cache invalidation is specified against; today it exists only inside the probe module.
+
+## Orchestrator verification (post-implementation)
+
+The audit's failing command now works:
+
+```
+$ agent-manager probe-mcp github --path tests/fixtures/claude/basic/project
+{ "phase": "preview", "serverId": "752032258dde2927", "serverName": "github",
+  "message": "This starts the MCP server \"github\" and runs its initialization logic.",
+  "commandDisplay": "npx -y @modelcontextprotocol/server-github",
+  "requiresConfirmation": true }
+```
+
+It resolves by configured name and stops at the confirmation gate with the §7.9 wording — the gate is untouched. Golden diffs are purely additive (`+name`, `+definitionKind`, `+configHash`); `source`, `configPath`, `transport` and `status` are byte-identical, so nothing shifted behaviourally. Suite 331 passed | 1 todo. Accepted.
+
+**One hasher, not two:** `computeMcpConfigHash` moved to discovery and the probe re-exports it, so the key-names-only rule established by H1-01 cannot drift between the two call sites. A test asserts both produce the same hash.
+
+**Ambiguity is reported, not resolved:** the same server name in two config files raises `McpServerAmbiguousError` listing every candidate (HTTP 409), rather than picking one — the same discipline A4 demands of agent collisions.
+
+**`definitionKind` is always `"config-file"` today**, because discovery only reads `.mcp.json`. Inline-agent and named-reference servers are not discovered, and no value was guessed for them. That gap is H1-23-adjacent (inline servers live in agent frontmatter, which H1-01 now redacts) and worth a follow-up once plugin/inline discovery exists.
+
+**`commandDisplay` still shows unredacted argv** — that is H1-15's scope, deliberately untouched here.

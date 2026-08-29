@@ -45,3 +45,30 @@ All four are `.gitkeep`-only. `depth-limit/` is additionally named as the fixtur
 ## Notes
 
 The golden files here are the contract for a later settings-permissions implementation. Recording `unknown` now is correct and expected (§11.3).
+
+## Added by the orchestrator after H1-06 and H1-08
+
+Beyond writing fixture content, each fixture task must close the loop on the matrix:
+
+- [ ] Flip every matrix entry this task satisfies from `pendingFixture` to `fixture`
+- [ ] Promote that entry's `confidence` from `"doc"` to `"fixture"` **only** after reading the fixture and confirming it actually exercises the rule — a directory existing is not evidence
+- [ ] Shrink `EXPECTED_PENDING_FIXTURES` in `tests/correctness-gate.test.ts` accordingly; the corpus test fails until it matches reality
+
+## Orchestrator verification (post-implementation)
+
+Read the goldens directly:
+
+- `environment`: all nine §3.11 rows present as key names with `origin` and normalized `effect`; the marker value planted in `env.json` and `settings.json` appears **zero** times in `expected.json`. `DEPLOY_API_TOKEN` survives as a key name only — invariant 10 holds.
+- `skill-allowed-tools`: two `security-finding` warnings with `matrixRef: K6`, and tools absent from `allowed-tools` (`Edit`, `Glob`, `Grep`, `WebSearch`, …) remain `available`. Pre-approval is recorded as a finding and never as a restriction, which is the whole point of K6/K7.
+- `settings-permissions`: S4 emits two `security-finding` warnings for the unanchored `*` and `mcp__*`; P4 produces an `ignored-field` warning because the higher-priority `settings.local.json` won.
+- `depth-limit`: five contexts covering `depth < maxDepth`, `depth >= maxDepth` with reason `depth-limit`, the fork exemption, and `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1`.
+
+Suite 314 passed | 5 todo. Accepted.
+
+**The S-fact instruction was followed correctly, and the result is more interesting than expected.** The agent's `tools` whitelist was designed so every tool a `deny` rule targets is already denied by F2 — so no golden line contradicts an S row and none blesses one. But that exposed a structural gap: an unimplemented rule surfaces as *no capability line at all*, not as `unknown`, because there is no capability id for `Bash(cmd:*)` or `Read(/src/**)`. Silence and undetermined are indistinguishable to a reader.
+
+**Filed as H1-21:** §4.4 lists seven resolver rules and the product implements six — settings `permissions` never reach resolution. A tool denied by settings but permitted by frontmatter is reported `available`/`enforced`, which is the inverse of the example §6 uses to define `enforced`. This was in the ROADMAP as post-v0.1 backlog; it belongs with the blockers.
+
+**Filed as H1-22:** fixture runs read the developer's `~/.claude/settings.json`, so the `environment` golden passes here only because this box has no such file.
+
+**Correctly not done:** no matrix entries exist for S1–S8, K6, K7 or E1–E9, so only `agent.depthLimit` could be promoted. Inventing entries to raise the coverage number would have been the exact dishonesty H1-08 exists to prevent.

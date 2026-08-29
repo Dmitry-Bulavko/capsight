@@ -1,16 +1,12 @@
 import type { ContextPreset } from "../../core/model/index.js";
+import {
+  CONTEXT_PRESETS,
+  DEFAULT_CONTEXT_PRESET,
+  DEFAULT_CONTEXT_REASON,
+} from "../../core/model/context-presets.js";
 
-export const DEFAULT_CONTEXT_PRESET: ContextPreset = "background-subagent";
-
-export const CONTEXT_PRESETS: readonly ContextPreset[] = [
-  "main-session",
-  "foreground-subagent",
-  "background-subagent",
-  "fork",
-  "explore",
-  "plan",
-  "teammate",
-] as const;
+/** Re-exported so the UI shares the §4.3 default with the CLI and the API. */
+export { CONTEXT_PRESETS, DEFAULT_CONTEXT_PRESET, DEFAULT_CONTEXT_REASON };
 
 const PRESET_LABELS: Record<ContextPreset, string> = {
   "main-session": "Main session",
@@ -69,8 +65,7 @@ export function ContextSelector({
       </fieldset>
 
       <p className="context-default-note">
-        Default preset is <code>{DEFAULT_CONTEXT_PRESET}</code> because it matches the
-        actual default mode in interactive sessions when fork mode is enabled (T6).
+        <code>{DEFAULT_CONTEXT_PRESET}</code> — {DEFAULT_CONTEXT_REASON}
       </p>
 
       {hasSelectedAgent && (

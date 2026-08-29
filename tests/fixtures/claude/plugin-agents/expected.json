@@ -1,0 +1,2770 @@
+{
+  "discovery": {
+    "agents": [
+      {
+        "name": "broken",
+        "description": "",
+        "source": {
+          "platform": "claude",
+          "scope": "project",
+          "path": ".claude/agents/broken.md"
+        },
+        "status": "invalid",
+        "invalidReason": "bad-yaml",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      },
+      {
+        "name": "legacy-helper",
+        "description": "",
+        "source": {
+          "platform": "claude",
+          "scope": "plugin",
+          "path": "plugins/my-plugin/agents/legacy-helper.md"
+        },
+        "status": "active",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": true,
+        "pluginScopedId": "my-plugin:legacy-helper"
+      },
+      {
+        "name": "nameless",
+        "description": "A8 - no name field, so the plugin agent loads under its file name",
+        "source": {
+          "platform": "claude",
+          "scope": "plugin",
+          "path": "plugins/my-plugin/agents/nameless.md"
+        },
+        "status": "active",
+        "configuration": {
+          "tools": [
+            "Read"
+          ],
+          "unknownFields": {}
+        },
+        "isPluginAgent": true,
+        "pluginScopedId": "my-plugin:nameless"
+      },
+      {
+        "name": "reviewer",
+        "description": "Project agent that beats the plugin agent of the same name (A1)",
+        "source": {
+          "platform": "claude",
+          "scope": "project",
+          "path": ".claude/agents/reviewer.md"
+        },
+        "status": "active",
+        "configuration": {
+          "tools": [
+            "Read"
+          ],
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      },
+      {
+        "name": "reviewer",
+        "description": "Plugin agent shadowed by the project agent of the same name (A1)",
+        "source": {
+          "platform": "claude",
+          "scope": "plugin",
+          "path": "plugins/my-plugin/agents/reviewer.md"
+        },
+        "status": "shadowed",
+        "configuration": {
+          "tools": [
+            "Read"
+          ],
+          "unknownFields": {}
+        },
+        "isPluginAgent": true,
+        "pluginScopedId": "my-plugin:reviewer",
+        "collision": {
+          "candidates": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/reviewer.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "effective": {
+            "platform": "claude",
+            "scope": "project",
+            "path": ".claude/agents/reviewer.md"
+          },
+          "rule": "A1",
+          "matrixRef": "agent.collisionCrossScope",
+          "enforcement": "enforced"
+        }
+      },
+      {
+        "name": "security",
+        "description": "Plugin agent whose hooks, mcpServers and permissionMode are ignored (F9)",
+        "source": {
+          "platform": "claude",
+          "scope": "plugin",
+          "path": "plugins/my-plugin/agents/review/security.md"
+        },
+        "status": "active",
+        "configuration": {
+          "tools": [
+            "Read",
+            "Grep"
+          ],
+          "mcpServers": [
+            {
+              "name": "audit-server",
+              "transport": "stdio",
+              "commandName": "audit-server",
+              "envKeys": [],
+              "headerKeys": []
+            }
+          ],
+          "permissionMode": "bypassPermissions",
+          "hooks": {
+            "form": "object",
+            "events": [
+              "PreToolUse"
+            ],
+            "count": 1
+          },
+          "unknownFields": {}
+        },
+        "isPluginAgent": true,
+        "pluginScopedId": "my-plugin:review:security"
+      }
+    ],
+    "skills": [],
+    "instructions": [],
+    "mcpServers": [],
+    "settings": [],
+    "trust": {
+      "accepted": false,
+      "projectPath": "."
+    },
+    "environment": {
+      "relevant": []
+    }
+  },
+  "resolutions": [
+    {
+      "agentName": "security",
+      "context": {
+        "preset": "foreground-subagent",
+        "isMainSession": false,
+        "isBackground": false,
+        "isFork": false,
+        "isTeammate": false,
+        "depth": 0,
+        "maxDepth": 3
+      },
+      "capabilities": [
+        {
+          "capabilityId": "permission:default",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "No permissionMode declared; using default (manual) mode (P5).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Agent",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Artifact",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "AskUserQuestion",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Bash",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Edit",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EndConversation",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterWorktree",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitWorktree",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Glob",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Grep",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md",
+              "fieldPath": "frontmatter.tools[1]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Allowed by tools pattern \"Grep\" (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md",
+                "fieldPath": "frontmatter.tools[1]"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Monitor",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "NotebookEdit",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "PowerShell",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Read",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md",
+              "fieldPath": "frontmatter.tools[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Allowed by tools pattern \"Read\" (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md",
+                "fieldPath": "frontmatter.tools[0]"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ScheduleWakeup",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "SendMessage",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Skill",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Task",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskOutput",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskStop",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TodoWrite",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ToolSearch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WaitForMcpServers",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebFetch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebSearch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Workflow",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Write",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/review/security.md"
+              }
+            }
+          ]
+        }
+      ],
+      "warnings": [
+        {
+          "category": "ignored-field",
+          "severity": "warning",
+          "message": "Plugin agents ignore frontmatter hooks (F9).",
+          "evidence": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md",
+              "fieldPath": "frontmatter.hooks"
+            }
+          ],
+          "matrixRef": "agent.pluginFieldLimits",
+          "enforcement": "enforced"
+        },
+        {
+          "category": "ignored-field",
+          "severity": "warning",
+          "message": "Plugin agents ignore frontmatter mcpServers (F9).",
+          "evidence": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md",
+              "fieldPath": "frontmatter.mcpServers"
+            }
+          ],
+          "matrixRef": "agent.pluginFieldLimits",
+          "enforcement": "enforced"
+        },
+        {
+          "category": "ignored-field",
+          "severity": "warning",
+          "message": "Plugin agents ignore frontmatter permissionMode (F9).",
+          "evidence": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/review/security.md",
+              "fieldPath": "frontmatter.permissionMode"
+            }
+          ],
+          "matrixRef": "agent.pluginFieldLimits",
+          "enforcement": "enforced"
+        }
+      ],
+      "unknownRate": 0
+    },
+    {
+      "agentName": "legacy-helper",
+      "context": {
+        "preset": "foreground-subagent",
+        "isMainSession": false,
+        "isBackground": false,
+        "isFork": false,
+        "isTeammate": false,
+        "depth": 0,
+        "maxDepth": 3
+      },
+      "capabilities": [
+        {
+          "capabilityId": "permission:default",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "No permissionMode declared; using default (manual) mode (P5).",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Agent",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Artifact",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "AskUserQuestion",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            },
+            {
+              "type": "context-filter",
+              "message": "Tool removed by subagent filter 1 (T1)."
+            }
+          ]
+        },
+        {
+          "capabilityId": "Bash",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Edit",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EndConversation",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            },
+            {
+              "type": "context-filter",
+              "message": "Tool removed by subagent filter 1 (T1)."
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            },
+            {
+              "type": "context-filter",
+              "message": "Tool removed by subagent filter 1 (T1)."
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterWorktree",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            },
+            {
+              "type": "context-filter",
+              "message": "Tool removed by subagent filter 1 (T1)."
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitWorktree",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Glob",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Grep",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Monitor",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "NotebookEdit",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "PowerShell",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Read",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ScheduleWakeup",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            },
+            {
+              "type": "context-filter",
+              "message": "Tool removed by subagent filter 1 (T1)."
+            }
+          ]
+        },
+        {
+          "capabilityId": "SendMessage",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Skill",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Task",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskOutput",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            },
+            {
+              "type": "context-filter",
+              "message": "Tool removed by subagent filter 1 (T1)."
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskStop",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TodoWrite",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ToolSearch",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WaitForMcpServers",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            },
+            {
+              "type": "context-filter",
+              "message": "Tool removed by subagent filter 1 (T1)."
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebFetch",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebSearch",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Workflow",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            },
+            {
+              "type": "context-filter",
+              "message": "Tool removed by subagent filter 1 (T1)."
+            }
+          ]
+        },
+        {
+          "capabilityId": "Write",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/legacy-helper.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "Inherited from parent session tool pool.",
+              "source": {
+                "platform": "claude",
+                "scope": "plugin",
+                "path": "plugins/my-plugin/agents/legacy-helper.md"
+              }
+            }
+          ]
+        }
+      ],
+      "warnings": [],
+      "unknownRate": 0
+    },
+    {
+      "agentName": "reviewer",
+      "context": {
+        "preset": "foreground-subagent",
+        "isMainSession": false,
+        "isBackground": false,
+        "isFork": false,
+        "isTeammate": false,
+        "depth": 0,
+        "maxDepth": 3
+      },
+      "capabilities": [
+        {
+          "capabilityId": "permission:default",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "No permissionMode declared; using default (manual) mode (P5).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Agent",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Artifact",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "AskUserQuestion",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Bash",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Edit",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "EndConversation",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterWorktree",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitWorktree",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Glob",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Grep",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Monitor",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "NotebookEdit",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "PowerShell",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Read",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md",
+              "fieldPath": "frontmatter.tools[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Allowed by tools pattern \"Read\" (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md",
+                "fieldPath": "frontmatter.tools[0]"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "ScheduleWakeup",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "SendMessage",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Skill",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Task",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskOutput",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskStop",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "TodoWrite",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "ToolSearch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "WaitForMcpServers",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebFetch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebSearch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Workflow",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Write",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              }
+            },
+            {
+              "type": "shadowed",
+              "message": "This declaration of agent \"reviewer\" is shadowed (A1); the capability is resolved from the effective declaration named by this reason's source.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/reviewer.md"
+              },
+              "matrixRef": "A1"
+            }
+          ]
+        }
+      ],
+      "warnings": [
+        {
+          "category": "shadowing",
+          "severity": "info",
+          "message": "Agent \"reviewer\" is shadowed by another declaration of the same name (A1); the effective declaration was resolved instead. Evidence lists the shadowed file first and the effective file second.",
+          "evidence": [
+            {
+              "platform": "claude",
+              "scope": "plugin",
+              "path": "plugins/my-plugin/agents/reviewer.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/reviewer.md"
+            }
+          ]
+        }
+      ],
+      "unknownRate": 0
+    }
+  ]
+}

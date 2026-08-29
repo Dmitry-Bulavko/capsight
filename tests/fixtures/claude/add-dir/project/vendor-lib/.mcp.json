@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "vendor-docs": {
+      "command": "vendor-docs-server"
+    }
+  }
+}

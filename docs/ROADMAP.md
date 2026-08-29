@@ -4,7 +4,7 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**H1 — Correctness hardening.** M0–M3 feature work is complete, but an audit of `aa7f109` against SPEC §0.1, §8, §11 and §13 found defects that block a v0.1 release. Start at [H1-01](tasks/H1-01-secret-redaction.md) and follow the order in [TASKS.md](./TASKS.md).
+**H1 complete.** The audit findings and everything they surfaced are closed; see the H1 outcome below. One follow-up stayed open by choice — [H1-29](tasks/H1-29-model-substitution-claim.md), raised on the last day of the phase. Next: decide whether S6/S7 argument matching and S11 belong in v0.1, and re-run the audit against a real third-party repository rather than the fixture corpus.
 
 ## Phase status
 
@@ -16,29 +16,51 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 | M1 — Resolver + Explainability | `done` | M1-15 correctness gate |
 | M2 — Probe, Graph, Simulation | `done` | M2-06 complete |
 | M3 — Editor (v0.2) | `done` | M3-03 complete |
-| H1 — Correctness hardening | `in_progress` | H1-01..H1-04 closed + §11.3 gate real |
+| H1 — Correctness hardening | `done` | 28 tasks closed; corpus 20/20; H1-29 open as follow-up |
 
-## Known deviations (H1)
+## H1 outcome
 
-Milestone tasks are `done` as scoped, but these SPEC requirements are not met on `aa7f109`. Until H1-01..H1-04 close, the product can return confident wrong answers, which SPEC §0.1.2 calls a critical defect.
+All twenty-eight H1 tasks are closed. The audit of `aa7f109` found thirteen deviations; implementing them surfaced fifteen more, several of the same blocker class as the originals. Everything below is fixed and covered.
 
-| # | Deviation | Spec | Task |
-|---|-----------|------|------|
-| 1 | Raw inline MCP `env`, `hooks`, `unknownFields` leave discovery verbatim into API, CLI stdout and M3 backups | §0.1.8, §12.6, inv 10 | H1-01 |
-| 2 | `tools` whose patterns all fail to parse disables the whitelist — whole parent pool reported `available`/`enforced` | §0.1.2, inv 4 | H1-02 |
-| 3 | Trust has no `unknown` state: unreadable `~/.claude.json` → `blocked`; `unknown` reason paired with `available` | §7.2, inv 4 | H1-03 |
-| 4 | `lookupFeature` has no production caller; enforcement is hardcoded and degraded mode never downgrades | §8.2, §8.3, inv 11 | H1-04 |
-| 5 | `facts.ts` holds 12 bare constants; `[doc]`/`[ext]`/`[spike]` trust levels not modelled | §3, §8.2 | H1-05 |
-| 6 | Trust, skills, instructions, builtin and plugin rules emit `enforced` with no matrix entry; `agent.depthLimit` names an empty fixture | §8.2, §0.1.3 | H1-06 |
-| 7 | Golden runner selects fixtures by `existsSync(expected.json)`; the corpus-completeness test is a tautology over that same filter | §11.1, §11.3 | H1-07 |
-| 8 | Coverage denominator is 12 registered facts, not the §3 list — reports ~92% against ~13% real coverage | §11.4 | H1-08 |
-| 9 | 12 of 20 fixtures empty; `managed-simulation` has no `expected.json` | §11.1 | H1-09, H1-10, H1-11 |
-| 10 | `src/core/` contains the Claude frontmatter schema, builtin tool tables, permission modes and `CLAUDE_CODE_*` env name | §12.2, inv 1 | H1-12 |
-| 11 | `DiscoveredMcpServer` lacks `name`, `definitionKind`, `configHash`; `probe-mcp <name>` cannot address a server | §5, §12.5 | H1-13 |
-| 12 | CLI missing `explain` and `warnings` from §12.5 | §12.5 | H1-14 |
-| 13 | Probe passes full `process.env` to the child, SIGTERM only, unredacted argv, caches failed runs | §9.4, §7.9 | H1-15 |
+| Deviation | Spec | Closed by |
+|---|---|---|
+| Raw inline MCP `env`, `hooks`, `unknownFields` reached API, CLI and backups | §0.1.8, §12.6, inv 10 | H1-01 |
+| `tools` whose patterns all failed to parse opened the whole parent pool | §0.1.2, inv 4 | H1-02 |
+| Trust had no `unknown`: an unreadable `~/.claude.json` read as `blocked` | §7.2, inv 4 | H1-03 |
+| `lookupFeature` had no caller; enforcement hardcoded; degraded mode inert | §8.2, §8.3, inv 11 | H1-04 |
+| `facts.ts` held 12 bare constants; trust levels unmodelled | §3, §8.2 | H1-05 |
+| Rules emitted `enforced` with no matrix entry; one named an empty fixture | §8.2, §0.1.3 | H1-06 |
+| Golden runner failed open; corpus-completeness test was a tautology | §11.1, §11.3 | H1-07 |
+| Coverage denominator was the implementation's own scope | §11.4 | H1-08 |
+| 12 of 20 fixtures empty; `managed-simulation` had no `expected.json` | §11.1 | H1-09, H1-10, H1-11 |
+| `src/core/` held Claude frontmatter, tool tables and a `CLAUDE_CODE_*` env name | §12.2, inv 1 | H1-12 |
+| `McpServer` lacked `name`, `definitionKind`, `configHash`; probe unaddressable by name | §5, §12.5 | H1-13 |
+| CLI missing `explain` and `warnings` | §12.5 | H1-14 |
+| Probe passed full `process.env`, SIGTERM only, raw argv, cached failed runs | §9.4, §7.9 | H1-15 |
+| Nothing recommended ignoring `.agent-manager/` | §12.3 | H1-16 |
+| Degraded mode left `status` confident while `enforcement` was unknown | §8.3, §11.3 | H1-17 |
+| Five matrix entries covering discovery and simulate were never consulted | §8.2, inv 11 | H1-18 |
+| `expandAliases` ignored F11's 2.1.63 boundary | F11, §8.2 | H1-19 |
+| An ambiguous agent resolved as if settled; shadowed resolved the loser; invalid resolved as unrestricted | A4, A7, inv 3, 4 | H1-20 |
+| Settings `permissions` never reached resolution — §4.4's seventh rule | §4.4, S1–S8, §6 | H1-21 |
+| Fixture runs read the developer's own `~/.claude/`; agent picked by walk order | §11.2, inv 2 | H1-22 |
+| Plugin agents were never discovered, so F9/A6/A8 were unreachable | A1, A6, A8, F9, M1 #6 | H1-23 |
+| CLI and API disagreed on the default context; UI held a third caption | §4.3, §4.1 | H1-24 |
+| Probe reaping test flaked under load | §9.4, §11.3 | H1-25 |
+| A1 cross-scope shadowing asserted a winner un-gated | A1, §8.2 | H1-26 |
+| Security findings contradicted F9 for plugin agents | F9, §7.6, §2.4 | H1-27 |
+| `confidence: "fixture"` meant three different things across entries | §8.1, §11.4 | H1-28 |
 
-Audited and confirmed clean: probe confirmation gate (§7.9, inv 9), no third-party execution on scan beyond `claude --version` (inv 8, M0 #7), no writes outside M3 apply and `.agent-manager/cache/` (inv 6), backup before mutation (inv 7), probe cache and environment handling store key names only (inv 10 on those paths), no version comparison outside `adapters/claude/version/` (inv 11), collision and invalid-file discovery (A1, A3, A4, A7), `unknownRate` surfaced per project (inv 13).
+Suite grew from 240 tests to 467. The §11.1 fixture corpus is complete at 20 of 20 with no pending entries.
+
+Coverage over the fixed §3 denominator ends at **9 fixture-verified / 31 documentation-only / 52 unverified**, from a starting point that *reported* 11 of 12 verified and was really 0 against the true denominator. It peaked at 15 mid-phase and came back down when H1-28 defined what `confidence: "fixture"` admits — the number fell because the criterion got stricter, not because evidence was lost. A maturity metric that can only rise is not measuring anything.
+
+### Still not implemented, and visible as such
+
+- S6 prefix matching and S7 gitignore-glob matching: the rules are recorded and resolve `unknown` rather than being evaluated.
+- S11 (`additionalDirectories`, `enableAllProjectMcpServers`).
+- The identity of an F8 substitute model, which the simulation still asserts (H1-29).
+- The observed layer (§9), excluded from v0.1 by the S0 decision.
 
 ## S0 outcome
 

@@ -43,3 +43,17 @@ Note F5: `Agent(type1, type2)` is a legitimate parenthesised form that is ignore
 ## Notes
 
 This is the single most dangerous finding of the audit: it converts an unreadable restriction into a confident permission.
+
+## Orchestrator verification (post-implementation)
+
+Verified independently of the unit tests, by resolving two agent files through the application service:
+
+| Agent | `tools` | available | unknown | denied |
+|---|---|---|---|---|
+| `danger` | `["Bash(git diff:*)"]` | — | all 30 | 0 |
+| `mixed` | `["Read", "Bash(git diff:*)"]` | `Read` | `Bash` | 27 |
+| `emptylist` | `[]` | — | — | 29 |
+
+The audit's failure case now yields nothing `available`. Accepted.
+
+**Behaviour change recorded:** `tools: []` denies everything instead of inheriting the parent pool. This follows F4 — a `tools` list that resolves to no tool means the subagent does not launch — and it is the safe direction. If a later fixture shows the platform treats `[]` as "unset", this becomes a §8.4 discrepancy and the conclusion drops to `unknown`; `tools-filters` (H1-10 adjacent) is the place to pin it down.

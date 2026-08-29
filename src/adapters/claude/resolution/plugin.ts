@@ -1,4 +1,11 @@
-import type { Agent, ResolutionReason, SourceInfo } from "../../../core/model/index.js";
+import type {
+  Enforcement,
+  ResolutionReason,
+  SourceInfo,
+} from "../../../core/model/index.js";
+import type { ClaudeAgent as Agent } from "../model/index.js";
+import { FACT, type FactId } from "../version/facts.js";
+import { MATRIX, resolveEnforcement } from "../version/matrix.js";
 
 /** Frontmatter fields ignored for plugin agents (F9). */
 export const PLUGIN_INEFFECTIVE_FIELDS = [
@@ -15,13 +22,15 @@ export interface ResolvePluginFieldResult {
   effective: undefined;
   ineffective: boolean;
   reasons: ResolutionReason[];
+  /** Matrix verdict on F9 for the detected version (§6, §8.2). */
+  enforcement: Enforcement;
 }
 
 function makeReason(
   type: ResolutionReason["type"],
   message: string,
   source: SourceInfo,
-  matrixRef?: string,
+  matrixRef?: FactId,
 ): ResolutionReason {
   return matrixRef
     ? { type, message, source, matrixRef }
@@ -53,10 +62,19 @@ export function isPluginIneffectiveField(
  */
 export function resolvePluginFieldLimitations(
   agent: Agent,
+  /** Detected CLI version, `"unknown"` in degraded mode (§8.3). */
+  version = "unknown",
 ): ResolvePluginFieldResult[] {
   if (!agent.isPluginAgent) {
     return [];
   }
+
+  // "The platform ignores this field" is a version-sensitive claim like any
+  // other, so the F9 entry decides how confidently it is reported.
+  const decision = resolveEnforcement({
+    matrixId: MATRIX["agent.pluginFieldLimits"],
+    version,
+  });
 
   const results: ResolvePluginFieldResult[] = [];
 
@@ -72,13 +90,15 @@ export function resolvePluginFieldLimitations(
       declared,
       effective: undefined,
       ineffective: true,
+      enforcement: decision.enforcement,
       reasons: [
         makeReason(
           "plugin-limitation",
           `Plugin agents ignore frontmatter ${field} (F9).`,
           source,
-          "F9",
+          FACT.F9,
         ),
+        ...(decision.reason ? [decision.reason] : []),
       ],
     });
   }

@@ -13,6 +13,11 @@ import {
   type PlanResult,
   type PlanWarning,
 } from "./plan.js";
+import {
+  checkLocalStateNotice,
+  markLocalStateNoticeDelivered,
+  type LocalStateWarning,
+} from "./local-state-notice.js";
 import { getOrScan, scanAndStore } from "./scan-store.js";
 import type { ProjectSnapshot } from "../core/model/index.js";
 
@@ -82,6 +87,8 @@ export interface ApplyResult {
   files: PlanFileChange[];
   warnings: PlanWarning[];
   snapshotId: string;
+  /** Present only on the first write into the project's `.agent-manager/` (§12.3). */
+  localStateWarning?: LocalStateWarning;
 }
 
 export interface RollbackOptions {
@@ -96,6 +103,7 @@ export interface RollbackResult {
   message: string;
   restoredFiles: string[];
   verified: boolean;
+  localStateWarning?: LocalStateWarning;
 }
 
 function agentManagerDir(projectPath: string): string {
@@ -179,6 +187,8 @@ export async function applyConfiguration(options: ApplyOptions): Promise<ApplyRe
   }
 
   const filePaths = planResult.files.map((file) => file.path);
+  // Checked before the backup because the backup is what creates the directory.
+  const localStateNotice = await checkLocalStateNotice(projectPath);
   const backup: { operationId: string; manifest: BackupManifest } = await createBackup({
     projectPath,
     snapshotId: planResult.snapshotId,
@@ -211,6 +221,10 @@ export async function applyConfiguration(options: ApplyOptions): Promise<ApplyRe
     message: APPLY_SUCCESS_MESSAGE,
   });
 
+  if (localStateNotice) {
+    markLocalStateNoticeDelivered(projectPath);
+  }
+
   await scanAndStore(projectPath);
 
   return {
@@ -219,6 +233,7 @@ export async function applyConfiguration(options: ApplyOptions): Promise<ApplyRe
     files: planResult.files,
     warnings: planResult.warnings,
     snapshotId: planResult.snapshotId,
+    ...(localStateNotice ? { localStateWarning: localStateNotice } : {}),
   };
 }
 
@@ -243,6 +258,7 @@ export async function rollbackConfiguration(options: RollbackOptions): Promise<R
   });
 
   const rollbackOperationId = `rollback-${options.operationId}`;
+  const localStateNotice = await checkLocalStateNotice(projectPath);
   await appendHistoryEntry(projectPath, {
     operationId: rollbackOperationId,
     type: "rollback",
@@ -256,6 +272,10 @@ export async function rollbackConfiguration(options: RollbackOptions): Promise<R
       : "Configuration restore completed but verification failed.",
   });
 
+  if (localStateNotice) {
+    markLocalStateNoticeDelivered(projectPath);
+  }
+
   await markApplyRolledBack(projectPath, options.operationId, rollbackOperationId);
   await scanAndStore(projectPath);
 
@@ -267,5 +287,6 @@ export async function rollbackConfiguration(options: RollbackOptions): Promise<R
       : "Configuration restore completed but verification failed.",
     restoredFiles: restoreResult.restoredFiles,
     verified: restoreResult.verified,
+    ...(localStateNotice ? { localStateWarning: localStateNotice } : {}),
   };
 }

@@ -62,6 +62,27 @@ describe("parseToolPattern", () => {
       kind: "unknown",
       raw: "mcp__github(create)",
     });
+    expect(parseToolPattern("Bash(git diff:*)")).toEqual({
+      kind: "unknown",
+      raw: "Bash(git diff:*)",
+    });
+  });
+
+  it("parses Agent(type1, type2) as an Agent entry, not as unparseable (F5)", () => {
+    expect(parseToolPattern("Agent(reviewer, planner)")).toEqual({
+      kind: "agent-types",
+      head: "Agent",
+      types: ["reviewer", "planner"],
+    });
+    expect(parseToolPattern("Task(reviewer)")).toEqual({
+      kind: "agent-types",
+      head: "Task",
+      types: ["reviewer"],
+    });
+    expect(parseToolPattern("Agent()")).toEqual({
+      kind: "unknown",
+      raw: "Agent()",
+    });
   });
 });
 
@@ -69,6 +90,7 @@ describe("resolveAgentTools", () => {
   it("inherits parent pool when no tools whitelist is declared", () => {
     const result = resolveAgentTools({
       parentPool: [...PARENT_POOL],
+      version: "2.1.233",
       disallowedTools: ["Bash"],
       agentSource: AGENT_SOURCE,
     });
@@ -83,6 +105,7 @@ describe("resolveAgentTools", () => {
   it("applies disallowedTools before tools whitelist (F2)", () => {
     const result = resolveAgentTools({
       parentPool: [...PARENT_POOL],
+      version: "2.1.233",
       tools: ["Read", "Write", "Grep", "Bash"],
       disallowedTools: ["Bash", "mcp__github__merge_pr"],
       agentSource: AGENT_SOURCE,
@@ -97,6 +120,7 @@ describe("resolveAgentTools", () => {
   it("supports MCP server and wildcard patterns (F3)", () => {
     const result = resolveAgentTools({
       parentPool: [...PARENT_POOL],
+      version: "2.1.233",
       tools: ["mcp__github", "Read"],
       agentSource: AGENT_SOURCE,
     });
@@ -110,6 +134,7 @@ describe("resolveAgentTools", () => {
   it("denies all MCP tools with mcp__* in disallowedTools (F3)", () => {
     const result = resolveAgentTools({
       parentPool: [...PARENT_POOL],
+      version: "2.1.233",
       disallowedTools: ["mcp__*"],
       agentSource: AGENT_SOURCE,
     });
@@ -122,6 +147,7 @@ describe("resolveAgentTools", () => {
   it("removes tools declared in both lists (F2)", () => {
     const result = resolveAgentTools({
       parentPool: [...PARENT_POOL],
+      version: "2.1.233",
       tools: ["Read", "Write"],
       disallowedTools: ["Read"],
       agentSource: AGENT_SOURCE,
@@ -136,6 +162,7 @@ describe("resolveAgentTools", () => {
   it("treats Agent and Task as aliases (F11)", () => {
     const denied = resolveAgentTools({
       parentPool: ["Agent", "Task", "Read"],
+      version: "2.1.233",
       disallowedTools: ["Agent"],
       agentSource: AGENT_SOURCE,
     });
@@ -144,32 +171,209 @@ describe("resolveAgentTools", () => {
 
     const allowed = resolveAgentTools({
       parentPool: ["Agent", "Task", "Read"],
+      version: "2.1.233",
       tools: ["Task"],
       agentSource: AGENT_SOURCE,
     });
     expect(allowed.pool).toEqual(["Agent", "Task"]);
   });
 
+  it("leaves alias-dependent verdicts undetermined below 2.1.63 (F11)", () => {
+    const denied = resolveAgentTools({
+      parentPool: ["Agent", "Task", "Read"],
+      version: "2.1.62",
+      disallowedTools: ["Agent"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    // `Agent` is named directly: that verdict never went through the alias.
+    expect(capability("Agent", denied)?.status).toBe("denied");
+    expect(capability("Agent", denied)?.enforcement).toBe("enforced");
+    // `Task` was only reached by treating it as the same tool, which the
+    // rename had not yet made true on this version.
+    expect(capability("Task", denied)?.status).toBe("unknown");
+    expect(capability("Task", denied)?.enforcement).toBe("unknown");
+    expect(
+      capability("Task", denied)?.reasons.some(
+        (reason) =>
+          reason.type === "version" && reason.matrixRef === "agent.toolAliases",
+      ),
+    ).toBe(true);
+    // A verdict that never touched the alias is unaffected: the downgrade is
+    // per-match, not blanket.
+    expect(capability("Read", denied)?.status).toBe("available");
+    expect(capability("Read", denied)?.enforcement).toBe("enforced");
+  });
+
+  it("leaves alias-dependent allow verdicts undetermined below 2.1.63 (F11)", () => {
+    const result = resolveAgentTools({
+      parentPool: ["Agent", "Task", "Read"],
+      version: "2.1.62",
+      tools: ["Task"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    expect(capability("Task", result)?.status).toBe("available");
+    expect(capability("Agent", result)?.status).toBe("unknown");
+    expect(capability("Agent", result)?.enforcement).toBe("unknown");
+    // Not selected by any pattern at all; nothing alias-dependent about it.
+    expect(capability("Read", result)?.status).toBe("denied");
+    expect(capability("Read", result)?.enforcement).toBe("enforced");
+  });
+
+  it("keeps an alias-dependent verdict when another pattern names the tool directly", () => {
+    const result = resolveAgentTools({
+      parentPool: ["Agent", "Task"],
+      version: "2.1.62",
+      disallowedTools: ["Task", "Agent"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    expect(capability("Agent", result)?.status).toBe("denied");
+    expect(capability("Agent", result)?.enforcement).toBe("enforced");
+    expect(capability("Task", result)?.status).toBe("denied");
+    expect(capability("Task", result)?.enforcement).toBe("enforced");
+  });
+
+  it("gates the F5 type list on the name it was written with (F11)", () => {
+    const result = resolveAgentTools({
+      parentPool: ["Agent", "Task"],
+      version: "2.1.62",
+      tools: ["Task(reviewer)"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    expect(capability("Task", result)?.status).toBe("available");
+    expect(capability("Agent", result)?.status).toBe("unknown");
+  });
+
+  it("leaves alias-dependent verdicts undetermined in degraded mode (§8.3)", () => {
+    const result = resolveAgentTools({
+      parentPool: ["Agent", "Task", "Read"],
+      version: "unknown",
+      disallowedTools: ["Agent"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    expect(capability("Task", result)?.status).toBe("unknown");
+    expect(capability("Task", result)?.enforcement).toBe("unknown");
+  });
+
   it("emits unknown status for unrecognized patterns without confident deny", () => {
     const result = resolveAgentTools({
       parentPool: ["Read", "Write"],
+      version: "2.1.233",
       disallowedTools: ["mcp__github(bad)"],
       tools: ["mcp__*"],
       agentSource: AGENT_SOURCE,
     });
 
-    expect(result.pool).toEqual(["Read", "Write"]);
-    const unknowns = result.capabilities.filter((c) => c.status === "unknown");
-    expect(unknowns).toHaveLength(2);
-    expect(unknowns.map((c) => c.capabilityId).sort()).toEqual([
+    // Nothing in `tools` parsed, so no tool may be reported available.
+    expect(result.pool).toEqual([]);
+    expect(
+      result.capabilities.filter((c) => c.status === "available"),
+    ).toHaveLength(0);
+    for (const toolName of ["Read", "Write"]) {
+      expect(capability(toolName, result)?.status).toBe("unknown");
+      expect(capability(toolName, result)?.enforcement).toBe("unknown");
+    }
+    const patternUnknowns = result.capabilities.filter(
+      (c) => c.capabilityId === "mcp__*" || c.capabilityId === "mcp__github(bad)",
+    );
+    expect(patternUnknowns.map((c) => c.capabilityId).sort()).toEqual([
       "mcp__*",
       "mcp__github(bad)",
     ]);
+    expect(patternUnknowns.every((c) => c.status === "unknown")).toBe(true);
+  });
+
+  it("never reports a tool available when the tools whitelist is unparseable", () => {
+    const result = resolveAgentTools({
+      parentPool: [...PARENT_POOL],
+      version: "2.1.233",
+      tools: ["Bash(git diff:*)"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    expect(result.pool).toEqual([]);
+    expect(
+      result.capabilities.filter((c) => c.status === "available"),
+    ).toHaveLength(0);
+    for (const toolName of PARENT_POOL) {
+      const cap = capability(toolName, result);
+      expect(cap?.status).toBe("unknown");
+      expect(cap?.enforcement).toBe("unknown");
+      expect(cap?.reasons[0]?.message).toContain("Bash(git diff:*)");
+      expect(cap?.sources.length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it("keeps parsed patterns effective while an unparsed one downgrades only what it could match", () => {
+    const result = resolveAgentTools({
+      parentPool: ["Read", "Write", "Bash"],
+      version: "2.1.233",
+      tools: ["Read", "Bash(git diff:*)"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    expect(result.pool).toEqual(["Read"]);
+    expect(capability("Read", result)?.status).toBe("available");
+    // Only `Bash` could have been meant by `Bash(git diff:*)`.
+    expect(capability("Bash", result)?.status).toBe("unknown");
+    expect(capability("Bash", result)?.enforcement).toBe("unknown");
+    expect(capability("Bash", result)?.reasons[0]?.message).toContain(
+      "Bash(git diff:*)",
+    );
+    expect(capability("Write", result)?.status).toBe("denied");
+  });
+
+  it("downgrades tools an unparseable disallowedTools pattern could remove", () => {
+    const result = resolveAgentTools({
+      parentPool: ["Read", "Write", "Bash"],
+      version: "2.1.233",
+      disallowedTools: ["Bash(rm:*)"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    expect(result.pool).toEqual(["Read", "Write"]);
+    expect(capability("Bash", result)?.status).toBe("unknown");
+    expect(capability("Bash", result)?.enforcement).toBe("unknown");
+    expect(capability("Bash", result)?.reasons[0]?.message).toContain("Bash(rm:*)");
+  });
+
+  it("treats Agent(type1, type2) as the Agent tool inside a subagent definition (F5)", () => {
+    const result = resolveAgentTools({
+      parentPool: ["Agent", "Task", "Read"],
+      version: "2.1.233",
+      tools: ["Agent(reviewer, planner)"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    expect(result.pool).toEqual(["Agent", "Task"]);
+    expect(capability("Agent", result)?.status).toBe("available");
+    expect(capability("Task", result)?.status).toBe("available");
+    expect(capability("Read", result)?.status).toBe("denied");
+    expect(
+      result.capabilities.some((c) => c.capabilityId === "Agent(reviewer, planner)"),
+    ).toBe(false);
+  });
+
+  it("denies every tool when tools is declared empty (F2, F4)", () => {
+    const result = resolveAgentTools({
+      parentPool: ["Read", "Write"],
+      version: "2.1.233",
+      tools: [],
+      agentSource: AGENT_SOURCE,
+    });
+
+    expect(result.pool).toEqual([]);
+    expect(capability("Read", result)?.status).toBe("denied");
   });
 
   it("returns empty pool when tools whitelist resolves to nothing (F4)", () => {
     const result = resolveAgentTools({
       parentPool: ["Read", "Write"],
+      version: "2.1.233",
       tools: ["NonExistentBuiltin"],
       agentSource: AGENT_SOURCE,
     });
@@ -181,6 +385,7 @@ describe("resolveAgentTools", () => {
   it("requires every capability to have sources and reasons", () => {
     const result = resolveAgentTools({
       parentPool: [...PARENT_POOL],
+      version: "2.1.233",
       tools: ["Read"],
       disallowedTools: ["Bash"],
       agentSource: AGENT_SOURCE,
@@ -195,10 +400,33 @@ describe("resolveAgentTools", () => {
   it("preserves deterministic parent pool ordering", () => {
     const result = resolveAgentTools({
       parentPool: ["Write", "Read", "Grep"],
+      version: "2.1.233",
       tools: ["Read", "Grep", "Write"],
       agentSource: AGENT_SOURCE,
     });
 
     expect(result.pool).toEqual(["Write", "Read", "Grep"]);
+  });
+
+  it("degrades status and enforcement to unknown when no CLI version was detected (§8.3)", () => {
+    const result = resolveAgentTools({
+      parentPool: [...PARENT_POOL],
+      version: "unknown",
+      tools: ["Read"],
+      disallowedTools: ["Bash"],
+      agentSource: AGENT_SOURCE,
+    });
+
+    for (const id of ["Read", "Bash", "Write"]) {
+      expect(capability(id, result)?.enforcement, id).toBe("unknown");
+      expect(
+        capability(id, result)?.reasons.some((reason) => reason.type === "version"),
+        id,
+      ).toBe(true);
+    }
+    // Which filter ran is platform behaviour, not file content: without a
+    // version the status is unfounded, not merely unguaranteed (H1-17).
+    expect(capability("Read", result)?.status).toBe("unknown");
+    expect(capability("Bash", result)?.status).toBe("unknown");
   });
 });

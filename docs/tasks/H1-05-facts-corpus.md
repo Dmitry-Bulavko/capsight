@@ -44,3 +44,20 @@
 ## Notes
 
 Registering all of §3 also fixes the §11.4 denominator (H1-08) — keep the registry the single source for both.
+
+## Orchestrator verification (post-implementation)
+
+Cross-checked the registry against the SPEC tables mechanically (parse §3 rows → compare id and trust level to `facts.ts`):
+
+```
+facts in SPEC tables: 83   facts in registry: 92 (83 + E1–E9 from §3.11)
+missing from code: none
+confidence mismatches: none
+ext facts: E9, K8, K10, K11, K12, S1–S8, S10, S11  (15)
+```
+
+S4 stayed `ext` despite `security-findings.ts` relying on it — exactly the upgrade this task existed to prevent. Accepted.
+
+**§3.11 id convention accepted:** `E1`–`E9` in table order, with the variable name stored in an `envVar` field so the id is anchored to the variable rather than to the row position.
+
+**Left open deliberately:** `core/model`'s `matrixRef` stays `string` rather than `FactId`, because `src/core/` must not import from `src/adapters/claude/` (invariant 1). Typing is enforced at the adapter boundary, where every fact reference is produced. H1-12 may revisit this once the core/adapter split is cleaned up.

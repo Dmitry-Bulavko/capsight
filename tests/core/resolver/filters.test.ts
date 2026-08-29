@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyContextFilters } from "../../../src/core/resolver/filters.js";
-import { buildExecutionContext } from "../../../src/core/resolver/context.js";
+import { buildExecutionContext } from "../../../src/adapters/claude/resolution/context.js";
+import { CLAUDE_TOOL_TABLES } from "../../../src/adapters/claude/resolution/tool-tables.js";
 
 const SAMPLE_TOOLS = [
   "Read",
@@ -19,7 +20,7 @@ const SAMPLE_TOOLS = [
 describe("applyContextFilters", () => {
   it("main session passes tools through unchanged", () => {
     const ctx = buildExecutionContext("main-session");
-    const result = applyContextFilters([...SAMPLE_TOOLS], ctx);
+    const result = applyContextFilters([...SAMPLE_TOOLS], ctx, CLAUDE_TOOL_TABLES);
 
     expect(result.tools).toEqual([...SAMPLE_TOOLS]);
     expect(result.removals).toEqual([]);
@@ -28,7 +29,7 @@ describe("applyContextFilters", () => {
 
   it("foreground subagent applies Filter 1 (T1)", () => {
     const ctx = buildExecutionContext("foreground-subagent");
-    const result = applyContextFilters([...SAMPLE_TOOLS], ctx);
+    const result = applyContextFilters([...SAMPLE_TOOLS], ctx, CLAUDE_TOOL_TABLES);
 
     expect(result.tools).not.toContain("AskUserQuestion");
     expect(result.tools).not.toContain("EnterPlanMode");
@@ -49,6 +50,7 @@ describe("applyContextFilters", () => {
     const result = applyContextFilters(
       ["Read", "ExitPlanMode", "EnterPlanMode"],
       ctx,
+      CLAUDE_TOOL_TABLES,
     );
 
     expect(result.tools).toContain("ExitPlanMode");
@@ -57,7 +59,7 @@ describe("applyContextFilters", () => {
 
   it("background subagent applies Filter 2 (T2) after Filter 1", () => {
     const ctx = buildExecutionContext("background-subagent");
-    const result = applyContextFilters([...SAMPLE_TOOLS], ctx);
+    const result = applyContextFilters([...SAMPLE_TOOLS], ctx, CLAUDE_TOOL_TABLES);
 
     expect(result.tools).toContain("Read");
     expect(result.tools).toContain("Write");
@@ -71,7 +73,7 @@ describe("applyContextFilters", () => {
 
   it("fork returns empty delta with context-filter skip reason (T3)", () => {
     const ctx = buildExecutionContext("fork");
-    const result = applyContextFilters([...SAMPLE_TOOLS], ctx);
+    const result = applyContextFilters([...SAMPLE_TOOLS], ctx, CLAUDE_TOOL_TABLES);
 
     expect(result.tools).toEqual([...SAMPLE_TOOLS]);
     expect(result.removals).toEqual([]);
@@ -80,7 +82,7 @@ describe("applyContextFilters", () => {
 
   it("fork at depth limit keeps Agent in list (N2)", () => {
     const ctx = buildExecutionContext("fork", { depth: 3, maxDepth: 3 });
-    const result = applyContextFilters(["Read", "Agent"], ctx);
+    const result = applyContextFilters(["Read", "Agent"], ctx, CLAUDE_TOOL_TABLES);
 
     expect(result.tools).toContain("Agent");
     expect(result.removals).toEqual([]);
@@ -92,7 +94,7 @@ describe("applyContextFilters", () => {
       depth: 3,
       maxDepth: 3,
     });
-    const result = applyContextFilters(["Read", "Agent", "Task"], ctx);
+    const result = applyContextFilters(["Read", "Agent", "Task"], ctx, CLAUDE_TOOL_TABLES);
 
     expect(result.tools).not.toContain("Agent");
     expect(result.tools).not.toContain("Task");
@@ -112,6 +114,7 @@ describe("applyContextFilters", () => {
     const result = applyContextFilters(
       ["Read", "AskUserQuestion", "Agent"],
       ctx,
+      CLAUDE_TOOL_TABLES,
     );
 
     expect(result.tools).toEqual(["Read", "Agent"]);
@@ -121,7 +124,7 @@ describe("applyContextFilters", () => {
   it("preserves deterministic input ordering", () => {
     const tools = ["Write", "Read", "Grep", "mcp__x__y"];
     const ctx = buildExecutionContext("background-subagent");
-    const result = applyContextFilters(tools, ctx);
+    const result = applyContextFilters(tools, ctx, CLAUDE_TOOL_TABLES);
 
     expect(result.tools).toEqual(["Write", "Read", "Grep", "mcp__x__y"]);
   });

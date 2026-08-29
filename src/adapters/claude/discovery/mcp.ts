@@ -21,6 +21,29 @@ export function computeMcpServerId(configPath: string, name: string): string {
   return createHash("sha256").update(`${configPath}:${name}`).digest("hex").slice(0, 16);
 }
 
+function sortedKeys(value: unknown): string[] | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+  return Object.keys(value).sort();
+}
+
+/**
+ * Key-names-only config hash used for probe cache invalidation (§7.9).
+ * Env and header *values* are never hashed or stored (invariant 10).
+ */
+export function computeMcpConfigHash(config: Record<string, unknown>): string {
+  const hashInput = {
+    command: config.command,
+    args: config.args,
+    url: config.url,
+    type: config.type,
+    envKeys: sortedKeys(config.env),
+    headerKeys: sortedKeys(config.headers),
+  };
+  return createHash("sha256").update(JSON.stringify(hashInput)).digest("hex").slice(0, 16);
+}
+
 function inferTransport(config: Record<string, unknown>): DiscoveredMcpServer["transport"] {
   if (typeof config.command === "string") {
     return "stdio";
@@ -75,10 +98,13 @@ export async function discoverMcpServers(
       const serverConfig = config as Record<string, unknown>;
       servers.push({
         id: computeMcpServerId(configPath, name),
+        name,
         source: source(scope, configPath),
         configPath,
         transport: inferTransport(serverConfig),
+        definitionKind: "config-file",
         status: "configured",
+        configHash: computeMcpConfigHash(serverConfig),
       });
     }
   };
@@ -92,4 +118,32 @@ export async function discoverMcpServers(
   await addFromConfig(path.join(repoRoot, ".mcp.json"), "project");
 
   return servers;
+}
+
+export type McpServerRefResolution =
+  | { kind: "found"; server: DiscoveredMcpServer }
+  | { kind: "not-found" }
+  | { kind: "ambiguous"; candidates: DiscoveredMcpServer[] };
+
+/**
+ * Resolves a user-supplied reference (configured name or opaque id) to a
+ * discovered server. An ambiguous name is reported, never silently narrowed.
+ */
+export function resolveMcpServerRef(
+  servers: DiscoveredMcpServer[],
+  ref: string,
+): McpServerRefResolution {
+  const byId = servers.find((server) => server.id === ref);
+  if (byId) {
+    return { kind: "found", server: byId };
+  }
+
+  const byName = servers.filter((server) => server.name === ref);
+  if (byName.length === 1) {
+    return { kind: "found", server: byName[0]! };
+  }
+  if (byName.length > 1) {
+    return { kind: "ambiguous", candidates: byName };
+  }
+  return { kind: "not-found" };
 }
