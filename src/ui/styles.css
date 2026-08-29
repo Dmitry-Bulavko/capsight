@@ -955,6 +955,491 @@ code {
   word-break: break-word;
 }
 
+.workflow-lab-panel .workflow-lab-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.workflow-lab-panel .workflow-lab-header h2 {
+  margin: 0;
+}
+
+.workflow-lab-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #3c2f1a;
+  color: #fdd663;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.workflow-lab-note {
+  margin: 0 0 0.75rem;
+  color: #9aa0a6;
+  font-size: 0.88rem;
+  max-width: 52rem;
+}
+
+.workflow-lab-container {
+  position: relative;
+  height: 56rem;
+  border: 1px solid #2d3139;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0b0d11;
+}
+
+.workflow-lab-container .react-flow {
+  background: radial-gradient(ellipse 120% 80% at 50% 0%, #141820 0%, #0b0d11 55%);
+}
+
+.workflow-lab-minimap {
+  border: 1px solid #3c4043 !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+  background: #12151c !important;
+  bottom: 5.75rem !important;
+  right: 0.75rem !important;
+}
+
+.workflow-lab-canvas-legend {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem 2.5rem;
+  padding: 0.65rem 1rem 0.75rem;
+  border-top: 1px solid #2d3139;
+  background: linear-gradient(180deg, rgba(11, 13, 17, 0.4) 0%, rgba(11, 13, 17, 0.94) 35%);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+
+.workflow-lab-canvas-legend-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.workflow-lab-canvas-legend-heading {
+  flex-shrink: 0;
+  min-width: 5.5rem;
+  color: #9aa0a6;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding-top: 0.15rem;
+}
+
+.workflow-lab-canvas-legend-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.85rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.72rem;
+  color: #bdc1c6;
+}
+
+.workflow-lab-canvas-legend-list li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.workflow-lab-canvas-legend-list .workflow-block-kind-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 4px;
+}
+
+.workflow-lab-canvas-legend-list .workflow-block-kind-icon svg {
+  width: 10px;
+  height: 10px;
+}
+
+.workflow-lab-canvas-legend-edge {
+  display: inline-block;
+  width: 1rem;
+  height: 0.18rem;
+  border-radius: 999px;
+}
+
+
+.workflow-lab-container .react-flow__node.workflow-lab-node--orchestrator-skill .workflow-block {
+  box-shadow: 0 0 16px rgba(197, 138, 249, 0.35), 0 0 32px rgba(197, 138, 249, 0.15) !important;
+}
+
+.workflow-lab-legend-kind {
+  min-width: 5.5rem;
+  color: #9aa0a6;
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+}
+
+.workflow-lab-legend-sample {
+  color: #e8eaed;
+}
+
+.workflow-lab-container .react-flow__controls {
+  bottom: 5.5rem;
+  left: 0.75rem;
+}
+
+.workflow-swimlane-group {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.workflow-swimlane-group-label {
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  line-height: 1.2;
+  opacity: 0.92;
+}
+
+.react-flow__node-swimlane {
+  pointer-events: none !important;
+}
+
+.workflow-lab-container .react-flow__edge.workflow-lab-edge .react-flow__edge-path {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.workflow-lab-container .react-flow__edge.workflow-lab-edge--spine .react-flow__edge-path {
+  stroke-width: 2.5;
+  opacity: 0.95;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--edge-stroke, #8ab4f8) 45%, transparent));
+}
+
+.workflow-lab-container .react-flow__edge.workflow-lab-edge--skill-unify .react-flow__edge-path {
+  stroke-dasharray: 5 6;
+}
+
+.workflow-lab-container .react-flow__edge.workflow-lab-edge:hover .react-flow__edge-path {
+  opacity: 1;
+  stroke-width: 2.5;
+}
+
+.workflow-lab-container .react-flow__edge-textbg {
+  fill: #12151c !important;
+}
+
+.workflow-lab-container .react-flow__edge-text {
+  fill: #bdc1c6 !important;
+}
+
+.workflow-lab-container .react-flow__arrowhead polyline,
+.workflow-lab-container .react-flow__arrowhead polygon {
+  stroke-linejoin: round;
+}
+
+.workflow-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  width: 280px;
+  height: 158px;
+  box-sizing: border-box;
+  padding: 0.55rem 0.65rem;
+  background: #1a1d24;
+  color: #e8eaed;
+  border: 1px solid;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.workflow-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid #2d3139;
+}
+
+.workflow-block-kind-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: help;
+}
+
+.workflow-block-kind-trigger:hover .workflow-block-kind-icon,
+.workflow-block-kind-trigger:focus-visible .workflow-block-kind-icon {
+  filter: brightness(1.08);
+}
+
+.workflow-block-kind-trigger:focus-visible {
+  outline: none;
+}
+
+.workflow-block-kind-trigger:focus-visible .workflow-block-kind-icon {
+  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.45);
+}
+
+.workflow-block-kind-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 6px;
+  border: 1px solid;
+}
+
+.workflow-block-kind-icon svg {
+  display: block;
+}
+
+.workflow-lab-legend .workflow-block-kind-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 5px;
+}
+
+.workflow-lab-legend .workflow-block-kind-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.workflow-block-title {
+  color: #9aa0a6;
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.workflow-block-info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #9aa0a6;
+  cursor: help;
+}
+
+.workflow-block-info:hover,
+.workflow-block-info:focus-visible {
+  color: #e8eaed;
+  background: #2d3139;
+  outline: none;
+}
+
+.workflow-block-info-icon {
+  display: block;
+}
+
+.workflow-block-label {
+  flex: 1 1 auto;
+  display: block;
+  min-height: 0;
+  padding: 0.1rem 0;
+  word-break: break-word;
+  color: #e8eaed;
+  line-height: 1.3;
+}
+
+.workflow-block-systems {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex: 0 0 auto;
+  gap: 0.25rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid #2d3139;
+}
+
+.workflow-block-systems-label {
+  color: #9aa0a6;
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.workflow-block-system-groups {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  width: 100%;
+}
+
+.workflow-block-system-group {
+  display: flex;
+  align-items: center;
+  gap: 0.28rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.workflow-block-system-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: #252830;
+  color: #e8eaed;
+  overflow: hidden;
+  cursor: help;
+}
+
+.workflow-block-system-icon svg {
+  display: block;
+}
+
+.agent-system-icon-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.agent-system-icon-image--neutral {
+  filter: brightness(0) invert(0.88);
+  transform: scale(0.72);
+}
+
+.agent-system-icon-mask {
+  display: block;
+  width: 100%;
+  height: 100%;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  transform: scale(0.82);
+}
+
+.agent-system-icon-mask--white {
+  transform: scale(0.82);
+}
+
+.agent-system-icon-mask--brand {
+  transform: scale(0.82);
+}
+
+.workflow-block-system-icon--available {
+  border-color: rgba(129, 201, 149, 0.55);
+  box-shadow: 0 0 8px rgba(129, 201, 149, 0.28);
+}
+
+.workflow-block-system-icon--unavailable {
+  opacity: 0.48;
+  border-color: rgba(154, 160, 166, 0.22);
+  box-shadow: none;
+}
+
+.workflow-block-system-icon--unavailable svg {
+  filter: grayscale(1);
+}
+
+.workflow-block-system-icon--unavailable .agent-system-icon-image--neutral {
+  filter: brightness(0) invert(0.88) grayscale(1);
+}
+
+.workflow-block-system-icon--unavailable .agent-system-icon-mask {
+  filter: grayscale(1);
+}
+
+.workflow-block-system-icon--unknown {
+  border-color: rgba(255, 152, 60, 0.72);
+  box-shadow: 0 0 8px rgba(255, 152, 60, 0.32);
+}
+
+.workflow-lab-container .react-flow__node.workflow-lab-node {
+  box-sizing: border-box;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  overflow: visible;
+  transition: filter 0.2s ease;
+}
+
+.workflow-lab-container .react-flow__node.workflow-lab-node.selected .workflow-block {
+  filter: brightness(1.06);
+}
+
+.workflow-lab-container .react-flow__node.workflow-lab-node.selected,
+.workflow-lab-container .react-flow__node.workflow-lab-node:focus,
+.workflow-lab-container .react-flow__node.workflow-lab-node:focus-visible {
+  outline: none;
+}
+
+.workflow-block-handle {
+  width: 7px;
+  height: 7px;
+  border: 2px solid #5f6368;
+  background: #1a1d24;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.workflow-block-handle--spawn {
+  left: 50% !important;
+  transform: translateX(-50%);
+}
+
+.workflow-block-handle--skill {
+  opacity: 0 !important;
+}
+
+.workflow-lab-container .react-flow__node.workflow-lab-node:hover .workflow-block-handle:not(.workflow-block-handle--skill),
+.workflow-lab-container .react-flow__node.workflow-lab-node.selected .workflow-block-handle:not(.workflow-block-handle--skill) {
+  opacity: 1;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .agent-editor-header {
   display: flex;
   align-items: center;

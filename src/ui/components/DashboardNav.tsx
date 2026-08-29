@@ -4,7 +4,8 @@ export type DashboardTab =
   | "agents"
   | "editor"
   | "capabilities"
-  | "graph";
+  | "graph"
+  | "workflow-lab";
 
 interface NavItem {
   id: DashboardTab;
@@ -19,6 +20,7 @@ export const DASHBOARD_NAV: readonly NavItem[] = [
   { id: "editor", label: "Editor", description: "In-memory tool toggles" },
   { id: "capabilities", label: "Capabilities", description: "Effective resolution" },
   { id: "graph", label: "Graph", description: "Context-aware inspection" },
+  { id: "workflow-lab", label: "Workflow Lab", description: "Block format preview (temp)" },
 ] as const;
 
 interface DashboardNavProps {

@@ -19,6 +19,7 @@ import {
 import { ProjectSummary, type ResourceCounts } from "./components/ProjectSummary.js";
 import { ScanPanel } from "./components/ScanPanel.js";
 import { GraphView } from "./components/GraphView.js";
+import { WorkflowLabView } from "./components/WorkflowLabView.js";
 import { WhyPanel } from "./components/WhyPanel.js";
 import { AgentEditor } from "./components/AgentEditor.js";
 import { EffectiveCapabilities } from "./components/EffectiveCapabilities.js";
@@ -359,6 +360,8 @@ export function App() {
             {activeTab === "graph" && (
               <GraphView context={contextPreset} />
             )}
+
+            {activeTab === "workflow-lab" && <WorkflowLabView />}
           </main>
         </div>
       )}
