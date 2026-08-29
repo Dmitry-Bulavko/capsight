@@ -11,8 +11,12 @@ import type { ManagedSimulationResult } from "../src/application/simulate.js";
 import { buildExecutionContext } from "../src/adapters/claude/resolution/context.js";
 import type { ContextPreset } from "../src/core/model/index.js";
 import type { PermissionMode } from "../src/adapters/claude/model/index.js";
-import { FACTS } from "../src/adapters/claude/version/facts.js";
-import { VERSION_MATRIX } from "../src/adapters/claude/version/matrix.js";
+import { FACTS as CLAUDE_FACTS } from "../src/adapters/claude/version/facts.js";
+import { VERSION_MATRIX as CLAUDE_MATRIX } from "../src/adapters/claude/version/matrix.js";
+import { FACTS as CURSOR_FACTS } from "../src/adapters/cursor/version/facts.js";
+import { VERSION_MATRIX as CURSOR_MATRIX } from "../src/adapters/cursor/version/matrix.js";
+import { FACTS as CODEX_FACTS } from "../src/adapters/codex/version/facts.js";
+import { VERSION_MATRIX as CODEX_MATRIX } from "../src/adapters/codex/version/matrix.js";
 import {
   buildCoverageReport,
   classifyFactCoverage,
@@ -24,12 +28,16 @@ import {
   inspectFixtureCorpus,
   isConfidentCapabilityStatus,
   pendingFixtureNames,
+  platformFixturesRoot,
   resolveFixtureAddDirs,
   resolveFixturePluginRoots,
   resolveFixtureManagedBundle,
   resolveFixtureScanPath,
-  FIXTURES_ROOT,
-  SPEC_FIXTURE_NAMES,
+  CLAUDE_FIXTURE_NAMES,
+  PLATFORM_FIXTURE_NAMES,
+  type CoverageFact,
+  type CoverageMatrixEntry,
+  type PlatformId,
 } from "./fixtures/coverage-report.js";
 import {
   normalizeGoldenOutput,
@@ -41,6 +49,60 @@ import {
   restoreProcessEnv,
   selectFixtureAgent,
 } from "./fixtures/fixture-runtime.js";
+
+const FIXTURES_ROOT = platformFixturesRoot("claude");
+
+/**
+ * One platform's §11.4 inputs. Kept separate per platform: the three registries
+ * name different facts, so there is no denominator they share and no sum of
+ * them that means anything (D1-01).
+ */
+interface PlatformCoverage<Id extends string = string> {
+  platform: PlatformId;
+  facts: readonly CoverageFact<Id>[];
+  matrix: readonly CoverageMatrixEntry<Id>[];
+  fixturesRoot: string;
+  fixtureNames: readonly string[];
+}
+
+/**
+ * `NoInfer` on the matrix pins `Id` to the platform's own fact registry, so a
+ * matrix paired with another platform's facts fails to compile rather than
+ * quietly widening to the union of both.
+ */
+function definePlatformCoverage<Id extends string>(coverage: {
+  platform: PlatformId;
+  facts: readonly CoverageFact<Id>[];
+  matrix: readonly CoverageMatrixEntry<NoInfer<Id>>[];
+  fixturesRoot: string;
+  fixtureNames: readonly string[];
+}): PlatformCoverage<Id> {
+  return coverage;
+}
+
+const PLATFORM_COVERAGE: readonly PlatformCoverage[] = [
+  definePlatformCoverage({
+    platform: "claude",
+    facts: CLAUDE_FACTS,
+    matrix: CLAUDE_MATRIX,
+    fixturesRoot: platformFixturesRoot("claude"),
+    fixtureNames: PLATFORM_FIXTURE_NAMES.claude,
+  }),
+  definePlatformCoverage({
+    platform: "cursor",
+    facts: CURSOR_FACTS,
+    matrix: CURSOR_MATRIX,
+    fixturesRoot: platformFixturesRoot("cursor"),
+    fixtureNames: PLATFORM_FIXTURE_NAMES.cursor,
+  }),
+  definePlatformCoverage({
+    platform: "codex",
+    facts: CODEX_FACTS,
+    matrix: CODEX_MATRIX,
+    fixturesRoot: platformFixturesRoot("codex"),
+    fixtureNames: PLATFORM_FIXTURE_NAMES.codex,
+  }),
+];
 
 const { mockDetectClaudeVersion } = vi.hoisted(() => ({
   mockDetectClaudeVersion: vi.fn<() => Promise<PlatformVersion>>(),
@@ -446,7 +508,10 @@ describe("correctness gate", () => {
     mockDetectClaudeVersion.mockReset();
   });
 
-  for (const fixtureName of discoverFixtureNames()) {
+  for (const fixtureName of discoverFixtureNames(
+    FIXTURES_ROOT,
+    CLAUDE_FIXTURE_NAMES,
+  )) {
     it(`passes gate for claude/${fixtureName} without confident mismatches`, async () => {
       const { actual, expected } = await runFixtureToGolden(fixtureName);
       const mismatches = findConfidentCapabilityMismatches(
@@ -459,50 +524,75 @@ describe("correctness gate", () => {
     });
   }
 
-  it("counts coverage over the fixed §3 fact corpus, not the registered subset", () => {
-    const fixtures = discoverFixtureNames();
-    expect(fixtures.length).toBeGreaterThan(0);
+  for (const coverage of PLATFORM_COVERAGE) {
+    it(
+      "counts " +
+        coverage.platform +
+        " coverage over its own fixed fact corpus, not the registered subset",
+      () => {
+        const fixtures = discoverFixtureNames(
+          coverage.fixturesRoot,
+          coverage.fixtureNames,
+        );
+        expect(fixtures.length).toBeGreaterThan(0);
 
-    const report = buildCoverageReport(fixtures);
+        const report = buildCoverageReport(
+          coverage.facts,
+          coverage.matrix,
+          fixtures,
+        );
 
-    // §11.4: the denominator is the whole §3 registry and cannot shrink.
-    expect(report.total).toBe(FACTS.length);
-    expect(
-      report.runtimeObserved +
-        report.fixtureVerified +
-        report.documentationOnly +
-        report.unverified,
-    ).toBe(FACTS.length);
+        // §11.4: the denominator is that platform's whole registry and cannot
+        // shrink. No floor is asserted anywhere: a stricter criterion is
+        // allowed to lower the count (H1-28).
+        expect(report.total).toBe(coverage.facts.length);
+        expect(
+          report.runtimeObserved +
+            report.fixtureVerified +
+            report.documentationOnly +
+            report.unverified,
+        ).toBe(coverage.facts.length);
 
-    // No runtime probing exists while the S0 fallback holds (§9.5).
-    expect(report.runtimeObserved).toBe(0);
+        // No runtime probing exists while the S0 fallback holds (§9.5).
+        expect(report.runtimeObserved).toBe(0);
 
-    // A fact no matrix entry references is unverified — recomputed here from
-    // the registries so the report cannot quietly reclassify it.
-    const referenced = new Set<string>(
-      VERSION_MATRIX.flatMap((entry) => [...entry.factRefs]),
+        // A fact no matrix entry references is unverified — recomputed here
+        // from the registries so the report cannot quietly reclassify it.
+        const referenced = new Set<string>(
+          coverage.matrix.flatMap((entry) => [...entry.factRefs]),
+        );
+        const unreferenced = coverage.facts.filter(
+          (fact) => !referenced.has(fact.id),
+        );
+        expect(unreferenced.length).toBeGreaterThan(0);
+        expect(report.unverified).toBe(unreferenced.length);
+        for (const fact of unreferenced) {
+          expect(
+            classifyFactCoverage(fact.id, new Set(fixtures), coverage.matrix),
+          ).toBe("unverified");
+        }
+
+        // Every fact a matrix entry references is at least documentation-only.
+        expect(report.fixtureVerified + report.documentationOnly).toBe(
+          coverage.facts.length - unreferenced.length,
+        );
+
+        const formatted = formatCoverageReport(report, coverage.platform);
+        expect(formatted).toContain("platform            : " + coverage.platform);
+        expect(formatted).toContain(
+          "SPEC §3 facts       : " + coverage.facts.length,
+        );
+        expect(formatted).toContain(
+          "fixture-verified    : " + report.fixtureVerified,
+        );
+        expect(formatted).toContain("unverified          : " + report.unverified);
+      },
     );
-    const unreferenced = FACTS.filter((fact) => !referenced.has(fact.id));
-    expect(unreferenced.length).toBeGreaterThan(0);
-    expect(report.unverified).toBe(unreferenced.length);
-    for (const fact of unreferenced) {
-      expect(classifyFactCoverage(fact.id, new Set(fixtures))).toBe("unverified");
-    }
-
-    // Every fact a matrix entry references is at least documentation-only.
-    expect(report.fixtureVerified + report.documentationOnly).toBe(
-      FACTS.length - unreferenced.length,
-    );
-
-    const formatted = formatCoverageReport(report);
-    expect(formatted).toContain("SPEC §3 facts       : " + FACTS.length);
-    expect(formatted).toContain("fixture-verified    : " + report.fixtureVerified);
-    expect(formatted).toContain("unverified          : " + report.unverified);
-  });
+  }
 
   it("counts a fact as fixture evidence only when the entry exercises it entire", () => {
     const fixtures = ["tools-filters"];
-    const factId = FACTS[0]!.id;
+    const factId = CLAUDE_FACTS[0]!.id;
     const facts = [{ id: factId }] as const;
 
     const docEntryWithFixture = [
@@ -519,58 +609,61 @@ describe("correctness gate", () => {
 
     // Fixture directory exists, but the entry never claimed fixture evidence.
     expect(
-      buildCoverageReport(fixtures, { facts, matrix: docEntryWithFixture }),
+      buildCoverageReport(facts, docEntryWithFixture, fixtures),
     ).toMatchObject({ fixtureVerified: 0, documentationOnly: 1 });
 
     // Entry claims fixture evidence, but the named fixture is not available.
     expect(
-      buildCoverageReport([], {
+      buildCoverageReport(
         facts,
-        matrix: [{ ...docEntryWithFixture[0], confidence: "fixture" }],
-      }),
+        [{ ...docEntryWithFixture[0], confidence: "fixture" }],
+        [],
+      ),
     ).toMatchObject({ fixtureVerified: 0, documentationOnly: 1 });
 
     // Entry is fixture-confident and its fixture exists, but the fixture pins
     // only one edge of the fact, so the fact is not claimed (H1-28). This is
     // the case the count used to round upward.
     expect(
-      buildCoverageReport(fixtures, {
+      buildCoverageReport(
         facts,
-        matrix: [
-          { ...docEntryWithFixture[0], confidence: "fixture", verifiedFacts: [] },
-        ],
-      }),
+        [{ ...docEntryWithFixture[0], confidence: "fixture", verifiedFacts: [] }],
+        fixtures,
+      ),
     ).toMatchObject({ fixtureVerified: 0, documentationOnly: 1 });
 
     // An entry cannot claim a fact it does not even reference.
     expect(
-      buildCoverageReport(fixtures, {
+      buildCoverageReport(
         facts,
-        matrix: [
+        [
           {
             ...docEntryWithFixture[0],
             confidence: "fixture",
-            factRefs: [FACTS[1]!.id],
+            factRefs: [CLAUDE_FACTS[1]!.id],
           },
         ],
-      }),
+        fixtures,
+      ),
     ).toMatchObject({ fixtureVerified: 0, unverified: 1 });
 
     // All three conditions hold.
     expect(
-      buildCoverageReport(fixtures, {
+      buildCoverageReport(
         facts,
-        matrix: [{ ...docEntryWithFixture[0], confidence: "fixture" }],
-      }),
+        [{ ...docEntryWithFixture[0], confidence: "fixture" }],
+        fixtures,
+      ),
     ).toMatchObject({ fixtureVerified: 1, documentationOnly: 0 });
 
     // `runtime-observed` stays structurally reachable, and is 0 in the real
     // matrix only because no entry carries runtime evidence yet (§9.5).
     expect(
-      buildCoverageReport(fixtures, {
+      buildCoverageReport(
         facts,
-        matrix: [{ ...docEntryWithFixture[0], confidence: "runtime-observed" }],
-      }),
+        [{ ...docEntryWithFixture[0], confidence: "runtime-observed" }],
+        fixtures,
+      ),
     ).toMatchObject({ runtimeObserved: 1, fixtureVerified: 0 });
   });
 
@@ -621,18 +714,18 @@ describe("correctness gate fixture corpus", () => {
   const EXPECTED_PENDING_FIXTURES: string[] = [];
 
   it("declares exactly the 20 SPEC §11.1 fixture names", () => {
-    expect(SPEC_FIXTURE_NAMES).toHaveLength(20);
-    expect([...SPEC_FIXTURE_NAMES]).toEqual([...SPEC_FIXTURE_NAMES].sort());
+    expect(CLAUDE_FIXTURE_NAMES).toHaveLength(20);
+    expect([...CLAUDE_FIXTURE_NAMES]).toEqual([...CLAUDE_FIXTURE_NAMES].sort());
   });
 
   it("has no fixture directory outside the declared §11.1 corpus", () => {
-    const undeclared = findUndeclaredFixtureDirectories(FIXTURES_ROOT);
+    const undeclared = findUndeclaredFixtureDirectories(FIXTURES_ROOT, CLAUDE_FIXTURE_NAMES);
     expect(undeclared, undeclared.join(", ")).toEqual([]);
   });
 
   it("classifies every declared fixture and names its missing contract files", () => {
-    const corpus = inspectFixtureCorpus(FIXTURES_ROOT);
-    expect(corpus.map((status) => status.name)).toEqual([...SPEC_FIXTURE_NAMES]);
+    const corpus = inspectFixtureCorpus(FIXTURES_ROOT, CLAUDE_FIXTURE_NAMES);
+    expect(corpus.map((status) => status.name)).toEqual([...CLAUDE_FIXTURE_NAMES]);
 
     for (const status of corpus) {
       expect(status.completeness, status.name).not.toBe("missing");
@@ -645,23 +738,23 @@ describe("correctness gate fixture corpus", () => {
   });
 
   it("matches the registered pending-fixture list", () => {
-    const pending = pendingFixtureNames(FIXTURES_ROOT);
+    const pending = pendingFixtureNames(FIXTURES_ROOT, CLAUDE_FIXTURE_NAMES);
     expect(
       pending,
-      formatPendingFixtures(inspectFixtureCorpus(FIXTURES_ROOT)),
+      formatPendingFixtures(inspectFixtureCorpus(FIXTURES_ROOT, CLAUDE_FIXTURE_NAMES)),
     ).toEqual(EXPECTED_PENDING_FIXTURES);
   });
 
   it("runs the gate over every complete fixture and nothing else", () => {
-    const complete = discoverFixtureNames(FIXTURES_ROOT);
-    const pending = pendingFixtureNames(FIXTURES_ROOT);
+    const complete = discoverFixtureNames(FIXTURES_ROOT, CLAUDE_FIXTURE_NAMES);
+    const pending = pendingFixtureNames(FIXTURES_ROOT, CLAUDE_FIXTURE_NAMES);
 
-    expect([...complete, ...pending].sort()).toEqual([...SPEC_FIXTURE_NAMES]);
-    expect(complete.length).toBe(SPEC_FIXTURE_NAMES.length - pending.length);
+    expect([...complete, ...pending].sort()).toEqual([...CLAUDE_FIXTURE_NAMES]);
+    expect(complete.length).toBe(CLAUDE_FIXTURE_NAMES.length - pending.length);
   });
 
   it("prints the pending fixtures with a count", () => {
-    const formatted = formatPendingFixtures(inspectFixtureCorpus(FIXTURES_ROOT));
+    const formatted = formatPendingFixtures(inspectFixtureCorpus(FIXTURES_ROOT, CLAUDE_FIXTURE_NAMES));
     expect(formatted).toContain(
       "pending fixtures (SPEC §11.1): " + EXPECTED_PENDING_FIXTURES.length + " of 20",
     );

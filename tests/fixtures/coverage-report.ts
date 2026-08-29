@@ -1,11 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { FACTS, type FactId } from "../../src/adapters/claude/version/facts.js";
-import {
-  VERSION_MATRIX,
-  type FeatureCompatibility,
-} from "../../src/adapters/claude/version/matrix.js";
 import type { ResolvedCapability } from "../../src/core/model/index.js";
 import type {
   NormalizedGoldenOutput,
@@ -13,7 +8,33 @@ import type {
 } from "./golden-normalize.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-export const FIXTURES_ROOT = path.join(__dirname, "claude");
+
+/** Platforms that own a fact registry, a matrix and a fixture corpus. */
+export const PLATFORM_IDS = ["claude", "cursor", "codex"] as const;
+
+export type PlatformId = (typeof PLATFORM_IDS)[number];
+
+/** Fixture corpus directory for one platform, e.g. `tests/fixtures/cursor`. */
+export function platformFixturesRoot(platform: PlatformId): string {
+  return path.join(__dirname, platform);
+}
+
+/**
+ * The shape §11.4 needs from a platform's `facts.ts`. Structural, and generic
+ * over the platform's own `FactId` union, so the three registries stay type
+ * distinct instead of collapsing into `string`.
+ */
+export interface CoverageFact<Id extends string = string> {
+  readonly id: Id;
+}
+
+/** The shape §11.4 needs from a platform's `matrix.ts`. */
+export interface CoverageMatrixEntry<Id extends string = string> {
+  readonly factRefs: readonly Id[];
+  readonly confidence: "doc" | "fixture" | "runtime-observed";
+  readonly fixture?: string;
+  readonly verifiedFacts?: readonly Id[];
+}
 
 export type CoverageTier =
   | "runtime-observed"
@@ -116,8 +137,8 @@ export function resolveFixtureManagedBundle(
   return fs.existsSync(bundlePath) ? bundlePath : undefined;
 }
 
-/** The SPEC §11.1 corpus, declared explicitly so a dropped fixture is visible. */
-export const SPEC_FIXTURE_NAMES = [
+/** The SPEC §11.1 Claude corpus, declared so a dropped fixture stays visible. */
+export const CLAUDE_FIXTURE_NAMES = [
   "add-dir",
   "background",
   "basic",
@@ -139,6 +160,13 @@ export const SPEC_FIXTURE_NAMES = [
   "trust-inline-mcp",
   "version-drift",
 ] as const;
+
+/** Corpus each platform declares. Cursor and Codex carry one fixture each (MP). */
+export const PLATFORM_FIXTURE_NAMES = {
+  claude: CLAUDE_FIXTURE_NAMES,
+  cursor: ["basic"],
+  codex: ["basic"],
+} as const satisfies Record<PlatformId, readonly string[]>;
 
 export type FixtureCompleteness = "complete" | "incomplete" | "empty" | "missing";
 
@@ -254,7 +282,7 @@ export function findConfidentCapabilityMismatches(
 /** Classifies one §11.1 fixture directory against the §11.2 contract. */
 export function inspectFixture(
   fixtureName: string,
-  fixturesRoot: string = FIXTURES_ROOT,
+  fixturesRoot: string,
 ): FixtureStatus {
   const fixtureDir = path.join(fixturesRoot, fixtureName);
   if (!fs.existsSync(fixtureDir)) {
@@ -280,16 +308,18 @@ export function inspectFixture(
 
 /** Classifies the whole declared §11.1 corpus, in declaration order. */
 export function inspectFixtureCorpus(
-  fixturesRoot: string = FIXTURES_ROOT,
+  fixturesRoot: string,
+  fixtureNames: readonly string[],
 ): FixtureStatus[] {
-  return SPEC_FIXTURE_NAMES.map((name) => inspectFixture(name, fixturesRoot));
+  return fixtureNames.map((name) => inspectFixture(name, fixturesRoot));
 }
 
 /** Directories present on disk that are not part of the declared §11.1 corpus. */
 export function findUndeclaredFixtureDirectories(
-  fixturesRoot: string = FIXTURES_ROOT,
+  fixturesRoot: string,
+  fixtureNames: readonly string[],
 ): string[] {
-  const declared = new Set<string>(SPEC_FIXTURE_NAMES);
+  const declared = new Set<string>(fixtureNames);
   return fs
     .readdirSync(fixturesRoot, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
@@ -300,9 +330,10 @@ export function findUndeclaredFixtureDirectories(
 
 /** Fixtures that are not yet runnable: anything not `complete`. */
 export function pendingFixtureNames(
-  fixturesRoot: string = FIXTURES_ROOT,
+  fixturesRoot: string,
+  fixtureNames: readonly string[],
 ): string[] {
-  return inspectFixtureCorpus(fixturesRoot)
+  return inspectFixtureCorpus(fixturesRoot, fixtureNames)
     .filter((status) => status.completeness !== "complete")
     .map((status) => status.name)
     .sort();
@@ -331,9 +362,10 @@ export function formatPendingFixtures(statuses: readonly FixtureStatus[]): strin
 
 /** Fixtures that satisfy the §11.2 contract and can therefore be executed. */
 export function discoverFixtureNames(
-  fixturesRoot: string = FIXTURES_ROOT,
+  fixturesRoot: string,
+  fixtureNames: readonly string[],
 ): string[] {
-  return inspectFixtureCorpus(fixturesRoot)
+  return inspectFixtureCorpus(fixturesRoot, fixtureNames)
     .filter((status) => status.completeness === "complete")
     .map((status) => status.name)
     .sort();
@@ -353,9 +385,9 @@ export function discoverFixtureNames(
  * `verifiedFacts` is intersected with `factRefs`, so an entry cannot claim
  * evidence for a fact it does not even reference.
  */
-function entryFactCoverageTier(
-  entry: FeatureCompatibility,
-  factId: FactId,
+function entryFactCoverageTier<Id extends string>(
+  entry: CoverageMatrixEntry<Id>,
+  factId: Id,
   availableFixtures: ReadonlySet<string>,
 ): CoverageTier {
   const hasFixture =
@@ -383,10 +415,10 @@ function entryFactCoverageTier(
  * entry references is `unverified` — the implementation cannot make it vanish
  * from the denominator by not registering it.
  */
-export function classifyFactCoverage(
-  factId: FactId,
+export function classifyFactCoverage<Id extends string>(
+  factId: Id,
   availableFixtures: ReadonlySet<string>,
-  matrix: readonly FeatureCompatibility[] = VERSION_MATRIX,
+  matrix: readonly CoverageMatrixEntry<Id>[],
 ): CoverageTier {
   let tier: CoverageTier = "unverified";
 
@@ -403,29 +435,26 @@ export function classifyFactCoverage(
   return tier;
 }
 
-export interface CoverageReportOptions {
-  /** Denominator override, for tests only. Defaults to the full §3 registry. */
-  facts?: readonly { readonly id: FactId }[];
-  matrix?: readonly FeatureCompatibility[];
-}
-
 /**
- * Coverage counts over the fixed §3 fact corpus (SPEC §11.4). The denominator
- * is the whole registry in `facts.ts`, never the subset the implementation
- * happens to reference, so the metric can only rise by adding evidence.
+ * Coverage counts over one platform's fixed fact corpus (SPEC §11.4). The
+ * denominator is that platform's whole registry in `facts.ts`, never the subset
+ * the implementation happens to reference.
+ *
+ * One report per platform, never a sum: the three registries name different
+ * facts, so a combined figure would measure nothing and would improve whenever
+ * a corpus shrank.
  *
  * CI diagnostic only: this number is a property of the test suite, not of the
  * scanned project, and must never reach a route or a UI component
  * (SPEC §13 invariant 13). The user-facing number is
  * `EffectiveConfiguration.unknownRate`.
  */
-export function buildCoverageReport(
-  availableFixtures: readonly string[] = discoverFixtureNames(),
-  options: CoverageReportOptions = {},
+export function buildCoverageReport<Id extends string>(
+  facts: readonly CoverageFact<Id>[],
+  matrix: readonly CoverageMatrixEntry<Id>[],
+  availableFixtures: readonly string[],
 ): CoverageReport {
   const fixtureSet = new Set(availableFixtures);
-  const facts = options.facts ?? FACTS;
-  const matrix = options.matrix ?? VERSION_MATRIX;
 
   let runtimeObserved = 0;
   let fixtureVerified = 0;
@@ -458,8 +487,12 @@ export function buildCoverageReport(
   };
 }
 
-export function formatCoverageReport(report: CoverageReport): string {
+export function formatCoverageReport(
+  report: CoverageReport,
+  platform: PlatformId,
+): string {
   return [
+    "platform            : " + platform,
     "SPEC §3 facts       : " + report.total,
     "runtime-observed    : " + report.runtimeObserved,
     "fixture-verified    : " + report.fixtureVerified,

@@ -16,6 +16,7 @@ import type {
   PermissionMode,
 } from "../../src/adapters/claude/model/index.js";
 import {
+  CLAUDE_FIXTURE_NAMES,
   discoverFixtureNames,
   formatPendingFixtures,
   inspectFixtureCorpus,
@@ -230,7 +231,10 @@ describe("golden fixtures", () => {
     cleanupFixtureHome();
   });
 
-  for (const fixtureName of discoverFixtureNames(FIXTURES_ROOT)) {
+  for (const fixtureName of discoverFixtureNames(
+    FIXTURES_ROOT,
+    CLAUDE_FIXTURE_NAMES,
+  )) {
     it(`matches expected discovery and resolution for claude/${fixtureName}`, async () => {
       const { actual, expected } = await runGoldenFixture(fixtureName);
       expect(actual).toEqual(expected);
@@ -308,7 +312,10 @@ describe("golden fixtures", () => {
 
   // Fixtures from the declared SPEC §11.1 corpus that do not yet satisfy the
   // §11.2 contract are surfaced as todos instead of being silently skipped.
-  for (const status of inspectFixtureCorpus(FIXTURES_ROOT)) {
+  for (const status of inspectFixtureCorpus(
+    FIXTURES_ROOT,
+    CLAUDE_FIXTURE_NAMES,
+  )) {
     if (status.completeness === "complete") {
       continue;
     }
@@ -318,4 +325,6 @@ describe("golden fixtures", () => {
   }
 });
 
-console.warn(formatPendingFixtures(inspectFixtureCorpus(FIXTURES_ROOT)));
+console.warn(
+  formatPendingFixtures(inspectFixtureCorpus(FIXTURES_ROOT, CLAUDE_FIXTURE_NAMES)),
+);
