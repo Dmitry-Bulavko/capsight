@@ -1,6 +1,30 @@
 /**
  * Version matrix and verified platform facts.
- * @see docs/SPEC.md §3, §8
+ *
+ * ## When an entry may claim `confidence: "fixture"` (H1-28)
+ *
+ * `confidence` describes the evidence behind *this entry's own rule*, not
+ * behind the §3 facts it cites. An entry may claim `"fixture"` only when a
+ * corpus fixture makes every part of that rule the operative cause of a
+ * *confident* golden expectation: delete the rule from the resolver and a
+ * non-`unknown` value in that fixture's `expected.json` changes. A fixture
+ * that merely runs while the rule is present, or that produces only `unknown`
+ * for it, is not evidence — an `unknown` claims nothing (§11.3), so an entry
+ * whose `status` is `unknown` by construction can never reach `"fixture"`.
+ *
+ * A rule narrower than the fact it cites is written narrowly: `feature` and
+ * `notes` name the edge that is pinned and the ranks that are not. Entries are
+ * never split per rank (A1's five scopes, S1's five layers), because §11.4
+ * counts *facts* and takes the best entry per fact — splitting could not make
+ * that count more honest, and whole-fact attribution can. That is what
+ * `verifiedFacts` is for: only a fact a fixture exercises *entire* is counted
+ * counted as fixture evidence. Pinning one edge of A1 or one layer of S1 earns the
+ * entry its own confidence and earns the fact nothing.
+ *
+ * `confidence: "doc"` is always permissible: understating evidence cannot
+ * inflate the metric, while overstating it makes §11.4 mean less than it says.
+ *
+ * @see docs/SPEC.md §3, §8, §11.4
  */
 
 import type {
@@ -32,6 +56,15 @@ export interface FeatureCompatibility {
    * `expected.json` (or the case for this rule) is still missing.
    */
   pendingFixture?: string;
+  /**
+   * Subset of `factRefs` the named fixture exercises *entire*, as the operative
+   * cause of a confident golden expectation. Only these facts are counted
+   * as fixture evidence by §11.4; a fact the fixture pins one edge of rests on
+   * documentation alone however well founded the entry's own verdict is. Set
+   * (possibly empty) on every entry that names a `fixture`, so that the call is
+   * made explicitly rather than inferred from `confidence` (H1-28).
+   */
+  verifiedFacts?: readonly FactId[];
   notes?: string;
 }
 
@@ -42,9 +75,14 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.F2, FACT.F3],
     minVersion: "2.1.0",
     status: "supported",
-    confidence: "doc",
+    confidence: "fixture",
     fixture: "tools-filters",
-    notes: "disallowedTools applied before tools whitelist; MCP patterns per F3.",
+    verifiedFacts: [FACT.F2],
+    notes:
+      "disallowedTools applied before tools whitelist; MCP patterns per F3. tools-filters pins " +
+      "F2 entire: Read stands in both lists and resolves denied, Write survives the whitelist. " +
+      "F3 is pinned only for the mcp__<server> form — no fixture carries mcp__<server>__* or the " +
+      "disallowedTools-only mcp__* — so F3 rests on documentation alone in §11.4.",
   },
   {
     id: "agent.tools",
@@ -55,7 +93,11 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "doc",
     fixture: "tools-filters",
-    notes: "Empty resolved tools list blocks subagent launch from v2.1.208 (F4).",
+    verifiedFacts: [],
+    notes:
+      "Empty resolved tools list blocks subagent launch from v2.1.208 (F4). The fixture's agent " +
+      "always resolves at least one tool, so the F4 half of this entry's rule is the operative " +
+      "cause of nothing and the entry stays at doc.",
   },
   {
     id: "agent.toolAliases",
@@ -65,6 +107,10 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "doc",
     fixture: "tools-filters",
+    verifiedFacts: [],
+    notes:
+      "No fixture agent names Task or Agent in tools or disallowedTools, so nothing exercises " +
+      "the alias; the entry rests on documentation.",
   },
   {
     id: "context.filter1",
@@ -74,6 +120,10 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "doc",
     fixture: "tools-filters",
+    verifiedFacts: [],
+    notes:
+      "The fixture pins the removals for a plain foreground subagent; T1 also carries the " +
+      "ExitPlanMode exception for permissionMode: plan, which no context in the corpus has.",
   },
   {
     id: "context.filter2",
@@ -83,6 +133,10 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "doc",
     fixture: "background",
+    verifiedFacts: [],
+    notes:
+      "The background agent whitelists two of the nineteen built-ins T2 keeps, so the surviving " +
+      "list itself is pinned by nothing.",
   },
   {
     id: "context.fork",
@@ -92,6 +146,12 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "doc",
     fixture: "fork",
+    verifiedFacts: [],
+    notes:
+      "Every tool the fork fixture resolves carries enforcement unknown — the parent pool is " +
+      "not known statically — so the fixture states the rule without confidently claiming an " +
+      "outcome. T3 also claims the parent's system prompt, model and history, which the model " +
+      "does not carry at all.",
   },
   {
     id: "agent.depthLimit",
@@ -102,11 +162,16 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "fixture",
     fixture: "depth-limit",
+    verifiedFacts: [],
     notes:
       "N5 depth values: 2.1.172-2.1.216 = 5 (not configurable), 2.1.217-2.1.218 = 1, 2.1.219+ = 3. " +
       "The fixture covers N2 (removal at the limit, fork exempt) and the 2.1.219+ default of 3 " +
       "including the CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH override (N3); the pre-2.1.219 values " +
-      "of N5 rest on documentation alone until a runtime probe can observe them.",
+      "of N5 rest on documentation alone until a runtime probe can observe them. Neither fact " +
+      "is verified entire (H1-28): N5 has two unobserved version windows, and N2's fork half " +
+      "resolves with enforcement unknown in the fixture, which claims nothing (§11.3). The " +
+      "removal at the limit is confidently pinned, which is what this entry's own confidence " +
+      "rests on.",
   },
   {
     id: "agent.depthLimitDefault",
@@ -115,13 +180,16 @@ const MATRIX_ENTRIES = [
     changedIn: ["2.1.172", "2.1.217", "2.1.219"],
     observedIn: ["2.1.217"],
     status: "changed",
-    confidence: "fixture",
+    confidence: "doc",
     fixture: "version-drift",
+    verifiedFacts: [],
     notes:
       "N5 records three different defaults below 2.1.219 (5, then 1) and no fixture or probe " +
       "has observed any of them; the resolver only knows the 2.1.219+ default of 3. The " +
       "version-drift fixture pins 2.1.217 and reproduces the discrepancy, so the depth-limit " +
-      "verdict is downgraded to unknown on those versions per §8.4 rather than guessed.",
+      "verdict is downgraded to unknown on those versions per §8.4 rather than guessed. Confidence " +
+      "downgraded to doc in H1-28: every expectation the drift fixture produces for this entry " +
+      "is unknown by design, so it evidences our downgrade and not the platform's defaults.",
   },
   {
     id: FACT.P1,
@@ -131,6 +199,10 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "doc",
     fixture: "permission-inheritance",
+    verifiedFacts: [],
+    notes:
+      "The corpus has a bypassPermissions parent but no acceptEdits parent, so half of the rule " +
+      "this entry states is the operative cause of nothing.",
   },
   {
     id: FACT.P2,
@@ -138,8 +210,12 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.P2],
     minVersion: "2.1.0",
     status: "supported",
-    confidence: "doc",
+    confidence: "fixture",
     fixture: "permission-inheritance",
+    verifiedFacts: [FACT.P2],
+    notes:
+      "P2 entire: the background context declares parentPermissionMode auto, the golden resolves " +
+      "permission:auto enforced, and the agent's acceptEdits frontmatter is dropped.",
   },
   {
     id: FACT.P4,
@@ -147,8 +223,14 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.P4],
     minVersion: "2.1.223",
     status: "supported",
-    confidence: "doc",
-    fixture: "permission-inheritance",
+    confidence: "fixture",
+    fixture: "settings-permissions",
+    verifiedFacts: [FACT.P4],
+    notes:
+      "Pinned by the `restricted` agent of settings-permissions, whose frontmatter declares " +
+      "bypassPermissions while a settings layer sets disableBypassPermissionsMode: the golden " +
+      "resolves permission:default enforced. permission-inheritance, which this entry used to " +
+      "name, carries no settings layer at all and never exercised the rule (H1-28).",
   },
   {
     id: FACT.P5,
@@ -158,6 +240,10 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "doc",
     fixture: "permission-inheritance",
+    verifiedFacts: [],
+    notes:
+      "The fixture pins the frontmatter path for acceptEdits and the default; P5 enumerates six " +
+      "modes and dontAsk, auto, plan and bypassPermissions never reach it from frontmatter.",
   },
   {
     id: "agent.collisionSameDir",
@@ -165,10 +251,15 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.A4],
     minVersion: "2.1.0",
     status: "unknown",
-    confidence: "fixture",
+    confidence: "doc",
     fixture: "collision-same-dir",
+    verifiedFacts: [],
     notes:
-      "Only the single-load behaviour is documented; which file wins follows FS read order (A4), so the winner stays unknown.",
+      "Only the single-load behaviour is documented; which file wins follows FS read order (A4), " +
+      "so the winner stays unknown. Confidence downgraded to doc in H1-28: the entry's status is " +
+      "unknown by construction, so everything the fixture produces for it — both candidates " +
+      "ambiguous, collision enforcement unknown — is an unknown claim, and unknown claims " +
+      "nothing (§11.3).",
   },
   {
     id: "agent.collisionCrossScope",
@@ -179,12 +270,15 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "fixture",
     fixture: "plugin-agents",
+    verifiedFacts: [],
     notes:
-      "A1 names a full order, but the corpus pins one edge of it: the plugin-agents fixture " +
-      "has a project and a plugin agent share a name and records the project file as " +
-      "effective. The managed and `--agents` CLI ranks are not pinned here — discovery reads " +
-      "a managed layer only through a §7.8 bundle and never reads a CLI layer at all — so " +
-      "those two ranks rest on documentation alone.",
+      "A1 names a full order, but the corpus pins edges of it, not the order: plugin-agents has " +
+      "a project and a plugin agent share a name and records the project file as effective, and " +
+      "managed-simulation shows a managed bundle shadowing a project agent through a §7.8 " +
+      "overlay. No fixture loads a `--agents` CLI layer or a ~/.claude/agents/ layer, so the " +
+      "CLI and user ranks rest on documentation alone. The project-over-plugin verdict this " +
+      "entry gates is fixture-backed; fact A1 is not verified entire and stays " +
+      "on documentation alone in §11.4 (H1-28).",
   },
   {
     id: "agent.collisionNested",
@@ -194,6 +288,11 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "fixture",
     fixture: "collision-nested",
+    verifiedFacts: [FACT.A3],
+    notes:
+      "A3 entire: the fixture scans from app/, the inner declaration resolves active and the " +
+      "outer one shadowed, with the collision record enforced. The fact states one rule and the " +
+      "fixture pins it.",
   },
   {
     id: "agent.descriptionBudget",
@@ -214,10 +313,13 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "fixture",
     fixture: "managed-simulation",
+    verifiedFacts: [],
     notes:
       "The managed-simulation fixture records the block and the substitution the simulation " +
       "reports (first entry of availableModels). Which model the platform actually substitutes " +
-      "is not documented, so only the fact of the block is a platform claim.",
+      "is not documented, so only the fact of the block is a platform claim: the substituted " +
+      "value in the golden follows our own convention and evidences the implementation, not the " +
+      "platform. The block founds this entry's verdict; F8 is not verified entire (H1-28).",
   },
   {
     id: "agent.pluginFieldLimits",
@@ -226,11 +328,14 @@ const MATRIX_ENTRIES = [
     minVersion: "2.1.0",
     status: "supported",
     confidence: "doc",
-    fixture: "plugin-agents",
+    pendingFixture: "plugin-agents",
     notes:
-      "The fixture reaches F9 through discovery: its plugin roots are named by the fixture " +
-      "(plugin-roots.json), because SPEC §3 documents what a plugin's agents/ directory does " +
-      "(A1, A6, A8) but not where an installed plugin lives.",
+      "The fixture reaches the plugin scope through discovery — its plugin roots are named by " +
+      "the fixture (plugin-roots.json), because SPEC §3 documents what a plugin's agents/ " +
+      "directory does (A1, A6, A8) but not where an installed plugin lives — yet no plugin " +
+      "agent in it declares hooks, mcpServers or permissionMode, so nothing exercises the three " +
+      "fields being ignored. Reclassified from fixture to pendingFixture in H1-28: naming a " +
+      "fixture that does not carry the case overstates what the corpus covers.",
   },
   {
     id: "skills.preload",
@@ -240,6 +345,10 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "doc",
     fixture: "skills-preload",
+    verifiedFacts: [],
+    notes:
+      "The fixture pins the preload itself; K1's other half — that the field is a preload and " +
+      "not an access allowlist — needs a skill the agent does not list, which the corpus lacks.",
   },
   {
     id: "skills.disableModelInvocation",
@@ -267,6 +376,11 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "doc",
     fixture: "trust-inline-mcp",
+    verifiedFacts: [],
+    notes:
+      "R1 is pinned for the project scope only (not for an --add-dir agents directory) and R4 " +
+      "only for the named-server case (not for ~/.claude/agents/, --agents/SDK or managed " +
+      "settings), so neither fact is exercised entire.",
   },
   {
     id: "trust.frontmatterHooks",
@@ -286,6 +400,11 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "fixture",
     fixture: "instructions",
+    verifiedFacts: [],
+    notes:
+      "The fixture pins the project levels: a nested CLAUDE.md, the outer one and CLAUDE.local.md " +
+      "all reach the subagent. I1 also names ~/.claude/CLAUDE.md and managed policy files, and " +
+      "no fixture carries either, so I1 is not verified entire (H1-28).",
   },
   {
     id: "instructions.builtinKind",
@@ -295,6 +414,10 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "fixture",
     fixture: "instructions",
+    verifiedFacts: [FACT.I2],
+    notes:
+      "I2 entire: the fixture resolves the same agent under both built-in kinds and both drop " +
+      "instructions to denied/enforced, while the plain subagent context keeps all three sources.",
   },
   {
     id: "discovery.addDirAgents",
@@ -304,10 +427,13 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "fixture",
     fixture: "add-dir",
+    verifiedFacts: [FACT.A9],
     notes:
       "A9 attaches agents only; the rest of the added directory's configuration " +
       "is not loaded. Discovery-level, so the gate lands on the discovered " +
-      "agent's status rather than on a capability.",
+      "agent's status rather than on a capability. A9 entire: the golden shows " +
+      "vendor-lib's agent attached while its settings.json, .mcp.json and " +
+      "CLAUDE.md stay out of the discovery result.",
   },
   {
     id: "discovery.addDirSkills",
@@ -317,9 +443,11 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "fixture",
     fixture: "add-dir",
+    verifiedFacts: [FACT.K12],
     notes:
       "K12 is the deliberate exception to A9 and is [ext], so the add-dir " +
-      "fixture is what lifts it above documentation (§8.2).",
+      "fixture is what lifts it above documentation (§8.2). One clause, pinned " +
+      "entire: vendor-lib's skill is attached and enforced in the golden.",
   },
   {
     id: "settings.layerPrecedence",
@@ -329,11 +457,14 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "fixture",
     fixture: "settings-permissions",
+    verifiedFacts: [],
     notes:
       "The fixture pins the .claude/settings.local.json > .claude/settings.json order: the two " +
       "layers set disableBypassPermissionsMode to different values and the local layer wins. " +
-      "The managed and command-line ranks of S1 are not pinned here — discovery reads a managed " +
-      "layer only through a §7.8 bundle and never reads a CLI layer at all.",
+      "The managed, command-line and user ranks of S1 are not pinned here — discovery reads a " +
+      "managed layer only through a §7.8 bundle and never reads a CLI layer at all. The " +
+      "local-over-project verdict this entry gates is therefore fixture-backed, while fact S1 " +
+      "is not verified entire and rests on documentation alone in §11.4 (H1-28).",
   },
   {
     id: "settings.denyPrecedence",
@@ -343,12 +474,15 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "fixture",
     fixture: "settings-permissions",
+    verifiedFacts: [],
     notes:
       "The fixture denies Bash and Write in .claude/settings.json while the higher-priority " +
       "local layer allows Write and Bash(npm run test:unit); both allow entries resolve inert. " +
       "Its `permissive` agent whitelists Bash and Write in frontmatter and runs under an " +
       "inherited bypassPermissions parent mode, and both tools still resolve denied — the " +
-      "deny-over-frontmatter and deny-over-bypass halves of S2.",
+      "deny-over-frontmatter and deny-over-bypass halves of S2. S2 also claims deny is not " +
+      "overridden at *any* level; only the project settings layer carries a deny in the corpus, " +
+      "so the fact is not verified entire and rests on documentation alone (H1-28).",
   },
   {
     id: "settings.mcpRuleSyntax",
@@ -358,10 +492,13 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "fixture",
     fixture: "settings-permissions",
+    verifiedFacts: [],
     notes:
       "S3 states mcp__server(pattern) is invalid, so the fixture's allow entry grants nothing. " +
       "What a *valid* mcp rule grants is a different claim and is not founded by S3: a deny in " +
-      "that form only makes the MCP tools it names undetermined, never a confident verdict.",
+      "that form only makes the MCP tools it names undetermined, never a confident verdict. S3 also " +
+      "names three valid forms and no fixture pins what they grant, so the fact is not verified " +
+      "entire (H1-28).",
   },
   {
     id: "settings.allowGlobIneffective",
@@ -371,6 +508,10 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "fixture",
     fixture: "settings-permissions",
+    verifiedFacts: [FACT.S4],
+    notes:
+      "S4 entire: both globs the fact names, `*` and `mcp__*`, sit in the fixture's allow list " +
+      "and both resolve blocked/enforced.",
   },
   {
     id: "settings.denyBareTool",
@@ -380,10 +521,13 @@ const MATRIX_ENTRIES = [
     status: "supported",
     confidence: "fixture",
     fixture: "settings-permissions",
+    verifiedFacts: [FACT.S5],
     notes:
       "Pinned by the `permissive` agent of the fixture, whose frontmatter whitelists Bash and " +
       "Write: without S5 both would resolve available, and in the golden both are denied. A " +
-      "tool the frontmatter already excluded would not have pinned anything.",
+      "tool the frontmatter already excluded would not have pinned anything. S5 has one clause and " +
+      "is verified entire; S2 is also referenced here but is pinned only at one layer, so it is " +
+      "not claimed (H1-28).",
   },
   {
     id: "settings.bashPrefixRules",

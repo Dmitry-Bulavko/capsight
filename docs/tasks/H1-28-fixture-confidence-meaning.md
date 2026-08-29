@@ -49,3 +49,20 @@ Reasoning 2 would make `confidence: "fixture"` unreachable for every entry, whic
 ## Notes
 
 Raised by H1-26, which asked the question explicitly rather than picking silently. This is the same class of defect H1-08 fixed one level up: there the denominator was gameable, here the numerator's admission criterion is unstated. A maturity metric with an undefined numerator is not better than one with a movable denominator.
+
+## Orchestrator verification (post-implementation)
+
+The rule, as written into the matrix header, resolves the three-way contradiction by separating two questions that had been conflated:
+
+- **Entry confidence** answers "what backs *this entry's rule*", and gates enforced verdicts per §8.2. An entry may claim `"fixture"` only when deleting the rule from the resolver would change a *non-`unknown`* value in some fixture's `expected.json`. An `unknown` claims nothing (§11.3), so it cannot be evidence — which is why an entry whose `status` is `unknown` by construction can never reach `"fixture"`.
+- **Fact coverage** answers a different question for §11.4, and gets its own field: `verifiedFacts ⊆ factRefs` names only the facts a fixture exercises *entire*. One edge of A1's five-rank order is not the order.
+
+That distinction is the insight. Position 2 from the finding ("a fixture verifies our implementation, not the platform") had to be rejected outright — §8.2 requires the level to be reachable — and positions 1 and 3 turn out not to conflict once the entry and the fact are asked about separately.
+
+**Coverage 15 → 9 of 92, and the direction is the point.** Nine facts were dropped, each with the reason recorded on its entry: A1 and S1 (ranks and layers no fixture loads), S2 (deny pinned at one layer), S3 (its valid forms pinned by nothing), I1 (`~/.claude/CLAUDE.md` and managed policy files absent from the corpus), N5 (two unobserved version windows), N2 (the fork half resolves `unknown`), A4 (unknown by construction), F8 (see below). Four were added after checking them against goldens rather than asserting them. A metric that only ever rises is not measuring anything.
+
+**Three entry-level corrections fell out of the pass**, each a small overclaim: `agent.collisionSameDir` and `agent.depthLimitDefault` dropped to `doc` (neither produces a confident expectation at all), `agent.pluginFieldLimits` to `pendingFixture` (no plugin agent in the corpus declares `hooks`, `mcpServers` or `permissionMode`, so H1-23's fixture reaches the plugin scope but never this rule — its `doc` level was right, its stated reason was not), and P4's fixture pointer moved to the fixture that actually exercises it.
+
+No golden moved: every downgraded entry either cites only `[doc]` facts or already resolved non-`supported`, so no resolver behaviour changed.
+
+**Filed as H1-29:** `managed-simulation` asserts `effective: "claude-sonnet-4"` with `enforcement: "enforced"` for a blocked model, but F8 says only that *a* substitution happens, not which model. The value is our own convention stated as platform fact — §0.1.1 in its purest form.

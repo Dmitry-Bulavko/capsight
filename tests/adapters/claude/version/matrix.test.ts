@@ -287,6 +287,52 @@ describe("VERSION_MATRIX", () => {
     }
   });
 
+  it("makes every fixture entry state which facts it exercises entire (H1-28)", () => {
+    for (const entry of VERSION_MATRIX) {
+      if (!entry.fixture) {
+        // No fixture, nothing to attribute: the field must stay unset so a
+        // pending entry cannot smuggle a fact claim into the §11.4 numerator.
+        expect(
+          entry.verifiedFacts,
+          `${entry.id} has no fixture and must not list verifiedFacts`,
+        ).toBeUndefined();
+        continue;
+      }
+
+      // The call is explicit: an entry with a fixture says which of its facts
+      // the fixture exercises entire, even when the answer is none.
+      expect(
+        entry.verifiedFacts,
+        `${entry.id} names a fixture and must declare verifiedFacts`,
+      ).toBeDefined();
+
+      for (const factId of entry.verifiedFacts ?? []) {
+        expect(
+          entry.factRefs.includes(factId),
+          `${entry.id} claims ${factId}, which it does not reference`,
+        ).toBe(true);
+      }
+
+      if ((entry.verifiedFacts ?? []).length > 0) {
+        // Claiming a fact whole is exactly the claim `confidence` records.
+        expect(
+          entry.confidence,
+          `${entry.id} claims fact evidence at confidence ${entry.confidence}`,
+        ).not.toBe("doc");
+      }
+    }
+  });
+
+  it("keeps an entry that can only resolve unknown out of fixture confidence", () => {
+    // An entry whose status is `unknown` by construction emits no confident
+    // verdict, so no fixture can make its rule the operative cause of one.
+    for (const entry of VERSION_MATRIX) {
+      if (entry.status === "unknown") {
+        expect(entry.confidence, entry.id).toBe("doc");
+      }
+    }
+  });
+
   it("marks an entry whose fixture is not written yet as pending, not verified", () => {
     for (const entry of VERSION_MATRIX) {
       expect(
@@ -338,7 +384,10 @@ describe("lookupFeature", () => {
     expect(result).toMatchObject({
       id: "agent.disallowedTools",
       status: "supported",
-      confidence: "doc",
+      // tools-filters pins F2 entire, so the entry is fixture-confident; F3 is
+      // only partly exercised and is left out of `verifiedFacts` (H1-28).
+      confidence: "fixture",
+      verifiedFacts: [FACT.F2],
       factRefs: [FACT.F2, FACT.F3],
     });
   });

@@ -119,4 +119,5 @@ Order: H1-01 → H1-02 → H1-03 → H1-05 → H1-06 → H1-04 → H1-07 → H1-
 | H1-25 | H1 | Flaky SIGTERM→SIGKILL escalation test | done | §9.4, §11.3 | tests/adapters/claude/probing/mcp-probe.test.ts | Cause identified; 20 consecutive passes |
 | H1-26 | H1 | Cross-scope shadowing (A1) is the last ungated collision rule | done | A1, §8.2, §6, inv 3 | src/adapters/claude/version/matrix.ts, discovery/agents.ts | A1 gated like A3/A4 |
 | H1-27 | H1 | Security findings contradict F9 for plugin agents | done | F9, §7.6, inv 3, 12, 14 | src/adapters/claude/resolution/security-findings.ts | No finding whose premise F9 nullifies |
-| H1-28 | H1 | `confidence: "fixture"` means three different things across entries | todo | §8.1, §8.2, §11.4, §0.1.3 | src/adapters/claude/version/matrix.ts, tests/fixtures/coverage-report.ts | One stated rule, applied uniformly |
+| H1-28 | H1 | `confidence: "fixture"` means three different things across entries | done | §8.1, §8.2, §11.4, §0.1.3 | src/adapters/claude/version/matrix.ts, tests/fixtures/coverage-report.ts | One stated rule, applied uniformly |
+| H1-29 | H1 | F8 model substitution asserts an undocumented value | todo | F8, §0.1.1, §7.8, inv 14 | src/application/simulate.ts | Substitute identity unknown unless established |

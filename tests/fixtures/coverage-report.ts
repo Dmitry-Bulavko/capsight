@@ -340,20 +340,33 @@ export function discoverFixtureNames(
 }
 
 /**
- * Evidence one matrix entry contributes for a fact it references.
+ * Evidence one matrix entry contributes **for one fact** it references.
  *
- * A named fixture that exists on disk is necessary but not sufficient: the
- * entry's own `confidence` must also have been raised to `"fixture"` or
- * higher. Directory existence alone proves nothing about whether the fixture
- * exercises the fact (SPEC §11.4, §0.1.3).
+ * Three conditions, all necessary (SPEC §11.4, §0.1.3, matrix.ts header):
+ * the named fixture exists on disk; the entry's own `confidence` was raised
+ * above `doc`; and the entry lists *this fact* in `verifiedFacts`, meaning the
+ * fixture exercises the fact entire rather than one edge of it. The third is
+ * what keeps the numerator from being talked upward: an entry that pins one
+ * rank of A1 or one layer of S1 is fixture-backed for its own verdict and
+ * contributes `documentation-only` for the fact.
+ *
+ * `verifiedFacts` is intersected with `factRefs`, so an entry cannot claim
+ * evidence for a fact it does not even reference.
  */
-function entryCoverageTier(
+function entryFactCoverageTier(
   entry: FeatureCompatibility,
+  factId: FactId,
   availableFixtures: ReadonlySet<string>,
 ): CoverageTier {
   const hasFixture =
     entry.fixture !== undefined && availableFixtures.has(entry.fixture);
   if (!hasFixture) {
+    return "documentation-only";
+  }
+  if (!entry.factRefs.includes(factId)) {
+    return "documentation-only";
+  }
+  if (!entry.verifiedFacts?.includes(factId)) {
     return "documentation-only";
   }
   if (entry.confidence === "runtime-observed") {
@@ -381,7 +394,7 @@ export function classifyFactCoverage(
     if (!entry.factRefs.includes(factId)) {
       continue;
     }
-    const candidate = entryCoverageTier(entry, availableFixtures);
+    const candidate = entryFactCoverageTier(entry, factId, availableFixtures);
     if (COVERAGE_RANK[candidate] > COVERAGE_RANK[tier]) {
       tier = candidate;
     }

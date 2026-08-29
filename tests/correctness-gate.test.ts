@@ -500,18 +500,20 @@ describe("correctness gate", () => {
     expect(formatted).toContain("unverified          : " + report.unverified);
   });
 
-  it("counts fixture-verified only when a matrix entry raised its own confidence", () => {
+  it("counts a fact as fixture evidence only when the entry exercises it entire", () => {
     const fixtures = ["tools-filters"];
-    const facts = [{ id: FACTS[0]!.id }] as const;
+    const factId = FACTS[0]!.id;
+    const facts = [{ id: factId }] as const;
 
     const docEntryWithFixture = [
       {
         id: "probe",
         feature: "probe",
-        factRefs: [FACTS[0]!.id],
+        factRefs: [factId],
         status: "supported",
         confidence: "doc",
         fixture: "tools-filters",
+        verifiedFacts: [factId],
       },
     ] as const;
 
@@ -528,7 +530,33 @@ describe("correctness gate", () => {
       }),
     ).toMatchObject({ fixtureVerified: 0, documentationOnly: 1 });
 
-    // Both conditions hold.
+    // Entry is fixture-confident and its fixture exists, but the fixture pins
+    // only one edge of the fact, so the fact is not claimed (H1-28). This is
+    // the case the count used to round upward.
+    expect(
+      buildCoverageReport(fixtures, {
+        facts,
+        matrix: [
+          { ...docEntryWithFixture[0], confidence: "fixture", verifiedFacts: [] },
+        ],
+      }),
+    ).toMatchObject({ fixtureVerified: 0, documentationOnly: 1 });
+
+    // An entry cannot claim a fact it does not even reference.
+    expect(
+      buildCoverageReport(fixtures, {
+        facts,
+        matrix: [
+          {
+            ...docEntryWithFixture[0],
+            confidence: "fixture",
+            factRefs: [FACTS[1]!.id],
+          },
+        ],
+      }),
+    ).toMatchObject({ fixtureVerified: 0, unverified: 1 });
+
+    // All three conditions hold.
     expect(
       buildCoverageReport(fixtures, {
         facts,
