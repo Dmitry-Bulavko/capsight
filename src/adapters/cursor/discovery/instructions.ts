@@ -93,7 +93,6 @@ async function parseRuleFile(
 export async function discoverInstructions(
   projectScopes: ProjectScopeLevel[],
   projectPath: string,
-  _repoRoot: string,
 ): Promise<DiscoveredInstruction[]> {
   const instructions: DiscoveredInstruction[] = [];
   const resolvedProject = path.resolve(projectPath);

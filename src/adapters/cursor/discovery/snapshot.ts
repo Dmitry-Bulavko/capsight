@@ -29,7 +29,7 @@ export async function buildProjectSnapshot(
     await Promise.all([
       discoverAgents(walk.scopes, projectPath),
       discoverSkills(walk.scopes, projectPath),
-      discoverInstructions(walk.scopes, projectPath, walk.repoRoot),
+      discoverInstructions(walk.scopes, projectPath),
       discoverMcpServers(walk.scopes, projectPath),
       discoverSettingsLayers(),
       readTrustState(projectPath),

@@ -1,8 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-const MAX_WALK_DEPTH = 256;
-
 export interface ProjectScopeLevel {
   path: string;
   hasCursorDir: boolean;
@@ -15,7 +13,6 @@ export interface ProjectScopeLevel {
 
 export interface WalkProjectScopesResult {
   projectPath: string;
-  repoRoot: string;
   scopes: ProjectScopeLevel[];
 }
 
@@ -71,7 +68,7 @@ async function inspectScopeLevel(dirPath: string): Promise<ProjectScopeLevel> {
   };
 }
 
-/** @see docs/CURSOR-FACTS.md CW1–CW2, CW5 */
+/** @see docs/CURSOR-FACTS.md CW2, CW5 */
 export async function walkProjectScopes(
   startPath: string,
 ): Promise<WalkProjectScopesResult> {
@@ -81,29 +78,8 @@ export async function walkProjectScopes(
     throw new Error(`Project path is not a directory: ${projectPath}`);
   }
 
-  let repoRoot = projectPath;
-  let current = projectPath;
-  let depth = 0;
-
-  while (depth < MAX_WALK_DEPTH) {
-    const gitPath = path.join(current, ".git");
-    if (await pathExists(gitPath)) {
-      repoRoot = current;
-      break;
-    }
-
-    const parent = path.dirname(current);
-    if (parent === current) {
-      break;
-    }
-
-    current = parent;
-    depth += 1;
-  }
-
   return {
     projectPath,
-    repoRoot,
     scopes: [await inspectScopeLevel(projectPath)],
   };
 }
