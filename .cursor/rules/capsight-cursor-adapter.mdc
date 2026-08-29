@@ -1,0 +1,34 @@
+---
+description: Cursor adapter invariants — platform-specific code, version matrix, read-only discovery
+globs: src/adapters/cursor/**
+alwaysApply: false
+---
+
+# Cursor Adapter Rules
+
+All Cursor platform knowledge lives under `src/adapters/cursor/`. Never add `.cursor/` paths, frontmatter field names, or version checks to `src/core/`.
+
+## Version matrix
+
+- All version-sensitive behavior goes through `src/adapters/cursor/version/matrix.ts`.
+- Every non-trivial resolver rule needs a matrix entry and a fixture.
+- Features without matrix entries resolve as `unknown`.
+
+## Discovery (read-only)
+
+- Never write to the scanned project's `.cursor/**`.
+- Only external process allowed in normal scan: `cursor --version`.
+- Register invalid agent files with specific reasons.
+- Mark same-directory name collisions as `ambiguous`; do not pick a winner.
+
+## Facts corpus
+
+- Verified facts: [docs/CURSOR-FACTS.md](../../docs/CURSOR-FACTS.md)
+
+## Secrets
+
+- Log and cache **key names** only — never env values, tokens, or MCP credentials.
+
+## When uncertain
+
+Return `unknown` with a reason. A confident wrong answer is worse than a missing feature.

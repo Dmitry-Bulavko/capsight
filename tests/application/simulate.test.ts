@@ -147,6 +147,7 @@ describe("managed simulation fixture", () => {
         effective: "claude-sonnet-4",
         matrixRef: "F8",
         enforcement: "enforced",
+        effectiveEnforcement: "unknown",
       }),
     ]);
   });
@@ -165,6 +166,7 @@ describe("managed simulation fixture", () => {
 
     const change = result.delta.modelChanges[0]!;
     expect(change.enforcement).toBe("unknown");
+    expect(change.effectiveEnforcement).toBe("unknown");
     expect(change.enforcementReason).toContain("SPEC §8.3");
     // The substitution is still reported; only the platform claim is not.
     expect(change.declared).toBe("blocked-model");

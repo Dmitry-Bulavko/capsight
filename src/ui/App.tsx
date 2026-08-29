@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { PlatformId } from "../adapters/platform.js";
 import type { Agent, ContextPreset, EffectiveConfiguration } from "../core/model/index.js";
 import type { ScanStatusSummary } from "../application/scan-store.js";
 import {
@@ -20,7 +21,9 @@ import {
 } from "./components/ContextSelector.js";
 import { ProjectSummary, type ResourceCounts } from "./components/ProjectSummary.js";
 import {
+  loadStoredPlatform,
   loadStoredProjectPath,
+  saveStoredPlatform,
   saveStoredProjectPath,
   ScanPanel,
 } from "./components/ScanPanel.js";
@@ -54,6 +57,8 @@ export function App() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [resourceCounts, setResourceCounts] = useState<ResourceCounts | null>(null);
   const [projectPath, setProjectPath] = useState("");
+  const [platform, setPlatform] = useState<PlatformId>("claude");
+  const platformRef = useRef<PlatformId>("claude");
   const [fallbackPath, setFallbackPath] = useState("");
   const [browseUnavailable, setBrowseUnavailable] = useState(false);
   const [browsing, setBrowsing] = useState(false);
@@ -62,6 +67,10 @@ export function App() {
   useEffect(() => {
     projectPathRef.current = projectPath;
   }, [projectPath]);
+
+  useEffect(() => {
+    platformRef.current = platform;
+  }, [platform]);
   const [scanning, setScanning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +96,16 @@ export function App() {
     setSummary(project);
     setAgents(agentList);
     setResourceCounts(countsFromSummary(project));
+    const scannedPlatform = project.version.platform;
+    if (
+      scannedPlatform === "claude" ||
+      scannedPlatform === "cursor" ||
+      scannedPlatform === "codex"
+    ) {
+      setPlatform(scannedPlatform);
+      platformRef.current = scannedPlatform;
+      saveStoredPlatform(scannedPlatform);
+    }
     setNeedsScan(false);
   }, []);
 
@@ -119,16 +138,19 @@ export function App() {
   const editorPendingCount = totalPendingChanges(agents, editorPending);
 
   const runScan = useCallback(
-    async (overridePath?: string) => {
+    async (overridePath?: string, overridePlatform?: PlatformId) => {
       const pathToScan = (overridePath ?? projectPathRef.current).trim();
+      const platformToScan = overridePlatform ?? platformRef.current;
       setScanning(true);
       setError(null);
       try {
-        const result = await scanProject(pathToScan || undefined);
+        const result = await scanProject(pathToScan || undefined, platformToScan);
         if (pathToScan) {
           setProjectPath(pathToScan);
           saveStoredProjectPath(pathToScan);
         }
+        setPlatform(platformToScan);
+        saveStoredPlatform(platformToScan);
         setResourceCounts(resourceCountsFromScan(result));
         await loadDiscovery();
       } catch (err) {
@@ -138,6 +160,18 @@ export function App() {
       }
     },
     [loadDiscovery],
+  );
+
+  const handlePlatformChange = useCallback(
+    (nextPlatform: string) => {
+      const parsed = nextPlatform as PlatformId;
+      setPlatform(parsed);
+      saveStoredPlatform(parsed);
+      if (projectPathRef.current.trim()) {
+        void runScan(undefined, parsed);
+      }
+    },
+    [runScan],
   );
 
   const handleBrowse = useCallback(async () => {
@@ -290,6 +324,15 @@ export function App() {
       setLoading(true);
       setError(null);
       let initialPath = loadStoredProjectPath() ?? "";
+      const storedPlatform = loadStoredPlatform();
+      if (
+        storedPlatform === "claude" ||
+        storedPlatform === "cursor" ||
+        storedPlatform === "codex"
+      ) {
+        setPlatform(storedPlatform);
+        platformRef.current = storedPlatform;
+      }
       try {
         if (!initialPath) {
           const config = await fetchProjectConfig();
@@ -340,6 +383,8 @@ export function App() {
           {(needsScan || summary) && (
             <ScanPanel
               projectPath={projectPath}
+              platform={platform}
+              onPlatformChange={handlePlatformChange}
               onBrowse={handleBrowse}
               onRescan={handleRescan}
               onFallbackScan={handleFallbackScan}

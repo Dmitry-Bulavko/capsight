@@ -3,6 +3,7 @@ import {
   computeAgentToolFrontmatter,
   diffToolFrontmatter,
 } from "../adapters/claude/generation/plan.js";
+import { assertClaudePlatform } from "./platform-guard.js";
 import { getOrScan } from "./scan-store.js";
 
 export interface PlanPendingState {
@@ -50,6 +51,7 @@ export async function plan(options: PlanOptions): Promise<PlanResult> {
     : await getOrScan(options.projectPath ?? process.cwd());
 
   const snapshot = scanResult.snapshot;
+  assertClaudePlatform(snapshot, "Configuration planning");
   const warnings: PlanWarning[] = [];
 
   if (options.editSnapshotId !== snapshot.id) {

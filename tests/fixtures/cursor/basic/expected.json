@@ -1,0 +1,257 @@
+{
+  "discovery": {
+    "agents": [
+      {
+        "name": "example",
+        "description": "Example Cursor subagent for API work",
+        "source": {
+          "platform": "cursor",
+          "scope": "project",
+          "path": ".cursor/agents/example.md"
+        },
+        "status": "active",
+        "configuration": {
+          "tools": [
+            "Read",
+            "Grep"
+          ],
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      }
+    ],
+    "skills": [
+      {
+        "name": "example",
+        "description": "Example skill for API routes",
+        "source": {
+          "platform": "cursor",
+          "scope": "project",
+          "path": ".cursor/skills/example/SKILL.md"
+        },
+        "path": ".cursor/skills/example/SKILL.md",
+        "kind": "skill"
+      }
+    ],
+    "instructions": [
+      {
+        "type": "rule",
+        "path": ".cursor/rules/example.mdc",
+        "scope": "project",
+        "sizeBytes": 94,
+        "description": "Example project rule",
+        "alwaysApply": true
+      },
+      {
+        "type": "AGENTS.md",
+        "path": "AGENTS.md",
+        "scope": "project",
+        "sizeBytes": 46
+      }
+    ],
+    "mcpServers": [
+      {
+        "name": "github",
+        "source": {
+          "platform": "cursor",
+          "scope": "project",
+          "path": ".cursor/mcp.json"
+        },
+        "configPath": ".cursor/mcp.json",
+        "transport": "stdio",
+        "definitionKind": "config-file",
+        "status": "configured",
+        "configHash": "8f6e318fa3eeabdb",
+        "envKeys": [
+          "GITHUB_TOKEN"
+        ]
+      }
+    ],
+    "settings": [],
+    "trust": {
+      "accepted": "unknown",
+      "projectPath": "."
+    },
+    "environment": {
+      "relevant": []
+    }
+  },
+  "resolutions": [
+    {
+      "agentName": "example",
+      "context": {
+        "preset": "background-subagent",
+        "isMainSession": false,
+        "isBackground": true,
+        "isFork": false,
+        "isTeammate": false,
+        "depth": 0,
+        "maxDepth": 3
+      },
+      "capabilities": [
+        {
+          "capabilityId": "Read",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "cursor",
+              "scope": "project",
+              "path": ".cursor/agents/example.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "Cursor subagent tool pool semantics are not verified (CA4).",
+              "source": {
+                "platform": "cursor",
+                "scope": "project",
+                "path": ".cursor/agents/example.md"
+              },
+              "matrixRef": "agent.toolPool"
+            }
+          ]
+        },
+        {
+          "capabilityId": "Grep",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "cursor",
+              "scope": "project",
+              "path": ".cursor/agents/example.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "Cursor subagent tool pool semantics are not verified (CA4).",
+              "source": {
+                "platform": "cursor",
+                "scope": "project",
+                "path": ".cursor/agents/example.md"
+              },
+              "matrixRef": "agent.toolPool"
+            }
+          ]
+        },
+        {
+          "capabilityId": "instruction:AGENTS.md",
+          "kind": "instruction",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "cursor",
+              "scope": "project",
+              "path": "AGENTS.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "Instruction \"AGENTS.md\" application semantics are not verified for Cursor.",
+              "source": {
+                "platform": "cursor",
+                "scope": "project",
+                "path": "AGENTS.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "instruction:.cursor/rules/example.mdc",
+          "kind": "instruction",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "cursor",
+              "scope": "project",
+              "path": ".cursor/rules/example.mdc"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "Instruction \"rule\" application semantics are not verified for Cursor.",
+              "source": {
+                "platform": "cursor",
+                "scope": "project",
+                "path": ".cursor/rules/example.mdc"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "skill:example",
+          "kind": "skill",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "cursor",
+              "scope": "project",
+              "path": ".cursor/skills/example/SKILL.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "Skill \"example\" (skill) attachment semantics are not verified (CS2).",
+              "source": {
+                "platform": "cursor",
+                "scope": "project",
+                "path": ".cursor/skills/example/SKILL.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "mcp:github",
+          "kind": "mcp_server",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "cursor",
+              "scope": "project",
+              "path": ".cursor/mcp.json"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "not-probed",
+              "message": "MCP server \"github\" is configured but not probed (CM4).",
+              "source": {
+                "platform": "cursor",
+                "scope": "project",
+                "path": ".cursor/mcp.json"
+              }
+            }
+          ]
+        }
+      ],
+      "warnings": [
+        {
+          "category": "trust",
+          "severity": "info",
+          "message": "Cursor project trust model is not documented (CT1).",
+          "evidence": [
+            {
+              "platform": "cursor",
+              "scope": "unknown"
+            }
+          ],
+          "matrixRef": "trust.project",
+          "enforcement": "unknown"
+        }
+      ],
+      "unknownRate": 1
+    }
+  ]
+}

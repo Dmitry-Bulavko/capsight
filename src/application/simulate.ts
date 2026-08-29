@@ -23,6 +23,7 @@ import {
   resolveEnforcement,
 } from "../adapters/claude/version/matrix.js";
 import { getLastScan, getOrScan } from "./scan-store.js";
+import { assertClaudePlatform } from "./platform-guard.js";
 
 export { ManagedBundleError } from "../adapters/claude/discovery/managed-overlay.js";
 
@@ -48,19 +49,24 @@ export interface ModelChangeDelta {
   declared: string;
   /**
    * Model the simulation reports after the block — the first `availableModels`
-   * entry. F8 documents that a substitution happens, not which model wins, so
-   * this value is never more than the allowlist order we read.
+   * entry. F8 documents that a substitution happens, not which model wins; this
+   * value follows our allowlist-order convention only.
    */
   effective: string;
   source: SourceInfo;
   matrixRef: typeof FACT.F8;
   /**
-   * Matrix verdict on F8 for the scanned version (§6). `unknown` means the
-   * block itself is not founded on this version, not merely the substitution.
+   * Confidence that the declared model is blocked and a substitution occurs (F8).
+   * Gated on the scanned version via the matrix (§8.2, §8.3).
    */
   enforcement: Enforcement;
-  /** Reason the verdict was downgraded, when it was (§8.2, §8.3). */
+  /** Reason the block verdict was downgraded, when it was. */
   enforcementReason?: string;
+  /**
+   * Confidence in the substitute model identity. F8 does not name which model
+   * the platform picks, so this stays `unknown` unless documentation establishes it.
+   */
+  effectiveEnforcement: Enforcement;
 }
 
 export interface IgnoredFieldDelta {
@@ -196,6 +202,7 @@ function findModelChanges(
       matrixRef: FACT.F8,
       enforcement: decision.enforcement,
       ...(decision.reason ? { enforcementReason: decision.reason.message } : {}),
+      effectiveEnforcement: "unknown",
     },
   ];
 }
@@ -357,6 +364,8 @@ export async function simulateManagedOverlay(
     const scanResult = getLastScan() ?? (await getOrScan());
     baselineSnapshot = scanResult.snapshot;
   }
+
+  assertClaudePlatform(baselineSnapshot, "Managed simulation");
 
   const simulatedSnapshot = applyManagedOverlay(baselineSnapshot, bundle);
   const context = buildExecutionContext("main-session");

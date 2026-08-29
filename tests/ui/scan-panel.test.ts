@@ -1,8 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   formatProjectFolderLabel,
+  loadStoredPlatform,
   loadStoredProjectPath,
+  PLATFORM_STORAGE_KEY,
   PROJECT_PATH_STORAGE_KEY,
+  saveStoredPlatform,
   saveStoredProjectPath,
 } from "../../src/ui/components/ScanPanel.js";
 
@@ -50,6 +53,33 @@ describe("ScanPanel project path storage", () => {
     storage[PROJECT_PATH_STORAGE_KEY] = "/tmp/old";
     saveStoredProjectPath("   ");
     expect(storage[PROJECT_PATH_STORAGE_KEY]).toBeUndefined();
+  });
+});
+
+describe("ScanPanel platform storage", () => {
+  let storage: Record<string, string>;
+
+  beforeEach(() => {
+    storage = {};
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => storage[key] ?? null,
+      setItem: (key: string, value: string) => {
+        storage[key] = value;
+      },
+      removeItem: (key: string) => {
+        delete storage[key];
+      },
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("persists platform selection without a project path", () => {
+    saveStoredPlatform("cursor");
+    expect(storage[PLATFORM_STORAGE_KEY]).toBe("cursor");
+    expect(loadStoredPlatform()).toBe("cursor");
   });
 });
 

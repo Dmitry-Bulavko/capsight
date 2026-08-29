@@ -62,6 +62,7 @@ function makeSnapshot(overrides: Partial<ProjectSnapshot> = {}): ProjectSnapshot
 
 function makeScanResult(overrides: Partial<ProjectSnapshot> = {}): ScanResult {
   return {
+    platform: "claude",
     snapshot: makeSnapshot(overrides),
     status: "complete",
   };
@@ -142,6 +143,7 @@ describe("CLI commands", () => {
 
       expect(summary).toEqual({
         projectPath: "/mock/project",
+        platform: "claude",
         scannedAt: "2026-01-01T12:00:00.000Z",
         version: mockVersion,
         agents: {

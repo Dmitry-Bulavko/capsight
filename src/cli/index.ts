@@ -9,6 +9,7 @@ import type {
   ResolvedCapability,
   Warning,
 } from "../core/model/index.js";
+import { parsePlatformId, type PlatformId } from "../adapters/platform.js";
 import type { ScanResult } from "../application/scan.js";
 import { PERMISSION_MODES, type PermissionMode } from "../adapters/claude/model/index.js";
 import { buildExecutionContext } from "../adapters/claude/resolution/context.js";
@@ -42,8 +43,11 @@ import {
   type RollbackResult,
 } from "../application/apply.js";
 
-export async function runScan(projectPath: string): Promise<ScanResult> {
-  return scanAndStore(projectPath);
+export async function runScan(
+  projectPath: string,
+  platform?: PlatformId,
+): Promise<ScanResult> {
+  return scanAndStore(projectPath, platform);
 }
 
 export async function runStatus(): Promise<ScanStatusSummary> {
@@ -278,8 +282,18 @@ program
   .command("scan")
   .description("Scan project configuration (read-only)")
   .argument("[path]", "Project path", process.cwd())
-  .action(async (projectPath: string) => {
-    const result = await runScan(projectPath);
+  .option("--platform <id>", "Platform adapter (claude | cursor | codex)")
+  .action(async (projectPath: string, options: { platform?: string }) => {
+    let platform: PlatformId | undefined;
+    if (options.platform !== undefined) {
+      platform = parsePlatformId(options.platform);
+      if (!platform) {
+        console.error(`Unknown platform: ${options.platform}`);
+        process.exitCode = 1;
+        return;
+      }
+    }
+    const result = await runScan(projectPath, platform);
     console.log(JSON.stringify(result, null, 2));
   });
 

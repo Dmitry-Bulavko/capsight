@@ -926,15 +926,27 @@ src/
 │   ├── graph/
 │   └── warnings/
 │
-├── adapters/claude/         вся Claude-специфика
-│   ├── adapter.ts
-│   ├── version/             matrix.ts, facts.ts
-│   ├── environment/
-│   ├── discovery/           agents, skills, instructions, mcp, settings, trust
-│   ├── parsing/
-│   ├── resolution/          правила §4.4
-│   ├── probing/             mcp probe, runtime probe (S0)
-│   └── generation/          только M3
+├── adapters/
+│   ├── registry.ts          platform id → adapter
+│   ├── claude/              вся Claude-специфика
+│   │   ├── adapter.ts
+│   │   ├── version/         matrix.ts, facts.ts
+│   │   ├── environment/
+│   │   ├── discovery/       agents, skills, instructions, mcp, settings, trust
+│   │   ├── parsing/
+│   │   ├── resolution/      правила §4.4
+│   │   ├── probing/         mcp probe, runtime probe (S0)
+│   │   └── generation/      только M3
+│   ├── cursor/              Cursor IDE agent config (MP phase)
+│   │   ├── version/
+│   │   ├── discovery/
+│   │   ├── parsing/
+│   │   └── resolution/
+│   └── codex/               OpenAI Codex CLI config (MP phase)
+│       ├── version/
+│       ├── discovery/
+│       ├── parsing/
+│       └── resolution/
 │
 ├── application/             scan, inspect, explain, simulate, plan, apply
 ├── server/                  routes, services
@@ -942,7 +954,7 @@ src/
 └── ui/                      pages, inspectors, why-panel, graph, state
 ```
 
-**Инвариант:** `src/core/` не содержит ни одного пути вида `.claude/`, ни одного имени поля frontmatter, ни одной проверки версии.
+**Инвариант:** `src/core/` не содержит ни одного пути вида `.claude/`, `.cursor/`, `.codex/`, ни одного имени поля frontmatter, ни одной проверки версии. Платформенная специфика — только в `src/adapters/{platform}/`.
 
 ## 12.3. Локальное состояние
 

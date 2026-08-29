@@ -63,6 +63,17 @@ body {
   color: #9aa0a6;
 }
 
+.agent-selector-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.agent-selector-status {
+  flex-shrink: 0;
+}
+
 .agent-selector-compact .agent-select {
   min-width: 14rem;
 }
@@ -146,6 +157,28 @@ body {
   align-items: center;
   gap: 0.35rem;
   flex-wrap: nowrap;
+}
+
+.scan-platform-select {
+  box-sizing: border-box;
+  min-height: 2.5rem;
+  max-width: 9rem;
+  padding: 0.45rem 1.75rem 0.45rem 0.65rem;
+  border: 1px solid #5f6368;
+  border-radius: 6px;
+  background: #303134;
+  color: #e8eaed;
+  font: inherit;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239aa0a6' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+}
+
+.scan-platform-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .scan-project-button {

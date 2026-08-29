@@ -1,0 +1,30 @@
+---
+description: Codex adapter invariants — platform-specific code, version matrix, read-only discovery
+globs: src/adapters/codex/**
+alwaysApply: false
+---
+
+# Codex Adapter Rules
+
+All Codex platform knowledge lives under `src/adapters/codex/`. Never add `.codex/` paths, TOML keys, or version checks to `src/core/`.
+
+## Version matrix
+
+- All version-sensitive behavior goes through `src/adapters/codex/version/matrix.ts`.
+- Every non-trivial resolver rule needs a matrix entry and a fixture.
+- Features without matrix entries resolve as `unknown`.
+
+## Discovery (read-only)
+
+- Never write to the scanned project's `.codex/**`.
+- Only external process allowed in normal scan: `codex --version`.
+- Untrusted projects: skip project `.codex/` layers (config, hooks); user config still loads.
+- Redact TOML `env` and secrets — key names only.
+
+## Facts corpus
+
+- Verified facts: [docs/CODEX-FACTS.md](../../docs/CODEX-FACTS.md)
+
+## When uncertain
+
+Return `unknown` with a reason. Trust unreadable → `unknown`, not `blocked`.

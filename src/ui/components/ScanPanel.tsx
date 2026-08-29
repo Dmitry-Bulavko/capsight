@@ -1,4 +1,11 @@
 export const PROJECT_PATH_STORAGE_KEY = "capsight:projectPath";
+export const PLATFORM_STORAGE_KEY = "capsight:platform";
+
+export const PLATFORM_OPTIONS = [
+  { id: "claude" as const, label: "Claude Code" },
+  { id: "cursor" as const, label: "Cursor" },
+  { id: "codex" as const, label: "Codex" },
+];
 
 function getStorage(): Storage | null {
   try {
@@ -25,6 +32,19 @@ export function saveStoredProjectPath(path: string): void {
   } else {
     storage.removeItem(PROJECT_PATH_STORAGE_KEY);
   }
+}
+
+export function loadStoredPlatform(): string | null {
+  const storage = getStorage();
+  if (!storage) return null;
+  const value = storage.getItem(PLATFORM_STORAGE_KEY);
+  return value?.trim() || null;
+}
+
+export function saveStoredPlatform(platform: string): void {
+  const storage = getStorage();
+  if (!storage) return;
+  storage.setItem(PLATFORM_STORAGE_KEY, platform);
 }
 
 /** Folder basename for the project button label. */
@@ -64,6 +84,8 @@ function RescanIcon() {
 
 interface ScanPanelProps {
   projectPath: string;
+  platform: string;
+  onPlatformChange: (platform: string) => void;
   onBrowse: () => void;
   onRescan: () => void;
   onFallbackScan: (path: string) => void;
@@ -88,6 +110,8 @@ function projectButtonLabel(
 
 export function ScanPanel({
   projectPath,
+  platform,
+  onPlatformChange,
   onBrowse,
   onRescan,
   onFallbackScan,
@@ -105,6 +129,19 @@ export function ScanPanel({
   return (
     <div className="scan-toolbar">
       <div className="scan-toolbar-row">
+        <select
+          className="scan-platform-select"
+          value={platform}
+          disabled={busy}
+          aria-label="Platform"
+          onChange={(event) => onPlatformChange(event.target.value)}
+        >
+          {PLATFORM_OPTIONS.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.label}
+            </option>
+          ))}
+        </select>
         <button
           type="button"
           className="scan-project-button"

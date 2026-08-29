@@ -315,11 +315,9 @@ const MATRIX_ENTRIES = [
     fixture: "managed-simulation",
     verifiedFacts: [],
     notes:
-      "The managed-simulation fixture records the block and the substitution the simulation " +
-      "reports (first entry of availableModels). Which model the platform actually substitutes " +
-      "is not documented, so only the fact of the block is a platform claim: the substituted " +
-      "value in the golden follows our own convention and evidences the implementation, not the " +
-      "platform. The block founds this entry's verdict; F8 is not verified entire (H1-28).",
+      "The managed-simulation fixture records the F8 block (enforcement on modelChanges) and " +
+      "reports a substitute from allowlist order with effectiveEnforcement unknown. Which model " +
+      "the platform actually substitutes is not documented — only the block is a platform claim.",
   },
   {
     id: "agent.pluginFieldLimits",

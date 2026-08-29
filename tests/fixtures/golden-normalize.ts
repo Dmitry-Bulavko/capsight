@@ -315,6 +315,15 @@ function normalizeCapability(
   };
 }
 
+function capabilityWithinProject(
+  capability: ResolvedCapability,
+  projectRoot: string,
+): boolean {
+  return capability.sources.every(
+    (source) => source.path === undefined || isWithinProject(projectRoot, source.path),
+  );
+}
+
 function normalizeResolution(
   resolution: EffectiveConfiguration,
   agentName: string,
@@ -324,9 +333,9 @@ function normalizeResolution(
   return {
     agentName,
     context: rest.context,
-    capabilities: rest.capabilities.map((capability) =>
-      normalizeCapability(capability, projectRoot),
-    ),
+    capabilities: rest.capabilities
+      .filter((capability) => capabilityWithinProject(capability, projectRoot))
+      .map((capability) => normalizeCapability(capability, projectRoot)),
     warnings: sortByKey(rest.warnings, (warning) => warning.message).map((warning) => ({
       ...warning,
       evidence: sortSources(

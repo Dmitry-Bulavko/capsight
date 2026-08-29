@@ -7,6 +7,7 @@ import type {
   PlatformVersion,
   ResolvedCapability,
 } from "../core/model/index.js";
+import type { PlatformId } from "../adapters/platform.js";
 import type { ScanResult } from "../application/scan.js";
 import type { ScanStatusSummary } from "../application/scan-store.js";
 
@@ -98,12 +99,18 @@ export async function fetchGraph(context: ContextPreset): Promise<InspectionGrap
   return request<InspectionGraph>(`/api/graph?${params.toString()}`);
 }
 
-export async function scanProject(projectPath?: string): Promise<ScanResult> {
+export async function scanProject(
+  projectPath?: string,
+  platform?: PlatformId,
+): Promise<ScanResult> {
   const trimmed = projectPath?.trim();
   return request<ScanResult>("/api/project/scan", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(trimmed ? { projectPath: trimmed } : {}),
+    body: JSON.stringify({
+      ...(trimmed ? { projectPath: trimmed } : {}),
+      ...(platform ? { platform } : {}),
+    }),
   });
 }
 

@@ -1,6 +1,8 @@
 import { spawn, type ChildProcess } from "node:child_process";
+import fs from "node:fs/promises";
 import { platform } from "node:os";
 import { Router, type Response } from "express";
+import { parsePlatformId, UnknownPlatformError } from "../../adapters/platform.js";
 import { getDefaultProjectPath } from "../../application/default-project-path.js";
 import {
   buildStatusSummary,
@@ -30,6 +32,26 @@ class BrowseCommandTimeoutError extends Error {
   constructor() {
     super("browse-timeout");
     this.name = "BrowseCommandTimeoutError";
+  }
+}
+
+export class InvalidProjectPathError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidProjectPathError";
+  }
+}
+
+export async function validateScanProjectPath(projectPath: string): Promise<void> {
+  let stat;
+  try {
+    stat = await fs.stat(projectPath);
+  } catch {
+    throw new InvalidProjectPathError(`Project path does not exist: ${projectPath}`);
+  }
+
+  if (!stat.isDirectory()) {
+    throw new InvalidProjectPathError(`Project path is not a directory: ${projectPath}`);
   }
 }
 
@@ -169,6 +191,17 @@ function resolveScanPath(raw: unknown): string {
   return getDefaultProjectPath();
 }
 
+function resolveScanPlatform(raw: unknown) {
+  if (raw === undefined || raw === null || raw === "") {
+    return undefined;
+  }
+  const platform = parsePlatformId(raw);
+  if (!platform) {
+    throw new UnknownPlatformError(String(raw));
+  }
+  return platform;
+}
+
 projectRouter.get("/config", (_req, res) => {
   res.json({ defaultProjectPath: getDefaultProjectPath() });
 });
@@ -185,9 +218,15 @@ projectRouter.post("/browse", async (_req, res) => {
 projectRouter.post("/scan", async (req, res) => {
   try {
     const projectPath = resolveScanPath(req.body?.projectPath);
-    const result = await scanAndStore(projectPath);
+    await validateScanProjectPath(projectPath);
+    const platform = resolveScanPlatform(req.body?.platform);
+    const result = await scanAndStore(projectPath, platform);
     res.json(result);
   } catch (err) {
+    if (err instanceof InvalidProjectPathError || err instanceof UnknownPlatformError) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
     respondServerError(res, err, "Project scan failed");
   }
 });
