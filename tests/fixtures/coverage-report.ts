@@ -92,6 +92,22 @@ export function resolveFixtureAddDirs(fixtureDir: string): string[] {
   return parsed.map((entry) => path.join(fixtureDir, entry));
 }
 
+/**
+ * Plugin roots the fixture passes to `scan({ pluginRoots })`. Optional
+ * `plugin-roots.json` holds paths relative to the fixture directory: SPEC §3
+ * establishes no install location for plugins, so the fixture names its own
+ * plugin directories instead of a run depending on what is installed on the
+ * machine (§13 invariant 2, H1-22).
+ */
+export function resolveFixturePluginRoots(fixtureDir: string): string[] {
+  const pluginRootsFile = path.join(fixtureDir, "plugin-roots.json");
+  if (!fs.existsSync(pluginRootsFile)) {
+    return [];
+  }
+  const parsed = JSON.parse(fs.readFileSync(pluginRootsFile, "utf8")) as string[];
+  return parsed.map((entry) => path.join(fixtureDir, entry));
+}
+
 /** Managed bundle a §7.8 simulation fixture overlays, when it declares one. */
 export function resolveFixtureManagedBundle(
   fixtureDir: string,

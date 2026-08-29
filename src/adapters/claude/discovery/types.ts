@@ -85,6 +85,11 @@ export interface RawAgentFile {
   scopePriority: number;
   isPluginAgent: boolean;
   /**
+   * Name of the plugin that ships this file, the first segment of its A6
+   * scoped id. Set only for plugin sources.
+   */
+  pluginName?: string;
+  /**
    * Matrix entry backing the rule that attached this directory (A9). Absent
    * for the ordinary project/user scope walk, which no entry gates.
    */

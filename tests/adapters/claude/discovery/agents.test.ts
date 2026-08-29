@@ -226,6 +226,153 @@ description: Agent attached through --add-dir
       "active",
     );
   });
+
+  it("attaches a configured plugin's agents/ below every other scope (A1)", async () => {
+    const project = await makeTempProject({
+      ".claude/agents/reviewer.md": `---
+name: reviewer
+description: Project agent
+---
+`,
+    });
+    const plugin = await makeTempProject({
+      ".claude-plugin/plugin.json": JSON.stringify({ name: "my-plugin" }),
+      "agents/reviewer.md": `---
+name: reviewer
+description: Plugin agent of the same name
+---
+`,
+    });
+    const agentsPath = path.join(project, ".claude", "agents");
+
+    const { agents } = await discoverAgents(
+      [scopeLevel(project, agentsPath)],
+      project,
+      [],
+      "2.1.240",
+      [plugin],
+    );
+
+    const fromPlugin = agents.find((a: Agent) => a.isPluginAgent);
+    expect(fromPlugin?.source.scope).toBe("plugin");
+    expect(fromPlugin?.status).toBe("shadowed");
+    expect(fromPlugin?.collision?.rule).toBe("A1");
+    expect(fromPlugin?.collision?.effective?.scope).toBe("project");
+    expect(
+      agents.find((a: Agent) => !a.isPluginAgent && a.name === "reviewer")?.status,
+    ).toBe("active");
+  });
+
+  it("puts the subfolder into a plugin agent's scoped id (A6)", async () => {
+    const project = await makeTempProject({});
+    const plugin = await makeTempProject({
+      ".claude-plugin/plugin.json": JSON.stringify({ name: "my-plugin" }),
+      "agents/review/security.md": `---
+name: security
+description: Plugin agent in a subfolder
+---
+`,
+    });
+
+    const { agents } = await discoverAgents(
+      [scopeLevel(project)],
+      project,
+      [],
+      "2.1.240",
+      [plugin],
+    );
+
+    expect(agents.find((a: Agent) => a.name === "security")?.pluginScopedId).toBe(
+      "my-plugin:review:security",
+    );
+  });
+
+  it("loads a nameless or unparsable plugin agent under its file name (A8)", async () => {
+    const unparsable = `---
+name: "unterminated
+description: broken
+---
+`;
+    const nameless = `---
+description: No name field
+---
+`;
+    const project = await makeTempProject({
+      ".claude/agents/broken.md": unparsable,
+      ".claude/agents/nameless.md": nameless,
+    });
+    const plugin = await makeTempProject({
+      ".claude-plugin/plugin.json": JSON.stringify({ name: "my-plugin" }),
+      "agents/broken.md": unparsable,
+      "agents/nameless.md": nameless,
+    });
+    const agentsPath = path.join(project, ".claude", "agents");
+
+    const { agents } = await discoverAgents(
+      [scopeLevel(project, agentsPath)],
+      project,
+      [],
+      "2.1.240",
+      [plugin],
+    );
+
+    for (const name of ["broken", "nameless"]) {
+      const pluginAgent = agents.find(
+        (a: Agent) => a.isPluginAgent && a.name === name,
+      );
+      expect(pluginAgent?.status, name).toBe("active");
+      expect(pluginAgent?.pluginScopedId, name).toBe(`my-plugin:${name}`);
+
+      // A7 is the inverse: the identical project file is skipped.
+      const projectAgent = agents.find(
+        (a: Agent) => !a.isPluginAgent && a.name === name,
+      );
+      expect(projectAgent?.status, name).toBe("invalid");
+    }
+  });
+
+  it("names a plugin without a readable manifest after its directory", async () => {
+    const project = await makeTempProject({});
+    const plugin = await makeTempProject({
+      "agents/helper.md": `---
+name: helper
+description: Plugin without a manifest
+---
+`,
+    });
+
+    const { agents } = await discoverAgents(
+      [scopeLevel(project)],
+      project,
+      [],
+      "2.1.240",
+      [plugin],
+    );
+
+    expect(agents.find((a: Agent) => a.name === "helper")?.pluginScopedId).toBe(
+      `${path.basename(plugin)}:helper`,
+    );
+  });
+
+  it("reports no plugin agents when no plugin root is configured", async () => {
+    const project = await makeTempProject({
+      ".claude/agents/reviewer.md": `---
+name: reviewer
+description: Project agent
+---
+`,
+    });
+    const agentsPath = path.join(project, ".claude", "agents");
+
+    const { agents } = await discoverAgents(
+      [scopeLevel(project, agentsPath)],
+      project,
+      [],
+      "2.1.240",
+    );
+
+    expect(agents.filter((a: Agent) => a.isPluginAgent)).toEqual([]);
+  });
 });
 
 describe("discoverAgents secret redaction (§0.1.8, §13 invariant 10)", () => {

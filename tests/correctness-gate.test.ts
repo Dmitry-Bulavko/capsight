@@ -25,6 +25,7 @@ import {
   isConfidentCapabilityStatus,
   pendingFixtureNames,
   resolveFixtureAddDirs,
+  resolveFixturePluginRoots,
   resolveFixtureManagedBundle,
   resolveFixtureScanPath,
   FIXTURES_ROOT,
@@ -120,9 +121,11 @@ async function runFixtureToGolden(
   const { resolve } = await import("../src/application/resolve.js");
 
   const addDirs = resolveFixtureAddDirs(fixtureDir);
+  const pluginRoots = resolveFixturePluginRoots(fixtureDir);
   const scanResult = await scan({
     projectPath: resolveFixtureScanPath(fixtureDir),
     ...(addDirs.length > 0 ? { addDirs } : {}),
+    ...(pluginRoots.length > 0 ? { pluginRoots } : {}),
   });
   const resolutions: Array<{ agentName: string; resolution: EffectiveConfiguration }> =
     [];
@@ -581,14 +584,13 @@ describe("correctness gate", () => {
 
 describe("correctness gate fixture corpus", () => {
   /**
-   * Fixtures from SPEC §11.1 that are not yet authored. `plugin-agents`
-   * (F9, A6, A8) stays pending because discovery has no plugin agent source
-   * at all: nothing sets `isPluginAgent`, so a plugin fixture would assert
-   * behaviour the product does not have yet.
-   * Shrink this list as fixtures land; the test below fails until it matches
-   * reality, so the corpus cannot silently stay incomplete.
+   * Fixtures from SPEC §11.1 that are not yet authored. The corpus is complete
+   * (20/20) since `plugin-agents` landed with plugin agent discovery (H1-23),
+   * so this list is empty. It stays here because the test below fails until it
+   * matches reality: a fixture that stops being runnable has to be declared
+   * rather than silently skipped.
    */
-  const EXPECTED_PENDING_FIXTURES = ["plugin-agents"];
+  const EXPECTED_PENDING_FIXTURES: string[] = [];
 
   it("declares exactly the 20 SPEC §11.1 fixture names", () => {
     expect(SPEC_FIXTURE_NAMES).toHaveLength(20);

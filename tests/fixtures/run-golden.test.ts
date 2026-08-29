@@ -20,6 +20,7 @@ import {
   formatPendingFixtures,
   inspectFixtureCorpus,
   resolveFixtureAddDirs,
+  resolveFixturePluginRoots,
   resolveFixtureManagedBundle,
   resolveFixtureScanPath,
 } from "./coverage-report.js";
@@ -131,9 +132,11 @@ async function runGoldenFixture(
   const { resolve } = await import("../../src/application/resolve.js");
 
   const addDirs = resolveFixtureAddDirs(fixtureDir);
+  const pluginRoots = resolveFixturePluginRoots(fixtureDir);
   const scanResult = await scan({
     projectPath: resolveFixtureScanPath(fixtureDir),
     ...(addDirs.length > 0 ? { addDirs } : {}),
+    ...(pluginRoots.length > 0 ? { pluginRoots } : {}),
   });
   const snapshot = options.mutateSnapshot
     ? options.mutateSnapshot(scanResult.snapshot)

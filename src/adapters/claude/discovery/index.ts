@@ -4,6 +4,11 @@ export {
   type WalkProjectScopesResult,
 } from "./project-walk.js";
 export { discoverAgents, discoverAgentSources } from "./agents.js";
+export {
+  pluginScopedId,
+  resolvePluginInstallations,
+  type PluginInstallation,
+} from "./plugins.js";
 export { discoverSkills } from "./skills.js";
 export { discoverInstructions } from "./instructions.js";
 export { discoverMcpServers } from "./mcp.js";

@@ -15,6 +15,7 @@ import {
   parseFrontmatter,
 } from "../parsing/frontmatter.js";
 import type { ProjectScopeLevel } from "./project-walk.js";
+import { pluginScopedId, resolvePluginInstallations } from "./plugins.js";
 import type { RawAgentFile, AgentDiscoveryResult } from "./types.js";
 import { FACT } from "../version/facts.js";
 import { gateCollision, gateDiscovery, MATRIX } from "../version/matrix.js";
@@ -143,12 +144,17 @@ async function parseAgentFile(file: RawAgentFile): Promise<ParsedAgent> {
   }
 
   const parsed = parseFrontmatter(content);
-  if (!parsed.ok) {
+  if (!parsed.ok && !file.isPluginAgent) {
     return { kind: "invalid", file, invalidReason: "bad-yaml" };
   }
 
-  const name = getStringField(parsed.data, "name");
-  const description = getStringField(parsed.data, "description");
+  // A8 is the inverse of A7: frontmatter that does not parse skips a project
+  // agent silently, but a plugin agent still loads — under its file name, with
+  // no configuration to read.
+  const data: Record<string, unknown> = parsed.ok ? parsed.data : {};
+
+  const name = getStringField(data, "name");
+  const description = getStringField(data, "description");
 
   if (!file.isPluginAgent) {
     if (!name) {
@@ -161,14 +167,14 @@ async function parseAgentFile(file: RawAgentFile): Promise<ParsedAgent> {
       return { kind: "invalid", file, invalidReason: "no-description" };
     }
   } else {
-    const effectiveName = name ?? path.basename(file.filePath, ".md");
-    if (!effectiveName) {
+    const pluginName = name ?? path.basename(file.filePath, ".md");
+    if (!pluginName) {
       return { kind: "invalid", file, invalidReason: "no-name" };
     }
-    parsed.data.name = effectiveName;
+    data.name = pluginName;
   }
 
-  const effectiveName = (getStringField(parsed.data, "name") ??
+  const effectiveName = (getStringField(data, "name") ??
     path.basename(file.filePath, ".md"))!;
   const effectiveDescription =
     description ?? (file.isPluginAgent ? "" : undefined);
@@ -183,8 +189,18 @@ async function parseAgentFile(file: RawAgentFile): Promise<ParsedAgent> {
     description: effectiveDescription ?? "",
     source: fileSource(file),
     status: "active",
-    configuration: buildConfiguration(parsed.data),
+    configuration: buildConfiguration(data),
     isPluginAgent: file.isPluginAgent,
+    ...(file.isPluginAgent && file.pluginName !== undefined
+      ? {
+          pluginScopedId: pluginScopedId(
+            file.pluginName,
+            file.agentsRoot,
+            file.filePath,
+            effectiveName,
+          ),
+        }
+      : {}),
   };
 
   return { kind: "valid", file, agent };
@@ -331,6 +347,8 @@ export async function discoverAgentSources(
   projectScopes: ProjectScopeLevel[],
   projectPath: string,
   addDirs: string[] = [],
+  /** Configured plugin roots (§3 establishes no install location — see plugins.ts). */
+  pluginRoots: string[] = [],
 ): Promise<RawAgentFile[]> {
   const sources: Omit<RawAgentFile, "filePath">[] = [];
   const resolvedProject = path.resolve(projectPath);
@@ -375,6 +393,23 @@ export async function discoverAgentSources(
     }
   }
 
+  // Plugin `agents/` directories come last and rank lowest: A1 puts them below
+  // `~/.claude/agents/`, so a plugin never shadows an agent the user wrote.
+  const installations = await resolvePluginInstallations(pluginRoots);
+  installations.forEach((installation, index) => {
+    if (!installation.agentsPath) {
+      return;
+    }
+    sources.push({
+      scope: "plugin",
+      agentsRoot: installation.agentsPath,
+      scopeDistance: index,
+      scopePriority: SCOPE_PRIORITY.plugin,
+      isPluginAgent: true,
+      pluginName: installation.name,
+    });
+  });
+
   const rawFiles: RawAgentFile[] = [];
   for (const source of sources) {
     const markdownFiles = await collectMarkdownFiles(source.agentsRoot);
@@ -411,8 +446,15 @@ export async function discoverAgents(
   addDirs: string[] = [],
   /** Detected CLI version, `"unknown"` in degraded mode (§8.3). */
   version = "unknown",
+  /** Configured plugin roots (§3 establishes no install location — see plugins.ts). */
+  pluginRoots: string[] = [],
 ): Promise<AgentDiscoveryResult> {
-  const rawFiles = await discoverAgentSources(projectScopes, projectPath, addDirs);
+  const rawFiles = await discoverAgentSources(
+    projectScopes,
+    projectPath,
+    addDirs,
+    pluginRoots,
+  );
   const parsed = await Promise.all(rawFiles.map(parseAgentFile));
   const agents = gateDiscoveredAgents(resolveCollisions(parsed, version), version);
   const invalidCount = agents.filter((a) => a.status === "invalid").length;

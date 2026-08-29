@@ -1,0 +1,9 @@
+[
+  { "agentName": "security", "preset": "foreground-subagent" },
+  { "agentName": "legacy-helper", "preset": "foreground-subagent" },
+  {
+    "agentName": "reviewer",
+    "agentSourcePath": "plugins/my-plugin/agents/reviewer.md",
+    "preset": "foreground-subagent"
+  }
+]

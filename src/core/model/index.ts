@@ -114,6 +114,12 @@ export interface Agent<
   invalidReason?: "no-name" | "no-description" | "bad-yaml" | "bad-name-chars";
   configuration: TConfiguration;
   isPluginAgent: boolean;
+  /**
+   * Scoped id a plugin agent is addressed by, subfolder included:
+   * `my-plugin:review:security` (A6). Absent for non-plugin agents, whose
+   * identity is the `name` alone (A5).
+   */
+  pluginScopedId?: string;
 }
 
 export interface ResolutionReason {

@@ -114,7 +114,8 @@ Order: H1-01 → H1-02 → H1-03 → H1-05 → H1-06 → H1-04 → H1-07 → H1-
 | H1-20 | H1 | Resolving an ambiguous or invalid agent must not be silent | done | A4, §5, inv 3, 4, 14 | src/adapters/claude/resolution/resolver.ts | ambiguous-collision warning emitted; contested fields unknown |
 | H1-21 | H1 | Settings permissions never resolved — denied tool can read as available | done | §4.4 rule 7, S1–S8, §6, inv 4, 14 | src/adapters/claude/resolution/, discovery/settings.ts | deny applied last and overrides everything |
 | H1-22 | H1 | Fixture runs must not read the developer's own `~/.claude/` | done | §11.2, inv 2 | tests/fixtures/run-golden.test.ts, correctness-gate.test.ts | Goldens resolve identically on any machine |
-| H1-23 | H1 | Plugin agents are never discovered | in_progress | A1, A6, A8, F9, M1 #6 | src/adapters/claude/discovery/agents.ts | Plugin agents discovered; plugin-agents fixture lands |
-| H1-24 | H1 | CLI and API disagree on the default execution context | todo | §4.3, §4.1, T6 | src/server/routes/agents.ts, src/cli/index.ts | One shared default + caption on every surface |
+| H1-23 | H1 | Plugin agents are never discovered | done | A1, A6, A8, F9, M1 #6 | src/adapters/claude/discovery/agents.ts | Plugin agents discovered; plugin-agents fixture lands |
+| H1-24 | H1 | CLI and API disagree on the default execution context | in_progress | §4.3, §4.1, T6 | src/server/routes/agents.ts, src/cli/index.ts | One shared default + caption on every surface |
 | H1-25 | H1 | Flaky SIGTERM→SIGKILL escalation test | done | §9.4, §11.3 | tests/adapters/claude/probing/mcp-probe.test.ts | Cause identified; 20 consecutive passes |
 | H1-26 | H1 | Cross-scope shadowing (A1) is the last ungated collision rule | todo | A1, §8.2, §6, inv 3 | src/adapters/claude/version/matrix.ts, discovery/agents.ts | A1 gated like A3/A4 |
+| H1-27 | H1 | Security findings contradict F9 for plugin agents | todo | F9, §7.6, inv 3, 12, 14 | src/adapters/claude/resolution/security-findings.ts | No finding whose premise F9 nullifies |

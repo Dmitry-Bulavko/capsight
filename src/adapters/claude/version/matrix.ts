@@ -210,7 +210,11 @@ const MATRIX_ENTRIES = [
     minVersion: "2.1.0",
     status: "supported",
     confidence: "doc",
-    pendingFixture: "plugin-agents",
+    fixture: "plugin-agents",
+    notes:
+      "The fixture reaches F9 through discovery: its plugin roots are named by the fixture " +
+      "(plugin-roots.json), because SPEC §3 documents what a plugin's agents/ directory does " +
+      "(A1, A6, A8) but not where an installed plugin lives.",
   },
   {
     id: "skills.preload",
