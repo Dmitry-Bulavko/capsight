@@ -129,6 +129,7 @@ Order: H1-01 → H1-02 → H1-03 → H1-05 → H1-06 → H1-04 → H1-07 → H1-
 | V0-01 | V0 | UI project folder selection | done | §12.4 M0 | src/ui/, src/server/routes/project.ts | Browse + Rescan + headless fallback |
 | V0-02 | V0 | Bad project path is indistinguishable from a server failure | done | §12.4 M0 | src/server/routes/project.ts, src/ui/App.tsx | 400 + actionable message for a bad path; 500 stays generic |
 | V0-03 | V0 | Agent dropdown lost its status badge | done | §12.4 M0 | src/ui/components/AgentSelector.tsx, src/ui/styles.css | Status visible again, valid `<option>` markup, tested |
+| V0-04 | V0 | Custom select + dropdown styling | done | — | CapsightSelect.tsx | Custom listbox; badges inside rows |
 
 ## MP — Multi-platform (Cursor + Codex)
 

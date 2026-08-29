@@ -4,7 +4,7 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**MP + V0 follow-ups complete** — Cursor/Codex adapters, path validation (V0-02), agent status badge (V0-03), F8 substitute honesty (H1-29). v0.1 gate: H1 phase fully closed.
+**V0-04 done** — custom `CapsightSelect` listbox with in-row status badges. Native MDN `<select>` abandoned (see `docs/tasks/V0-04-select-styling.md`).
 
 ## Phase status
 
@@ -17,7 +17,7 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 | M2 — Probe, Graph, Simulation | `done` | M2-06 complete |
 | M3 — Editor (v0.2) | `done` | M3-03 complete |
 | H1 — Correctness hardening | `done` | H1-29 closed; corpus 20/20 |
-| V0 — v0.1 UX polish | `done` | V0-01..V0-03 complete |
+| V0 — v0.1 UX polish | `done` | V0-01..V0-04 complete |
 | MP — Multi-platform | `done` | MP-C15 + MP-X15 golden gates |
 
 ## H1 outcome

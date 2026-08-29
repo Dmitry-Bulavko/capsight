@@ -1,3 +1,5 @@
+import { CapsightSelect } from "./CapsightSelect.js";
+
 export const PROJECT_PATH_STORAGE_KEY = "capsight:projectPath";
 export const PLATFORM_STORAGE_KEY = "capsight:platform";
 
@@ -129,19 +131,17 @@ export function ScanPanel({
   return (
     <div className="scan-toolbar">
       <div className="scan-toolbar-row">
-        <select
-          className="scan-platform-select"
+        <CapsightSelect
+          className="capsight-select--platform"
           value={platform}
+          options={PLATFORM_OPTIONS.map((option) => ({
+            value: option.id,
+            label: option.label,
+          }))}
+          onChange={onPlatformChange}
           disabled={busy}
-          aria-label="Platform"
-          onChange={(event) => onPlatformChange(event.target.value)}
-        >
-          {PLATFORM_OPTIONS.map((option) => (
-            <option key={option.id} value={option.id}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+          ariaLabel="Platform"
+        />
         <button
           type="button"
           className="scan-project-button"

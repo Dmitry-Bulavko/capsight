@@ -1,6 +1,9 @@
+import { createElement } from "react";
+import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import type { Agent } from "../../src/core/model/index.js";
 import {
+  AgentSelector,
   formatAgentOptionLabel,
   STATUS_LABELS,
 } from "../../src/ui/components/AgentSelector.js";
@@ -34,5 +37,20 @@ describe("formatAgentOptionLabel", () => {
       const label = formatAgentOptionLabel(makeAgent({ status }), false);
       expect(label).toContain(STATUS_LABELS[status]);
     }
+  });
+});
+
+describe("AgentSelector markup", () => {
+  it("does not render an external status badge outside the select", () => {
+    const html = renderToString(
+      createElement(AgentSelector, {
+        agents: [makeAgent()],
+        selectedAgentId: "agent-1",
+        onAgentChange: () => {},
+      }),
+    );
+
+    expect(html).not.toContain("agent-selector-status");
+    expect(html).toContain('class="status-badge status-active"');
   });
 });
