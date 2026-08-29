@@ -319,7 +319,9 @@ function capabilityWithinProject(
   capability: ResolvedCapability,
   projectRoot: string,
 ): boolean {
-  return capability.sources.every((source) => isWithinProject(projectRoot, source.path));
+  return capability.sources.every(
+    (source) => source.path === undefined || isWithinProject(projectRoot, source.path),
+  );
 }
 
 function normalizeResolution(
