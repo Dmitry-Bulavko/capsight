@@ -895,34 +895,6 @@
       ],
       "warnings": [
         {
-          "category": "security-finding",
-          "severity": "warning",
-          "message": "Agent declares permissionMode bypassPermissions, which skips permission prompts.",
-          "evidence": [
-            {
-              "platform": "claude",
-              "scope": "plugin",
-              "path": "plugins/my-plugin/agents/review/security.md",
-              "fieldPath": "frontmatter.permissionMode"
-            }
-          ],
-          "matrixRef": "P5"
-        },
-        {
-          "category": "security-finding",
-          "severity": "warning",
-          "message": "Inline MCP server runs arbitrary command \"audit-server\" from agent frontmatter.",
-          "evidence": [
-            {
-              "platform": "claude",
-              "scope": "plugin",
-              "path": "plugins/my-plugin/agents/review/security.md",
-              "fieldPath": "frontmatter.mcpServers[0]"
-            }
-          ],
-          "matrixRef": "R1"
-        },
-        {
           "category": "ignored-field",
           "severity": "warning",
           "message": "Plugin agents ignore frontmatter hooks (F9).",

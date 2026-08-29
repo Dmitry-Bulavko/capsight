@@ -14,6 +14,7 @@ import { MATRIX, gateWarning } from "../version/matrix.js";
 import type { DiscoveredSkill, SettingsLayer } from "../discovery/types.js";
 import { parseFrontmatter } from "../parsing/frontmatter.js";
 import { isInlineMcpServerEntry } from "./trust.js";
+import { isPluginIneffectiveField } from "./plugin.js";
 
 const SENSITIVE_ALLOWED_TOOL_BASES = new Set(["Bash", "Write", "Edit", "Agent"]);
 const INEFFECTIVE_ALLOW_GLOBS = new Set(["*", "mcp__*"]);
@@ -72,7 +73,22 @@ function findBashGuardrailWarning(
   );
 }
 
+/**
+ * A finding about a frontmatter field the platform ignores for plugin agents
+ * (F9) would contradict the `ignored-field` warning the same resolution emits.
+ * The warning still reports that the field was written; only the claim about
+ * its effect is dropped (§2.4). Findings not premised on an F9 field — a skill
+ * pre-approving sensitive tools, an unanchored `allow` glob — are unaffected.
+ */
+function isNullifiedByPluginLimits(agent: Agent, field: string): boolean {
+  return agent.isPluginAgent && isPluginIneffectiveField(field);
+}
+
 function findBypassPermissionsWarning(agent: Agent): Warning | undefined {
+  if (isNullifiedByPluginLimits(agent, "permissionMode")) {
+    return undefined;
+  }
+
   if (agent.configuration.permissionMode !== "bypassPermissions") {
     return undefined;
   }
@@ -85,6 +101,10 @@ function findBypassPermissionsWarning(agent: Agent): Warning | undefined {
 }
 
 function findInlineMcpCommandWarnings(agent: Agent): Warning[] {
+  if (isNullifiedByPluginLimits(agent, "mcpServers")) {
+    return [];
+  }
+
   const warnings: Warning[] = [];
 
   for (const [index, entry] of (agent.configuration.mcpServers ?? []).entries()) {

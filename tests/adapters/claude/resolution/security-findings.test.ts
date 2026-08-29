@@ -204,6 +204,67 @@ describe("resolveSecurityFindings", () => {
     expect(warnings.some((warning) => warning.matrixRef === "R1")).toBe(true);
   });
 
+  // F9: the same declaration is a real finding for a project agent and an
+  // ignored field for a plugin one. Asserting both halves is what keeps the
+  // finding from drifting back into contradicting the `ignored-field` warning.
+  it("drops F9-nullified findings for a plugin agent but keeps them for a project agent", async () => {
+    const configuration = {
+      tools: ["Read"],
+      permissionMode: "bypassPermissions" as const,
+      mcpServers: [
+        {
+          transport: "stdio" as const,
+          commandName: "audit-server",
+          envKeys: [],
+          headerKeys: [],
+        },
+      ],
+      unknownFields: {},
+    };
+
+    const projectWarnings = await resolveSecurityFindings({
+      agent: makeAgent({ configuration }),
+      snapshot: makeSnapshot(),
+      toolCapabilities: [],
+    });
+    const pluginWarnings = await resolveSecurityFindings({
+      agent: makeAgent({ configuration, isPluginAgent: true }),
+      snapshot: makeSnapshot(),
+      toolCapabilities: [],
+    });
+
+    expect(projectWarnings.map((warning) => warning.matrixRef)).toEqual(["P5", "R1"]);
+    expect(pluginWarnings).toEqual([]);
+  });
+
+  it("keeps findings a plugin agent cannot nullify (K6, S4)", async () => {
+    const skill = await writeSkill("git-helper", {
+      name: "git-helper",
+      "allowed-tools": ["Bash(git *)"],
+    });
+    const settingsLayer = await makeSettingsLayer({ permissions: { allow: ["*"] } });
+    const snapshot = makeSnapshot({ skills: [skill], settings: [settingsLayer] });
+
+    const warnings = await resolveSecurityFindings({
+      agent: makeAgent({
+        configuration: {
+          tools: ["Read", "Bash"],
+          disallowedTools: ["Write"],
+          unknownFields: {},
+        },
+        isPluginAgent: true,
+      }),
+      snapshot,
+      toolCapabilities: [toolCapability("Bash", "available")],
+    });
+
+    expect(warnings.some((warning) => warning.message.includes("guardrail"))).toBe(true);
+    expect(warnings.some((warning) => warning.matrixRef === "K6")).toBe(true);
+    expect(
+      warnings.some((warning) => warning.matrixRef === "settings.allowGlobIneffective"),
+    ).toBe(true);
+  });
+
   it("flags skill allowed-tools that pre-approve sensitive tools (K6, K7)", async () => {
     const skill = await writeSkill("git-helper", {
       name: "git-helper",
