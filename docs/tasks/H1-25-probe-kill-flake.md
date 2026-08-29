@@ -45,3 +45,13 @@ Two candidate causes, and they need distinguishing rather than guessing:
 ## Notes
 
 Observed during H1-17, which correctly declined to chase it out of scope. Filed rather than left as folklore: an intermittent failure that everyone learns to re-run is how a suite stops being a gate, which is the failure mode H1-07 existed to fix.
+
+## Orchestrator verification (post-implementation)
+
+**Cause: candidate 1, test timing — and it was reproduced, not guessed.** A standalone harness driving the real spawner showed 0/40 failures on an idle machine but **8/25 under CPU load**, and in every failing run the child's log file was empty: Node had not finished booting, so the SIGTERM handler was not yet installed and the child died on the default disposition without ever reaching escalation. In every run where the handler was installed the recorded signal was SIGKILL, with no counter-examples. That exonerates the reaping path in `mcp-probe.ts` — the grace timer never fired against an already-reaped process.
+
+**Verified independently: 20 consecutive passes of the file under six-way CPU load, 0 failures**, on the same machine and the same load shape that made the old form fail 8 out of 25. Suite 450 passed | 1 todo.
+
+**The fix removes the race rather than widening it.** The child announces `ready` on stdout only after installing its handlers; the test waits for that line and then calls `close()` to trigger termination. The idle timeout is set to 60 s precisely so it is unreachable — the timer stops being the trigger. That is why this is not timeout inflation: the failure mode becomes impossible instead of less likely, which is what the handoff's prohibition was protecting.
+
+A second test covers the timeout path with a child that has no handlers, so it dies on SIGTERM whether or not it has finished booting — that assertion is scheduling-independent too, and escalation coverage is unchanged because `close()` and the timeout call the same `terminate()`.

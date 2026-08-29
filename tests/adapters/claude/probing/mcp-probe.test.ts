@@ -769,16 +769,47 @@ describe("mcp-probe", () => {
           "process.on('SIGTERM', () => {});",
           "process.on('SIGINT', () => {});",
           "setInterval(() => {}, 1000);",
+          // Announced only once the handlers above are installed, so the parent
+          // never signals a child that would still die on SIGTERM.
+          "process.stdout.write('ready\\n');",
         ].join("\n"),
         "utf8",
       );
 
-      const spawner = createDefaultProcessSpawner(50, { killGraceMs: 100 });
+      // The idle timeout is deliberately unreachable: termination is triggered
+      // by close() after the readiness handshake, not by a race against boot.
+      const spawner = createDefaultProcessSpawner(60_000, { killGraceMs: 100 });
       const proc = spawner.spawn(process.execPath, [scriptPath], { cwd: projectDir });
 
       expect(proc.pid).toBeGreaterThan(0);
+      let ready = false;
+      for await (const line of proc.readLines()) {
+        if (line === "ready") {
+          ready = true;
+          break;
+        }
+      }
+      expect(ready).toBe(true);
+
+      proc.close();
       const exit = await proc.exited!;
       expect(exit.signal).toBe("SIGKILL");
+      expect(() => process.kill(proc.pid!, 0)).toThrow();
+    }, 10_000);
+
+    it("reaps a cooperative child on the idle timeout", async () => {
+      const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), "capsight-mcp-timeout-"));
+      tempDirs.push(projectDir);
+      const scriptPath = path.join(projectDir, "idle.js");
+      // No signal handlers: this child dies on SIGTERM whether or not it has
+      // finished booting, so the assertion does not depend on scheduling.
+      await fs.writeFile(scriptPath, "setInterval(() => {}, 1000);\n", "utf8");
+
+      const spawner = createDefaultProcessSpawner(50, { killGraceMs: 100 });
+      const proc = spawner.spawn(process.execPath, [scriptPath], { cwd: projectDir });
+
+      const exit = await proc.exited!;
+      expect(exit.signal).toBe("SIGTERM");
       expect(() => process.kill(proc.pid!, 0)).toThrow();
     }, 10_000);
   });
