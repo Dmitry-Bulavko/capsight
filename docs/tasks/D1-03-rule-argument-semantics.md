@@ -1,0 +1,55 @@
+# D1-03: S6 / S7 — evaluate rule arguments, or state why not
+
+## Goal
+
+Decide, with evidence, whether Capsight can report what an argument-scoped permission rule does to the capability set — and either implement it or record the refusal as a founded `unknown`.
+
+## Spec refs
+
+- SPEC §3.5 S6 (`Bash(cmd:*)` prefix matching), S7 (`Read`/`Edit` gitignore-like globs)
+- SPEC §2.3 (no own permission engine), §6, §14
+- `settings-permissions.ts` header: "not a permission engine"
+
+## Scope IN
+
+- `src/adapters/claude/resolution/settings-permissions.ts`
+- `src/adapters/claude/version/matrix.ts` — `settings.bashPrefixRules`, `settings.pathRules`
+- `tests/fixtures/claude/settings-permissions/`
+- `docs/tasks/D1-03-rule-argument-semantics.md` — the decision, written back into Notes
+
+## Scope OUT
+
+- Deciding whether a specific command or path would be approved at runtime — that is the permission engine §2.3 forbids
+- S8/S9/S10 (D1-02)
+
+## Design decisions
+
+**This task may legitimately end with no code.** The current entries say it plainly: *"The resolver does not evaluate rule arguments, so a path-scoped rule resolves unknown; a fixture pinning `/` vs `//` would need per-invocation resolution to assert against."* If that holds after investigation, the deliverable is a matrix note and a removed `pendingFixture`, not a forced implementation. §14 ranks honest unknowns above coverage.
+
+**The distinction to establish first.** There are two different questions, and only one is in scope:
+
+1. *Would `Bash(npm test)` be permitted?* — needs an invocation. Out of scope, forever (§2.3).
+2. *Does `Bash(npm run test:*)` shrink or shape the reported Bash capability, and is `:*` recognized only at the end?* — a statement about rule shape, answerable without an invocation, and in scope.
+
+If question 2 can be answered for a rule, the capability may carry a shaped status with its reason; if not, it stays `unknown` with the reason naming the limit.
+
+**No new claim without a matrix entry.** Whatever is implemented is gated exactly like every other rule, and `[ext]`-confidence facts need a fixture before any confident conclusion uses them (M1 acceptance #9).
+
+## Acceptance
+
+- [ ] A written decision for S6 and for S7 separately: evaluated, or `unknown` with the reason
+- [ ] Where evaluated: the rule is gated by its matrix entry, and a fixture makes it the operative cause of a non-`unknown` expectation
+- [ ] Where not evaluated: `pendingFixture` removed, `notes` state what evidence would be required and why it is unavailable
+- [ ] No code path decides whether a concrete command or path would be approved (§2.3 grep-level check)
+- [ ] `unknownRate` for the fixture project changes only if a rule genuinely became determinate
+
+## Done checklist
+
+- [ ] `npm run test` passes
+- [ ] `npm run typecheck` passes
+- [ ] No writes to scanned project's `.claude/**`
+- [ ] TASKS.md updated by orchestrator (not implementer)
+
+## Notes
+
+This is the task most likely to be "solved" by writing plausible glob matching that nothing founds. Resist it: an invented semantics that agrees with intuition is the exact failure mode §14 is written against.

@@ -4,7 +4,9 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**EC phase opened** — ecosystem visualization of the declared layer (SPEC §7.4) across all detected platforms; replaces the Overview tab. Handoffs written for EC-01…EC-08; **EC-01 (compat facts corpus) is next** and blocks every badge in EC-05.
+**D1 phase opened and sequenced ahead of EC** — foundation before surface. The §11.4 metric stands at 9 of 92 Claude facts fixture-verified, and Cursor and Codex have no coverage denominator at all while every one of their matrix entries is `unknown`. D1 closes that; EC then builds the visualization on top of adapters that actually found their answers. **D1-01 (per-platform coverage denominator) is next** — measurement before work, so every later task is judged by its effect on three real numbers.
+
+Previous: **EC phase written** — ecosystem visualization handoffs EC-01…EC-08, now blocked on D1.
 
 Previous: **V0-04 done** — custom `CapsightSelect` listbox with in-row status badges. Native MDN `<select>` abandoned (see `docs/tasks/V0-04-select-styling.md`).
 
@@ -21,9 +23,30 @@ Previous: **V0-04 done** — custom `CapsightSelect` listbox with in-row status 
 | H1 — Correctness hardening | `done` | H1-29 closed; corpus 20/20 |
 | V0 — v0.1 UX polish | `done` | V0-01..V0-04 complete |
 | MP — Multi-platform | `done` | MP-C15 + MP-X15 golden gates |
-| EC — Ecosystem visualization | `todo` | EC-08 mixed-project golden gate |
+| D1 — Depth (evidence) | `todo` | No `pendingFixture` left; three coverage reports |
+| EC — Ecosystem visualization | `blocked` | Waits on D1-07 + D1-08 |
+
+## D1 scope note
+
+Measured baseline at `334c227`, from the project's own `buildCoverageReport`:
+
+```
+SPEC §3 facts (Claude) : 92
+runtime-observed       : 0
+fixture-verified       : 9
+documentation-only     : 31
+unverified             : 52
+```
+
+Cursor and Codex have **no report at all** — `coverage-report.ts` hardcodes the Claude facts registry and fixtures root. Their matrices hold three and three entries, every one `status: "unknown"`, so `resolveEnforcement` returns `unknown` for everything those adapters are asked.
+
+The concrete target is the matrix's own `pendingFixture` field: twelve entries name the fixture that still owes them evidence, covering A10, F9, K4, K5, R5, S6, S7, S8, S9, S10 and B2. Emptying that field is what finishing D1 means on the Claude side. It is a ceiling, not a promise — some of those facts will end the phase still `unknown`, with the reason recorded, and that is a result rather than a shortfall (§14, H1-28).
+
+Four facts reach no matrix entry whatsoever and so count `unverified` by construction: S11, K8, K10, K11. D1-04 and D1-05 own them.
 
 ## EC scope note
+
+**Sequenced after D1.** Compatibility badges are claims about three platforms; two of those adapters found nothing until D1-07 and D1-08 land, so building EC first would produce badges resting on an empty matrix.
 
 The Graph tab visualizes the **effective** layer: one platform, one execution context, edges recomputed per context. The Ecosystem screen visualizes the **declared** layer: every detected platform at once, no context, no resolver. SPEC §7.4 names both halves; only the effective one had a surface until now.
 

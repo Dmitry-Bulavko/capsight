@@ -174,9 +174,28 @@ Order: MP-01 → MP-03 → MP-04 → MP-C01..C15 → MP-X01..X15.
 | MP-X14 | MP | Codex golden fixture basic | done | §11.1 | tests/fixtures/codex/basic/ | Golden passes |
 | MP-X15 | MP | Codex correctness gate | done | §11.3 | tests/fixtures/run-codex-golden.test.ts | Codex golden runner |
 
+## D1 — Depth (evidence before surface)
+
+Closes the gap §11.4 measures: 9 of 92 Claude facts fixture-verified, Cursor and Codex with no coverage denominator at all and every matrix entry `unknown`. **Runs before EC.**
+
+A task here may legitimately end with a fact still `unknown` and a recorded reason — understating evidence is always permissible, overstating it makes §11.4 mean less than it says (H1-28).
+
+Order: D1-01 → D1-02 → D1-03 → D1-04 → D1-05 → D1-06 → D1-07 → D1-08.
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| D1-01 | D1 | Per-platform coverage denominator | todo | §11.4, §11.3 | tests/fixtures/coverage-report.ts, correctness-gate.test.ts | Three reports; no hardcoded Claude root |
+| D1-02 | D1 | Complete settings-permissions fixture (S8–S10) | todo | §3.5, §11.1–11.4, H1-28 | tests/fixtures/claude/settings-permissions/, matrix.ts | Each fact fixture-backed or doc-only with a reason |
+| D1-03 | D1 | S6/S7 rule-argument semantics — evaluate or refuse | todo | §3.5 S6–S7, §2.3, §14 | resolution/settings-permissions.ts, matrix.ts | Written decision per fact; no permission engine |
+| D1-04 | D1 | S11 additionalDirectories + enableAllProjectMcpServers | todo | §3.5 S11, §4.4, §8.2 | discovery/settings.ts, resolution/, matrix.ts | Two entries; trust interaction founded or unknown |
+| D1-05 | D1 | K8/K10/K11 skill overrides + command precedence | todo | §3.6, M1 #9, §8.2 | resolution/skills.ts, discovery/, matrix.ts | No `[ext]` fact drives a confident answer without a fixture |
+| D1-06 | D1 | Close remaining pendingFixture entries (A10, F9, K4, K5, R5, B2) | todo | §3, §11.1–11.4, H1-28 | tests/fixtures/claude/*, matrix.ts | No `pendingFixture` left in the Claude matrix |
+| D1-07 | D1 | Cursor matrix + fixture depth | todo | CURSOR-FACTS, §8, §11 | adapters/cursor/, tests/fixtures/cursor/ | ≥3 founded entries, ≥2 new fixtures, CT1 stays unknown |
+| D1-08 | D1 | Codex matrix + fixture depth | todo | CODEX-FACTS, §8, §11 | adapters/codex/, tests/fixtures/codex/ | ≥3 founded entries, trust difference pinned |
+
 ## EC — Ecosystem visualization
 
-Declared-layer visualization across all detected platforms (SPEC §7.4). Replaces the Overview tab. Compat facts: [COMPAT-FACTS.md](./COMPAT-FACTS.md) (produced by EC-01).
+Declared-layer visualization across all detected platforms (SPEC §7.4). Replaces the Overview tab. **Blocked on D1** — EC-01 states compatibility claims across three adapters, and two of them found nothing until D1-07/D1-08 land. Compat facts: [COMPAT-FACTS.md](./COMPAT-FACTS.md) (produced by EC-01).
 
 Order: EC-01 → EC-02 → EC-03 → EC-04 → EC-05 → EC-06 → EC-07 → EC-08.
 
