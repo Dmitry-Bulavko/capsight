@@ -166,6 +166,7 @@ export function App() {
     (nextPlatform: string) => {
       const parsed = nextPlatform as PlatformId;
       setPlatform(parsed);
+      saveStoredPlatform(parsed);
       if (projectPathRef.current.trim()) {
         void runScan(undefined, parsed);
       }

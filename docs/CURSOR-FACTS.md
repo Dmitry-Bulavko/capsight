@@ -67,7 +67,8 @@ Capsight v1: discover plugin directories referenced from project; do not execute
 | ID | Statement | Trust |
 |----|-----------|-------|
 | CW1 | Repo root: directory containing `.git` (default, mirror Claude A2 walk) | `[doc]` / `[ext]` |
-| CW2 | Walk upward from scan path to repo root; collect `.cursor/` metadata at each level | `[ext]` (Claude pattern) |
+| CW2 | Walk upward from scan path to repo root to locate `.git`; collect `.cursor/` metadata only at the scanned workspace path (CW5) | `[ext]` (Claude pattern, workspace-bounded) |
+| CW5 | Capsight treats the scanned `projectPath` as the workspace root — ancestor directories above it (including enclosing git repos) are not scanned for project metadata | `[doc]` (Capsight invariant) |
 | CW3 | Nested `AGENTS.md` in subdirectories applies when working in that subtree | `[doc]` |
 | CW4 | Same-name collision rules for agents across scopes — **unknown** until fixture-verified | `[unknown]` |
 

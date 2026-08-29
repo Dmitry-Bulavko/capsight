@@ -93,7 +93,7 @@ async function parseRuleFile(
 export async function discoverInstructions(
   projectScopes: ProjectScopeLevel[],
   projectPath: string,
-  repoRoot: string,
+  _repoRoot: string,
 ): Promise<DiscoveredInstruction[]> {
   const instructions: DiscoveredInstruction[] = [];
   const resolvedProject = path.resolve(projectPath);
@@ -124,7 +124,7 @@ export async function discoverInstructions(
     }
   }
 
-  const cursorRulesPath = path.join(repoRoot, ".cursorrules");
+  const cursorRulesPath = path.join(resolvedProject, ".cursorrules");
   const cursorRulesStat = await fileStat(cursorRulesPath);
   if (cursorRulesStat) {
     instructions.push({

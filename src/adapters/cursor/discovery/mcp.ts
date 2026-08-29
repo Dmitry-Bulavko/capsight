@@ -3,6 +3,7 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import os from "node:os";
 import type { Scope, SourceInfo } from "../../../core/model/index.js";
+import { inferMcpTransport } from "../../shared/infer-mcp-transport.js";
 import { CURSOR_PLATFORM } from "../model/index.js";
 import { extractEnvKeys } from "./redact.js";
 import type { ProjectScopeLevel } from "./project-walk.js";
@@ -42,29 +43,6 @@ export function computeMcpConfigHash(config: Record<string, unknown>): string {
     headerKeys: sortedKeys(config.headers),
   };
   return createHash("sha256").update(JSON.stringify(hashInput)).digest("hex").slice(0, 16);
-}
-
-function inferTransport(config: Record<string, unknown>): DiscoveredMcpServer["transport"] {
-  if (typeof config.type === "string") {
-    const type = config.type.toLowerCase();
-    if (type === "stdio" || type === "sse" || type === "ws" || type === "http") {
-      return type;
-    }
-  }
-  if (typeof config.command === "string") {
-    return "stdio";
-  }
-  if (typeof config.url === "string") {
-    const url = config.url.toLowerCase();
-    if (/\/sse(?:\/|$|\?|#)/.test(url) || url.endsWith("/sse")) {
-      return "sse";
-    }
-    if (url.startsWith("ws")) {
-      return "ws";
-    }
-    return "http";
-  }
-  return "unknown";
 }
 
 function source(scope: Scope, configPath: string): SourceInfo {
@@ -112,7 +90,7 @@ export async function discoverMcpServers(
         name,
         source: source(scope, configPath),
         configPath,
-        transport: inferTransport(serverConfig),
+        transport: inferMcpTransport(serverConfig),
         definitionKind: "config-file",
         status: "configured",
         configHash: computeMcpConfigHash(serverConfig),
