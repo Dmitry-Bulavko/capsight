@@ -1,38 +1,8 @@
-import { Router, type Request, type Response } from "express";
+import { Router, type Response } from "express";
 import { AgentNotFoundError, resolve } from "../../application/resolve.js";
 import { getAgentsFromResult, getLastScan } from "../../application/scan-store.js";
-import type { ContextPreset, Warning } from "../../core/model/index.js";
-import type { PermissionMode } from "../../adapters/claude/model/index.js";
-import { buildExecutionContext } from "../../adapters/claude/resolution/context.js";
-
-const CONTEXT_PRESETS = new Set<ContextPreset>([
-  "main-session",
-  "foreground-subagent",
-  "background-subagent",
-  "fork",
-  "explore",
-  "plan",
-  "teammate",
-]);
-
-const PERMISSION_MODES = new Set<PermissionMode>([
-  "default",
-  "acceptEdits",
-  "auto",
-  "dontAsk",
-  "bypassPermissions",
-  "plan",
-]);
-
-function getQueryString(value: unknown): string | undefined {
-  if (typeof value === "string") {
-    return value;
-  }
-  if (Array.isArray(value) && typeof value[0] === "string") {
-    return value[0];
-  }
-  return undefined;
-}
+import type { Warning } from "../../core/model/index.js";
+import { getQueryString, parseContextFromQuery } from "../context-query.js";
 
 function requireLastScan(res: Response) {
   const lastScan = getLastScan();
@@ -41,46 +11,6 @@ function requireLastScan(res: Response) {
     return null;
   }
   return lastScan;
-}
-
-function parseContextFromQuery(
-  req: Request,
-): { context: ReturnType<typeof buildExecutionContext> } | { error: string } {
-  const preset =
-    getQueryString(req.query.context) ?? ("main-session" satisfies ContextPreset);
-
-  if (!CONTEXT_PRESETS.has(preset as ContextPreset)) {
-    return { error: `Invalid context preset: ${preset}` };
-  }
-
-  const overrides: {
-    depth?: number;
-    parentPermissionMode?: PermissionMode;
-  } = {};
-
-  if (req.query.depth !== undefined) {
-    const depthRaw = getQueryString(req.query.depth);
-    if (depthRaw === undefined) {
-      return { error: "Invalid depth" };
-    }
-    const depth = Number.parseInt(depthRaw, 10);
-    if (Number.isNaN(depth)) {
-      return { error: "Invalid depth" };
-    }
-    overrides.depth = depth;
-  }
-
-  const parentMode = getQueryString(req.query.parentMode);
-  if (parentMode !== undefined) {
-    if (!PERMISSION_MODES.has(parentMode as PermissionMode)) {
-      return { error: `Invalid parentMode: ${parentMode}` };
-    }
-    overrides.parentPermissionMode = parentMode as PermissionMode;
-  }
-
-  return {
-    context: buildExecutionContext(preset as ContextPreset, overrides),
-  };
 }
 
 export const agentsRouter = Router();
@@ -111,7 +41,10 @@ agentsRouter.get("/:id/effective", async (req, res) => {
       agentId: req.params.id,
       context: parsed.context,
     });
-    res.json(effective);
+    res.json({
+      ...effective,
+      ...(parsed.contextDefault ? { contextDefault: parsed.contextDefault } : {}),
+    });
   } catch (error) {
     if (error instanceof AgentNotFoundError) {
       res.status(404).json({ error: error.message });
@@ -158,6 +91,7 @@ capabilitiesRouter.get("/:id/explain", async (req, res) => {
       agentId,
       context: effective.context,
       capability,
+      ...(parsed.contextDefault ? { contextDefault: parsed.contextDefault } : {}),
     });
   } catch (error) {
     if (error instanceof AgentNotFoundError) {
@@ -200,5 +134,8 @@ warningsRouter.get("/", async (req, res) => {
     }
   }
 
-  res.json({ warnings });
+  res.json({
+    warnings,
+    ...(parsed.contextDefault ? { contextDefault: parsed.contextDefault } : {}),
+  });
 });

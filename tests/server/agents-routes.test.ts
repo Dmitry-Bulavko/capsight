@@ -8,6 +8,11 @@ import type {
 import type { ScanResult } from "../../src/application/scan.js";
 import { clearLastScan, setLastScan } from "../../src/application/scan-store.js";
 import { app } from "../../src/server/index.js";
+import {
+  CONTEXT_PRESETS,
+  DEFAULT_CONTEXT_PRESET,
+  DEFAULT_CONTEXT_REASON,
+} from "../../src/core/model/context-presets.js";
 
 const mockVersion: PlatformVersion = {
   platform: "claude",
@@ -94,16 +99,25 @@ describe("M1 agents API routes", () => {
 
       expect(response.status).toBe(400);
       expect(response.body.error).toMatch(/Invalid context preset/);
+      for (const preset of CONTEXT_PRESETS) {
+        expect(response.body.error).toContain(preset);
+      }
     });
 
-    it("returns effective configuration for agent with default context", async () => {
+    it("defaults to background-subagent and says so (§4.3)", async () => {
       setLastScan(makeScanResult());
 
       const response = await request(app).get("/api/agents/backend/effective");
 
       expect(response.status).toBe(200);
       expect(response.body.agentId).toBe("backend");
-      expect(response.body.context.preset).toBe("main-session");
+      expect(DEFAULT_CONTEXT_PRESET).toBe("background-subagent");
+      expect(response.body.context.preset).toBe(DEFAULT_CONTEXT_PRESET);
+      expect(response.body.contextDefault).toEqual({
+        preset: DEFAULT_CONTEXT_PRESET,
+        reason: DEFAULT_CONTEXT_REASON,
+      });
+      expect(DEFAULT_CONTEXT_REASON).toMatch(/T6/);
       expect(response.body.version).toEqual(mockVersion);
       expect(Array.isArray(response.body.capabilities)).toBe(true);
       expect(response.body.capabilities.length).toBeGreaterThan(0);
@@ -124,6 +138,7 @@ describe("M1 agents API routes", () => {
         parentPermissionMode: "auto",
         isBackground: true,
       });
+      expect(response.body.contextDefault).toBeUndefined();
     });
 
     it("differs between foreground and fork contexts", async () => {
@@ -157,6 +172,19 @@ describe("M1 agents API routes", () => {
 
       expect(response.status).toBe(400);
       expect(response.body).toEqual({ error: "Missing required query parameter: agent" });
+    });
+
+    it("defaults to background-subagent and says so (§4.3)", async () => {
+      setLastScan(makeScanResult());
+
+      const response = await request(app).get("/api/capabilities/Read/explain?agent=backend");
+
+      expect(response.status).toBe(200);
+      expect(response.body.context.preset).toBe(DEFAULT_CONTEXT_PRESET);
+      expect(response.body.contextDefault).toEqual({
+        preset: DEFAULT_CONTEXT_PRESET,
+        reason: DEFAULT_CONTEXT_REASON,
+      });
     });
 
     it("returns 404 when capability does not exist", async () => {
@@ -201,6 +229,10 @@ describe("M1 agents API routes", () => {
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body.warnings)).toBe(true);
+      expect(response.body.contextDefault).toEqual({
+        preset: DEFAULT_CONTEXT_PRESET,
+        reason: DEFAULT_CONTEXT_REASON,
+      });
       for (const warning of response.body.warnings) {
         expect(warning.agentId).toBe("backend");
         expect(warning).toMatchObject({

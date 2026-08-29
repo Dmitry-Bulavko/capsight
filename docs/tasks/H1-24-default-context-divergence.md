@@ -52,3 +52,28 @@ while H1-14 gave the CLI `background-subagent` with the T6 caption, as §4.3 req
 ## Notes
 
 Raised by H1-14, which correctly implemented the spec on its own surface and flagged the divergence rather than silently matching the API's wrong default.
+
+## Orchestrator verification (post-implementation)
+
+Checked against the running server:
+
+```
+GET /api/agents/<id>/effective
+  preset: background-subagent
+  contextDefault: { preset, reason: "...actual default mode in an interactive session (T6)." }
+
+GET /api/agents/<id>/effective?context=fork
+  preset: fork    contextDefault: absent
+
+GET /api/agents/<id>/effective?context=nonsense
+  400 "Invalid context preset: nonsense. Expected one of: main-session, foreground-subagent,
+       background-subagent, fork, explore, plan, teammate"
+```
+
+The API now answers the same question the same way the CLI does, with the caption present only when a default was actually applied. Suite 459 passed, goldens unmoved. Accepted.
+
+**The UI was already correct on behaviour but was a third copy.** It defaulted to `background-subagent` and always sent `context=` explicitly, so the server default never reached it — but it carried its own list, its own default and its own caption wording ("when fork mode is enabled (T6)"), a third phrasing of the same rationale. All three now render `DEFAULT_CONTEXT_REASON` verbatim from one module, so the surfaces cannot describe T6 differently even if they cannot disagree on the value.
+
+**One test encoded the bug and was rewritten, not deleted.** `returns effective configuration for agent with default context` asserted `context.preset === "main-session"` — it was pinning the defect in place. It now asserts the correct preset plus the `contextDefault` payload and that the reason cites T6, so the surfaces are held to §4.1 rather than merely to a value.
+
+**`parentMode` rejection got the same treatment** for consistency: a bad value now names the valid modes instead of failing bare.

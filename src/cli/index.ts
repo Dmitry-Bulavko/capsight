@@ -10,8 +10,16 @@ import type {
   Warning,
 } from "../core/model/index.js";
 import type { ScanResult } from "../application/scan.js";
-import type { PermissionMode } from "../adapters/claude/model/index.js";
+import { PERMISSION_MODES, type PermissionMode } from "../adapters/claude/model/index.js";
 import { buildExecutionContext } from "../adapters/claude/resolution/context.js";
+import {
+  CONTEXT_PRESETS,
+  DEFAULT_CONTEXT_PRESET,
+  DEFAULT_CONTEXT_NOTICE,
+  DEFAULT_CONTEXT_REASON,
+  invalidContextPresetMessage,
+  isContextPreset,
+} from "../core/model/context-presets.js";
 import { resolve } from "../application/resolve.js";
 import {
   buildStatusSummary,
@@ -48,32 +56,8 @@ export async function runAgents(): Promise<Agent[]> {
   return getAgentsFromResult(result);
 }
 
-/** Every §4.3 preset, in spec order. */
-export const CONTEXT_PRESETS: readonly ContextPreset[] = [
-  "main-session",
-  "foreground-subagent",
-  "background-subagent",
-  "fork",
-  "explore",
-  "plan",
-  "teammate",
-] as const;
-
-/** §4.3: the actual default mode in an interactive session (T6). */
-export const DEFAULT_CONTEXT_PRESET: ContextPreset = "background-subagent";
-
-/** §4.3 requires the caption explaining why this default was chosen. */
-export const DEFAULT_CONTEXT_REASON =
-  "Default context is background-subagent because it is the actual default mode in an interactive session (T6).";
-
-const PERMISSION_MODES: readonly PermissionMode[] = [
-  "default",
-  "acceptEdits",
-  "auto",
-  "dontAsk",
-  "bypassPermissions",
-  "plan",
-] as const;
+/** Re-exported from the single source of truth so both surfaces cannot drift (§4.3). */
+export { CONTEXT_PRESETS, DEFAULT_CONTEXT_PRESET, DEFAULT_CONTEXT_REASON };
 
 export interface ContextOptions {
   context?: string;
@@ -83,9 +67,7 @@ export interface ContextOptions {
 
 export class InvalidContextPresetError extends Error {
   constructor(preset: string) {
-    super(
-      `Invalid context preset: ${preset}. Expected one of: ${CONTEXT_PRESETS.join(", ")}`,
-    );
+    super(invalidContextPresetMessage(preset));
     this.name = "InvalidContextPresetError";
   }
 }
@@ -107,7 +89,7 @@ export function resolveContextOption(options: ContextOptions = {}): {
   contextDefault?: { preset: ContextPreset; reason: string };
 } {
   const preset = options.context ?? DEFAULT_CONTEXT_PRESET;
-  if (!CONTEXT_PRESETS.includes(preset as ContextPreset)) {
+  if (!isContextPreset(preset)) {
     throw new InvalidContextPresetError(preset);
   }
 
@@ -118,7 +100,7 @@ export function resolveContextOption(options: ContextOptions = {}): {
     throw new InvalidParentModeError(options.parentMode);
   }
 
-  const context = buildExecutionContext(preset as ContextPreset, {
+  const context = buildExecutionContext(preset, {
     ...(options.depth !== undefined ? { depth: options.depth } : {}),
     ...(options.parentMode !== undefined
       ? { parentPermissionMode: options.parentMode as PermissionMode }
@@ -128,7 +110,7 @@ export function resolveContextOption(options: ContextOptions = {}): {
   return options.context === undefined
     ? {
         context,
-        contextDefault: { preset: DEFAULT_CONTEXT_PRESET, reason: DEFAULT_CONTEXT_REASON },
+        contextDefault: DEFAULT_CONTEXT_NOTICE,
       }
     : { context };
 }
