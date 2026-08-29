@@ -16,7 +16,7 @@ Implementation contract: [SPEC.md](./SPEC.md)
 ## Iteration workflow
 
 ```
-ROADMAP (phase) → TASKS (pick one) → handoff → implementer → verify → update docs → next task
+ROADMAP (phase) → TASKS (pick one) → handoff → implementer → reviewer → verify → update docs → next task
 ```
 
 **Rule:** from task **#04 onward** in each phase (M0-04, M1-04, …) — implementer only. Orchestrator autonomously advances 04 → 05 → … when asked to continue.
@@ -24,14 +24,18 @@ ROADMAP (phase) → TASKS (pick one) → handoff → implementer → verify → 
 1. Orchestrator reads [TASKS.md](./TASKS.md) and [ROADMAP.md](./ROADMAP.md).
 2. Sets one task `in_progress`; writes `docs/tasks/{ID}.md`.
 3. Delegates to implementer (Cursor Task or `@implementer` in Claude Code).
-4. Implementer returns; orchestrator runs `npm run test` + `npm run typecheck`.
-5. Marks task `done`; updates Current focus in ROADMAP.
-6. If continuing autonomously and next task is still ≥ #04 — go to step 1 (fresh subagent).
+4. Implementer returns; orchestrator delegates to **reviewer** — a separate agent, so the code is not reviewed by whoever wrote it.
+5. Reviewer returns a verdict; orchestrator runs `npm run test` + `npm run typecheck` itself.
+6. On `fail`, back to step 3 with the findings. On `pass`, marks task `done`; updates Current focus in ROADMAP.
+7. If continuing autonomously and next task is still ≥ #04 — go to step 1 (fresh subagent).
 
 Roles are defined in:
 
 - Orchestrator: `.cursor/rules/capsight-orchestration.mdc`
 - Implementer: `.cursor/skills/capsight-implementer/SKILL.md`, `.claude/agents/implementer.md`
+- Reviewer: `.cursor/skills/capsight-reviewer/SKILL.md`, `.claude/agents/reviewer.md`
+
+The reviewer exists for two reasons: an agent reviewing its own diff reconstructs its reasoning charitably rather than checking it, and a fresh context costs less than carrying the implementation transcript into review.
 
 ## Orchestrator prompt template (Task tool)
 
