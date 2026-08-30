@@ -4,9 +4,9 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**D1 phase complete.** All D1-00…D1-16 tasks closed (including deferred D1-11/D1-12 and review findings D1-13…D1-16). Coverage: Claude **92/0/11/23+11ext/47**, Cursor **27/0/3**, Codex **26/0/2**. **EC-01** (cross-platform compatibility facts) is next — see [docs/tasks/EC-01-compat-facts.md](./tasks/EC-01-compat-facts.md) when handoff exists.
+**EC phase complete** — EC-01…EC-08 done on `feat/ec-ecosystem` (PR pending merge). Ecosystem tab: declared inventory across Claude, Cursor, Codex with compat badges, detail panel, health readout, and mixed-project golden fixture.
 
-Previous: **EC phase written** — ecosystem visualization handoffs EC-01…EC-08, now blocked on D1.
+Previous: **D1 phase complete** — evidence depth for three platforms.
 
 Previous: **V0-04 done** — custom `CapsightSelect` listbox with in-row status badges. Native MDN `<select>` abandoned (see `docs/tasks/V0-04-select-styling.md`).
 
@@ -24,7 +24,7 @@ Previous: **V0-04 done** — custom `CapsightSelect` listbox with in-row status 
 | V0 — v0.1 UX polish | `done` | V0-01..V0-04 complete |
 | MP — Multi-platform | `done` | MP-C15 + MP-X15 golden gates |
 | D1 — Depth (evidence) | `done` | D1-00…D1-16 closed; three-platform coverage reports honest |
-| EC — Ecosystem visualization | `todo` | EC-01 next |
+| EC — Ecosystem visualization | `done` | EC-01…EC-08 complete; ecosystem golden fixture |
 
 ## D1 scope note
 
@@ -43,8 +43,9 @@ Measured after D1-01, which gave the two newer adapters a denominator for the fi
 | platform | facts | runtime-observed | fixture-verified | documentation-only | unverified | fixtures |
 |---|---|---|---|---|---|---|
 | claude | 92 | 0 | 9 | 31 | 52 | 20 |
-| cursor | 26 | 0 | 0 | 4 | 22 | 1 |
-| codex | 25 | 0 | 0 | 4 | 21 | 1 |
+| cursor | 26 | 0 | 0 | 4 | 22 | 4 |
+| codex | 25 | 0 | 0 | 4 | 21 | 4 |
+| ecosystem | — | — | — | — | — | 1 |
 
 Cursor and Codex sit at zero fixture-verified for a structural reason, not merely a thin corpus: their `FeatureCompatibility` interfaces carry no `verifiedFacts` field, and every matrix entry is `confidence: "doc"` with `status: "unknown"`, so `entryFactCoverageTier` cannot return anything above `documentation-only` however many fixtures are added. D1-07 and D1-08 have to add that field before their numbers can move at all.
 
@@ -115,7 +116,7 @@ Final tally for the twelve `pendingFixture` debts: **four promoted, eight refuse
 
 ## EC scope note
 
-**Sequenced after D1.** Compatibility badges are claims about three platforms; two of those adapters found nothing until D1-07 and D1-08 land, so building EC first would produce badges resting on an empty matrix.
+**D1 gate cleared.** Compatibility badges are claims about three platforms; D1-07 and D1-08 gave Cursor and Codex honest matrix depth before EC begins.
 
 The Graph tab visualizes the **effective** layer: one platform, one execution context, edges recomputed per context. The Ecosystem screen visualizes the **declared** layer: every detected platform at once, no context, no resolver. SPEC §7.4 names both halves; only the effective one had a surface until now.
 

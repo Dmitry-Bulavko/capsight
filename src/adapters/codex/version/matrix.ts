@@ -19,6 +19,8 @@
  * @see docs/CODEX-FACTS.md, docs/SPEC.md §8, §11.4
  */
 
+import type { CompatMatrixEntry } from "../../../core/compat/matrix.js";
+import { RESOURCE_CLASS } from "../../../core/compat/resource-class.js";
 import type { Enforcement, Warning } from "../../../core/model/index.js";
 import { FACT, type FactId } from "./facts.js";
 
@@ -108,6 +110,152 @@ const MATRIX_ENTRIES = [
     notes: "Probe requires explicit confirmation",
   },
 ] as const satisfies readonly FeatureCompatibility[];
+
+const CODEX_PLATFORM = "codex";
+
+/** Cross-platform consumption claims for Codex (EC-01). */
+export const COMPAT_MATRIX_ENTRIES = [
+  {
+    id: "compat.codex.agent-markdown",
+    resourceClass: RESOURCE_CLASS.AGENT_MARKDOWN,
+    platform: CODEX_PLATFORM,
+    support: "not-supported",
+    factRefs: [FACT.XA1],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Codex primary agent configuration is instruction-based (AGENTS.md), not markdown agent files (XA1).",
+  },
+  {
+    id: "compat.codex.skill-directory",
+    resourceClass: RESOURCE_CLASS.SKILL_DIRECTORY,
+    platform: CODEX_PLATFORM,
+    support: "supported",
+    factRefs: [FACT.XS1],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Codex discovers skills from SKILL.md files under the agents skills directory (XS1).",
+  },
+  {
+    id: "compat.codex.command-markdown",
+    resourceClass: RESOURCE_CLASS.COMMAND_MARKDOWN,
+    platform: CODEX_PLATFORM,
+    support: "not-supported",
+    factRefs: [FACT.XA1],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Codex does not document slash-command markdown files; configuration is instruction-based (XA1).",
+  },
+  {
+    id: "compat.codex.instruction-agents-md",
+    resourceClass: RESOURCE_CLASS.INSTRUCTION_AGENTS_MD,
+    platform: CODEX_PLATFORM,
+    support: "supported",
+    factRefs: [FACT.XI2],
+    confidence: "doc",
+    enforcement: "advisory",
+    reason: "Codex walks AGENTS.md files from the repository root toward the working directory (XI2).",
+  },
+  {
+    id: "compat.codex.instruction-agents-override-md",
+    resourceClass: RESOURCE_CLASS.INSTRUCTION_AGENTS_OVERRIDE_MD,
+    platform: CODEX_PLATFORM,
+    support: "supported",
+    factRefs: [FACT.XI1],
+    confidence: "doc",
+    enforcement: "advisory",
+    reason: "Codex prefers AGENTS.override.md over AGENTS.md in the same directory (XI1).",
+  },
+  {
+    id: "compat.codex.instruction-claude-local-md",
+    resourceClass: RESOURCE_CLASS.INSTRUCTION_CLAUDE_LOCAL_MD,
+    platform: CODEX_PLATFORM,
+    support: "not-supported",
+    factRefs: [FACT.XI3],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Codex does not read CLAUDE.local.md by default; only configured fallback filenames apply (XI3).",
+  },
+  {
+    id: "compat.codex.instruction-rule-mdc",
+    resourceClass: RESOURCE_CLASS.INSTRUCTION_RULE_MDC,
+    platform: CODEX_PLATFORM,
+    support: "not-supported",
+    factRefs: [FACT.XI2],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Codex does not read Cursor rule (.mdc) files; it loads AGENTS.md chains (XI2).",
+  },
+  {
+    id: "compat.codex.instruction-cursorrules",
+    resourceClass: RESOURCE_CLASS.INSTRUCTION_CURSORRULES,
+    platform: CODEX_PLATFORM,
+    support: "not-supported",
+    factRefs: [FACT.XI2],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Codex does not read .cursorrules; it loads AGENTS.md chains (XI2).",
+  },
+  {
+    id: "compat.codex.instruction-fallback-doc",
+    resourceClass: RESOURCE_CLASS.INSTRUCTION_FALLBACK_DOC,
+    platform: CODEX_PLATFORM,
+    support: "supported",
+    factRefs: [FACT.XI3],
+    confidence: "doc",
+    enforcement: "advisory",
+    reason: "Codex may load filenames listed in project_doc_fallback_filenames when AGENTS.md is absent (XI3).",
+  },
+  {
+    id: "compat.codex.mcp-json-config",
+    resourceClass: RESOURCE_CLASS.MCP_JSON_CONFIG,
+    platform: CODEX_PLATFORM,
+    support: "not-supported",
+    factRefs: [FACT.XM1],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Codex does not read JSON mcp.json configuration; MCP is declared in TOML (XM1).",
+  },
+  {
+    id: "compat.codex.mcp-toml-config",
+    resourceClass: RESOURCE_CLASS.MCP_TOML_CONFIG,
+    platform: CODEX_PLATFORM,
+    support: "supported",
+    factRefs: [FACT.XM1],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Codex reads MCP servers from TOML mcp_servers blocks (XM1).",
+  },
+  {
+    id: "compat.codex.mcp-inline-agent",
+    resourceClass: RESOURCE_CLASS.MCP_INLINE_AGENT,
+    platform: CODEX_PLATFORM,
+    support: "not-supported",
+    factRefs: [FACT.XA1],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Codex does not read inline MCP declarations in agent frontmatter; configuration is TOML-based (XA1).",
+  },
+  {
+    id: "compat.codex.settings-json",
+    resourceClass: RESOURCE_CLASS.SETTINGS_JSON,
+    platform: CODEX_PLATFORM,
+    support: "not-supported",
+    factRefs: [FACT.XSet1],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Codex does not read JSON settings layers; configuration is TOML-based (XSet1).",
+  },
+  {
+    id: "compat.codex.settings-toml",
+    resourceClass: RESOURCE_CLASS.SETTINGS_TOML,
+    platform: CODEX_PLATFORM,
+    support: "supported",
+    factRefs: [FACT.XR3],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Codex reads layered config.toml files walking from the repository root toward cwd (XR3).",
+  },
+] as const satisfies readonly CompatMatrixEntry[];
 
 export const VERSION_MATRIX: readonly FeatureCompatibility[] = MATRIX_ENTRIES;
 

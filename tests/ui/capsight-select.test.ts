@@ -72,8 +72,9 @@ describe("capsight-select custom listbox", () => {
   it("ScanPanel platform selector uses CapsightSelect without badges", () => {
     const html = renderToString(
       createElement(ScanPanel, {
-        projectPath: "",
-        platform: "claude",
+        projectPath: "D:\\projects\\backbone",
+        platform: "cursor",
+        platformVersion: "3.18.9",
         onPlatformChange: noop,
         onBrowse: noop,
         onRescan: noop,
@@ -87,10 +88,26 @@ describe("capsight-select custom listbox", () => {
 
     expect(html).toContain('class="capsight-select capsight-select--platform"');
     expect(html).toContain('class="capsight-select-trigger"');
-    expect(html).toContain("Claude Code");
+    expect(html).toContain("Cursor");
+    expect(html).toContain("3.18.9");
+    expect(html).toContain('title="D:\\projects\\backbone"');
     expect(html).not.toContain("<select");
     expect(html).not.toContain("status-badge");
     expect(html).not.toContain("<selectedcontent");
+  });
+
+  it("CapsightSelect renders optional sublabel on the trigger", () => {
+    const html = renderToString(
+      createElement(CapsightSelect, {
+        value: "cursor",
+        options: [{ value: "cursor", label: "Cursor", sublabel: "3.18.9" }],
+        onChange: noop,
+        ariaLabel: "Platform",
+      }),
+    );
+
+    expect(html).toContain('class="capsight-select-option-sublabel"');
+    expect(html).toContain("3.18.9");
   });
 
   it("CapsightSelect supports badge markup in option rows", () => {

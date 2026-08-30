@@ -10,7 +10,7 @@ import {
   fetchExplain,
   fetchProject,
   fetchProjectConfig,
-  resourceCountsFromScan,
+  formatVersion,
   scanProject,
 } from "./api.js";
 import { AgentList } from "./components/AgentList.js";
@@ -19,7 +19,6 @@ import {
   ContextSelector,
   DEFAULT_CONTEXT_PRESET,
 } from "./components/ContextSelector.js";
-import { ProjectSummary, type ResourceCounts } from "./components/ProjectSummary.js";
 import {
   loadStoredPlatform,
   loadStoredProjectPath,
@@ -28,6 +27,7 @@ import {
   ScanPanel,
 } from "./components/ScanPanel.js";
 import { GraphView } from "./components/GraphView.js";
+import { EcosystemView } from "./components/EcosystemView.js";
 import { WhyPanel } from "./components/WhyPanel.js";
 import { AgentEditor } from "./components/AgentEditor.js";
 import { EffectiveCapabilities } from "./components/EffectiveCapabilities.js";
@@ -44,18 +44,9 @@ function totalPendingChanges(agents: Agent[], pending: EditorPendingState): numb
   return agents.reduce((sum, agent) => sum + countPendingChanges(agent, pending), 0);
 }
 
-function countsFromSummary(summary: ScanStatusSummary): ResourceCounts {
-  return {
-    skills: summary.skillsCount,
-    instructions: summary.instructionsCount,
-    mcpServers: summary.mcpServersCount,
-  };
-}
-
 export function App() {
   const [summary, setSummary] = useState<ScanStatusSummary | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [resourceCounts, setResourceCounts] = useState<ResourceCounts | null>(null);
   const [projectPath, setProjectPath] = useState("");
   const [platform, setPlatform] = useState<PlatformId>("claude");
   const platformRef = useRef<PlatformId>("claude");
@@ -88,14 +79,13 @@ export function App() {
     null,
   );
   const [editorPending, setEditorPending] = useState<EditorPendingState>(createEmptyEditorState);
-  const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
+  const [activeTab, setActiveTab] = useState<DashboardTab>("ecosystem");
 
   const loadDiscovery = useCallback(async () => {
     const project = await fetchProject();
     const agentList = await fetchAgents();
     setSummary(project);
     setAgents(agentList);
-    setResourceCounts(countsFromSummary(project));
     const scannedPlatform = project.version.platform;
     if (
       scannedPlatform === "claude" ||
@@ -151,7 +141,6 @@ export function App() {
         }
         setPlatform(platformToScan);
         saveStoredPlatform(platformToScan);
-        setResourceCounts(resourceCountsFromScan(result));
         await loadDiscovery();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Scan failed");
@@ -384,6 +373,7 @@ export function App() {
             <ScanPanel
               projectPath={projectPath}
               platform={platform}
+              platformVersion={summary ? formatVersion(summary.version) : undefined}
               onPlatformChange={handlePlatformChange}
               onBrowse={handleBrowse}
               onRescan={handleRescan}
@@ -420,8 +410,8 @@ export function App() {
           />
 
           <main className="dashboard-content">
-            {activeTab === "overview" && resourceCounts && (
-              <ProjectSummary summary={summary} resourceCounts={resourceCounts} variant="stats" />
+            {activeTab === "ecosystem" && (
+              <EcosystemView refreshKey={summary.scannedAt} />
             )}
 
             {activeTab === "context" && (

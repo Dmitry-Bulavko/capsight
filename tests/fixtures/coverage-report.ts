@@ -12,11 +12,19 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 /** Platforms that own a fact registry, a matrix and a fixture corpus. */
 export const PLATFORM_IDS = ["claude", "cursor", "codex"] as const;
 
+/** Ecosystem cross-platform fixture corpus (SPEC §11.1 extension, EC-08). */
+export const ECOSYSTEM_FIXTURE_NAMES = ["mixed"] as const;
+
 export type PlatformId = (typeof PLATFORM_IDS)[number];
 
 /** Fixture corpus directory for one platform, e.g. `tests/fixtures/cursor`. */
 export function platformFixturesRoot(platform: PlatformId): string {
   return path.join(__dirname, platform);
+}
+
+/** Cross-platform ecosystem fixture corpus at `tests/fixtures/ecosystem`. */
+export function ecosystemFixturesRoot(): string {
+  return path.join(__dirname, "ecosystem");
 }
 
 /**

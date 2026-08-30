@@ -37,20 +37,20 @@ Clicking a node opens a panel with the resource's metadata, its related files an
 
 ## Acceptance
 
-- [ ] Selecting any node opens the panel; the canvas keeps the node visibly selected
-- [ ] Metadata, source paths, related folders and collision verdicts render for every resource kind
-- [ ] Markdown renders with headings, lists, tables and code blocks styled to the app's typography
-- [ ] Raw HTML and `javascript:` URLs in a source file are sanitized; test asserts a `<script>` in a fixture skill does not reach the DOM
-- [ ] MCP and settings resources show the redacted model and no content section
-- [ ] Truncated and unreadable bodies state their condition explicitly
-- [ ] Frontmatter renders as fields, not as text at the top of the body
+- [x] Selecting any node opens the panel; the canvas keeps the node visibly selected
+- [x] Metadata, source paths, related folders and collision verdicts render for every resource kind
+- [x] Markdown renders with headings, lists, tables and code blocks styled to the app's typography
+- [x] Raw HTML and `javascript:` URLs in a source file are sanitized; test asserts a `<script>` in a fixture skill does not reach the DOM
+- [x] MCP and settings resources show the redacted model and no content section
+- [x] Truncated and unreadable bodies state their condition explicitly
+- [x] Frontmatter renders as fields, not as text at the top of the body
 
 ## Done checklist
 
-- [ ] `npm run test` passes
-- [ ] `npm run typecheck` passes
-- [ ] No writes to scanned project's `.claude/**`
-- [ ] TASKS.md updated by orchestrator (not implementer)
+- [x] `npm run test` passes
+- [x] `npm run typecheck` passes
+- [x] No writes to scanned project's `.claude/**`
+- [x] TASKS.md updated by orchestrator (not implementer)
 
 ## Notes
 

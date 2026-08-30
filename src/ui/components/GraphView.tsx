@@ -85,10 +85,7 @@ export function GraphView({ context }: GraphViewProps) {
   return (
     <section className="panel graph-panel">
       <h2>Inspection graph</h2>
-      <p className="graph-note">
-        Read-only context-aware view. Tools are grouped in a grid; edge labels are hidden when
-        there are many agent→tool links.
-      </p>
+      <p className="graph-note">Effective resolution — one context</p>
 
       {activeLegendItems.length > 0 && (
         <ul className="graph-legend" aria-label="Edge types">

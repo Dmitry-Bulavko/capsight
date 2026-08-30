@@ -19,6 +19,8 @@
  * @see docs/CURSOR-FACTS.md, docs/SPEC.md §8, §11.4
  */
 
+import type { CompatMatrixEntry } from "../../../core/compat/matrix.js";
+import { RESOURCE_CLASS } from "../../../core/compat/resource-class.js";
 import type { Enforcement, Warning } from "../../../core/model/index.js";
 import { FACT, type FactId } from "./facts.js";
 
@@ -123,6 +125,142 @@ const MATRIX_ENTRIES = [
       "resolve active in the golden.",
   },
 ] as const satisfies readonly FeatureCompatibility[];
+
+const CURSOR_PLATFORM = "cursor";
+
+/** Cross-platform consumption claims for Cursor (EC-01). */
+export const COMPAT_MATRIX_ENTRIES = [
+  {
+    id: "compat.cursor.agent-markdown",
+    resourceClass: RESOURCE_CLASS.AGENT_MARKDOWN,
+    platform: CURSOR_PLATFORM,
+    support: "supported",
+    factRefs: [FACT.CA1],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Cursor discovers subagents from markdown files under the agents directory (CA1).",
+  },
+  {
+    id: "compat.cursor.skill-directory",
+    resourceClass: RESOURCE_CLASS.SKILL_DIRECTORY,
+    platform: CURSOR_PLATFORM,
+    support: "supported",
+    factRefs: [FACT.CS1],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Cursor discovers skills from SKILL.md files in skill subdirectories (CS1).",
+  },
+  {
+    id: "compat.cursor.command-markdown",
+    resourceClass: RESOURCE_CLASS.COMMAND_MARKDOWN,
+    platform: CURSOR_PLATFORM,
+    support: "supported",
+    factRefs: [FACT.CS3],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Cursor discovers slash commands from markdown files under the commands directory (CS3).",
+  },
+  {
+    id: "compat.cursor.instruction-agents-md",
+    resourceClass: RESOURCE_CLASS.INSTRUCTION_AGENTS_MD,
+    platform: CURSOR_PLATFORM,
+    support: "supported",
+    factRefs: [FACT.CW3],
+    confidence: "doc",
+    enforcement: "advisory",
+    reason: "Cursor reads AGENTS.md at the project root and in nested subdirectories (CW3).",
+  },
+  {
+    id: "compat.cursor.instruction-claude-md",
+    resourceClass: RESOURCE_CLASS.INSTRUCTION_CLAUDE_MD,
+    platform: CURSOR_PLATFORM,
+    support: "not-supported",
+    factRefs: [FACT.CR3],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Cursor does not read CLAUDE.md; it loads AGENTS.md and project rules (CR3).",
+  },
+  {
+    id: "compat.cursor.instruction-claude-local-md",
+    resourceClass: RESOURCE_CLASS.INSTRUCTION_CLAUDE_LOCAL_MD,
+    platform: CURSOR_PLATFORM,
+    support: "not-supported",
+    factRefs: [FACT.CR3],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Cursor does not read CLAUDE.local.md; it loads AGENTS.md and project rules (CR3).",
+  },
+  {
+    id: "compat.cursor.instruction-rule-mdc",
+    resourceClass: RESOURCE_CLASS.INSTRUCTION_RULE_MDC,
+    platform: CURSOR_PLATFORM,
+    support: "supported",
+    factRefs: [FACT.CR1, FACT.CR4],
+    confidence: "doc",
+    enforcement: "advisory",
+    reason: "Cursor reads .mdc rule files under the rules directory (CR1, CR4).",
+  },
+  {
+    id: "compat.cursor.instruction-cursorrules",
+    resourceClass: RESOURCE_CLASS.INSTRUCTION_CURSORRULES,
+    platform: CURSOR_PLATFORM,
+    support: "supported",
+    factRefs: [FACT.CR3],
+    confidence: "doc",
+    enforcement: "advisory",
+    reason: "Cursor still reads the legacy .cursorrules file at the repository root.",
+  },
+  {
+    id: "compat.cursor.instruction-fallback-doc",
+    resourceClass: RESOURCE_CLASS.INSTRUCTION_FALLBACK_DOC,
+    platform: CURSOR_PLATFORM,
+    support: "not-supported",
+    factRefs: [FACT.CR3],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Cursor does not use Codex-style project_doc_fallback_filenames; it loads AGENTS.md and rules (CR3).",
+  },
+  {
+    id: "compat.cursor.mcp-json-config",
+    resourceClass: RESOURCE_CLASS.MCP_JSON_CONFIG,
+    platform: CURSOR_PLATFORM,
+    support: "supported",
+    factRefs: [FACT.CM1],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Cursor reads MCP servers declared in project mcp.json configuration (CM1).",
+  },
+  {
+    id: "compat.cursor.mcp-toml-config",
+    resourceClass: RESOURCE_CLASS.MCP_TOML_CONFIG,
+    platform: CURSOR_PLATFORM,
+    support: "not-supported",
+    factRefs: [FACT.CM1],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Cursor does not read Codex TOML mcp_servers blocks; it uses JSON MCP configuration (CM1).",
+  },
+  {
+    id: "compat.cursor.settings-json",
+    resourceClass: RESOURCE_CLASS.SETTINGS_JSON,
+    platform: CURSOR_PLATFORM,
+    support: "supported",
+    factRefs: [FACT.CSet3],
+    confidence: "doc",
+    enforcement: "unknown",
+    reason: "Cursor may expose readable JSON settings layers where install paths are stable (CSet3).",
+  },
+  {
+    id: "compat.cursor.settings-toml",
+    resourceClass: RESOURCE_CLASS.SETTINGS_TOML,
+    platform: CURSOR_PLATFORM,
+    support: "not-supported",
+    factRefs: [FACT.CSet1],
+    confidence: "doc",
+    enforcement: "enforced",
+    reason: "Cursor does not read Codex TOML config files; it uses JSON settings (CSet1).",
+  },
+] as const satisfies readonly CompatMatrixEntry[];
 
 export const VERSION_MATRIX: readonly FeatureCompatibility[] = MATRIX_ENTRIES;
 

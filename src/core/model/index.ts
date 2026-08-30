@@ -207,6 +207,17 @@ export interface TrustState {
   unknownReason?: string;
 }
 
+export type {
+  EcosystemInventory,
+  InventoryResource,
+  InventoryResourceKind,
+  OverlapCollision,
+  OverlapRelation,
+  PlatformDetection,
+  PlatformDetectionStatus,
+} from "./ecosystem.js";
+export { isMarkdownContentKind } from "./ecosystem.js";
+
 export interface ProjectSnapshot<
   TConfiguration extends AgentConfiguration = AgentConfiguration,
 > {

@@ -41,21 +41,21 @@ Replace the Overview tab with a reactflow canvas of thematic blocks — skills, 
 
 ## Acceptance
 
-- [ ] `ecosystem` is the first nav tab; `overview` no longer exists as a tab id
-- [ ] Canvas renders four blocks (agents, skills, MCP, rules/instructions); an empty block renders as an explicit empty state, not as nothing
-- [ ] Resources from all detected platforms appear in one canvas
-- [ ] `local`-scope resources carry a visible **local** badge and sit adjacent to the repository resource they overlap
-- [ ] The single `overlaps` edge kind is drawn; an unresolved collision (no winner) is visually distinct from a resolved one
-- [ ] Nodes cannot be dragged or connected; no layout state is written anywhere
-- [ ] Side rail hosts scan controls and counts; browse / rescan / path persistence behave exactly as before
-- [ ] Both graph tabs carry their distinguishing captions
+- [x] `ecosystem` is the first nav tab; `overview` no longer exists as a tab id
+- [x] Canvas renders four blocks (agents, skills, MCP, rules/instructions); an empty block renders as an explicit empty state, not as nothing
+- [x] Resources from all detected platforms appear in one canvas
+- [x] `local`-scope resources carry a visible **local** badge and sit adjacent to the repository resource they overlap
+- [x] The single `overlaps` edge kind is drawn; an unresolved collision (no winner) is visually distinct from a resolved one
+- [x] Nodes cannot be dragged or connected; no layout state is written anywhere
+- [x] Side rail hosts scan controls and counts; browse / rescan / path persistence behave exactly as before
+- [x] Both graph tabs carry their distinguishing captions
 
 ## Done checklist
 
-- [ ] `npm run test` passes
-- [ ] `npm run typecheck` passes
-- [ ] No writes to scanned project's `.claude/**`
-- [ ] TASKS.md updated by orchestrator (not implementer)
+- [x] `npm run test` passes
+- [x] `npm run typecheck` passes
+- [x] No writes to scanned project's `.claude/**`
+- [x] TASKS.md updated by orchestrator (not implementer)
 
 ## Notes
 
