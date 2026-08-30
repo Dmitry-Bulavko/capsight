@@ -4,7 +4,7 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**D1-00 and D1-01 done.** All three platforms now carry a §11.4 coverage report, and fixture runs are isolated from Capsight's own repository. **Scaffolding done — D1-00, D1-01, D1-09 and D1-10 are closed.** The corpus is isolated from this repository, portable across checkout paths, and its isolation guard is falsifiable on all three platforms. **D1-03 done; D1-04 is next.** Two evidence tasks have now landed and moved the §11.4 numbers by zero between them — see below. The `pendingFixture` backlog is 12 → 6, but five of the six retired entries turned out to be unprovable rather than proved.
+**D1-00 and D1-01 done.** All three platforms now carry a §11.4 coverage report, and fixture runs are isolated from Capsight's own repository. **Scaffolding done — D1-00, D1-01, D1-09 and D1-10 are closed.** The corpus is isolated from this repository, portable across checkout paths, and its isolation guard is falsifiable on all three platforms. **D1-04 done; D1-05 is next.** The metric moved for the first time in the phase: S11 went from `unverified` to `documentation-only`, so Claude now reads **92 / 0 / 9 / 32 / 51**. The `pendingFixture` backlog stands at 6, and five of the six entries retired so far turned out to be unprovable rather than proved.
 
 Previous: **EC phase written** — ecosystem visualization handoffs EC-01…EC-08, now blocked on D1.
 
@@ -92,6 +92,10 @@ D1-03 continued the pattern and went further: it ended with **no production code
 The refusal turned on a distinction worth recording, because the opposite move was available and tempting. D1-02 promoted S8 by treating a WebFetch rule without the `domain:` prefix as granting nothing. The parallel move for S6 would treat a mid-pattern `:*` the same way. It was refused because the facts are not parallel in form: S8 says the prefix is *required*, so a rule lacking it is malformed; S6 says only that `:*` is not a wildcard away from the end, so such a rule is still valid and merely matches something narrower. Review confirmed this independently by comparing the neighbours — S3 ("invalid") and S4 ("ignored and allow nothing") do use the language that licenses a confident `blocked` verdict, and S6 pointedly does not.
 
 Both entries also record *why* they are unprovable in a way a later reader can act on: not physical impossibility, but impossibility under a permanent scope choice — the evidence that would promote them is a verdict of the form "this command line would be approved", which is the permission engine §2.3 forbids this product to have.
+
+D1-04 broke the pattern, and it is worth naming why it could. S6, S7, S9 and S10 all asked the product to state what a rule does to a *specific* invocation — a command line, a path, a subagent that has no capability kind. S11 asks only what two settings keys are and what they widen, which is discovery. So it produced code where the others produced refusals, and it moved the fact from having no consumer at all to being read by the resolver.
+
+Both new entries are `confidence: "fixture"` with `verifiedFacts: []` — the D1-02 shape again, because each pins one clause of S11 rather than the fact entire. `fixture-verified` therefore stays at 9. The lesson is consistent across all three evidence tasks so far: **the §11.4 fact count is a far slower measure than the work behind it**, and entry-level confidence is where the progress actually shows.
 
 **This lowers the phase's ceiling.** The earlier estimate of 9 → roughly 20 fixture-verified assumed the twelve pending entries were mostly convertible. On the first sample, three of four were not. A more honest expectation is that D1 ends with a materially smaller `pendingFixture` list, a handful of promotions, and several facts formally recorded as unprovable by fixture — with the §11.4 count moving far less than the amount of work suggests.
 

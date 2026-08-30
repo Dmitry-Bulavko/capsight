@@ -194,8 +194,8 @@ D1-00 was found while verifying D1-01: fixture scans walk past the fixture proje
 | D1-10 | D1 | Isolation and portability follow-ups (5 review findings) | done | §11.2, §11.3 | tests/fixtures/fixture-runtime.ts, global-setup.ts, .gitignore | Isolation asserted on all three platforms |
 | D1-02 | D1 | Complete settings-permissions fixture (S8–S10) | done | §3.5, §11.1–11.4, H1-28 | tests/fixtures/claude/settings-permissions/, matrix.ts | Each fact fixture-backed or doc-only with a reason |
 | D1-03 | D1 | S6/S7 rule-argument semantics — evaluate or refuse | done | §3.5 S6–S7, §2.3, §14 | resolution/settings-permissions.ts, matrix.ts | Written decision per fact; no permission engine |
-| D1-04 | D1 | S11 additionalDirectories + enableAllProjectMcpServers | in_progress | §3.5 S11, §4.4, §8.2 | discovery/settings.ts, resolution/, matrix.ts | Two entries; trust interaction founded or unknown |
-| D1-05 | D1 | K8/K10/K11 skill overrides + command precedence | todo | §3.6, M1 #9, §8.2 | resolution/skills.ts, discovery/, matrix.ts | No `[ext]` fact drives a confident answer without a fixture |
+| D1-04 | D1 | S11 additionalDirectories + enableAllProjectMcpServers | done | §3.5 S11, §4.4, §8.2 | discovery/settings.ts, resolution/, matrix.ts | Two entries; trust interaction founded or unknown |
+| D1-05 | D1 | K8/K10/K11 skill overrides + command precedence | in_progress | §3.6, M1 #9, §8.2 | resolution/skills.ts, discovery/, matrix.ts | No `[ext]` fact drives a confident answer without a fixture |
 | D1-06 | D1 | Close remaining pendingFixture entries (A10, F9, K4, K5, R5, B2) | todo | §3, §11.1–11.4, H1-28 | tests/fixtures/claude/*, matrix.ts | No `pendingFixture` left in the Claude matrix |
 | D1-07 | D1 | Cursor matrix + fixture depth | todo | CURSOR-FACTS, §8, §11 | adapters/cursor/, tests/fixtures/cursor/ | ≥3 founded entries, ≥2 new fixtures, CT1 stays unknown |
 | D1-08 | D1 | Codex matrix + fixture depth | todo | CODEX-FACTS, §8, §11 | adapters/codex/, tests/fixtures/codex/ | ≥3 founded entries, trust difference pinned |
