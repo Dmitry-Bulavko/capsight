@@ -81,21 +81,87 @@ export interface FixtureRepoRootLease {
 /** Claim files live inside the marker directory, which `.gitignore` covers. */
 const CLAIM_PREFIX = "capsight-run-";
 
+/**
+ * Upper bound on a claim's life. A pid alone is not proof of ownership: pids
+ * are reused, so a long-dead claim whose number has come round again would
+ * read as live forever. No test run lasts hours.
+ */
+const MAX_CLAIM_AGE_MS = 6 * 60 * 60 * 1000;
+
+/**
+ * Environment variable the isolation hook publishes its run id in, so a test
+ * can assert *this* run holds the lease rather than that some marker exists.
+ * Set in `global-setup.ts`, which runs before vitest forks its workers, so the
+ * workers inherit it.
+ */
+export const FIXTURE_RUN_ID_ENV = "CAPSIGHT_FIXTURE_RUN_ID";
+
 function claimPath(marker: string, runId: string): string {
   return path.join(marker, `${CLAIM_PREFIX}${runId}`);
 }
 
-function hasOtherClaims(marker: string, runId: string): boolean {
-  let entries: string[];
+function newRunId(): string {
+  return `${process.pid}-${crypto.randomUUID()}`;
+}
+
+function claimOwnerPid(entry: string): number | undefined {
+  const pid = Number.parseInt(entry.slice(CLAIM_PREFIX.length).split("-")[0] ?? "", 10);
+  return Number.isInteger(pid) && pid > 0 ? pid : undefined;
+}
+
+function processIsAlive(pid: number): boolean {
   try {
-    entries = fs.readdirSync(marker);
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    // EPERM means the process exists and belongs to somebody else.
+    return (error as NodeJS.ErrnoException).code === "EPERM";
+  }
+}
+
+/**
+ * Is this claim held by a run that is still going?
+ *
+ * A claim outlives its owner whenever a run dies without tearing down — a
+ * SIGKILL, or the SIGPIPE a `vitest ... | head` takes when the pipe closes.
+ * Nothing reaps it on its own, so an unreaped claim pins its marker forever,
+ * and a pinned marker makes `assertFixtureIsolated` pass whether or not the
+ * isolation hook ran: the guard stops being able to observe what it guards
+ * (H1-07). Liveness is therefore never assumed from the file's existence.
+ */
+function claimIsLive(marker: string, entry: string): boolean {
+  if (!entry.startsWith(CLAIM_PREFIX)) {
+    return false;
+  }
+  let mtimeMs: number;
+  try {
+    mtimeMs = fs.statSync(path.join(marker, entry)).mtimeMs;
   } catch {
     return false;
   }
-  return entries.some(
-    (entry) =>
-      entry.startsWith(CLAIM_PREFIX) && entry !== `${CLAIM_PREFIX}${runId}`,
-  );
+  if (Date.now() - mtimeMs > MAX_CLAIM_AGE_MS) {
+    return false;
+  }
+  const pid = claimOwnerPid(entry);
+  return pid !== undefined && processIsAlive(pid);
+}
+
+function readClaims(marker: string): string[] {
+  try {
+    return fs.readdirSync(marker).filter((entry) => entry.startsWith(CLAIM_PREFIX));
+  } catch {
+    return [];
+  }
+}
+
+/** Delete every claim whose owning run is gone. Safe to call concurrently. */
+function reapDeadClaims(marker: string): void {
+  for (const entry of readClaims(marker)) {
+    if (claimIsLive(marker, entry)) {
+      continue;
+    }
+    fs.rmSync(path.join(marker, entry), { force: true });
+  }
 }
 
 /**
@@ -105,41 +171,74 @@ function hasOtherClaims(marker: string, runId: string): boolean {
  * tree overlap, and a teardown that removed the marker unconditionally would
  * strip isolation out from under a run still scanning — the exact failure this
  * hook exists to prevent, arriving as a flake. Each run therefore drops a
- * claim file inside the marker directory and `releaseFixtureRepoRoots` deletes
- * the directory only once the last claim is gone (refcount by filesystem).
+ * claim file inside the marker directory and the last run out removes it
+ * (refcount by filesystem).
+ *
+ * Dead claims are reaped here rather than trusted, so an interrupted run
+ * cannot pin a marker — and with it the isolation assertions — indefinitely.
  */
 export function acquireFixtureRepoRoots(
   projectRoots: readonly string[],
-  runId: string = `${process.pid}-${crypto.randomUUID()}`,
+  runId: string = newRunId(),
 ): FixtureRepoRootLease {
   const markers: string[] = [];
   for (const projectRoot of projectRoots) {
     const marker = path.join(projectRoot, ".git");
-    fs.mkdirSync(marker, { recursive: true });
-    fs.writeFileSync(claimPath(marker, runId), "", "utf8");
+    // A concurrent release can remove the marker between the mkdir and the
+    // write, which surfaces as ENOENT on the claim. Retry rather than fail:
+    // the loser of that race simply recreates the marker it needs.
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        fs.mkdirSync(marker, { recursive: true });
+        reapDeadClaims(marker);
+        fs.writeFileSync(claimPath(marker, runId), "", "utf8");
+        break;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ENOENT" || attempt >= 10) {
+          throw error;
+        }
+      }
+    }
     markers.push(marker);
   }
   return { runId, markers };
 }
 
 /**
- * Drop this run's claim, and remove a marker only when no other run holds one.
+ * Drop this run's claim, and remove the marker only if no other run holds one.
+ *
+ * The emptiness test and the removal are the same syscall: `rmdir` fails with
+ * ENOTEMPTY if a claim is present, so a run that acquires between this run's
+ * two steps cannot have its claim deleted out from under it. A recursive
+ * `rm` after a separate `readdir` would leave exactly that window open.
  */
 export function releaseFixtureRepoRoots(lease: FixtureRepoRootLease): void {
   for (const marker of lease.markers) {
     fs.rmSync(claimPath(marker, lease.runId), { force: true });
-    if (hasOtherClaims(marker, lease.runId)) {
-      continue;
+    reapDeadClaims(marker);
+    try {
+      fs.rmdirSync(marker);
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code !== "ENOTEMPTY" && code !== "ENOENT") {
+        throw error;
+      }
     }
-    fs.rmSync(marker, { recursive: true, force: true });
   }
 }
 
 /**
  * Precondition every golden runner shares: the isolation hook
  * (`tests/fixtures/global-setup.ts`) has given this fixture project a
- * repo-root marker. Without it a scope walk climbs out of the fixture into the
- * Capsight checkout, so a golden would record the developer's configuration.
+ * repo-root marker *for this run*. Without it a scope walk climbs out of the
+ * fixture into the Capsight checkout, so a golden would record the developer's
+ * configuration.
+ *
+ * The assertion is on this run's claim, not on the marker's existence: a
+ * marker left behind by an interrupted run would otherwise satisfy it forever
+ * and the guard would pass while guarding nothing (H1-07). When no run id is
+ * published — a caller using the lease API directly — it falls back to
+ * requiring a claim whose owning process is still alive.
  *
  * Asserted per platform rather than once: the hook is the only thing standing
  * between the corpus and the checkout, and a corpus that cannot observe it
@@ -147,11 +246,18 @@ export function releaseFixtureRepoRoots(lease: FixtureRepoRootLease): void {
  */
 export function assertFixtureIsolated(fixtureDir: string): void {
   const marker = path.join(path.resolve(fixtureDir), "project", ".git");
-  if (!fs.existsSync(marker)) {
+  const runId = process.env[FIXTURE_RUN_ID_ENV];
+  const held =
+    runId !== undefined
+      ? fs.existsSync(claimPath(marker, runId))
+      : readClaims(marker).some((entry) => claimIsLive(marker, entry));
+  if (!held) {
     throw new Error(
-      `Fixture ${fixtureDir} has no repo-root marker at ${marker}: the ` +
-        `isolation hook (tests/fixtures/global-setup.ts) did not run, so this ` +
-        `scan can climb into the Capsight checkout.`,
+      `Fixture ${fixtureDir} carries no live repo-root claim at ${marker}` +
+        (runId === undefined ? "" : ` for run ${runId}`) +
+        `: the isolation hook (tests/fixtures/global-setup.ts) did not run for ` +
+        `this run, so this scan can climb into the Capsight checkout. A marker ` +
+        `left behind by an interrupted run does not count.`,
     );
   }
 }

@@ -32,6 +32,7 @@ import {
 } from "./golden-normalize.js";
 import {
   CHECKOUT_SHAPES,
+  FIXTURE_RUN_ID_ENV,
   acquireFixtureRepoRoots,
   assertFixtureIsolated,
   cleanupFixtureHome,
@@ -431,6 +432,110 @@ describe("golden fixtures", () => {
       expect(fsSync.existsSync(marker)).toBe(false);
     } finally {
       child.kill();
+      fsSync.rmSync(workspace, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  // A claim outlives its owner whenever a run dies without tearing down: a
+  // SIGKILL, or the SIGPIPE that `vitest ... | head` delivers when the pipe
+  // closes. Nothing reaped those claims, so one zero-byte leftover pinned a
+  // marker forever — and because the isolation assertions only asked whether
+  // the marker existed, a pinned marker made all of them pass with the
+  // isolation hook removed entirely. The guard could no longer observe what it
+  // guarded (H1-07). A dead run's claim must not hold a marker open.
+  it("reaps a dead run's claim instead of pinning the marker forever", async () => {
+    const workspace = fsSync.mkdtempSync(
+      path.join(os.tmpdir(), "capsight-stale-claim-"),
+    );
+    const projectRoot = path.join(workspace, "fixture", "project");
+    const marker = path.join(projectRoot, ".git");
+    fsSync.mkdirSync(marker, { recursive: true });
+
+    // A real pid that is really gone, rather than a number assumed unused.
+    const corpse = spawn(process.execPath, ["-e", ""], { stdio: "ignore" });
+    const deadPid = await new Promise<number>((resolve, reject) => {
+      corpse.on("error", reject);
+      corpse.on("exit", () => resolve(corpse.pid!));
+    });
+    const stale = path.join(marker, `capsight-run-${deadPid}-stale`);
+    fsSync.writeFileSync(stale, "", "utf8");
+
+    try {
+      // The next run reaps it, so its own teardown can still free the marker.
+      const lease = acquireFixtureRepoRoots([projectRoot]);
+      expect(fsSync.existsSync(stale)).toBe(false);
+      releaseFixtureRepoRoots(lease);
+      expect(
+        fsSync.existsSync(marker),
+        "a dead run's claim kept the marker pinned",
+      ).toBe(false);
+    } finally {
+      fsSync.rmSync(workspace, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  // ...and the isolation assertion must reject that leftover too, otherwise
+  // reaping only narrows the window: a marker present but unclaimed by this
+  // run proves nothing about whether the hook ran. Both modes are pinned down
+  // here, so the meaning does not depend on how the suite was invoked.
+  it("rejects a marker no live run holds a claim on", async () => {
+    const workspace = fsSync.mkdtempSync(
+      path.join(os.tmpdir(), "capsight-orphan-marker-"),
+    );
+    const fixtureDir = path.join(workspace, "fixture");
+    const marker = path.join(fixtureDir, "project", ".git");
+    fsSync.mkdirSync(marker, { recursive: true });
+    const publishedRunId = process.env[FIXTURE_RUN_ID_ENV];
+    expect(
+      publishedRunId,
+      "global-setup must publish its run id to the workers",
+    ).toBeTypeOf("string");
+
+    // A pid that is really gone, for the no-run-id fallback below.
+    const corpse = spawn(process.execPath, ["-e", ""], { stdio: "ignore" });
+    const deadPid = await new Promise<number>((resolve, reject) => {
+      corpse.on("error", reject);
+      corpse.on("exit", () => resolve(corpse.pid!));
+    });
+
+    try {
+      // A bare marker, exactly what an interrupted run leaves behind.
+      expect(() => assertFixtureIsolated(fixtureDir)).toThrow(
+        /no live repo-root claim/,
+      );
+
+      // With a run id published, another run's claim is not this run's claim,
+      // however alive that other run is.
+      vi.stubEnv(FIXTURE_RUN_ID_ENV, "this-run");
+      const foreign = path.join(marker, `capsight-run-${process.pid}-other`);
+      fsSync.writeFileSync(foreign, "", "utf8");
+      expect(() => assertFixtureIsolated(fixtureDir)).toThrow(
+        /no live repo-root claim/,
+      );
+
+      // This run's own claim satisfies it.
+      fsSync.writeFileSync(path.join(marker, "capsight-run-this-run"), "", "utf8");
+      expect(() => assertFixtureIsolated(fixtureDir)).not.toThrow();
+
+      // Without a published run id the fallback asks for a live owner, so a
+      // dead run's leftover still fails and a live run's claim still passes.
+      delete process.env[FIXTURE_RUN_ID_ENV];
+      fsSync.rmSync(path.join(marker, "capsight-run-this-run"), { force: true });
+      fsSync.rmSync(foreign, { force: true });
+      fsSync.writeFileSync(
+        path.join(marker, `capsight-run-${deadPid}-stale`),
+        "",
+        "utf8",
+      );
+      expect(() => assertFixtureIsolated(fixtureDir)).toThrow(
+        /no live repo-root claim/,
+      );
+      fsSync.writeFileSync(foreign, "", "utf8");
+      expect(() => assertFixtureIsolated(fixtureDir)).not.toThrow();
+    } finally {
+      if (publishedRunId !== undefined) {
+        process.env[FIXTURE_RUN_ID_ENV] = publishedRunId;
+      }
       fsSync.rmSync(workspace, { recursive: true, force: true });
     }
   }, 30_000);

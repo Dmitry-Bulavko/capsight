@@ -1,4 +1,6 @@
+import { randomUUID } from "node:crypto";
 import {
+  FIXTURE_RUN_ID_ENV,
   acquireFixtureRepoRoots,
   fixtureProjectRoots,
   releaseFixtureRepoRoots,
@@ -23,8 +25,14 @@ import { PLATFORM_IDS, platformFixturesRoot } from "./coverage-report.js";
  * no-op: if a corpus directory is renamed or moved, silently creating zero
  * markers would put every fixture of that platform back on the developer's
  * checkout while the suite stayed green (§11.3, H1-07).
+ *
+ * The run id is published to the workers (this runs before vitest forks them)
+ * so `assertFixtureIsolated` can check that *this* run holds the lease. A
+ * marker orphaned by an interrupted run must not be able to satisfy the guard.
  */
 export default function setup(): () => void {
+  const runId = `${process.pid}-${randomUUID()}`;
+  process.env[FIXTURE_RUN_ID_ENV] = runId;
   const leases: FixtureRepoRootLease[] = [];
   for (const platform of PLATFORM_IDS) {
     const fixturesRoot = platformFixturesRoot(platform);
@@ -37,11 +45,12 @@ export default function setup(): () => void {
           `climb into the Capsight checkout.`,
       );
     }
-    leases.push(acquireFixtureRepoRoots(projectRoots));
+    leases.push(acquireFixtureRepoRoots(projectRoots, runId));
   }
   return () => {
     for (const lease of leases) {
       releaseFixtureRepoRoots(lease);
     }
+    delete process.env[FIXTURE_RUN_ID_ENV];
   };
 }
