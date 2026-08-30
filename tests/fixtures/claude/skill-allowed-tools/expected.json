@@ -33,11 +33,26 @@
         "type": "CLAUDE.md",
         "path": "CLAUDE.md",
         "scope": "project",
-        "sizeBytes": 163
+        "sizeBytes": 461
       }
     ],
     "mcpServers": [],
-    "settings": [],
+    "settings": [
+      {
+        "scope": "project",
+        "path": ".claude/settings.json",
+        "priority": 30,
+        "permissions": {
+          "rules": [
+            {
+              "action": "deny",
+              "index": 0,
+              "raw": "Write"
+            }
+          ]
+        }
+      }
+    ],
     "trust": {
       "accepted": false,
       "projectPath": "."
@@ -80,6 +95,33 @@
                 "scope": "project",
                 "path": ".claude/agents/runner.md"
               }
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:deny:Write",
+          "kind": "permission",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.deny entry \"Write\" removes the tool from the session entirely (S5); settings deny rules are applied last and are not overridden by agent frontmatter or by a bypass permission mode (S2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[0]"
+              },
+              "matrixRef": "settings.denyBareTool"
             }
           ]
         },
@@ -790,13 +832,19 @@
         {
           "capabilityId": "Write",
           "kind": "tool",
-          "status": "available",
+          "status": "denied",
           "enforcement": "enforced",
           "sources": [
             {
               "platform": "claude",
               "scope": "project",
               "path": ".claude/agents/runner.md"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[0]"
             }
           ],
           "reasons": [
@@ -808,6 +856,17 @@
                 "scope": "project",
                 "path": ".claude/agents/runner.md"
               }
+            },
+            {
+              "type": "denied",
+              "message": "permissions.deny entry \"Write\" removes the tool from the session entirely (S5); settings deny rules are applied last and are not overridden by agent frontmatter or by a bypass permission mode (S2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[0]"
+              },
+              "matrixRef": "settings.denyBareTool"
             }
           ]
         },
@@ -840,6 +899,27 @@
       "warnings": [
         {
           "category": "security-finding",
+          "severity": "info",
+          "message": "Skill pre-approves \"Write\" via allowed-tools, but a settings layer denies \"Write\", which removes the tool from the session (S5). A deny rule is not overridden at any level (S2) and does not yield to allowed-tools (K8), so the pre-approval has nothing to approve.",
+          "evidence": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[0]"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/skills/deployer/SKILL.md",
+              "fieldPath": "frontmatter.allowed-tools[1]"
+            }
+          ],
+          "matrixRef": "skills.denyBeatsAllowedTools",
+          "enforcement": "enforced"
+        },
+        {
+          "category": "security-finding",
           "severity": "warning",
           "message": "Skill pre-approves sensitive tool \"Bash(git push:*)\" via allowed-tools (K6, K7).",
           "evidence": [
@@ -848,20 +928,6 @@
               "scope": "project",
               "path": ".claude/skills/deployer/SKILL.md",
               "fieldPath": "frontmatter.allowed-tools[0]"
-            }
-          ],
-          "matrixRef": "K6"
-        },
-        {
-          "category": "security-finding",
-          "severity": "warning",
-          "message": "Skill pre-approves sensitive tool \"Write\" via allowed-tools (K6, K7).",
-          "evidence": [
-            {
-              "platform": "claude",
-              "scope": "project",
-              "path": ".claude/skills/deployer/SKILL.md",
-              "fieldPath": "frontmatter.allowed-tools[1]"
             }
           ],
           "matrixRef": "K6"

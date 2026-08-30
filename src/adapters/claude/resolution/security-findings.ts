@@ -14,6 +14,7 @@ import { MATRIX, gateWarning } from "../version/matrix.js";
 import type { DiscoveredSkill, SettingsLayer } from "../discovery/types.js";
 import { parseFrontmatter } from "../parsing/frontmatter.js";
 import { isInlineMcpServerEntry } from "./trust.js";
+import { findBareToolDenial } from "./settings-permissions.js";
 import { isPluginIneffectiveField } from "./plugin.js";
 
 const SENSITIVE_ALLOWED_TOOL_BASES = new Set(["Bash", "Write", "Edit", "Agent"]);
@@ -29,10 +30,11 @@ function securityWarning(
   message: string,
   evidence: SourceInfo[],
   matrixRef?: FactId,
+  severity: Warning["severity"] = "warning",
 ): Warning {
   return {
     category: "security-finding",
-    severity: "warning",
+    severity,
     message,
     evidence,
     matrixRef,
@@ -149,10 +151,32 @@ async function readAllowedToolsFromSkill(skillPath: string): Promise<string[]> {
   }
 }
 
+/**
+ * K6/K7 findings, and the one case where the finding would be wrong.
+ *
+ * A skill's `allowed-tools` entry pre-approves a tool rather than restricting
+ * the agent (K6), and it applies to any invocation of the skill (K7) — which
+ * is why a pre-approval of a sensitive tool is a finding. But a settings layer
+ * that denies the bare tool name has removed that tool from the session (S5),
+ * a deny is not overridden at any level (S2) and K8 states the same for
+ * `allowed-tools` in particular, so there is nothing left for the entry to
+ * pre-approve. The finding is not dropped: reporting the pre-approval as a risk
+ * would be a confident wrong claim (§11.3), and reporting nothing would hide a
+ * line the skill file really contains, so the finding states what the entry is
+ * and why it has no effect, at `info`.
+ *
+ * Only a *bare* deny is acted on. Whether a deny of the form `Bash(rm:*)`
+ * covers a pre-approval of `Bash(git push:*)` is a question about which
+ * invocations a rule matches, and this product does not evaluate rule arguments
+ * (§2.3): such a pair keeps the ordinary K6/K7 finding, since S2 says the deny
+ * is not overridden but not what it leaves of the pre-approval.
+ */
 async function findSkillAllowedToolsWarnings(
   snapshot: ProjectSnapshot,
 ): Promise<Warning[]> {
   const skills = snapshot.skills as DiscoveredSkill[];
+  const layers = snapshot.settings as SettingsLayer[];
+  const version = snapshot.version.version;
   const warnings: Warning[] = [];
 
   for (const skill of skills) {
@@ -162,19 +186,34 @@ async function findSkillAllowedToolsWarnings(
         continue;
       }
 
+      const evidence: SourceInfo = {
+        platform: "claude",
+        scope: skill.source.scope,
+        path: skill.path,
+        fieldPath: `frontmatter.allowed-tools[${index}]`,
+      };
+      const denial = findBareToolDenial(layers, allowedToolBase(pattern));
+
       warnings.push(
-        securityWarning(
-          `Skill pre-approves sensitive tool "${pattern}" via allowed-tools (K6, K7).`,
-          [
-            {
-              platform: "claude",
-              scope: skill.source.scope,
-              path: skill.path,
-              fieldPath: `frontmatter.allowed-tools[${index}]`,
-            },
-          ],
-          FACT.K6,
-        ),
+        denial
+          ? gateWarning(
+              securityWarning(
+                `Skill pre-approves "${pattern}" via allowed-tools, but a settings layer ` +
+                  `denies "${denial.rule.raw}", which removes the tool from the session (S5). ` +
+                  "A deny rule is not overridden at any level (S2) and does not yield to " +
+                  "allowed-tools (K8), so the pre-approval has nothing to approve.",
+                [evidence, denial.source],
+                FACT.K8,
+                "info",
+              ),
+              MATRIX["skills.denyBeatsAllowedTools"],
+              version,
+            )
+          : securityWarning(
+              `Skill pre-approves sensitive tool "${pattern}" via allowed-tools (K6, K7).`,
+              [evidence],
+              FACT.K6,
+            ),
       );
     }
   }

@@ -460,6 +460,22 @@ function bareToolDenials(rules: readonly IndexedSettingsRule[]): IndexedSettings
   );
 }
 
+/**
+ * The bare `deny` rule that removed a tool from the session, if any layer has
+ * one (S5). Exported so that the K8 finding about a skill's `allowed-tools`
+ * pre-approval asks the same question the S2 branch of `resolveRule` asks —
+ * one deny-precedence path, matched on the tool a rule names and on nothing
+ * else, rather than a second one that could drift from it.
+ */
+export function findBareToolDenial(
+  layers: readonly SettingsLayer[],
+  tool: string,
+): IndexedSettingsRule | undefined {
+  return bareToolDenials(indexSettingsRules(layers)).find(
+    (entry) => (entry.parsed as { tool: string }).tool === tool,
+  );
+}
+
 interface RuleOutcome {
   status: ResolvedCapability["status"];
   reasons: ResolutionReason[];

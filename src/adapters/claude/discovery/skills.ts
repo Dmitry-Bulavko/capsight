@@ -142,6 +142,15 @@ export async function discoverSkills(
     }
   };
 
+  // K11: a `.claude/commands/*.md` file is still discovered, and a skill of the
+  // same name in the same scope takes the name from it. Both halves are that
+  // entry's rule, so the record carries the gate: on a version the matrix does
+  // not cover, the command is reported without claiming the platform still
+  // reads it. The precedence itself is the walk order below — the skills
+  // directory is read first and the deduplicating key is per scope, so the
+  // command file of a taken name never enters the result.
+  const commandGate = gateDiscovery(MATRIX["discovery.commandNamePrecedence"], version);
+
   for (const scope of projectScopes) {
     if (!scope.hasClaudeDir) {
       continue;
@@ -157,7 +166,14 @@ export async function discoverSkills(
     }
 
     for (const skill of await discoverCommands(path.join(claudeDir, "commands"), scopeType)) {
-      addSkill(skill);
+      addSkill({
+        ...skill,
+        source: {
+          ...skill.source,
+          matrixRef: MATRIX["discovery.commandNamePrecedence"],
+        },
+        enforcement: commandGate.enforcement,
+      });
     }
   }
 

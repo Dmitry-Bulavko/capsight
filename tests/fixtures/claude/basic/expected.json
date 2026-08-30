@@ -30,6 +30,18 @@
           "path": ".claude/skills/api-helper/SKILL.md"
         },
         "path": ".claude/skills/api-helper/SKILL.md"
+      },
+      {
+        "name": "release-notes",
+        "description": "Draft release notes from the merged pull requests of the current milestone",
+        "source": {
+          "platform": "claude",
+          "scope": "project",
+          "path": ".claude/commands/release-notes.md",
+          "matrixRef": "discovery.commandNamePrecedence"
+        },
+        "path": ".claude/commands/release-notes.md",
+        "enforcement": "enforced"
       }
     ],
     "instructions": [

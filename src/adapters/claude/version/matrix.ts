@@ -379,6 +379,56 @@ const MATRIX_ENTRIES = [
     pendingFixture: "skills-preload",
   },
   {
+    id: "skills.denyBeatsAllowedTools",
+    feature:
+      "A settings deny of a bare tool leaves a skill's allowed-tools pre-approval of that tool with nothing to approve",
+    factRefs: [FACT.K8, FACT.K6, FACT.S2, FACT.S5],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "skill-allowed-tools",
+    verifiedFacts: [],
+    notes:
+      "The fixture's deployer skill pre-approves Write and Bash(git push:*) while the project " +
+      "settings deny bare Write. The Write pre-approval resolves to a finding that states the " +
+      "pre-approval has no effect; drop this rule and the same entry resolves to the ordinary " +
+      "K6/K7 finding that the skill pre-approves a sensitive tool — a confident claim about the " +
+      "opposite state of affairs (H1-28). The Bash entry keeps the K6/K7 finding, so both " +
+      "branches are in one golden. " +
+      "Narrower than K8 in two ways. Only a bare-tool deny is acted on: that is the one deny " +
+      "form whose effect §3.5 states outright (S5 removes the tool from the session), whereas " +
+      "what a deny of the form Bash(rm:*) leaves of a pre-approval is the per-invocation " +
+      "question §2.3 keeps out of this product, so such a pair stays a plain K6/K7 finding. And " +
+      "the rule acts in one direction only — it withdraws a claim about a pre-approval, it never " +
+      "adds a capability. K8 says the deny wins *always*, over every deny form, so the fact is " +
+      "not exercised entire and rests on documentation alone in §11.4. " +
+      "The two facts agree here, and the rule acted on is the S2 one. K8 speaks of a *global* " +
+      "deny beating allowed-tools; S2 says a deny at any level is not overridden anywhere. " +
+      "Acting on a project-layer deny therefore rests on S2, the broader statement, rather than " +
+      "on a widened reading of the word global in K8.",
+  },
+  {
+    id: "skills.settingsOverrides",
+    feature: "skillOverrides settings key manages skills without editing the skill file",
+    factRefs: [FACT.K10],
+    status: "unknown",
+    confidence: "doc",
+    noFixturePossible:
+      "§3.6 states that the key exists and what it is for, and nothing else: not where it sits " +
+      "in a settings file, not what it contains, not which skill property it can change and not " +
+      "which of the S1 layers may carry it. A fixture cannot supply that. A fixture is an input " +
+      "this project authors together with its golden, so writing a skillOverrides block into a " +
+      "settings file and asserting a resolution over it would record an invented schema as " +
+      "though it were platform behaviour (§13.14) — the fixture would prove only that the " +
+      "resolver reads what the same commit made up. The missing evidence is documentary: the " +
+      "shape of the key. Until §3.6 carries it, the key is not read at discovery and no rule " +
+      "cites it, so every question about it resolves unknown (§8.2) and an unknown claims " +
+      "nothing (§11.3).",
+    notes:
+      "Registered rather than omitted so that the refusal is visible: without an entry K10 would " +
+      "be indistinguishable in §11.4 from a fact nobody has looked at.",
+  },
+  {
     id: "trust.inlineMcp",
     feature: "Inline MCP servers in project agents require accepted folder trust",
     factRefs: [FACT.R1, FACT.R4],
@@ -458,6 +508,31 @@ const MATRIX_ENTRIES = [
       "K12 is the deliberate exception to A9 and is [ext], so the add-dir " +
       "fixture is what lifts it above documentation (§8.2). One clause, pinned " +
       "entire: vendor-lib's skill is attached and enforced in the golden.",
+  },
+  {
+    id: "discovery.commandNamePrecedence",
+    feature:
+      ".claude/commands/*.md is discovered; a .claude/skills/ entry of the same name wins the name",
+    factRefs: [FACT.K11],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "basic",
+    verifiedFacts: [],
+    notes:
+      "Discovery-level, so the gate lands on the discovered record rather than on a capability. " +
+      "The basic fixture carries both halves: .claude/commands/release-notes.md has no " +
+      "counterpart and is reported, while .claude/commands/api-helper.md collides with the " +
+      "skill of that name and does not reach the golden. Reverse the walk order so commands " +
+      "are read first and the api-helper record in the golden changes its path, source and " +
+      "description to the command file, which is a confident value moving (H1-28). " +
+      "What is pinned is the precedence, not K11 entire. \"Continues to work\" is a claim about " +
+      "invocation, and an ordinary scan does not invoke anything (§2.1): the fixture shows the " +
+      "command file discovered, which is as far as this product can see. The precedence is also " +
+      "pinned within one scope only — the collision that has a rule. A command and a skill of " +
+      "the same name in different scopes are two records here, because K11 names the two " +
+      "directories and not the A1/A3 scope order, and inventing one would be §13.14. K11 is " +
+      "therefore not verified entire and rests on documentation alone in §11.4.",
   },
   {
     id: "settings.layerPrecedence",
