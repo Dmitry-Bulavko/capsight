@@ -5,6 +5,7 @@ tools:
   - Read
 skills:
   - helper
+  - restricted
 ---
 
 You preload project skills into context.

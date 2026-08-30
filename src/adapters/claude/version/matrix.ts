@@ -313,9 +313,20 @@ const MATRIX_ENTRIES = [
     minVersion: "2.1.0",
     status: "supported",
     confidence: "doc",
-    pendingFixture: "invalid-agents",
+    noFixturePossible:
+      "A10 is a startup claim about the agent set as a whole: the budget is computed during " +
+      "discovery and its warning is carried on the snapshot, not on any agent's " +
+      "EffectiveConfiguration. A §11.2 golden records discovery entities and, per resolution, " +
+      "capabilities, reasons and warnings; a total summed over every user agent is a property " +
+      "of no single resolution, so no field of an expected.json holds the value this rule " +
+      "causes and the deletion test has nothing to move (H1-28). The threshold and the " +
+      "estimate are pinned by unit tests, which §11.4 deliberately does not count. A corpus " +
+      "case would also have to carry ~60 000 characters of agent description, recorded " +
+      "verbatim in the golden, to cross the 15 000-token budget — the lesser obstacle, and " +
+      "not the reason for this field.",
     notes:
-      "The invalid-agents fixture covers the A7 skip reasons only; the A10 budget warning still needs its own oversized-description case.",
+      "The invalid-agents fixture this entry used to owe covers the A7 skip reasons only; it " +
+      "was never the missing piece, because the warning would not reach that fixture's golden.",
   },
   {
     id: "agent.modelAllowlist",
@@ -337,15 +348,21 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.F9],
     minVersion: "2.1.0",
     status: "supported",
-    confidence: "doc",
-    pendingFixture: "plugin-agents",
+    confidence: "fixture",
+    fixture: "plugin-agents",
+    verifiedFacts: [FACT.F9],
     notes:
       "The fixture reaches the plugin scope through discovery — its plugin roots are named by " +
       "the fixture (plugin-roots.json), because SPEC §3 documents what a plugin's agents/ " +
-      "directory does (A1, A6, A8) but not where an installed plugin lives — yet no plugin " +
-      "agent in it declares hooks, mcpServers or permissionMode, so nothing exercises the three " +
-      "fields being ignored. Reclassified from fixture to pendingFixture in H1-28: naming a " +
-      "fixture that does not carry the case overstates what the corpus covers.",
+      "directory does (A1, A6, A8) but not where an installed plugin lives. H1-28 demoted this " +
+      "entry to pendingFixture on the premise that no plugin agent in the corpus declares " +
+      "hooks, mcpServers or permissionMode; the premise was wrong. " +
+      "plugins/my-plugin/agents/review/security.md declares all three, and the golden carries " +
+      "the three ignored-field warnings together with permission:default for that agent. " +
+      "Deletion test (D1-06): with the rule removed the same agent resolves " +
+      "permission:bypassPermissions from its own frontmatter — a confident and wrong verdict — " +
+      "and all three warnings leave the golden. F9 names exactly those three fields and the " +
+      "fixture exercises each of them, so the fact is verified entire.",
   },
   {
     id: "skills.preload",
@@ -366,8 +383,16 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.K4],
     minVersion: "2.1.0",
     status: "supported",
-    confidence: "doc",
-    pendingFixture: "skills-preload",
+    confidence: "fixture",
+    fixture: "skills-preload",
+    verifiedFacts: [FACT.K4],
+    notes:
+      "The fixture's preloader lists two skills: helper preloads, and restricted — which sets " +
+      "disable-model-invocation: true — resolves denied. Deletion test (D1-06): with the rule " +
+      "removed restricted resolves preloaded, so a confident golden value moves (H1-28). K4 " +
+      "states one rule and the fixture carries both of its sides, so the fact is verified " +
+      "entire. The verdict is about preloading only: it does not claim what such a skill can " +
+      "still do when a user invokes it.",
   },
   {
     id: "skills.missing",
@@ -376,7 +401,14 @@ const MATRIX_ENTRIES = [
     minVersion: "2.1.0",
     status: "supported",
     confidence: "doc",
-    pendingFixture: "skills-preload",
+    noFixturePossible:
+      "The rule's only product is an unknown capability, and an unknown claims nothing " +
+      "(§11.3), so no fixture can make it the operative cause of a confident golden value " +
+      "(H1-28). Structural rather than a gap in the corpus: a name in `skills:` that the scan " +
+      "did not discover may be absent, disabled, or declared in a scope this scan does not " +
+      "read, and §3.6 records that the platform skips it to a debug log rather than what the " +
+      "session is left holding — so there is no confident verdict for a fixture to pin. " +
+      "Adding such a name to skills-preload would add one more unknown and no evidence.",
   },
   {
     id: "skills.denyBeatsAllowedTools",
@@ -448,9 +480,18 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.R5],
     minVersion: "2.1.0",
     status: "supported",
-    confidence: "doc",
-    pendingFixture: "trust-inline-mcp",
-    notes: "The existing trust-inline-mcp fixture covers R1/R4 only; it still needs a hooks agent.",
+    confidence: "fixture",
+    fixture: "trust-inline-mcp",
+    verifiedFacts: [],
+    notes:
+      "The fixture's `hooked` agent is project-scoped and declares frontmatter hooks while the " +
+      "project trust record is not accepted, so its hooks capability resolves blocked and " +
+      "enforced on the R5 reason. Deletion test (D1-06): with the rule removed that blocked " +
+      "capability leaves the golden altogether. Only R5's first clause is pinned — the " +
+      "exemption for user-level agents and --agents needs a home directory or a CLI flag no " +
+      "project fixture carries — so the fact is not verified entire. `blocked` records which " +
+      "resource the platform holds behind the trust dialog; it is not a claim that hooks " +
+      "cannot run by some other route (§2.4).",
   },
   {
     id: "instructions.hierarchy",
@@ -784,9 +825,18 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.B2],
     minVersion: "2.1.0",
     status: "supported",
-    confidence: "doc",
-    pendingFixture: "tools-filters",
-    notes: "tools-filters has no explore/plan context yet; the built-in kinds must be added there.",
+    confidence: "fixture",
+    fixture: "instructions",
+    verifiedFacts: [],
+    notes:
+      "Pointer moved to the fixture that already carries the case rather than adding the case " +
+      "to tools-filters: instructions resolves its docs-writer agent under foreground-subagent, " +
+      "explore and plan, and Write and Edit — both allowed by that agent's own tools whitelist " +
+      "— resolve available in the first context and denied in the other two. Deletion test " +
+      "(D1-06): with the rule removed all four flip back to available. B2's other clause, that " +
+      "Explore and Plan carry read-only tools only, is not pinned — the rule names Write and " +
+      "Edit and no fixture asserts the rest of the built-in set — so the fact is not verified " +
+      "entire.",
   },
 ] as const satisfies readonly FeatureCompatibility[];
 

@@ -6,5 +6,9 @@
   {
     "agentName": "named-ref",
     "preset": "foreground-subagent"
+  },
+  {
+    "agentName": "hooked",
+    "preset": "foreground-subagent"
   }
 ]

@@ -15,7 +15,8 @@
             "Read"
           ],
           "skills": [
-            "helper"
+            "helper",
+            "restricted"
           ],
           "unknownFields": {}
         },
@@ -32,6 +33,16 @@
           "path": ".claude/skills/helper/SKILL.md"
         },
         "path": ".claude/skills/helper/SKILL.md"
+      },
+      {
+        "name": "restricted",
+        "description": "Skill withheld from preload by disable-model-invocation (K4 fixture)",
+        "source": {
+          "platform": "claude",
+          "scope": "project",
+          "path": ".claude/skills/restricted/SKILL.md"
+        },
+        "path": ".claude/skills/restricted/SKILL.md"
       }
     ],
     "instructions": [
@@ -841,6 +852,37 @@
                 "fieldPath": "frontmatter.skills[0]"
               },
               "matrixRef": "K1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "skill:restricted",
+          "kind": "skill",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/preloader.md",
+              "fieldPath": "frontmatter.skills[1]"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/skills/restricted/SKILL.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Skill cannot be preloaded because disable-model-invocation is set (K4).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/skills/restricted/SKILL.md"
+              },
+              "matrixRef": "K4"
             }
           ]
         }
