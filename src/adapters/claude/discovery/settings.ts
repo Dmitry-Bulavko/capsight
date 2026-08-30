@@ -41,13 +41,32 @@ async function fileExists(filePath: string): Promise<boolean> {
 export async function readSettingsPermissions(
   filePath: string,
 ): Promise<SettingsPermissions | undefined> {
-  let parsed: unknown;
+  return parseSettingsPermissions(await readSettingsJson(filePath));
+}
+
+/** Parsed settings JSON, or `undefined` when the file is missing or unreadable. */
+async function readSettingsJson(filePath: string): Promise<unknown> {
   try {
-    parsed = JSON.parse(await fs.readFile(filePath, "utf8"));
+    return JSON.parse(await fs.readFile(filePath, "utf8")) as unknown;
   } catch {
     return undefined;
   }
-  return parseSettingsPermissions(parsed);
+}
+
+/**
+ * Top-level `enableAllProjectMcpServers` (S11). Only a boolean counts: the key
+ * absent, or written as something else, leaves the layer with no declaration
+ * rather than with a `false`, because §3.5 does not state a default.
+ */
+export function parseEnableAllProjectMcpServers(
+  parsed: unknown,
+): boolean | undefined {
+  if (typeof parsed !== "object" || parsed === null) {
+    return undefined;
+  }
+  const value = (parsed as { enableAllProjectMcpServers?: unknown })
+    .enableAllProjectMcpServers;
+  return typeof value === "boolean" ? value : undefined;
 }
 
 /** Extract the `permissions` block from already-parsed settings JSON. */
@@ -76,11 +95,18 @@ export function parseSettingsPermissions(
   }
 
   const disableBypass = record.disableBypassPermissionsMode;
+  // S11: recorded verbatim. How a relative entry resolves, and what a rule in
+  // `permissions.allow` / `deny` covers inside such a directory, are questions
+  // §3.5 does not answer, so discovery does not rewrite the text.
+  const additionalDirectories = record.additionalDirectories;
 
   return {
     rules,
     ...(typeof disableBypass === "boolean"
       ? { disableBypassPermissionsMode: disableBypass }
+      : {}),
+    ...(Array.isArray(additionalDirectories)
+      ? { additionalDirectories: additionalDirectories.map(String) }
       : {}),
   };
 }
@@ -95,12 +121,17 @@ export async function discoverSettingsLayers(
     filePath: string,
     priority: number,
   ): Promise<void> => {
-    const permissions = await readSettingsPermissions(filePath);
+    const parsed = await readSettingsJson(filePath);
+    const permissions = parseSettingsPermissions(parsed);
+    const enableAllProjectMcpServers = parseEnableAllProjectMcpServers(parsed);
     layers.push({
       scope,
       path: filePath,
       priority,
       ...(permissions ? { permissions } : {}),
+      ...(enableAllProjectMcpServers !== undefined
+        ? { enableAllProjectMcpServers }
+        : {}),
     });
   };
 

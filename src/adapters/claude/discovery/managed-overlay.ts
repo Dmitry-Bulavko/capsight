@@ -15,7 +15,10 @@ import {
   parseFrontmatter,
 } from "../parsing/frontmatter.js";
 import type { SettingsLayer } from "./types.js";
-import { parseSettingsPermissions } from "./settings.js";
+import {
+  parseEnableAllProjectMcpServers,
+  parseSettingsPermissions,
+} from "./settings.js";
 import { FACT } from "../version/facts.js";
 import { gateCollision } from "../version/matrix.js";
 import {
@@ -369,6 +372,9 @@ async function readManagedSettings(bundlePath: string): Promise<{
     // The managed layer outranks every project layer (S1), so its permission
     // rules have to reach resolution like any other layer's.
     const managedPermissions = parseSettingsPermissions(record);
+    // Same reason for the S11 flag: the S1 winner for it cannot be read off
+    // the project layers alone when a managed layer sets it too.
+    const managedMcpApproval = parseEnableAllProjectMcpServers(record);
 
     return {
       settingsLayer: {
@@ -376,6 +382,9 @@ async function readManagedSettings(bundlePath: string): Promise<{
         path: settingsPath,
         priority: 60,
         ...(managedPermissions ? { permissions: managedPermissions } : {}),
+        ...(managedMcpApproval !== undefined
+          ? { enableAllProjectMcpServers: managedMcpApproval }
+          : {}),
       },
       availableModels,
     };

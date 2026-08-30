@@ -15,6 +15,11 @@
       "Edit(//etc/secrets/**)",
       "WebFetch(example.org)"
     ],
-    "disableBypassPermissionsMode": false
-  }
+    "disableBypassPermissionsMode": false,
+    "additionalDirectories": [
+      "/opt/shared-docs",
+      "../vendor-lib"
+    ]
+  },
+  "enableAllProjectMcpServers": true
 }

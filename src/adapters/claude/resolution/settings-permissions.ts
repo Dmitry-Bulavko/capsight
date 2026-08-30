@@ -28,7 +28,7 @@ import {
  * so a rule this resolver cannot act on is visible as an explicit `unknown`
  * rather than as an absent line.
  *
- * @see docs/SPEC.md §3.5 S1–S10, §4.4 rule 7, §6, §13 invariants 3, 4, 14
+ * @see docs/SPEC.md §3.5 S1–S11, §4.4 rule 7, §6, §13 invariants 3, 4, 14
  */
 
 /** Tool names the product knows; a rule naming anything else is not acted on. */
@@ -241,6 +241,205 @@ export function resolveDisableBypassPermissionsMode(
       (layer) => layer.permissions!.disableBypassPermissionsMode !== value,
     ),
   };
+}
+
+/**
+ * `enableAllProjectMcpServers` from the highest-priority layer that sets it
+ * (S1), read exactly like `disableBypassPermissionsMode`: a layer that omits
+ * the key does not vote.
+ */
+export function resolveProjectMcpApproval(
+  layers: readonly SettingsLayer[],
+): { value: boolean; source: SourceInfo; contested: boolean } | undefined {
+  const setting = [...layers]
+    .sort((left, right) => right.priority - left.priority)
+    .filter((layer) => layer.enableAllProjectMcpServers !== undefined);
+
+  const winner = setting[0];
+  if (!winner) {
+    return undefined;
+  }
+
+  const value = winner.enableAllProjectMcpServers!;
+  return {
+    value,
+    source: {
+      platform: "claude",
+      scope: winner.scope,
+      path: winner.path,
+      fieldPath: "enableAllProjectMcpServers",
+    },
+    contested: setting.some((layer) => layer.enableAllProjectMcpServers !== value),
+  };
+}
+
+export const PROJECT_MCP_APPROVAL_CAPABILITY_ID = "settings-project-mcp-approval";
+
+/**
+ * The S11 approval reason, for the servers the key names. Returned separately
+ * so the resolver can attach it to each `.mcp.json` server capability: the
+ * effect of the key is on those servers, and a reason that lived only on the
+ * settings capability would leave the server itself unexplained.
+ *
+ * Wording per §2.4: the key removes a prompt, it does not make a server
+ * trusted and it is not a security boundary in either direction.
+ */
+export function projectMcpApprovalReason(
+  approval: { value: boolean; source: SourceInfo },
+): ResolutionReason {
+  return approval.value
+    ? reason(
+        "declared",
+        'Settings set "enableAllProjectMcpServers" to true, so MCP servers declared in the ' +
+          "project's .mcp.json are approved without a prompt (S11). Approval is not an " +
+          "observation that a server starts or a statement about what it does: an ordinary " +
+          "scan does not start MCP servers.",
+        approval.source,
+        MATRIX["settings.projectMcpAutoApproval"],
+      )
+    : reason(
+        "unknown",
+        'Settings set "enableAllProjectMcpServers" to false. §3.5 states what the key does ' +
+          "when it approves the project's .mcp.json servers and not what a false value leaves " +
+          "in place, so whether each server is prompted for individually is not determined.",
+        approval.source,
+        MATRIX["settings.projectMcpAutoApproval"],
+      );
+}
+
+/**
+ * The approval as its own capability, so the setting is visible even in a
+ * project whose `.mcp.json` declares nothing.
+ *
+ * Trust is stated rather than assumed. §7.2 applies `blocked_by_trust` only to
+ * R1 and R5 and names servers from `.mcp.json` as outside it (R4), so trust
+ * does not withhold this approval; §3 describes no further interaction between
+ * the key and the trust dialog, and none is invented here.
+ */
+function buildProjectMcpApprovalCapability(
+  approval: { value: boolean; source: SourceInfo; contested: boolean },
+  version: string,
+): ResolvedCapability {
+  const reasons: ResolutionReason[] = [projectMcpApprovalReason(approval)];
+
+  if (approval.value) {
+    reasons.push(
+      reason(
+        "trust",
+        "Project trust does not withhold this approval: trust is never applied to servers " +
+          "declared in .mcp.json, and blocked_by_trust covers inline agent servers and agent " +
+          "frontmatter hooks only (R4). §3 states no further interaction between this setting " +
+          "and the trust dialog.",
+        approval.source,
+        MATRIX["settings.projectMcpAutoApproval"],
+      ),
+    );
+  }
+
+  if (approval.contested) {
+    reasons.push(
+      reason(
+        "declared",
+        "More than one settings layer sets this key with different values; the layer named " +
+          "here is the one that outranks the others (S1).",
+        approval.source,
+        MATRIX["settings.layerPrecedence"],
+      ),
+    );
+  }
+
+  return gateCapability(
+    {
+      capabilityId: PROJECT_MCP_APPROVAL_CAPABILITY_ID,
+      kind: "permission" as const,
+      status: approval.value ? ("available" as const) : ("unknown" as const),
+      enforcement: approval.value ? ("enforced" as const) : ("unknown" as const),
+      sources: [approval.source],
+      reasons,
+    },
+    MATRIX["settings.projectMcpAutoApproval"],
+    version,
+  );
+}
+
+/**
+ * `permissions.additionalDirectories`, one capability per declared entry (S11).
+ *
+ * Two layers declaring the key is left undetermined rather than merged: S1
+ * orders settings *files*, and §3.5 does not say whether a higher-priority
+ * layer replaces a lower one's list or the two lists add up. Reporting a union
+ * would be an answer this product does not have.
+ */
+function buildAdditionalDirectoryCapabilities(
+  layers: readonly SettingsLayer[],
+  version: string,
+): ResolvedCapability[] {
+  const declaring = [...layers]
+    .sort((left, right) => right.priority - left.priority)
+    .filter((layer) => layer.permissions?.additionalDirectories !== undefined);
+  const contested = declaring.length > 1;
+
+  return declaring.flatMap((layer) =>
+    layer.permissions!.additionalDirectories!.map((entry, index) => {
+      const source: SourceInfo = {
+        platform: "claude",
+        scope: layer.scope,
+        path: layer.path,
+        fieldPath: `permissions.additionalDirectories[${index}]`,
+      };
+      const quoted = `permissions.additionalDirectories entry "${entry}"`;
+      return gateCapability(
+        {
+          capabilityId: `settings-additional-directory:${layer.scope}:${entry}`,
+          kind: "permission" as const,
+          status: contested ? ("unknown" as const) : ("available" as const),
+          enforcement: contested ? ("unknown" as const) : ("enforced" as const),
+          sources: [source],
+          reasons: [
+            contested
+              ? reason(
+                  "unknown",
+                  `${quoted}: more than one settings layer declares additionalDirectories, and ` +
+                    "§3.5 does not state whether a higher-priority layer replaces a lower " +
+                    "one's list or the lists add up, so which directories this session reaches " +
+                    "is not determined.",
+                  source,
+                  MATRIX["settings.additionalDirectories"],
+                )
+              : reason(
+                  "declared",
+                  `${quoted} extends the file access of a session in this project beyond the ` +
+                    "project root (S11). The path is reported as written: §3.5 does not state " +
+                    "how a relative entry resolves. This is a configuration guardrail rather " +
+                    "than a complete security boundary, and permission rules still apply to " +
+                    "paths inside the directory — which paths a rule covers is a question this " +
+                    "product does not evaluate (§2.3).",
+                  source,
+                  MATRIX["settings.additionalDirectories"],
+                ),
+          ],
+        },
+        MATRIX["settings.additionalDirectories"],
+        version,
+      );
+    }),
+  );
+}
+
+/**
+ * The two S11 settings keys as capabilities: the directories a settings layer
+ * adds to the session's file access, and the approval of the project's
+ * `.mcp.json` servers.
+ */
+export function resolveSettingsKeys(
+  layers: readonly SettingsLayer[],
+  version: string,
+): ResolvedCapability[] {
+  const approval = resolveProjectMcpApproval(layers);
+  return [
+    ...buildAdditionalDirectoryCapabilities(layers, version),
+    ...(approval ? [buildProjectMcpApprovalCapability(approval, version)] : []),
+  ];
 }
 
 function reason(

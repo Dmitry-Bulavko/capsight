@@ -66,6 +66,12 @@ export interface SettingsPermissions {
   rules: SettingsPermissionRule[];
   /** Present only when the layer sets the key; absent is not `false` (P4, S1). */
   disableBypassPermissionsMode?: boolean;
+  /**
+   * `permissions.additionalDirectories`, entries verbatim and in file order
+   * (S11). Present only when the layer declares the key; an empty array is a
+   * declared empty list, which is not the same as no declaration.
+   */
+  additionalDirectories?: string[];
 }
 
 export interface SettingsLayer {
@@ -75,6 +81,12 @@ export interface SettingsLayer {
   priority: number;
   /** Parsed `permissions` block; absent when the layer declares none. */
   permissions?: SettingsPermissions;
+  /**
+   * Top-level `enableAllProjectMcpServers` (S11). Present only when the layer
+   * sets the key; absent is not `false`, because §3.5 states what the key does
+   * when set and says nothing about its default.
+   */
+  enableAllProjectMcpServers?: boolean;
 }
 
 export interface RawAgentFile {

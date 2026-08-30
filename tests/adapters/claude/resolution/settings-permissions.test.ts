@@ -5,6 +5,8 @@ import { parseSettingsPermissions } from "../../../../src/adapters/claude/discov
 import {
   parseSettingsPermissionRule,
   resolveDisableBypassPermissionsMode,
+  resolveProjectMcpApproval,
+  resolveSettingsKeys,
   resolveSettingsPermissions,
 } from "../../../../src/adapters/claude/resolution/settings-permissions.js";
 
@@ -124,6 +126,115 @@ describe("resolveDisableBypassPermissionsMode (S1)", () => {
     expect(
       resolveDisableBypassPermissionsMode([layer("project", 30, { allow: ["Read"] })]),
     ).toEqual({ contested: false });
+  });
+});
+
+describe("S11 settings keys", () => {
+  function mcpLayer(
+    scope: SettingsLayer["scope"],
+    priority: number,
+    value?: boolean,
+  ): SettingsLayer {
+    return {
+      scope,
+      path: `/project/.claude/${scope}.json`,
+      priority,
+      ...(value !== undefined ? { enableAllProjectMcpServers: value } : {}),
+    };
+  }
+
+  const directoryCapabilities = (layers: SettingsLayer[]): ResolvedCapability[] =>
+    resolveSettingsKeys(layers, VERSION).filter((capability) =>
+      capability.capabilityId.startsWith("settings-additional-directory:"),
+    );
+
+  it("reports each additionalDirectories entry with its own source (S11)", () => {
+    const capabilities = directoryCapabilities([
+      layer("project", 30, {
+        additionalDirectories: ["/opt/shared-docs", "../vendor-lib"],
+      }),
+    ]);
+
+    expect(capabilities.map((capability) => capability.capabilityId)).toEqual([
+      "settings-additional-directory:project:/opt/shared-docs",
+      "settings-additional-directory:project:../vendor-lib",
+    ]);
+    for (const capability of capabilities) {
+      // The evidence the matrix entry claims: without this rule the file-access
+      // surface the settings widen is absent from the reported set entirely.
+      expect(capability.status).toBe("available");
+      expect(capability.enforcement).toBe("enforced");
+      expect(capability.sources[0]?.path).toBe("/project/.claude/project.json");
+      expect(capability.reasons[0]?.matrixRef).toBe("settings.additionalDirectories");
+    }
+    // The entry text is not resolved against anything (§3.5 says nothing about it).
+    expect(capabilities[1]?.reasons[0]?.message).toContain('"../vendor-lib"');
+  });
+
+  it("leaves two layers declaring the key undetermined rather than merging them", () => {
+    const capabilities = directoryCapabilities([
+      layer("project", 30, { additionalDirectories: ["/opt/a"] }),
+      layer("local", 35, { additionalDirectories: ["/opt/b"] }),
+    ]);
+
+    expect(capabilities).toHaveLength(2);
+    for (const capability of capabilities) {
+      expect(capability.status).toBe("unknown");
+      expect(capability.enforcement).toBe("unknown");
+      expect(capability.reasons[0]?.message).toMatch(/does not state whether/);
+    }
+  });
+
+  it("takes enableAllProjectMcpServers from the highest-priority layer that sets it (S1)", () => {
+    expect(
+      resolveProjectMcpApproval([
+        mcpLayer("project", 30, false),
+        mcpLayer("local", 35, true),
+      ]),
+    ).toMatchObject({ value: true, contested: true });
+    expect(resolveProjectMcpApproval([mcpLayer("project", 30)])).toBeUndefined();
+  });
+
+  it("reports project MCP servers as approved without a prompt when the key is true", () => {
+    const [capability] = resolveSettingsKeys([mcpLayer("project", 30, true)], VERSION);
+
+    expect(capability).toMatchObject({
+      capabilityId: "settings-project-mcp-approval",
+      status: "available",
+      enforcement: "enforced",
+    });
+    expect(capability!.reasons[0]?.message).toContain("approved without a prompt");
+    // The trust interaction is founded on §7.2/R4, not assumed: a project with
+    // no accepted trust record does not withhold this approval, and the
+    // capability says so instead of leaving the reader to guess.
+    const trustReason = capability!.reasons.find((entry) => entry.type === "trust");
+    expect(trustReason?.message).toMatch(/trust is never applied to servers declared in \.mcp\.json/);
+  });
+
+  it("does not read a false value as the opposite claim", () => {
+    const [capability] = resolveSettingsKeys([mcpLayer("project", 30, false)], VERSION);
+
+    expect(capability).toMatchObject({
+      capabilityId: "settings-project-mcp-approval",
+      status: "unknown",
+      enforcement: "unknown",
+    });
+    expect(capability!.reasons[0]?.message).toMatch(/not what a false value leaves in place/);
+  });
+
+  it("claims no security boundary for either key (§2.4)", () => {
+    const messages = resolveSettingsKeys(
+      [
+        layer("project", 30, { additionalDirectories: ["/opt/shared-docs"] }),
+        mcpLayer("local", 35, true),
+      ],
+      VERSION,
+    ).flatMap((capability) => capability.reasons.map((entry) => entry.message));
+
+    expect(messages.length).toBeGreaterThan(0);
+    for (const message of messages) {
+      expect(message).not.toMatch(/sandbox|cannot access|is trusted|are trusted/i);
+    }
   });
 });
 

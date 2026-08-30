@@ -38,10 +38,14 @@ import {
 } from "./permissions.js";
 import { resolvePluginFieldLimitations } from "./plugin.js";
 import {
+  projectMcpApprovalReason,
   resolveDisableBypassPermissionsMode,
+  resolveProjectMcpApproval,
+  resolveSettingsKeys,
   resolveSettingsPermissions,
 } from "./settings-permissions.js";
 import {
+  isMcpConfigFileSource,
   resolveMcpConfigFileTrust,
   resolveTrustGate,
   type ResolveTrustResult,
@@ -416,6 +420,13 @@ function buildMcpServerCapabilities(
   version: string,
 ): ResolvedCapability[] {
   const servers = snapshot.mcpServers as DiscoveredMcpServer[];
+  // S11: the approval names the servers declared in `.mcp.json`, so it is
+  // recorded on each of them and not only on the settings capability. A false
+  // or absent key adds nothing here — §3.5 says what the key does when it
+  // approves, not what its absence leaves in place.
+  const approval = resolveProjectMcpApproval(snapshot.settings as SettingsLayer[]);
+  const approvalReason =
+    approval?.value === true ? projectMcpApprovalReason(approval) : undefined;
 
   return servers.map((server) => {
     const trustResult = resolveMcpConfigFileTrust(server.source);
@@ -427,7 +438,10 @@ function buildMcpServerCapabilities(
         status: outcome.status,
         enforcement: outcome.enforcement,
         sources: [server.source],
-        reasons: trustResult.reasons,
+        reasons:
+          approvalReason && isMcpConfigFileSource(server.source)
+            ? [...trustResult.reasons, approvalReason]
+            : trustResult.reasons,
       },
       MATRIX["trust.inlineMcp"],
       version,
@@ -1028,6 +1042,7 @@ export async function resolveEffectiveConfiguration(
     ),
     ...settingsPermissions.capabilities,
     ...settingsPermissions.ruleCapabilities,
+    ...resolveSettingsKeys(snapshot.settings as SettingsLayer[], version),
     ...buildMcpServerCapabilities(snapshot, version),
     ...buildTrustCapabilities(agent, snapshot, version),
     ...buildInstructionCapabilities(snapshot, context, version),

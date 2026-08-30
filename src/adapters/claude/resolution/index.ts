@@ -28,6 +28,8 @@ export {
   indexSettingsRules,
   parseSettingsPermissionRule,
   resolveDisableBypassPermissionsMode,
+  resolveProjectMcpApproval,
+  resolveSettingsKeys,
   resolveSettingsPermissions,
   type IndexedSettingsRule,
   type ResolveSettingsPermissionsInput,

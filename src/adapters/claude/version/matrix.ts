@@ -659,6 +659,51 @@ const MATRIX_ENTRIES = [
       "recorded and left unknown instead of being turned into an availability verdict.",
   },
   {
+    id: "settings.additionalDirectories",
+    feature:
+      "permissions.additionalDirectories extends the file access of a session beyond the project root",
+    factRefs: [FACT.S11],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "settings-permissions",
+    verifiedFacts: [],
+    notes:
+      "The fixture declares two entries in one layer and both resolve available/enforced; drop " +
+      "the key from the resolver and both capabilities leave the golden, so the rule is the " +
+      "operative cause of a confident golden value (H1-28). What is pinned is the declaration " +
+      "reaching the reported set, not a path verdict: the entry text is reported verbatim, " +
+      "because §3.5 does not say how a relative entry resolves, and which paths inside such a " +
+      "directory an allow/deny rule covers is the S7 question this product does not evaluate " +
+      "(§2.3). Nothing here attaches configuration found inside the directory — that is the " +
+      "--add-dir rule (A9, K12), not this key. S11 also carries the " +
+      "enableAllProjectMcpServers clause, which this entry does not cover, so the fact is not " +
+      "verified entire here and rests on documentation alone in §11.4.",
+  },
+  {
+    id: "settings.projectMcpAutoApproval",
+    feature:
+      "enableAllProjectMcpServers approves the servers declared in .mcp.json without a prompt",
+    factRefs: [FACT.S11, FACT.R4],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "settings-permissions",
+    verifiedFacts: [],
+    notes:
+      "The fixture sets the key to true in .claude/settings.json and the approval resolves " +
+      "available/enforced, with the same reason attached to the .mcp.json server it names; " +
+      "drop the key from the resolver and both leave the golden (H1-28). Only `true` is " +
+      "founded: §3.5 says what the key does when set and not what its absence or an explicit " +
+      "false leaves in place, so those resolve unknown. Trust does not enter the verdict — " +
+      "trust is never applied to servers from .mcp.json and blocked_by_trust is reserved for " +
+      "R1 and R5 (§7.2), which is why R4 is referenced here; §3 describes no further " +
+      "interaction between this key and the trust dialog and none is assumed. Approval is not " +
+      "a claim that a server runs: an ordinary scan does not start MCP servers (§7.1), and " +
+      "probing is §7.9. S11's additionalDirectories clause is covered by a separate entry, so " +
+      "the fact is not verified entire here (H1-28).",
+  },
+  {
     id: "builtin.readOnly",
     feature: "Explore and Plan built-in agents deny Write and Edit",
     factRefs: [FACT.B2],

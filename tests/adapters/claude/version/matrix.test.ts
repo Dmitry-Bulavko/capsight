@@ -64,6 +64,8 @@ const M1_MATRIX_IDS = [
   "settings.denySubagents",
   "settings.denySkills",
   "settings.ruleScope",
+  "settings.additionalDirectories",
+  "settings.projectMcpAutoApproval",
   "builtin.readOnly",
 ] as const;
 

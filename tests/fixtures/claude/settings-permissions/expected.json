@@ -50,7 +50,21 @@
         "sizeBytes": 160
       }
     ],
-    "mcpServers": [],
+    "mcpServers": [
+      {
+        "name": "github",
+        "source": {
+          "platform": "claude",
+          "scope": "project",
+          "path": ".mcp.json"
+        },
+        "configPath": ".mcp.json",
+        "transport": "stdio",
+        "definitionKind": "config-file",
+        "status": "configured",
+        "configHash": "395ea227a8034d11"
+      }
+    ],
     "settings": [
       {
         "scope": "local",
@@ -134,8 +148,13 @@
               "raw": "WebFetch(example.org)"
             }
           ],
-          "disableBypassPermissionsMode": false
-        }
+          "disableBypassPermissionsMode": false,
+          "additionalDirectories": [
+            "/opt/shared-docs",
+            "../vendor-lib"
+          ]
+        },
+        "enableAllProjectMcpServers": true
       }
     ],
     "trust": {
@@ -193,6 +212,60 @@
                 "fieldPath": "permissions.disableBypassPermissionsMode"
               },
               "matrixRef": "settings.layerPrecedence"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-additional-directory:project:../vendor-lib",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.additionalDirectories[1]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "permissions.additionalDirectories entry \"../vendor-lib\" extends the file access of a session in this project beyond the project root (S11). The path is reported as written: §3.5 does not state how a relative entry resolves. This is a configuration guardrail rather than a complete security boundary, and permission rules still apply to paths inside the directory — which paths a rule covers is a question this product does not evaluate (§2.3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.additionalDirectories[1]"
+              },
+              "matrixRef": "settings.additionalDirectories"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-additional-directory:project:/opt/shared-docs",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.additionalDirectories[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "permissions.additionalDirectories entry \"/opt/shared-docs\" extends the file access of a session in this project beyond the project root (S11). The path is reported as written: §3.5 does not state how a relative entry resolves. This is a configuration guardrail rather than a complete security boundary, and permission rules still apply to paths inside the directory — which paths a rule covers is a question this product does not evaluate (§2.3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.additionalDirectories[0]"
+              },
+              "matrixRef": "settings.additionalDirectories"
             }
           ]
         },
@@ -572,6 +645,44 @@
                 "fieldPath": "permissions.deny[1]"
               },
               "matrixRef": "settings.denyBareTool"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-project-mcp-approval",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "enableAllProjectMcpServers"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Settings set \"enableAllProjectMcpServers\" to true, so MCP servers declared in the project's .mcp.json are approved without a prompt (S11). Approval is not an observation that a server starts or a statement about what it does: an ordinary scan does not start MCP servers.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "enableAllProjectMcpServers"
+              },
+              "matrixRef": "settings.projectMcpAutoApproval"
+            },
+            {
+              "type": "trust",
+              "message": "Project trust does not withhold this approval: trust is never applied to servers declared in .mcp.json, and blocked_by_trust covers inline agent servers and agent frontmatter hooks only (R4). §3 states no further interaction between this setting and the trust dialog.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "enableAllProjectMcpServers"
+              },
+              "matrixRef": "settings.projectMcpAutoApproval"
             }
           ]
         },
@@ -1312,6 +1423,42 @@
           ]
         },
         {
+          "capabilityId": "mcp-server:.mcp.json",
+          "kind": "mcp_server",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".mcp.json"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "trust",
+              "message": "MCP servers from .mcp.json are not subject to project trust (R4).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".mcp.json"
+              },
+              "matrixRef": "R4"
+            },
+            {
+              "type": "declared",
+              "message": "Settings set \"enableAllProjectMcpServers\" to true, so MCP servers declared in the project's .mcp.json are approved without a prompt (S11). Approval is not an observation that a server starts or a statement about what it does: an ordinary scan does not start MCP servers.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "enableAllProjectMcpServers"
+              },
+              "matrixRef": "settings.projectMcpAutoApproval"
+            }
+          ]
+        },
+        {
           "capabilityId": "instruction:CLAUDE.md",
           "kind": "instruction",
           "status": "available",
@@ -1397,7 +1544,7 @@
           "enforcement": "enforced"
         }
       ],
-      "unknownRate": 0.09090909090909091
+      "unknownRate": 0.08333333333333333
     },
     {
       "agentName": "permissive",
@@ -1434,6 +1581,60 @@
                 "path": ".claude/agents/permissive.md"
               },
               "matrixRef": "P1"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-additional-directory:project:../vendor-lib",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.additionalDirectories[1]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "permissions.additionalDirectories entry \"../vendor-lib\" extends the file access of a session in this project beyond the project root (S11). The path is reported as written: §3.5 does not state how a relative entry resolves. This is a configuration guardrail rather than a complete security boundary, and permission rules still apply to paths inside the directory — which paths a rule covers is a question this product does not evaluate (§2.3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.additionalDirectories[1]"
+              },
+              "matrixRef": "settings.additionalDirectories"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-additional-directory:project:/opt/shared-docs",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.additionalDirectories[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "permissions.additionalDirectories entry \"/opt/shared-docs\" extends the file access of a session in this project beyond the project root (S11). The path is reported as written: §3.5 does not state how a relative entry resolves. This is a configuration guardrail rather than a complete security boundary, and permission rules still apply to paths inside the directory — which paths a rule covers is a question this product does not evaluate (§2.3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.additionalDirectories[0]"
+              },
+              "matrixRef": "settings.additionalDirectories"
             }
           ]
         },
@@ -1813,6 +2014,44 @@
                 "fieldPath": "permissions.deny[1]"
               },
               "matrixRef": "settings.denyBareTool"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-project-mcp-approval",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "enableAllProjectMcpServers"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Settings set \"enableAllProjectMcpServers\" to true, so MCP servers declared in the project's .mcp.json are approved without a prompt (S11). Approval is not an observation that a server starts or a statement about what it does: an ordinary scan does not start MCP servers.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "enableAllProjectMcpServers"
+              },
+              "matrixRef": "settings.projectMcpAutoApproval"
+            },
+            {
+              "type": "trust",
+              "message": "Project trust does not withhold this approval: trust is never applied to servers declared in .mcp.json, and blocked_by_trust covers inline agent servers and agent frontmatter hooks only (R4). §3 states no further interaction between this setting and the trust dialog.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "enableAllProjectMcpServers"
+              },
+              "matrixRef": "settings.projectMcpAutoApproval"
             }
           ]
         },
@@ -2553,6 +2792,42 @@
           ]
         },
         {
+          "capabilityId": "mcp-server:.mcp.json",
+          "kind": "mcp_server",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".mcp.json"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "trust",
+              "message": "MCP servers from .mcp.json are not subject to project trust (R4).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".mcp.json"
+              },
+              "matrixRef": "R4"
+            },
+            {
+              "type": "declared",
+              "message": "Settings set \"enableAllProjectMcpServers\" to true, so MCP servers declared in the project's .mcp.json are approved without a prompt (S11). Approval is not an observation that a server starts or a statement about what it does: an ordinary scan does not start MCP servers.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "enableAllProjectMcpServers"
+              },
+              "matrixRef": "settings.projectMcpAutoApproval"
+            }
+          ]
+        },
+        {
           "capabilityId": "instruction:CLAUDE.md",
           "kind": "instruction",
           "status": "available",
@@ -2610,7 +2885,7 @@
           "enforcement": "enforced"
         }
       ],
-      "unknownRate": 0.09090909090909091
+      "unknownRate": 0.08333333333333333
     }
   ]
 }
