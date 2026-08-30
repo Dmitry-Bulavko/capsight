@@ -1,7 +1,8 @@
 import {
-  createFixtureRepoRoots,
+  acquireFixtureRepoRoots,
   fixtureProjectRoots,
-  removeFixtureRepoRoots,
+  releaseFixtureRepoRoots,
+  type FixtureRepoRootLease,
 } from "./fixture-runtime.js";
 import { PLATFORM_IDS, platformFixturesRoot } from "./coverage-report.js";
 
@@ -17,12 +18,30 @@ import { PLATFORM_IDS, platformFixturesRoot } from "./coverage-report.js";
  * Global rather than per-file: fixture directories are shared across test
  * files, so a per-file teardown could remove a marker while another file is
  * still scanning.
+ *
+ * A declared platform that yields no project roots is a hard failure, not a
+ * no-op: if a corpus directory is renamed or moved, silently creating zero
+ * markers would put every fixture of that platform back on the developer's
+ * checkout while the suite stayed green (§11.3, H1-07).
  */
 export default function setup(): () => void {
-  const created = PLATFORM_IDS.flatMap((platform) =>
-    createFixtureRepoRoots(fixtureProjectRoots(platformFixturesRoot(platform))),
-  );
+  const leases: FixtureRepoRootLease[] = [];
+  for (const platform of PLATFORM_IDS) {
+    const fixturesRoot = platformFixturesRoot(platform);
+    const projectRoots = fixtureProjectRoots(fixturesRoot);
+    if (projectRoots.length === 0) {
+      throw new Error(
+        `Platform ${platform} declares a fixture corpus at ${fixturesRoot} but ` +
+          `it contains no <fixture>/project directory: the isolation hook would ` +
+          `create no repo-root markers and every ${platform} fixture scan would ` +
+          `climb into the Capsight checkout.`,
+      );
+    }
+    leases.push(acquireFixtureRepoRoots(projectRoots));
+  }
   return () => {
-    removeFixtureRepoRoots(created);
+    for (const lease of leases) {
+      releaseFixtureRepoRoots(lease);
+    }
   };
 }

@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -55,7 +56,11 @@ export function cleanupFixtureHome(): void {
  */
 export function fixtureProjectRoots(fixturesRoot: string): string[] {
   if (!fs.existsSync(fixturesRoot)) {
-    return [];
+    throw new Error(
+      `Fixture corpus root ${fixturesRoot} does not exist; the isolation hook ` +
+        `would silently create no repo-root markers and every fixture scan ` +
+        `would walk into the Capsight checkout.`,
+    );
   }
   return fs
     .readdirSync(fixturesRoot, { withFileTypes: true })
@@ -65,27 +70,89 @@ export function fixtureProjectRoots(fixturesRoot: string): string[] {
 }
 
 /**
- * Create the repo-root marker at each fixture project, and return the ones
- * this call created so a teardown can remove exactly those. Creation is
- * idempotent: an already-present marker is left alone and not reported, so a
- * leftover from a crashed run is never deleted out from under a concurrent one.
+ * Identifies one test run's claim on the fixture repo-root markers. Two runs
+ * sharing a working tree hold independent claims on the same marker.
  */
-export function createFixtureRepoRoots(projectRoots: readonly string[]): string[] {
-  const created: string[] = [];
-  for (const projectRoot of projectRoots) {
-    const marker = path.join(projectRoot, ".git");
-    if (fs.existsSync(marker)) {
-      continue;
-    }
-    fs.mkdirSync(marker, { recursive: true });
-    created.push(marker);
-  }
-  return created;
+export interface FixtureRepoRootLease {
+  readonly runId: string;
+  readonly markers: readonly string[];
 }
 
-export function removeFixtureRepoRoots(markers: readonly string[]): void {
-  for (const marker of markers) {
+/** Claim files live inside the marker directory, which `.gitignore` covers. */
+const CLAIM_PREFIX = "capsight-run-";
+
+function claimPath(marker: string, runId: string): string {
+  return path.join(marker, `${CLAIM_PREFIX}${runId}`);
+}
+
+function hasOtherClaims(marker: string, runId: string): boolean {
+  let entries: string[];
+  try {
+    entries = fs.readdirSync(marker);
+  } catch {
+    return false;
+  }
+  return entries.some(
+    (entry) =>
+      entry.startsWith(CLAIM_PREFIX) && entry !== `${CLAIM_PREFIX}${runId}`,
+  );
+}
+
+/**
+ * Claim the repo-root marker at each fixture project on behalf of one run.
+ *
+ * Creation is idempotent, but removal must not be: two runs in one working
+ * tree overlap, and a teardown that removed the marker unconditionally would
+ * strip isolation out from under a run still scanning — the exact failure this
+ * hook exists to prevent, arriving as a flake. Each run therefore drops a
+ * claim file inside the marker directory and `releaseFixtureRepoRoots` deletes
+ * the directory only once the last claim is gone (refcount by filesystem).
+ */
+export function acquireFixtureRepoRoots(
+  projectRoots: readonly string[],
+  runId: string = `${process.pid}-${crypto.randomUUID()}`,
+): FixtureRepoRootLease {
+  const markers: string[] = [];
+  for (const projectRoot of projectRoots) {
+    const marker = path.join(projectRoot, ".git");
+    fs.mkdirSync(marker, { recursive: true });
+    fs.writeFileSync(claimPath(marker, runId), "", "utf8");
+    markers.push(marker);
+  }
+  return { runId, markers };
+}
+
+/**
+ * Drop this run's claim, and remove a marker only when no other run holds one.
+ */
+export function releaseFixtureRepoRoots(lease: FixtureRepoRootLease): void {
+  for (const marker of lease.markers) {
+    fs.rmSync(claimPath(marker, lease.runId), { force: true });
+    if (hasOtherClaims(marker, lease.runId)) {
+      continue;
+    }
     fs.rmSync(marker, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Precondition every golden runner shares: the isolation hook
+ * (`tests/fixtures/global-setup.ts`) has given this fixture project a
+ * repo-root marker. Without it a scope walk climbs out of the fixture into the
+ * Capsight checkout, so a golden would record the developer's configuration.
+ *
+ * Asserted per platform rather than once: the hook is the only thing standing
+ * between the corpus and the checkout, and a corpus that cannot observe it
+ * losing effect is not guarded (§11.3, H1-07).
+ */
+export function assertFixtureIsolated(fixtureDir: string): void {
+  const marker = path.join(path.resolve(fixtureDir), "project", ".git");
+  if (!fs.existsSync(marker)) {
+    throw new Error(
+      `Fixture ${fixtureDir} has no repo-root marker at ${marker}: the ` +
+        `isolation hook (tests/fixtures/global-setup.ts) did not run, so this ` +
+        `scan can climb into the Capsight checkout.`,
+    );
   }
 }
 
@@ -147,8 +214,8 @@ export function cleanupRelocatedCheckouts(): void {
 
 /**
  * Copy a fixture into a temp container, without the repo-root marker, so a
- * test can show what the unisolated walk does. Only the leak demonstration in
- * `run-golden.test.ts` uses this.
+ * test can show what the unisolated walk does. Used by the leak demonstrations
+ * in `run-golden.test.ts` and `run-codex-golden.test.ts`.
  */
 export function materializeUnisolatedFixture(fixtureDir: string): string {
   const source = path.resolve(fixtureDir);

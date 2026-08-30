@@ -1,3 +1,4 @@
+import fsSync from "node:fs";
 import fsPromises from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,8 +14,14 @@ import {
   type NormalizedGoldenOutput,
 } from "./golden-normalize.js";
 import {
+  CHECKOUT_SHAPES,
+  assertFixtureIsolated,
   cleanupFixtureHome,
+  cleanupRelocatedCheckouts,
+  cleanupUnisolatedFixtures,
   fixtureHomeDir,
+  materializeFixtureAtCheckout,
+  materializeUnisolatedFixture,
   restoreProcessEnv,
   selectFixtureAgent,
 } from "./fixture-runtime.js";
@@ -80,8 +87,19 @@ function applyFixtureEnv(env: Record<string, string>, homeDir?: string): void {
 
 async function runGoldenFixture(
   fixtureName: string,
-): Promise<{ actual: NormalizedGoldenOutput; expected: NormalizedGoldenOutput }> {
-  const fixtureDir = path.join(FIXTURES_ROOT, fixtureName);
+  /** Fixture directory to read instead of the corpus one (isolation tests). */
+  fixtureDirOverride?: string,
+): Promise<{
+  actual: NormalizedGoldenOutput;
+  expected: NormalizedGoldenOutput;
+  /**
+   * Raw snapshot, before normalization. The isolation test asserts on it
+   * because `normalizeGoldenOutput` drops every entry outside the project, so
+   * an ancestor file a scan wrongly read is invisible in the golden itself.
+   */
+  instructionPaths: string[];
+}> {
+  const fixtureDir = fixtureDirOverride ?? path.join(FIXTURES_ROOT, fixtureName);
   const projectRoot = path.join(fixtureDir, "project");
   const contract = await loadFixtureContract(fixtureDir);
   const expected = JSON.parse(
@@ -125,7 +143,13 @@ async function runGoldenFixture(
     resolutions,
     projectRoot,
   );
-  return { actual, expected };
+  return {
+    actual,
+    expected,
+    instructionPaths: (
+      scanResult.snapshot.instructions as Array<{ path: string }>
+    ).map((instruction) => instruction.path),
+  };
 }
 
 describe("codex golden fixtures", () => {
@@ -139,10 +163,65 @@ describe("codex golden fixtures", () => {
 
   afterAll(() => {
     cleanupFixtureHome();
+    cleanupUnisolatedFixtures();
+    cleanupRelocatedCheckouts();
   });
 
   it("matches expected discovery and resolution for codex/basic", async () => {
     const { actual, expected } = await runGoldenFixture("basic");
     expect(actual).toEqual(expected);
+  });
+
+  // §11.2/§13 invariant 2. Codex's `walkProjectScopes` climbs until it finds a
+  // directory containing `.git`, exactly like Claude's, so a codex fixture scan
+  // reads every `AGENTS.md` between `project/` and the Capsight checkout unless
+  // the isolation hook gives it a repo root. The codex golden passed
+  // identically with and without that hook (H1-07), for two reasons, and both
+  // are asserted here rather than assumed:
+  //
+  //  - the hook must actually have run for this corpus, and
+  //  - the leak is real but *invisible in the golden*: `normalizeGoldenOutput`
+  //    drops every discovery entry and capability outside the project, so the
+  //    ancestor file shows up only in the raw snapshot. It is asserted there.
+  it("reads nothing above the fixture project", async () => {
+    const fixtureDir = path.join(FIXTURES_ROOT, "basic");
+    const plant = (root: string): void => {
+      fsSync.writeFileSync(
+        path.join(root, "AGENTS.md"),
+        "# Ambient instructions\n\nPlanted by the test; must not be seen.\n",
+        "utf8",
+      );
+    };
+    const outsideProject = (
+      run: { instructionPaths: string[] },
+      projectRoot: string,
+    ): string[] =>
+      run.instructionPaths.filter((candidate) =>
+        path.relative(projectRoot, candidate).startsWith(".."),
+      );
+
+    // The plant is real: with no repo-root marker the walk reaches the
+    // ancestor and its AGENTS.md joins the instruction chain.
+    const leaky = materializeUnisolatedFixture(fixtureDir);
+    plant(leaky);
+    const leaked = await runGoldenFixture("basic", leaky);
+    expect(outsideProject(leaked, path.join(leaky, "project"))).toEqual([
+      path.join(leaky, "AGENTS.md"),
+    ]);
+
+    // Fails when `globalSetup` is disabled or the corpus root moves.
+    assertFixtureIsolated(fixtureDir);
+
+    // With the marker the hook created, the same plant is unreachable and the
+    // scan stays inside the fixture project.
+    const isolated = materializeFixtureAtCheckout(fixtureDir, CHECKOUT_SHAPES[0]);
+    plant(isolated);
+    const run = await runGoldenFixture("basic", isolated);
+    expect(outsideProject(run, path.join(isolated, "project"))).toEqual([]);
+    expect(run.actual).toEqual(run.expected);
+
+    // And the corpus fixture itself, as every other codex test scans it.
+    const corpus = await runGoldenFixture("basic");
+    expect(outsideProject(corpus, path.join(fixtureDir, "project"))).toEqual([]);
   });
 });

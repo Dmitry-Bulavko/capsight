@@ -97,6 +97,20 @@ export interface SimulateManagedOptions {
   snapshot?: ProjectSnapshot;
 }
 
+/**
+ * Locale-independent string order. `localeCompare` without an explicit locale
+ * follows the host's collation, so two machines can order the same two names
+ * differently — and these lists reach a golden through `NormalizedSimulation`,
+ * where the recorded order is part of the contract (§11.2, D1-09). Compared by
+ * code unit instead.
+ */
+function compareStrings(left: string, right: string): number {
+  if (left === right) {
+    return 0;
+  }
+  return left < right ? -1 : 1;
+}
+
 function indexAgentsById(agents: Agent[]): Map<string, Agent> {
   return new Map(agents.map((agent) => [agent.id, agent]));
 }
@@ -127,7 +141,9 @@ function findShadowedAgents(
     });
   }
 
-  return deltas.sort((left, right) => left.agentName.localeCompare(right.agentName));
+  return deltas.sort((left, right) =>
+    compareStrings(left.agentName, right.agentName),
+  );
 }
 
 function findDeniedTools(
@@ -327,15 +343,19 @@ function buildDelta(
     );
   }
 
-  deniedTools.sort((left, right) =>
-    left.agentName.localeCompare(right.agentName) ||
-    left.capabilityId.localeCompare(right.capabilityId),
+  deniedTools.sort(
+    (left, right) =>
+      compareStrings(left.agentName, right.agentName) ||
+      compareStrings(left.capabilityId, right.capabilityId),
   );
-  ignoredFields.sort((left, right) =>
-    left.agentName.localeCompare(right.agentName) ||
-    left.field.localeCompare(right.field),
+  ignoredFields.sort(
+    (left, right) =>
+      compareStrings(left.agentName, right.agentName) ||
+      compareStrings(left.field, right.field),
   );
-  modelChanges.sort((left, right) => left.agentName.localeCompare(right.agentName));
+  modelChanges.sort((left, right) =>
+    compareStrings(left.agentName, right.agentName),
+  );
 
   return {
     shadowedAgents,

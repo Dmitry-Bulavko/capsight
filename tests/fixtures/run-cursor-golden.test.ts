@@ -1,3 +1,4 @@
+import fsSync from "node:fs";
 import fsPromises from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,10 +15,13 @@ import {
 } from "./golden-normalize.js";
 import {
   CHECKOUT_SHAPES,
+  assertFixtureIsolated,
   cleanupFixtureHome,
   cleanupRelocatedCheckouts,
+  cleanupUnisolatedFixtures,
   fixtureHomeDir,
   materializeFixtureAtCheckout,
+  materializeUnisolatedFixture,
   restoreProcessEnv,
   selectFixtureAgent,
 } from "./fixture-runtime.js";
@@ -143,11 +147,50 @@ describe("cursor golden fixtures", () => {
 
   afterAll(() => {
     cleanupFixtureHome();
+    cleanupUnisolatedFixtures();
     cleanupRelocatedCheckouts();
   });
 
   it("matches expected discovery and resolution for cursor/basic", async () => {
     const { actual, expected } = await runGoldenFixture("basic");
+    expect(actual).toEqual(expected);
+  });
+
+  // §11.2/§13 invariant 2. The cursor golden passed identically with and
+  // without the isolation hook, so a regression in it was invisible (H1-07).
+  //
+  // The reason is a property of the adapter, not of the corpus: cursor's
+  // `walkProjectScopes` inspects `projectPath` only (CW2/CW5) and never climbs,
+  // so no ancestor `.cursor/` is reachable today and no plant above the fixture
+  // can be made to leak. Both halves of the guard are therefore asserted
+  // directly: the hook's own output must be present for this corpus, and the
+  // non-climbing behaviour that makes it sufficient must still hold.
+  it("runs isolated, and reads nothing above the fixture project", async () => {
+    const fixtureDir = path.join(FIXTURES_ROOT, "basic");
+    // Fails when `globalSetup` is disabled or the corpus root moves.
+    assertFixtureIsolated(fixtureDir);
+
+    const plant = (root: string): void => {
+      const rulesDir = path.join(root, ".cursor", "rules");
+      fsSync.mkdirSync(rulesDir, { recursive: true });
+      fsSync.writeFileSync(
+        path.join(rulesDir, "ambient.mdc"),
+        "---\ndescription: Ambient rule that must not be seen.\nalwaysApply: true\n---\n\nPlanted by the test.\n",
+        "utf8",
+      );
+    };
+
+    // Even without a repo-root marker the walk must not reach the ancestor:
+    // if cursor ever gains an upward walk, this is where it shows up.
+    const leaky = materializeUnisolatedFixture(fixtureDir);
+    plant(leaky);
+    const unmarked = await runGoldenFixture("basic", leaky);
+    expect(unmarked.actual).toEqual(unmarked.expected);
+
+    // And the isolated corpus fixture, replayed from its own marker, agrees.
+    const isolated = materializeFixtureAtCheckout(fixtureDir, CHECKOUT_SHAPES[0]);
+    plant(isolated);
+    const { actual, expected } = await runGoldenFixture("basic", isolated);
     expect(actual).toEqual(expected);
   });
 

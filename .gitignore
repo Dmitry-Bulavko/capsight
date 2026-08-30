@@ -14,3 +14,8 @@ coverage/
 # (D1-00): a fixture scan must stop at its own project, not walk into this
 # repository. Removed on teardown; ignored so a crashed run leaves no noise.
 tests/fixtures/*/*/project/.git/
+
+# Belt and braces for the fixture plants (D1-10): the isolation tests now plant
+# into temp copies, so nothing should ever appear here. If a killed run ever
+# leaves one behind, an unrelated `git add -A` must not commit it.
+tests/fixtures/*/*/.claude/

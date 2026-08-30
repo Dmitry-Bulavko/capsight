@@ -1,3 +1,4 @@
+import { spawn } from "node:child_process";
 import fsSync from "node:fs";
 import fsPromises from "node:fs/promises";
 import os from "node:os";
@@ -31,12 +32,15 @@ import {
 } from "./golden-normalize.js";
 import {
   CHECKOUT_SHAPES,
+  acquireFixtureRepoRoots,
+  assertFixtureIsolated,
   cleanupFixtureHome,
   cleanupRelocatedCheckouts,
   cleanupUnisolatedFixtures,
   fixtureHomeDir,
   materializeFixtureAtCheckout,
   materializeUnisolatedFixture,
+  releaseFixtureRepoRoots,
   restoreProcessEnv,
   selectFixtureAgent,
 } from "./fixture-runtime.js";
@@ -114,8 +118,9 @@ interface RunGoldenOptions {
    */
   mutateSnapshot?: (snapshot: ClaudeProjectSnapshot) => ClaudeProjectSnapshot;
   /**
-   * Fixture directory the run reads, instead of the corpus one. Only the leak
-   * demonstration overrides it, with an unisolated copy.
+   * Fixture directory the run reads, instead of the corpus one. The leak
+   * demonstration overrides it with an unisolated copy, and the portability
+   * test with a copy replayed from an unrelated absolute checkout path.
    */
   fixtureDir?: string;
 }
@@ -338,16 +343,97 @@ describe("golden fixtures", () => {
       runGoldenFixture("add-dir", { fixtureDir: leaky }),
     ).rejects.toThrow(/agent reviewer is declared by 2 entries/);
 
-    // The isolated corpus fixture cannot see the same plant one level above it.
-    const plantedDir = path.join(fixtureDir, ".claude");
-    plant(fixtureDir);
-    try {
-      const { actual, expected } = await runGoldenFixture("add-dir");
-      expect(actual).toEqual(expected);
-    } finally {
-      fsSync.rmSync(plantedDir, { recursive: true, force: true });
-    }
+    // The same plant one level above an *isolated* fixture cannot be seen.
+    // Planted into a relocated copy rather than into the corpus: a run killed
+    // between the plant and its cleanup would otherwise leave an untracked
+    // `.claude/agents/reviewer.md` inside the checked-out corpus, where an
+    // unrelated `git add -A` could commit it. The copy carries the marker
+    // `global-setup.ts` created, so `materializeFixtureAtCheckout` also fails
+    // loudly if the isolation hook did not run.
+    assertFixtureIsolated(fixtureDir);
+    const isolated = materializeFixtureAtCheckout(fixtureDir, CHECKOUT_SHAPES[0]);
+    plant(isolated);
+    const { actual, expected } = await runGoldenFixture("add-dir", {
+      fixtureDir: isolated,
+    });
+    expect(actual).toEqual(expected);
   });
+
+  // §11.2: two test runs sharing one working tree. Marker creation is
+  // idempotent, so run B reuses run A's marker; if A's teardown then removed
+  // it unconditionally, B would lose isolation mid-scan and read the Capsight
+  // checkout — the failure this hook exists to prevent, arriving as a flake.
+  // Each run holds a claim inside the marker and the last one out removes it.
+  it("does not strip a concurrent run's repo-root markers", async () => {
+    const workspace = fsSync.mkdtempSync(
+      path.join(os.tmpdir(), "capsight-concurrent-runs-"),
+    );
+    const projectRoot = path.join(workspace, "fixture", "project");
+    fsSync.mkdirSync(projectRoot, { recursive: true });
+    const marker = path.join(projectRoot, ".git");
+    const ready = path.join(workspace, "ready");
+    const go = path.join(workspace, "go");
+
+    // Run B is a real second process, holding its lease across run A's teardown.
+    const probe = path.join(workspace, "probe.ts");
+    const runtimeModule = path.join(__dirname, "fixture-runtime.ts");
+    fsSync.writeFileSync(
+      probe,
+      [
+        `import fs from "node:fs";`,
+        `import { acquireFixtureRepoRoots, releaseFixtureRepoRoots } from ${JSON.stringify(runtimeModule)};`,
+        `const lease = acquireFixtureRepoRoots([${JSON.stringify(projectRoot)}]);`,
+        `fs.writeFileSync(${JSON.stringify(ready)}, "", "utf8");`,
+        `const wait = setInterval(() => {`,
+        `  if (!fs.existsSync(${JSON.stringify(go)})) return;`,
+        `  clearInterval(wait);`,
+        `  releaseFixtureRepoRoots(lease);`,
+        `}, 10);`,
+      ].join("\n"),
+      "utf8",
+    );
+
+    const waitFor = async (target: string): Promise<void> => {
+      for (let attempt = 0; attempt < 1000; attempt += 1) {
+        if (fsSync.existsSync(target)) {
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      throw new Error(`timed out waiting for ${target}`);
+    };
+
+    const runA = acquireFixtureRepoRoots([projectRoot]);
+    const child = spawn(
+      process.execPath,
+      ["--import", "tsx", probe],
+      { stdio: "ignore" },
+    );
+    const exited = new Promise<number | null>((resolve, reject) => {
+      child.on("error", reject);
+      child.on("exit", (code) => resolve(code));
+    });
+
+    try {
+      await waitFor(ready);
+      expect(fsSync.existsSync(marker)).toBe(true);
+
+      // Run A finishes while run B is still scanning.
+      releaseFixtureRepoRoots(runA);
+      expect(
+        fsSync.existsSync(marker),
+        "run A's teardown stripped the marker run B is relying on",
+      ).toBe(true);
+
+      // Run B finishes: the last claim gone, the marker goes with it.
+      fsSync.writeFileSync(go, "", "utf8");
+      expect(await exited).toBe(0);
+      expect(fsSync.existsSync(marker)).toBe(false);
+    } finally {
+      child.kill();
+      fsSync.rmSync(workspace, { recursive: true, force: true });
+    }
+  }, 30_000);
 
   // §11.2/§13 invariant 2, third leak of the H1-22 class: an instruction id is
   // `sha256("instruction:" + absolute path)` (`discovery/instructions.ts`), and
