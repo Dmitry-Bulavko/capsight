@@ -53,12 +53,21 @@ export interface FeatureCompatibility {
   /**
    * Corpus directory that still has to cover this entry (H1-09..H1-11).
    * Mutually exclusive with `fixture`; the directory may exist while its
-   * `expected.json` (or the case for this rule) is still missing. An entry no
-   * fixture could ever promote — one that resolves only `unknown` (H1-28) —
-   * declares neither field and records that in `notes`, so an owed fixture is
-   * distinguishable from one that would prove nothing.
+   * `expected.json` (or the case for this rule) is still missing.
    */
   pendingFixture?: string;
+  /**
+   * Why no fixture can ever promote this entry (H1-28) — typically that its
+   * rule resolves only `unknown`, which claims nothing (§11.3). Mutually
+   * exclusive with `fixture` and `pendingFixture`.
+   *
+   * The field exists so that "no fixture is owed" is a declaration rather than
+   * an absence: an entry that simply forgot `pendingFixture` would otherwise
+   * drop out of the owed-fixture backlog silently, and the phase exit criterion
+   * "no `pendingFixture` left in the matrix" would be satisfiable by deleting
+   * the field instead of by earning the evidence.
+   */
+  noFixturePossible?: string;
   /**
    * Subset of `factRefs` the named fixture exercises *entire*, as the operative
    * cause of a confident golden expectation. Only these facts are counted
@@ -581,14 +590,16 @@ const MATRIX_ENTRIES = [
     minVersion: "2.1.0",
     status: "supported",
     confidence: "doc",
+    noFixturePossible:
+      "Agent(<name>) and its Task alias are argument-scoped rules, and this product resolves " +
+      "what the platform applies rather than evaluating rule arguments (§2.3), so a rule of " +
+      "this shape resolves unknown in either action. Nor does the deny lower the subagent it " +
+      "names: `ResolvedCapability[\"kind\"]` has no subagent member, so there is nothing in the " +
+      "capability set for such a rule to act on. Every value the rule causes is therefore " +
+      "unknown, and an unknown claims nothing (§11.3).",
     notes:
-      "No fixture can promote this entry, so it names none (H1-28). Agent(<name>) and its Task " +
-      "alias are argument-scoped rules, and this product resolves what the platform applies " +
-      "rather than evaluating rule arguments (§2.3): a rule of this shape resolves unknown in " +
-      "either action, and it does not lower the named subagent's own capability, which stays " +
-      "as the earlier stages left it. Every value the rule causes is therefore unknown, and an " +
-      "unknown claims nothing (§11.3). What is not pinned is S9 itself — that the deny blocks " +
-      "the subagent, for builtin and user-defined names alike.",
+      "What is not pinned is S9 itself — that the deny blocks the subagent, for builtin and " +
+      "user-defined names alike.",
   },
   {
     id: "settings.denySkills",
@@ -597,14 +608,16 @@ const MATRIX_ENTRIES = [
     minVersion: "2.1.0",
     status: "supported",
     confidence: "doc",
+    noFixturePossible:
+      "The rule acts in one direction only: a Skill or Skill(<name>) deny lowers the skill it " +
+      "names to unknown, because §3.5 does not say what such a rule leaves of a preloaded " +
+      "skill, and the rule capability itself is argument-scoped and resolves unknown too " +
+      "(§2.3). The one confident verdict in this neighbourhood — an allow of a skill a bare " +
+      "Skill deny already removed — rests on S2/S5 and is credited to settings.denyPrecedence, " +
+      "not here.",
     notes:
-      "No fixture can promote this entry, so it names none (H1-28). The rule acts in one " +
-      "direction only: a Skill or Skill(<name>) deny lowers the skill it names to unknown, " +
-      "because §3.5 does not say what such a rule leaves of a preloaded skill, and the rule " +
-      "capability itself is argument-scoped and resolves unknown too (§2.3). The one confident " +
-      "verdict in this neighbourhood — an allow of a skill a bare Skill deny already removed — " +
-      "rests on S2/S5 and is credited to settings.denyPrecedence, not here. What is not pinned " +
-      "is S10 itself: that Skill covers every skill and Skill(<name>) / Skill(<name> *) one.",
+      "What is not pinned is S10 itself: that Skill covers every skill and Skill(<name>) / " +
+      "Skill(<name> *) one.",
   },
   {
     id: "settings.ruleScope",
@@ -613,14 +626,14 @@ const MATRIX_ENTRIES = [
     factRefs: [],
     status: "unknown",
     confidence: "doc",
+    noFixturePossible:
+      "Status unknown by construction, so no fixture can make this rule the operative cause of " +
+      "a confident golden value and the entry can never reach confidence: fixture (H1-28).",
     notes:
       "§3.5 documents which rule syntaxes exist, not what an allow entry adds to a session or " +
       "which invocations an argument narrows. The product resolves what the platform applies " +
       "rather than running its own permission engine (§2.3), so a rule of this shape is " +
-      "recorded and left unknown instead of being turned into an availability verdict. This " +
-      "entry names no fixture and never will: its status is unknown by construction, so no " +
-      "fixture can make its rule the operative cause of a confident golden value, and it can " +
-      "never reach confidence: fixture (H1-28).",
+      "recorded and left unknown instead of being turned into an availability verdict.",
   },
   {
     id: "builtin.readOnly",
