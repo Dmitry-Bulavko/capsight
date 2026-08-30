@@ -222,3 +222,70 @@ Order: EC-01 → EC-02 → EC-03 → EC-04 → EC-05 → EC-06 → EC-07 → EC-
 | D1-14 | D1 | A `skills:` entry resolving to a command file reports `preloaded` on K1's authority | done | §3.6 K1, §8.2 | resolution/skills.ts, discovery/types.ts | Command-backed preload resolves `unknown`, not `preloaded` |
 | D1-15 | D1 | No golden channel for snapshot-level warnings; A10's refusal overstates its obstacle | done | §11.2, §7.7 | golden-normalize.ts, matrix.ts | Channel exists, or A10's reason says "under the current golden shape" |
 | D1-16 | D1 | `agent-hooks` normalizes to `instruction:<path>`, colliding with an instruction source | done | §11.2 | golden-normalize.ts:298-303, resolver.ts:505 | Two capabilities on one agent file cannot collapse to one id |
+
+## V1 — UI Surface
+
+Wiring existing API into the browser. **Scope OUT for the whole phase:** new resolver/discovery/matrix logic, observed layer (§9), permission engine (§2.3), writes to `.claude/**` beyond the existing M3 apply path, persistent desired state, drag-and-drop graph editing.
+
+V1-01…V1-03 are compliance defects, not features: the browser today states restrictions without the caveat §2.4 makes mandatory, omits the declared/effective pairs §7.4 calls обязательные, and shows status without enforcement (invariant 3). They go first.
+
+Order: V1-01 → V1-02 → V1-03 → V1-04 → V1-05 → V1-06 → V1-07.
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| V1-01 | V1 | Warnings surface — security findings visible | todo | §2.4, §7.6, §7.7, inv 12 | src/ui/components/WarningsPanel.tsx, api.ts, EcosystemHealth.tsx | Browser shows no fewer warnings than `agent-manager warnings`; Bash guardrail caveat on screen; health counts drill down to messages |
+| V1-02 | V1 | Declared vs effective pairs | todo | §7.4, P1, P2, F8, F9, T3 | src/ui/components/DeclaredEffective.tsx, App.tsx | All four obligatory cases render both values with the reason; `fork` states that agent config does not apply |
+| V1-03 | V1 | Capability list depth — kind + enforcement | todo | inv 3, §6, §7.3 | src/ui/components/EffectiveCapabilities.tsx | Every row carries enforcement; `unknown` is visually distinct from `enforced`; filter or grouping by kind |
+| V1-04 | V1 | Agent declared configuration block | todo | §7.1, §5, M0 goal | src/ui/components/AgentList.tsx | Frontmatter as-is: tools, model, permissionMode, skills; existing invalid/ambiguous states preserved |
+| V1-05 | V1 | Graph → Why bridge | todo | §7.5, §7.10 | src/ui/components/GraphView.tsx, App.tsx | Node click selects the capability and opens Why; no new fetch path |
+| V1-06 | V1 | Ecosystem → effective bridge | todo | §7.4, §4.1 | src/ui/components/EcosystemView.tsx, App.tsx | Declared resource opens its effective resolution; platform/agent switch is explicit, never silent |
+| V1-07 | V1 | Plan preview (read-only) + editor deferral | todo | §10 M3 #2, §14, §12.4 M3 | src/ui/api.ts, src/ui/components/PlanPreview.tsx, docs/TASKS.md | `POST /api/plan` diff rendered read-only; no apply button; apply/rollback/history/probe deferrals recorded with reasons |
+
+### Recorded deferrals (V1-07 writes these here)
+
+| Surface | Endpoint | Reason |
+|---|---|---|
+| Apply + confirm | `POST /api/apply` | §14 ranks editing 7th of 8; CLI `apply` covers it. Revisit after D2 |
+| Rollback + history | `POST /api/rollback/:id`, `GET /api/history` | Same; destructive flows earn a UI only alongside apply |
+| MCP probe | `POST /api/mcp/:id/probe` | §7.9 confirmation flow + isolated process; developer-tone, CLI-appropriate |
+| Managed simulation | `POST /api/simulate/managed` | Deferred to **P1**, where it is the phase, not a corner |
+
+## D2 — Evidence depth
+
+Works the 87 facts that reach no matrix entry (ROADMAP coverage baseline). Each ends as an entry or as a written `noFixturePossible` refusal. **No fourth platform.**
+
+Order: D2-01 → D2-02 → D2-03 → D2-04 → D2-05 → D2-06.
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| D2-01 | D2 | Triage all unreferenced facts into a ledger | todo | §3, §8.1, §11.4 | docs/EVIDENCE-LEDGER.md | Every one of the 87 gets a disposition: entry owed, refusal, or out of scope with reason |
+| D2-02 | D2 | Claude: entries for the highest-value unreferenced facts | todo | §3, §8.2, §11.1 | claude/version/matrix.ts, tests/fixtures/claude/ | Each new entry either fixture-backed or `noFixturePossible`; no entry claims a fixture it lacks |
+| D2-03 | D2 | Cursor: raise fixture-verified past 3 | todo | CURSOR-FACTS, §8, §11 | adapters/cursor/, tests/fixtures/cursor/ | New verified facts are the operative cause of a confident golden, per H1-28 |
+| D2-04 | D2 | Codex: raise fixture-verified past 2 | todo | CODEX-FACTS, §8, §11 | adapters/codex/, tests/fixtures/codex/ | Same criterion; trust difference stays pinned |
+| D2-05 | D2 | **UI:** evidence line in the Why panel | todo | §8.1, §7.5, inv 3, inv 13 | src/ui/components/WhyPanel.tsx | Each claim shows its fact confidence tier and matrix ref; doc-only reads visibly weaker than fixture-backed; no suite metric shown (inv 13) |
+| D2-06 | D2 | Coverage gate: unreferenced count cannot rise | todo | §11.4, §11.3 | tests/correctness-gate.test.ts | A new fact without a disposition fails the gate |
+
+## P1 — Policy surface
+
+Managed simulation (§7.8) gets the screen its named audience needs. **No new simulation logic** — `src/application/simulate.ts` already returns the delta.
+
+Order: P1-01 → P1-02 → P1-03 → P1-04.
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| P1-01 | P1 | Simulation API client + bundle selection | todo | §7.8, §12.4 M2 | src/ui/api.ts, src/server/routes/simulate.ts | Candidate bundle chosen through the existing browse path; read-only end to end |
+| P1-02 | P1 | **UI:** simulation delta view | todo | §7.8, §7.4 | src/ui/components/SimulationView.tsx, DashboardNav.tsx | Shadowed agents, denied tools, ignored fields, substituted models — each traceable to its cause |
+| P1-03 | P1 | F8 substitute-model honesty in the delta | todo | F8, §2.4, H1-29 | resolution/, SimulationView.tsx | The identity of a substitute model is `unknown` unless founded; never asserted |
+| P1-04 | P1 | Managed-simulation golden fixture extension | todo | §11.1–11.3 | tests/fixtures/claude/managed-simulation/ | Delta pinned in a golden, unknowns included |
+
+## G1 — Version drift guard
+
+§8.4 divergence becomes detectable instead of assumed away. Protects every confident answer the product gives once the platform moves past 2.1.x.
+
+Order: G1-01 → G1-02 → G1-03.
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| G1-01 | G1 | Version applicability per matrix entry | todo | §8.1, §8.2, §8.4 | */version/matrix.ts, resolve-enforcement | A detected version outside a rule's range downgrades that rule, not the whole scan |
+| G1-02 | G1 | **UI:** drift banner + affected answers | todo | §8.4, §2.4, inv 11 | src/ui/components/DriftBanner.tsx | User sees which answers the version gap touches; no blanket "unsupported" |
+| G1-03 | G1 | Drift fixture: version above the matrix | todo | §11.1–11.3, §8.4 | tests/fixtures/claude/version-drift/ | Golden pins the downgrade, not a confident answer |

@@ -4,7 +4,9 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**EC phase complete** — EC-01…EC-08 done on `feat/ec-ecosystem` (PR pending merge). Ecosystem tab: declared inventory across Claude, Cursor, Codex with compat badges, detail panel, health readout, and mixed-project golden fixture.
+**V1 — UI Surface** is the active phase. The engine is ahead of the browser: seven API route groups have no UI client, and three spec obligations (§2.4, §7.4, invariant 3) are satisfied in the CLI but not on screen. V1 closes that before any new capability is added.
+
+Previous: **EC phase complete** — EC-01…EC-08 merged to `main` (PR #4). Ecosystem tab: declared inventory across Claude, Cursor, Codex with compat badges, detail panel, health readout, and mixed-project golden fixture.
 
 Previous: **D1 phase complete** — evidence depth for three platforms.
 
@@ -17,14 +19,40 @@ Previous: **V0-04 done** — custom `CapsightSelect` listbox with in-row status 
 | I0 — Process setup | `done` | All I0 tasks done |
 | S0 — Runtime observation spike | `done` | [S0-DECISION.md](./S0-DECISION.md) |
 | M0 — Discovery Viewer | `done` | SPEC §10 Acceptance M0 |
-| M1 — Resolver + Explainability | `done` | M1-15 correctness gate |
-| M2 — Probe, Graph, Simulation | `done` | M2-06 complete |
-| M3 — Editor (v0.2) | `done` | M3-03 complete |
+| M1 — Resolver + Explainability | `done` — CLI/API | M1-15 correctness gate · browser surface in V1 |
+| M2 — Probe, Graph, Simulation | `done` — CLI/API | M2-06 complete · probe/simulate stay CLI-only until P1 |
+| M3 — Editor (v0.2) | `done` — CLI/API | M3-03 complete · apply/rollback stay CLI-only (V1-07) |
 | H1 — Correctness hardening | `done` | H1-29 closed; corpus 20/20 |
 | V0 — v0.1 UX polish | `done` | V0-01..V0-04 complete |
 | MP — Multi-platform | `done` | MP-C15 + MP-X15 golden gates |
 | D1 — Depth (evidence) | `done` | D1-00…D1-16 closed; three-platform coverage reports honest |
 | EC — Ecosystem visualization | `done` | EC-01…EC-08 complete; ecosystem golden fixture |
+| V1 — UI Surface | `todo` | §2.4, §7.4 and invariant 3 observable in the browser |
+| D2 — Evidence depth | `todo` | Every fact either matrix-referenced or refused in writing |
+| P1 — Policy surface | `todo` | Managed simulation usable without the terminal |
+| G1 — Version drift guard | `todo` | §8.4 divergence detectable, not assumed away |
+
+## Surface rule
+
+**Every phase ships something a person can see in the browser.** Not a screenshot at the end — a task inside the phase whose acceptance is visual.
+
+The rule exists because the first six phases broke it. M1, M2 and M3 are marked `done` on acceptance criteria written as *«показаны раздельно»*, *«показывается пользователю»*, *«после apply показывается …»* — and all three were closed against the CLI and the API. That is how the project arrived at a resolver of real depth behind a dashboard that renders four of eleven route groups and not one warning. A phase that produces only engine is not finished; it is deferred, and the deferral has to be written into TASKS with a reason.
+
+Practically, for each phase below: at least one task is a UI task, it is not scheduled last, and the phase gate names what becomes visible.
+
+## Coverage baseline (measured 2026-08-30, `28a510b`)
+
+Recomputed from the project's own `buildCoverageReport` over the three fixed fact registries:
+
+| platform | facts | fixture-verified | documentation-only | externally-cited | matrix-referenced unknown | unverified | fixtures |
+|---|---|---|---|---|---|---|---|
+| claude | 92 | 11 | 23 | 11 | 0 | 47 | 20 |
+| cursor | 27 | 3 | 0 | 0 | 3 | 21 | 4 |
+| codex | 26 | 2 | 4 | 0 | 1 | 19 | 4 |
+
+Two corrections to the D1-era numbers recorded below: Claude moved 9 → 11 fixture-verified and 52 → 47 unverified over D1-04…D1-06, and the D1 scope note's structural claim — that Cursor and Codex *cannot* rise above `documentation-only` because their `FeatureCompatibility` carries no `verifiedFacts` field — was closed by D1-07 and D1-08. Both adapters have the field and both now have fixture-verified facts. The note is kept as written because it records what was true when the phase was planned.
+
+**87 facts across the three platforms still reach no matrix entry at all.** That is the denominator D2 works against, and it is the single largest risk to the product's central claim.
 
 ## D1 scope note
 
@@ -127,6 +155,54 @@ Two rules constrain the phase:
 
 The canvas stays read-only: no dragging, no connecting, no persisted positions (§2.3).
 
+## Phase order after EC
+
+```
+V1 (surface)  →  D2 (evidence)  →  P1 (policy surface)  →  G1 (drift guard)
+```
+
+V1 is first because the product currently shows a *less* honest picture in the browser than in the terminal, and that is a correctness problem, not a backlog item. D2 is second because every later claim rests on the fact corpus. P1 before G1 because managed simulation is the one feature in the spec with a named paying audience (§7.8), and G1 is insurance whose value grows with the corpus D2 builds.
+
+## V1 scope note — UI Surface
+
+Wiring existing API into the interface. **No new resolver, discovery or matrix logic** — if a task needs one, it is out of scope and gets recorded instead.
+
+The phase opens with three compliance tasks, not with the easiest ones:
+
+- **§2.4 and invariant 12.** `security-findings.ts` already produces «Agent has Bash access. Tool-level restrictions are a guardrail, not a complete security boundary.» Nothing in `src/ui/` renders warnings, while `EffectiveCapabilities` renders a `denied` badge as bare fact. The browser therefore states a restriction without the caveat the spec makes mandatory. V1-01.
+- **§7.4.** «Везде, где declared-значение может не действовать, показывать оба» — обязательно for `permissionMode`, `model` (F8), plugin fields (F9) and the whole configuration under `fork` (T3). `permissionMode` does not appear anywhere in `src/ui/`. V1-02.
+- **Invariant 3.** Every assertion carries source, reason and enforcement. The Why panel honours this; the capability list shows status alone, so `unknown` enforcement is indistinguishable from `enforced` until clicked. V1-03.
+
+Editing is deliberately *not* completed in this phase. §14 ranks editing seventh of eight priorities, so V1 ships a read-only plan preview (V1-07) and leaves apply, rollback and history in the CLI, recorded as an explicit deferral rather than an omission. MCP probe UI stays deferred for the same reason (§7.9 confirmation flow, developer-tone).
+
+**Gate:** the browser shows no fewer warnings than `agent-manager warnings`; every §7.4-obligatory pair is on screen; every capability shows its enforcement without a click.
+
+## D2 scope note — Evidence depth
+
+D1 converted the twelve `pendingFixture` debts. It did not touch the 87 facts that reach no matrix entry, and said so. D2 works that denominator directly: each fact either gets an entry, or a written refusal saying why no fixture can promote it (`noFixturePossible`, the mechanism H1-28 built for exactly this).
+
+The phase goes deeper on the platforms already supported. **It adds no fourth platform.** MP and EC widened the surface while Cursor and Codex sat at zero fixture-verified facts; that ordering will not be repeated.
+
+Its UI task surfaces per-claim evidence in the Why panel — the cited fact's own confidence tier and matrix reference, so a doc-only claim is visibly weaker than a fixture-backed one. This is a property of the individual claim under §8.1, **not** the coverage report: invariant 13 forbids showing the test-suite metric as a property of the user's project, and §11.4 keeps that report CI-only.
+
+**Gate:** no fact in any of the three registries is silently unreferenced; every remaining gap is a declaration.
+
+## P1 scope note — Policy surface
+
+§7.8 names managed simulation the differentiator and names its user: a platform team rolling policy across dozens of repositories. It is fully implemented, fully read-only, and reachable only by typing `agent-manager simulate --managed ./candidate/`.
+
+P1 gives it a screen: pick a candidate bundle, see which agents become shadowed, which tools become denied, which fields are ignored, which models are substituted under `availableModels` (F8). No new simulation logic — `src/application/simulate.ts` already returns the delta.
+
+**Gate:** a platform team can answer "what does this policy do to this repository" without a terminal.
+
+## G1 scope note — Version drift guard
+
+Every confident answer the product gives is pinned to Claude Code 2.1.x. §8.4 defines what divergence means; nothing currently detects it. When the platform ships 2.2, the product does not degrade loudly — it keeps answering with the same confidence against a matrix that has quietly stopped applying.
+
+G1 builds the mechanism: matrix entries carry version applicability, a detected version outside a rule's range downgrades that rule rather than the whole scan, and the user sees which of their answers are affected.
+
+**Gate:** a version outside the matrix produces a visible, scoped downgrade — never a silent confident answer.
+
 ## H1 outcome
 
 All twenty-eight H1 tasks are closed. The audit of `aa7f109` found thirteen deviations; implementing them surfaced fifteen more, several of the same blocker class as the originals. Everything below is fixed and covered.
@@ -191,6 +267,6 @@ See [SPEC.md §10](./SPEC.md#10-milestones).
 
 ## Post-v0.1 backlog (not started)
 
-Settings-permission precedence (S1–S8) and skill overrides (K8, K10–K12) are unimplemented; H1-10 records them as honest `unknown` in the goldens first.
+Settings-permission precedence and skill overrides were revisited by D1-03 (S6/S7) and D1-05 (K8, K10, K11): each was either founded or refused in writing, and the refusals resolve `unknown` in the goldens rather than guessing. What is left of S1–S8 and K12 stays here, and D2 decides whether each becomes an entry or a recorded refusal.
 
 Live runtime observation layer if platform APIs mature (revisit S0).

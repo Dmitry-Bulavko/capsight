@@ -12,7 +12,6 @@ Implementation contract: [SPEC.md](./SPEC.md)
 | [TASKS.md](./TASKS.md) | Atomic backlog — one `in_progress` at a time |
 | [tasks/_TEMPLATE.md](./tasks/_TEMPLATE.md) | Handoff template for implementer |
 | [tasks/{ID}.md](./tasks/) | Per-task handoff packets |
-| [CONTINUATION.md](./CONTINUATION.md) | Live state and operating rules for the D1 phase; delete when it closes |
 
 ## Iteration workflow
 
