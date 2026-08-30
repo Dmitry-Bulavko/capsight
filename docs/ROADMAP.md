@@ -4,7 +4,7 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**D1-00 and D1-01 done.** All three platforms now carry a §11.4 coverage report, and fixture runs are isolated from Capsight's own repository. **Scaffolding done — D1-00, D1-01, D1-09 and D1-10 are closed.** The corpus is isolated from this repository, portable across checkout paths, and its isolation guard is falsifiable on all three platforms. **D1-05 done; D1-06 is next.** Claude coverage reads **92 / 0 / 9 / 36 / 47** — `unverified` has fallen from 52 to 47 across the phase. The `pendingFixture` backlog stands at 6. Read the caveat on what `documentation-only` actually means before quoting that number.
+**D1-00 and D1-01 done.** All three platforms now carry a §11.4 coverage report, and fixture runs are isolated from Capsight's own repository. **Scaffolding done — D1-00, D1-01, D1-09 and D1-10 are closed.** The corpus is isolated from this repository, portable across checkout paths, and its isolation guard is falsifiable on all three platforms. **Claude side of D1 is closed.** `pendingFixture` is empty across all 44 entries and coverage reads **92 / 0 / 11 / 34 / 47**. D1-07 (Cursor) is next and has not started; see [CONTINUATION.md](./CONTINUATION.md) for state and operating rules. Read the caveat on what `documentation-only` means before quoting these numbers.
 
 Previous: **EC phase written** — ecosystem visualization handoffs EC-01…EC-08, now blocked on D1.
 
@@ -106,6 +106,12 @@ K8 produced the disagreement the handoff asked for rather than a smoothed answer
 `entryFactCoverageTier` never consults `factConfidence`, so **any** cited fact lands in `documentation-only` regardless of whether §3 marks it `[doc]`, `[ext]` or `[spike]`. K10 is `[ext]` — an unconfirmed third-party claim — and now counts there purely because an entry that states no rule names it.
 
 This is the metric's designed behaviour rather than a regression (K12 already sat there the same way), but the tier's name overstates what an `[ext]` citation establishes, and the effect compounds every time an entry cites a fact. Treat `documentation-only` as "some entry refers to this", not as "this is documented". D1-13 owns the fix or the rename.
+
+D1-06 closed the last six debts and produced the phase's only movement in `fixture-verified`, 9 → 11, by counting **F9 and K4 entire**. Review reproduced both deletion tests: without the plugin-field rule the golden does not merely differ, it becomes confident and wrong — the permission mode flips to `bypassPermissions` and all three warnings vanish.
+
+It also corrected a false premise in the project's own history. H1-28 demoted `agent.pluginFieldLimits` on the stated grounds that no plugin agent in the corpus declared `hooks`, `mcpServers` or `permissionMode`. That was untrue of the corpus at the moment it was written — `security.md` had declared all three since H1-23, and the golden already carried all three warnings. **F9 sat at `doc` for a whole phase for a reason that never existed.** No fixture edit was needed to promote it; reading the corpus was enough. The H1-28 task record now carries the correction inline.
+
+Final tally for the twelve `pendingFixture` debts: **four promoted, eight refused.** Two of the four count their fact entire.
 
 **This lowers the phase's ceiling.** The earlier estimate of 9 → roughly 20 fixture-verified assumed the twelve pending entries were mostly convertible. On the first sample, three of four were not. A more honest expectation is that D1 ends with a materially smaller `pendingFixture` list, a handful of promotions, and several facts formally recorded as unprovable by fixture — with the §11.4 count moving far less than the amount of work suggests.
 

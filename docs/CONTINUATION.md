@@ -18,23 +18,11 @@ Contract: [SPEC.md](./SPEC.md) · Phase status: [ROADMAP.md](./ROADMAP.md) · Ba
 
 Done: D1-00, D1-01, D1-09, D1-10 (scaffolding) and D1-02 … D1-06 (evidence).
 
-## Open loop — read this first
+## D1-06 is closed
 
-**D1-06 is committed and pushed but its review had not returned when this was written.** `docs/TASKS.md` still shows it `in_progress`. Before starting anything new:
+Its review returned `pass with findings` after these notes were first written. Both promotions were reproduced by the reviewer under the literal deletion test and both hold; `verifiedFacts: [F9]` and `[K4]` are earned. The re-record was clean — `trust-inline-mcp/expected.json` has zero deleted lines and `skills-preload/expected.json`'s only deletion is a comma. B2's pointer move to `instructions` was judged sound reuse rather than fixture shopping: that fixture already carried the explore and plan presets.
 
-1. If a review verdict is available, act on it. `pass` → mark D1-06 `done` in TASKS.md, update the ROADMAP current-focus line, commit, push. `fail` → send the findings back to an implementer as a fix round on the same branch.
-2. If no verdict survives, re-run the review yourself against `git show 969d327`. The four things worth checking are listed in "What D1-06 claims" below.
-
-## What D1-06 claims, and what to check if the review was lost
-
-It is the first commit in the phase to raise `fixture-verified` (9 → 11), by counting two facts **entire**:
-
-- **F9** `agent.pluginFieldLimits`, `verifiedFacts: [F9]` — enumerate F9's clauses and confirm `plugin-agents` exercises every one, not most.
-- **K4** `skills.disableModelInvocation`, `verifiedFacts: [K4]` — same treatment.
-
-Also worth a look: B2's fixture pointer was moved from `tools-filters` (the directory the handoff named) to `instructions`. That is either sound reuse or shopping for a fixture that happens to pass. And two goldens were re-recorded with a temporary recorder; confirm `skills-preload/expected.json` and `trust-inline-mcp/expected.json` moved only as their added input files require.
-
-One correction it makes to earlier recorded history: H1-27/H1-28 recorded that no plugin agent in the corpus declares `hooks`, `mcpServers` or `permissionMode`. That was false about its own corpus — `plugins/my-plugin/agents/review/security.md` declares all three and the golden already carried all three warnings.
+Three findings came out of it and are recorded as tasks rather than fixed: **D1-15** (A10's refusal overstates its obstacle, and there is no golden channel for snapshot-level warnings at all), **D1-16** (`agent-hooks` normalizes to `instruction:<path>` and can collide), and a one-line correction already applied to `docs/tasks/H1-28-fixture-confidence-meaning.md`.
 
 ## Next work, in order
 
