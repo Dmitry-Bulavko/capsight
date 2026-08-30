@@ -12,11 +12,10 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
     "paths": {
-      "@core/*": ["src/core/*"],
-      "@adapters/*": ["src/adapters/*"],
-      "@application/*": ["src/application/*"]
+      "@core/*": ["./src/core/*"],
+      "@adapters/*": ["./src/adapters/*"],
+      "@application/*": ["./src/application/*"]
     }
   },
   "include": ["src/ui/**/*", "src/core/**/*", "src/application/**/*", "tests/**/*"],
