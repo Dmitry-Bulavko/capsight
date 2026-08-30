@@ -4,7 +4,7 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**D1-00 and D1-01 done.** All three platforms now carry a §11.4 coverage report, and fixture runs are isolated from Capsight's own repository. **Scaffolding done — D1-00, D1-01, D1-09 and D1-10 are closed.** The corpus is isolated from this repository, portable across checkout paths, and its isolation guard is falsifiable on all three platforms. **D1-02 is next** — the first task in the phase that touches evidence rather than the machinery for holding it.
+**D1-00 and D1-01 done.** All three platforms now carry a §11.4 coverage report, and fixture runs are isolated from Capsight's own repository. **Scaffolding done — D1-00, D1-01, D1-09 and D1-10 are closed.** The corpus is isolated from this repository, portable across checkout paths, and its isolation guard is falsifiable on all three platforms. **D1-02 done; D1-03 is next.** The first evidence task landed and moved the §11.4 numbers by zero — see below, that is the honest result rather than a shortfall.
 
 Previous: **EC phase written** — ecosystem visualization handoffs EC-01…EC-08, now blocked on D1.
 
@@ -23,7 +23,7 @@ Previous: **V0-04 done** — custom `CapsightSelect` listbox with in-row status 
 | H1 — Correctness hardening | `done` | H1-29 closed; corpus 20/20 |
 | V0 — v0.1 UX polish | `done` | V0-01..V0-04 complete |
 | MP — Multi-platform | `done` | MP-C15 + MP-X15 golden gates |
-| D1 — Depth (evidence) | `todo` | No `pendingFixture` left; three coverage reports |
+| D1 — Depth (evidence) | `in_progress` | No `pendingFixture` left (promoted or declared unpromotable); three coverage reports |
 | EC — Ecosystem visualization | `blocked` | Waits on D1-07 + D1-08 |
 
 ## D1 scope note
@@ -70,7 +70,24 @@ Four of the phase's tasks did not exist when it opened: D1-00, D1-09, D1-10 and 
 
 Two of the four were caught only because review is done by an agent other than the author. D1-10 in particular passed its own implementer's checks and its first review, and failed on the second when a reviewer reproduced the defect in the live working tree.
 
-The evidence tasks (D1-02 … D1-08) remain untouched; the phase is longer than planned and has not yet moved the §11.4 numbers at all.
+The evidence tasks (D1-02 … D1-08) are where the phase's value is; the scaffolding merely made them mean something.
+
+## What D1-02 established, and what it recalibrates
+
+The coverage numbers are **unchanged** — 92 / 0 / 9 / 31 / 52, before and after. That is correct, not a failure. `settings.webFetchRules` was promoted to `confidence: "fixture"` on a literal deletion test (removing the rule moves a golden from `blocked/enforced` to `unknown/unknown`), but its `verifiedFacts` is empty: the fixture pins one edge of S8, not S8 entire, so the *entry* gained confidence and the *fact* count did not. H1-28 works exactly as designed.
+
+The real progress measure for this phase is the `pendingFixture` backlog, which went **12 → 8**:
+
+| Entry | Outcome |
+|---|---|
+| `settings.webFetchRules` | promoted to `fixture` |
+| `settings.denySubagents` | **unpromotable** — `ResolvedCapability["kind"]` has no subagent member, so a `deny: Agent(<name>)` has nothing in the capability set to lower |
+| `settings.denySkills` | **unpromotable** — every value the rule can cause is `unknown`; a confident `denied` would be invented semantics |
+| `settings.ruleScope` | **unpromotable** — `status` is `unknown` by construction, and H1-28 bars such an entry from ever reaching `fixture` |
+
+Three of the first four turned out to be debts that can never be paid rather than debts not yet paid. `FeatureCompatibility` gained a third field, `noFixturePossible`, so that state is machine-checkable instead of living in prose: every entry now declares exactly one of `fixture` / `pendingFixture` / `noFixturePossible`, asserted over all 39 entries.
+
+**This lowers the phase's ceiling.** The earlier estimate of 9 → roughly 20 fixture-verified assumed the twelve pending entries were mostly convertible. On the first sample, three of four were not. A more honest expectation is that D1 ends with a materially smaller `pendingFixture` list, a handful of promotions, and several facts formally recorded as unprovable by fixture — with the §11.4 count moving far less than the amount of work suggests.
 
 ## EC scope note
 
