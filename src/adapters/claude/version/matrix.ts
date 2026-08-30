@@ -546,10 +546,23 @@ const MATRIX_ENTRIES = [
     minVersion: "2.1.0",
     status: "supported",
     confidence: "doc",
-    pendingFixture: "settings-permissions",
+    noFixturePossible:
+      "Both halves of S6 answer a per-invocation question: the prefix decides which command " +
+      "lines match, and the position of :* decides where the wildcard applies. Neither says " +
+      "what a Bash(...) rule leaves of the session's capability set, so such a rule resolves " +
+      "unknown in either action, and an unknown claims nothing (§11.3) and can never be the " +
+      "operative cause of a confident golden value (H1-28). The evidence that would promote " +
+      "this entry is a verdict of the form \"this command line would be approved\", which is " +
+      "the permission engine §2.3 forbids this product to have. The S8 escape does not apply " +
+      "either: S8 says the domain: prefix is *required*, so a rule lacking it is malformed and " +
+      "an allow in that shape grants nothing, whereas S6 says only that :* is not a wildcard " +
+      "away from the end — not that such a rule is invalid. Reading a mid-pattern :* as " +
+      "granting nothing would be invented semantics (§13.14).",
     notes:
-      "The fixture carries Bash(...) rules, but every one of them is inert behind the bare " +
-      "Bash deny, so nothing there pins the prefix semantics themselves.",
+      "The fixture's Bash(npm run test:*) and Bash(npm run test:unit) entries are both inert " +
+      "behind the bare Bash deny and are attributed to settings.denyPrecedence, so no corpus " +
+      "rule currently reaches this entry at all; one in a layer without that deny would reach " +
+      "it and resolve unknown.",
   },
   {
     id: "settings.pathRules",
@@ -558,10 +571,20 @@ const MATRIX_ENTRIES = [
     minVersion: "2.1.0",
     status: "supported",
     confidence: "doc",
-    pendingFixture: "settings-permissions",
+    noFixturePossible:
+      "S7 is wholly a statement about which paths a rule covers — a leading / anchors at the " +
+      "project root, // at the filesystem root — and matching a concrete path against a glob " +
+      "is the per-invocation decision §2.3 keeps out of this product. A Read/Edit path rule " +
+      "therefore resolves unknown in either action, and an unknown claims nothing (§11.3), so " +
+      "no fixture can make this entry the operative cause of a confident golden value (H1-28). " +
+      "Pinning / against // would require asserting on a resolved path verdict this product " +
+      "does not produce and is not going to.",
     notes:
-      "The resolver does not evaluate rule arguments, so a path-scoped rule resolves unknown; " +
-      "a fixture pinning / vs // would need per-invocation resolution to assert against.",
+      "The fixture carries both anchoring forms S7 names — allow Read(/src/**) and deny " +
+      "Edit(//etc/secrets/**) — and each resolves unknown/unknown through this entry, which is " +
+      "all the entry claims. The stage also does not lower the tool-level Read or Edit " +
+      "capability on the strength of a path-scoped deny: S7 says which paths the rule covers, " +
+      "not what is left of the tool.",
   },
   {
     id: "settings.webFetchRules",

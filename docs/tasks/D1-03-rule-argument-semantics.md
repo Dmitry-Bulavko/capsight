@@ -59,3 +59,43 @@ If this task makes a prefixed WebFetch rule confident, it would **inherit fixtur
 ## Notes
 
 This is the task most likely to be "solved" by writing plausible glob matching that nothing founds. Resist it: an invented semantics that agrees with intuition is the exact failure mode §14 is written against.
+
+## Decision (D1-03, implemented)
+
+Both questions were asked in the form the handoff requires — not "would this command
+be permitted" (§2.3, out of scope forever) but "does the rule shrink or shape the
+reported capability, and is the shape itself decidable". Both answers are *no*, so
+this task ships no production code: two matrix entries move from `pendingFixture` to
+`noFixturePossible`.
+
+**S6 — `Bash(cmd:*)` prefix matching: `unknown`.** Both halves of S6 answer a
+per-invocation question. The prefix decides which command lines match; the position of
+`:*` decides where the wildcard applies. Neither half states what a `Bash(...)` rule
+leaves of the capability set, so the rule resolves `unknown` in either action and no
+golden value can rest on it. The tempting move — treating a mid-pattern `:*` the way
+S8's missing `domain:` prefix is treated, i.e. as an allow that grants nothing — is
+refused: S8 says the prefix is *required*, which makes a rule without it malformed,
+whereas S6 says only that `:*` is not a wildcard away from the end. A rule with a
+mid-pattern `:*` is still a rule; calling it inert would be invented semantics.
+Separately, no rule in the corpus even reaches this entry today: both fixture `Bash(...)`
+entries are inert behind the bare `Bash` deny and are attributed to
+`settings.denyPrecedence`.
+
+**S7 — `Read`/`Edit` gitignore-like globs: `unknown`.** S7 says which paths a rule
+covers (`/` = project root, `//` = filesystem root). Matching a concrete path against
+that glob is precisely the per-invocation decision §2.3 forbids. The fixture already
+carries both anchoring forms — allow `Read(/src/**)`, deny `Edit(//etc/secrets/**)` —
+and both resolve `unknown`/`unknown` through `settings.pathRules`; that is the entry's
+whole claim and it is not promotable.
+
+**Considered and rejected:** lowering the tool-level `Read`/`Edit`/`Bash` capability to
+`unknown` because *some* path or command is denied. S7/S6 say which invocations a rule
+covers, not what survives of the tool, so that would trade a founded verdict for an
+unfounded one and raise `unknownRate` on no evidence.
+
+**Not touched:** `settings.webFetchRules` was not split, because nothing here made any
+WebFetch shape confident; the inherited-confidence hazard the review named is unchanged
+and still applies to whoever does promote a prefixed `WebFetch(domain:...)` rule.
+
+Coverage is unchanged (92 / 0 / 9 / 31 / 52) — correctly: no fact became
+fixture-verified. `pendingFixture` count 8 -> 6.
