@@ -4,7 +4,7 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**D1-00 and D1-01 done.** All three platforms now carry a §11.4 coverage report, and fixture runs are isolated from Capsight's own repository. **D1-09 done** — the corpus is now reproducible from any checkout path, so CI is unblocked. **D1-10 (isolation follow-ups) is next**, then D1-02.
+**D1-00 and D1-01 done.** All three platforms now carry a §11.4 coverage report, and fixture runs are isolated from Capsight's own repository. **Scaffolding done — D1-00, D1-01, D1-09 and D1-10 are closed.** The corpus is isolated from this repository, portable across checkout paths, and its isolation guard is falsifiable on all three platforms. **D1-02 is next** — the first task in the phase that touches evidence rather than the machinery for holding it.
 
 Previous: **EC phase written** — ecosystem visualization handoffs EC-01…EC-08, now blocked on D1.
 
@@ -59,6 +59,18 @@ So D1's honest ceiling is narrower than the gap: the phase converts the twelve `
 Instruction `capabilityId` was `sha256("instruction:" + absolute path)` and `sortCapabilities` ordered by that hash, so golden order was a function of the checkout location: the corpus reproduced at `/home/user/capsight` but reordered at `/home/runner/work/...`, the default GitHub Actions path. D1-09 sorts instruction capabilities on their project-relative path instead and drops the locale-sensitive comparator alongside it. Both re-recorded goldens were verified to be pure permutations, and the portability test replays four unrelated checkout shapes. `cursor/basic` was checked empirically and needed no change.
 
 The corpus is portable; CI can run the suite from any path.
+
+## What the scaffolding cost, and why
+
+Four of the phase's tasks did not exist when it opened: D1-00, D1-09, D1-10 and the deferred D1-11 all came out of reviews rather than the plan. That is not scope creep — each is a corpus defect that would have let the remaining tasks found their conclusions on unstable ground:
+
+- **D1-00** — fixture scans read this repository's own `.claude/agents/`, so a golden's verdict changed when Capsight gained an agent.
+- **D1-09** — golden order derived from a hash of the absolute checkout path, so the corpus failed on GitHub Actions' default path.
+- **D1-10** — the isolation guard was satisfied by a marker left behind by any killed run, so it passed without observing what it guarded (H1-07). One zero-byte stale file made all nine isolation assertions inert.
+
+Two of the four were caught only because review is done by an agent other than the author. D1-10 in particular passed its own implementer's checks and its first review, and failed on the second when a reviewer reproduced the defect in the live working tree.
+
+The evidence tasks (D1-02 … D1-08) remain untouched; the phase is longer than planned and has not yet moved the §11.4 numbers at all.
 
 ## EC scope note
 
