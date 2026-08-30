@@ -793,8 +793,13 @@ describe("mcp-probe", () => {
 
       proc.close();
       const exit = await proc.exited!;
-      expect(exit.signal).toBe("SIGKILL");
       expect(() => process.kill(proc.pid!, 0)).toThrow();
+      // Windows does not let a Node child ignore SIGTERM, so the process exits on
+      // the first signal and the grace-period escalation never runs. Unix is where
+      // §9.4's SIGTERM→SIGKILL path is exercised.
+      if (process.platform !== "win32") {
+        expect(exit.signal).toBe("SIGKILL");
+      }
     }, 10_000);
 
     it("reaps a cooperative child on the idle timeout", async () => {

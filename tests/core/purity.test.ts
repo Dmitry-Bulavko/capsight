@@ -44,11 +44,18 @@ function coreLines(): Array<{ file: string; line: string }> {
   });
 }
 
+function normalizeSourceLine(line: string): string {
+  return line.replace(/\r$/, "");
+}
+
 describe("core platform independence", () => {
   it("contains no Claude frontmatter field, env var or platform literal", () => {
     const offenders = coreLines()
-      .filter(({ file, line }) => BANNED.test(line) && !ALLOWED_LINES.has(`${file}::${line}`))
-      .map(({ file, line }) => `${file}: ${line.trim()}`);
+      .filter(({ file, line }) => {
+        const normalized = normalizeSourceLine(line);
+        return BANNED.test(normalized) && !ALLOWED_LINES.has(`${file}::${normalized}`);
+      })
+      .map(({ file, line }) => `${file}: ${normalizeSourceLine(line).trim()}`);
 
     expect(offenders).toEqual([]);
   });

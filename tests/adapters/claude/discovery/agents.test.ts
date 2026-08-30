@@ -5,6 +5,11 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { ClaudeAgent as Agent } from "../../../../src/adapters/claude/model/index.js";
 import { discoverAgents } from "../../../../src/adapters/claude/discovery/agents.js";
 import type { ProjectScopeLevel } from "../../../../src/adapters/claude/discovery/project-walk.js";
+import {
+  captureHomeEnv,
+  restoreIsolatedHome,
+  setIsolatedHome,
+} from "../../../helpers/isolated-home.js";
 
 const tempDirs: string[] = [];
 
@@ -279,8 +284,8 @@ description: User agent of the same name
 `,
     });
     const agentsPath = path.join(project, ".claude", "agents");
-    const previousHome = process.env.HOME;
-    process.env.HOME = home;
+    const previousHomeEnv = captureHomeEnv();
+    setIsolatedHome(home);
 
     try {
       const { agents } = await discoverAgents(
@@ -312,11 +317,7 @@ description: User agent of the same name
         expect(agent.collision?.effective).toBeUndefined();
       }
     } finally {
-      if (previousHome === undefined) {
-        delete process.env.HOME;
-      } else {
-        process.env.HOME = previousHome;
-      }
+      restoreIsolatedHome(previousHomeEnv);
     }
   });
 

@@ -3,8 +3,13 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { readTrustState } from "../../../../src/adapters/claude/discovery/trust.js";
+import {
+  captureHomeEnv,
+  restoreIsolatedHome,
+  setIsolatedHome,
+} from "../../../helpers/isolated-home.js";
 
-const originalHome = process.env.HOME;
+const originalHomeEnv = captureHomeEnv();
 const tempDirs: string[] = [];
 
 async function makeHome(claudeJson?: string): Promise<string> {
@@ -13,12 +18,12 @@ async function makeHome(claudeJson?: string): Promise<string> {
   if (claudeJson !== undefined) {
     await fs.writeFile(path.join(dir, ".claude.json"), claudeJson, "utf8");
   }
-  process.env.HOME = dir;
+  setIsolatedHome(dir);
   return dir;
 }
 
 afterEach(async () => {
-  process.env.HOME = originalHome;
+  restoreIsolatedHome(originalHomeEnv);
   for (const dir of tempDirs.splice(0)) {
     await fs.rm(dir, { recursive: true, force: true });
   }
