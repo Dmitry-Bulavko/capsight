@@ -336,11 +336,20 @@ describe("VERSION_MATRIX", () => {
   it("marks an entry whose fixture is not written yet as pending, not verified", () => {
     for (const entry of VERSION_MATRIX) {
       expect(
-        Boolean(entry.fixture) !== Boolean(entry.pendingFixture),
-        `${entry.id} must declare exactly one of fixture / pendingFixture`,
-      ).toBe(true);
+        Boolean(entry.fixture) && Boolean(entry.pendingFixture),
+        `${entry.id} must not declare both fixture and pendingFixture`,
+      ).toBe(false);
 
       if (!entry.pendingFixture) {
+        // An entry no fixture can ever promote declares neither, and says so:
+        // an owed fixture and a fixture that would prove nothing are different
+        // states, and only `notes` can tell them apart (H1-28).
+        if (!entry.fixture) {
+          expect(
+            entry.notes,
+            `${entry.id} claims no fixture and must record why in notes`,
+          ).toBeTruthy();
+        }
         continue;
       }
       // The corpus is fixed at 20 directories (§11.1): a pending entry points

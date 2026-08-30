@@ -6,6 +6,7 @@
       "Bash(npm run test:*)",
       "Read(/src/**)",
       "WebFetch(domain:example.com)",
+      "WebFetch(example.net)",
       "mcp__github(issues)"
     ],
     "deny": [

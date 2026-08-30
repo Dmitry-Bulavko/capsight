@@ -106,6 +106,11 @@
             {
               "action": "allow",
               "index": 5,
+              "raw": "WebFetch(example.net)"
+            },
+            {
+              "action": "allow",
+              "index": 6,
               "raw": "mcp__github(issues)"
             },
             {
@@ -373,10 +378,32 @@
                 "fieldPath": "permissions.allow[4]"
               },
               "matrixRef": "settings.webFetchRules"
-            },
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:WebFetch(example.net)",
+          "kind": "permission",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
             {
-              "type": "version",
-              "message": "Matrix entry \"settings.webFetchRules\" rests on non-[doc] fact(s) S8 but has no fixture-level evidence; enforcement is unknown (SPEC §8.2).",
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[5]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.allow entry \"WebFetch(example.net)\" lacks the \"domain:\" prefix WebFetch rules require, so it grants nothing (S8).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.allow[5]"
+              },
               "matrixRef": "settings.webFetchRules"
             }
           ]
@@ -418,7 +445,7 @@
               "platform": "claude",
               "scope": "project",
               "path": ".claude/settings.json",
-              "fieldPath": "permissions.allow[5]"
+              "fieldPath": "permissions.allow[6]"
             }
           ],
           "reasons": [
@@ -429,7 +456,7 @@
                 "platform": "claude",
                 "scope": "project",
                 "path": ".claude/settings.json",
-                "fieldPath": "permissions.allow[5]"
+                "fieldPath": "permissions.allow[6]"
               },
               "matrixRef": "settings.mcpRuleSyntax"
             }
@@ -517,11 +544,6 @@
                 "path": ".claude/settings.json",
                 "fieldPath": "permissions.deny[3]"
               },
-              "matrixRef": "settings.webFetchRules"
-            },
-            {
-              "type": "version",
-              "message": "Matrix entry \"settings.webFetchRules\" rests on non-[doc] fact(s) S8 but has no fixture-level evidence; enforcement is unknown (SPEC §8.2).",
               "matrixRef": "settings.webFetchRules"
             }
           ]
@@ -1375,7 +1397,7 @@
           "enforcement": "enforced"
         }
       ],
-      "unknownRate": 0.09302325581395349
+      "unknownRate": 0.09090909090909091
     },
     {
       "agentName": "permissive",
@@ -1597,10 +1619,32 @@
                 "fieldPath": "permissions.allow[4]"
               },
               "matrixRef": "settings.webFetchRules"
-            },
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:WebFetch(example.net)",
+          "kind": "permission",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
             {
-              "type": "version",
-              "message": "Matrix entry \"settings.webFetchRules\" rests on non-[doc] fact(s) S8 but has no fixture-level evidence; enforcement is unknown (SPEC §8.2).",
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[5]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.allow entry \"WebFetch(example.net)\" lacks the \"domain:\" prefix WebFetch rules require, so it grants nothing (S8).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.allow[5]"
+              },
               "matrixRef": "settings.webFetchRules"
             }
           ]
@@ -1642,7 +1686,7 @@
               "platform": "claude",
               "scope": "project",
               "path": ".claude/settings.json",
-              "fieldPath": "permissions.allow[5]"
+              "fieldPath": "permissions.allow[6]"
             }
           ],
           "reasons": [
@@ -1653,7 +1697,7 @@
                 "platform": "claude",
                 "scope": "project",
                 "path": ".claude/settings.json",
-                "fieldPath": "permissions.allow[5]"
+                "fieldPath": "permissions.allow[6]"
               },
               "matrixRef": "settings.mcpRuleSyntax"
             }
@@ -1741,11 +1785,6 @@
                 "path": ".claude/settings.json",
                 "fieldPath": "permissions.deny[3]"
               },
-              "matrixRef": "settings.webFetchRules"
-            },
-            {
-              "type": "version",
-              "message": "Matrix entry \"settings.webFetchRules\" rests on non-[doc] fact(s) S8 but has no fixture-level evidence; enforcement is unknown (SPEC §8.2).",
               "matrixRef": "settings.webFetchRules"
             }
           ]
@@ -2571,7 +2610,7 @@
           "enforcement": "enforced"
         }
       ],
-      "unknownRate": 0.09302325581395349
+      "unknownRate": 0.09090909090909091
     }
   ]
 }
