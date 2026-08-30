@@ -50,6 +50,12 @@ If question 2 can be answered for a rule, the capability may carry a shaped stat
 - [ ] No writes to scanned project's `.claude/**`
 - [ ] TASKS.md updated by orchestrator (not implementer)
 
+## Inherited-confidence warning (from the D1-02 review)
+
+`settings.webFetchRules` now carries `confidence: "fixture"`, earned by one edge only: an allow rule *without* the `domain:` prefix grants nothing. But the resolver routes three different shapes through that same matrix id (`settings-permissions.ts:144-145, 161`) — the prefix-less allow, the prefix-less deny, and the correctly prefixed `WebFetch(domain:...)`. The latter two resolve `unknown` today, so the shared id is harmless.
+
+If this task makes a prefixed WebFetch rule confident, it would **inherit fixture-level confidence through an entry that never pinned it**. Split the entry before making any such rule confident, or the promotion is unearned.
+
 ## Notes
 
 This is the task most likely to be "solved" by writing plausible glob matching that nothing founds. Resist it: an invented semantics that agrees with intuition is the exact failure mode §14 is written against.
