@@ -1,0 +1,5 @@
+# Normalize text files to LF so fixture goldens (sizeBytes, ordering) are
+# identical on Linux CI and every developer checkout (D1-09 class defect).
+* text=auto eol=lf
+
+tests/fixtures/** text eol=lf

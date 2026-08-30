@@ -22,13 +22,13 @@
         "type": "AGENTS.md",
         "path": "AGENTS.md",
         "scope": "nested-project",
-        "sizeBytes": 75
+        "sizeBytes": 74
       },
       {
         "type": "AGENTS.md",
         "path": "sub/AGENTS.md",
         "scope": "project",
-        "sizeBytes": 42
+        "sizeBytes": 41
       }
     ],
     "mcpServers": [],

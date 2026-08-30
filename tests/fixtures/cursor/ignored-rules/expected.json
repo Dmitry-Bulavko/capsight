@@ -25,7 +25,7 @@
         "type": "rule",
         "path": ".cursor/rules/valid.mdc",
         "scope": "project",
-        "sizeBytes": 98,
+        "sizeBytes": 92,
         "description": "Valid project rule",
         "alwaysApply": true
       }
