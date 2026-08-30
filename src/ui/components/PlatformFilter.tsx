@@ -45,6 +45,7 @@ interface PlatformFilterProps {
   value: PlatformFilterValue;
   onChange: (value: PlatformFilterValue) => void;
   dimmedCount?: number;
+  layout?: "stacked" | "inline";
 }
 
 export function PlatformFilter({
@@ -52,12 +53,19 @@ export function PlatformFilter({
   value,
   onChange,
   dimmedCount = 0,
+  layout = "stacked",
 }: PlatformFilterProps) {
   const options = buildPlatformFilterOptions(detection);
   const readingLabel = platformFilterLabel(value);
+  const className = [
+    "platform-filter",
+    layout === "inline" ? "platform-filter--inline" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <div className="platform-filter" data-testid="platform-filter">
+    <div className={className} data-testid="platform-filter">
       <CapsightSelect
         value={value}
         options={options}
@@ -65,15 +73,20 @@ export function PlatformFilter({
         ariaLabel="Read inventory against platform"
         className="capsight-select--platform-filter"
       />
-      {value !== PLATFORM_FILTER_ALL && (
+      {layout === "stacked" && value !== PLATFORM_FILTER_ALL && (
         <p className="platform-filter-summary" data-testid="platform-filter-summary">
           Reading against <strong>{readingLabel}</strong>
           {dimmedCount > 0 && (
-            <p className="platform-filter-dimmed-count">
-              {`${dimmedCount} dimmed (not consumed)`}
-            </p>
+            <span className="platform-filter-dimmed-count">
+              {` · ${dimmedCount} dimmed (not consumed)`}
+            </span>
           )}
         </p>
+      )}
+      {layout === "inline" && value !== PLATFORM_FILTER_ALL && dimmedCount > 0 && (
+        <span className="platform-filter-dimmed-count" data-testid="platform-filter-summary">
+          {`${dimmedCount} dimmed`}
+        </span>
       )}
     </div>
   );

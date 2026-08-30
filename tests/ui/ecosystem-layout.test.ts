@@ -115,7 +115,7 @@ describe("layoutEcosystemGraph", () => {
     expect(localNode).toBeDefined();
     expect(projectNode).toBeDefined();
     expect(localNode!.position.x).toBeLessThan(projectNode!.position.x);
-    expect(projectNode!.position.x - localNode!.position.x).toBeLessThan(180);
+    expect(projectNode!.position.x - localNode!.position.x).toBeLessThanOrEqual(180);
     expect(edges).toHaveLength(1);
     expect(edges[0]).toMatchObject({
       source: localId,
@@ -162,6 +162,49 @@ describe("layoutEcosystemGraph", () => {
 
     const { edges } = layoutEcosystemGraph({ resources, overlaps: [] });
     expect(edges).toHaveLength(0);
+  });
+
+  it("lays kind blocks left to right on a single row", () => {
+    const { nodes } = layoutEcosystemGraph({
+      resources: emptyResources(),
+      overlaps: [],
+    });
+
+    const blocks = ECOSYSTEM_BLOCK_ORDER.map((kind) =>
+      nodes.find((node) => node.id === `block:${kind}`)!,
+    );
+
+    expect(blocks.every((block) => block.position.y === 0)).toBe(true);
+    for (let index = 1; index < blocks.length; index += 1) {
+      const previous = blocks[index - 1]!;
+      const current = blocks[index]!;
+      expect(current.position.x).toBeGreaterThan(previous.position.x);
+      expect(current.position.x).toBe((previous.style?.width as number) + previous.position.x + 56);
+    }
+  });
+
+  it("spaces resource rows by at least the node height plus grid gap", () => {
+    const resources = emptyResources();
+    resources.skill = Array.from({ length: 5 }, (_, index) =>
+      makeResource({
+        id: `claude:skill:skill-${index}`,
+        kind: "skill",
+        name: `skill-${index}`,
+        resourceClass: RESOURCE_CLASS.SKILL_DIRECTORY,
+      }),
+    );
+
+    const { nodes } = layoutEcosystemGraph({ resources, overlaps: [] });
+    const skillNodes = nodes
+      .filter((node) => node.type === "ecosystemResource" && node.parentId === "block:skill")
+      .sort((a, b) => a.position.y - b.position.y || a.position.x - b.position.x);
+
+    expect(skillNodes).toHaveLength(5);
+    expect(skillNodes[0]!.style).toMatchObject({ width: 172, height: 150 });
+
+    const firstRowY = skillNodes[0]!.position.y;
+    const secondRowY = skillNodes[3]!.position.y;
+    expect(secondRowY - firstRowY).toBe(164);
   });
 
   it("marks resource nodes as non-draggable", () => {

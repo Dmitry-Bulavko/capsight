@@ -76,7 +76,10 @@ describe("ResourceDetailPanel", () => {
     expect(html).toContain("skill-directory");
     expect(html).toContain("Collisions");
     expect(html).toContain("cursor:skill:fixture");
-    expect(html).toContain("Winner:");
+    expect(html).toContain("resource-detail-accordion");
+    expect(html).toContain("Metadata");
+    expect(html).toContain("resource-detail-markdown-scroll");
+    expect(html).toContain('aria-label="Close resource details"');
   });
 
   it("shows frontmatter as fields and not in the rendered body header area", () => {

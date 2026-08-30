@@ -33,15 +33,14 @@ export const ECOSYSTEM_BLOCK_COLORS: Record<EcosystemBlockKind, string> = {
   instruction: "#78d9ec",
 };
 
-const RESOURCE_NODE_WIDTH = 156;
-const RESOURCE_NODE_HEIGHT = 88;
+const RESOURCE_NODE_WIDTH = 172;
+const RESOURCE_NODE_HEIGHT = 150;
 const PAIR_GAP = 8;
 const GRID_GAP_X = 14;
-const GRID_GAP_Y = 12;
+const GRID_GAP_Y = 14;
 const BLOCK_PADDING = 20;
 const BLOCK_HEADER = 36;
 const BLOCK_GAP_X = 56;
-const BLOCK_GAP_Y = 48;
 
 export interface EcosystemLayoutInput {
   resources: Record<InventoryResourceKind, InventoryResourceWithCompat[]>;
@@ -194,6 +193,7 @@ function resourceNodeStyle(blockKind: EcosystemBlockKind, dimmed: boolean): Node
     background: "#1a1d24",
     color: "#e8eaed",
     width: RESOURCE_NODE_WIDTH,
+    height: RESOURCE_NODE_HEIGHT,
     fontSize: 12,
     opacity: dimmed ? 0.38 : 1,
   };
@@ -290,22 +290,16 @@ export function layoutEcosystemGraph(input: EcosystemLayoutInput): EcosystemLayo
     };
   });
 
-  const topRowHeight = Math.max(blockMetrics[0]!.height, blockMetrics[1]!.height);
-  const leftColWidth = Math.max(blockMetrics[0]!.width, blockMetrics[2]!.width);
-
-  const blockPositions: Record<EcosystemBlockKind, { x: number; y: number }> = {
-    agent: { x: 0, y: 0 },
-    skill: { x: leftColWidth + BLOCK_GAP_X, y: 0 },
-    mcp_server: { x: 0, y: topRowHeight + BLOCK_GAP_Y },
-    instruction: {
-      x: leftColWidth + BLOCK_GAP_X,
-      y: topRowHeight + BLOCK_GAP_Y,
-    },
-  };
+  const blockPositions = new Map<EcosystemBlockKind, { x: number; y: number }>();
+  let blockX = 0;
+  for (const block of blockMetrics) {
+    blockPositions.set(block.blockKind, { x: blockX, y: 0 });
+    blockX += block.width + BLOCK_GAP_X;
+  }
 
   for (const block of blockMetrics) {
     const blockId = `block:${block.blockKind}`;
-    const position = blockPositions[block.blockKind];
+    const position = blockPositions.get(block.blockKind)!;
 
     nodes.push({
       id: blockId,

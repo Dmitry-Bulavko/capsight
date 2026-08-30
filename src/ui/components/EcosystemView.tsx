@@ -17,18 +17,22 @@ import {
   type ResourceContentResult,
 } from "../api.js";
 import {
-  ECOSYSTEM_BLOCK_COLORS,
   ECOSYSTEM_FILTER_ALL,
   layoutEcosystemGraph,
   type EcosystemBlockNodeData,
   type EcosystemResourceNodeData,
 } from "../ecosystem-layout.js";
 import {
+  ecosystemBlockKindColor,
+  ecosystemKindGlow,
+} from "../ecosystem-block-kinds.js";
+import {
   healthFilterResourceIds as resolveHealthFilterIds,
   type HealthFilterId,
 } from "../../application/ecosystem-health-filter.js";
-import { CompatBadges } from "./CompatBadges.js";
+import { EcosystemBlockKindIcon } from "./EcosystemBlockKindIcon.js";
 import { EcosystemHealth } from "./EcosystemHealth.js";
+import { EcosystemResourceCard } from "./EcosystemResourceCard.js";
 import {
   PLATFORM_FILTER_ALL,
   PlatformFilter,
@@ -37,22 +41,22 @@ import {
 } from "./PlatformFilter.js";
 import { ResourceDetailPanel } from "./ResourceDetailPanel.js";
 
-function ScopeBadge({ scope }: { scope: string }) {
-  const className =
-    scope === "local"
-      ? "ecosystem-scope-badge ecosystem-scope-badge-local"
-      : "ecosystem-scope-badge";
-  return <span className={className}>{scope}</span>;
-}
-
 function EcosystemBlockNode({ data }: { data: EcosystemBlockNodeData }) {
+  const kindColor = ecosystemBlockKindColor(data.blockKind);
+
   return (
-    <div className="ecosystem-block">
-      <header
-        className="ecosystem-block-header"
-        style={{ borderColor: ECOSYSTEM_BLOCK_COLORS[data.blockKind] }}
-      >
-        <span className="ecosystem-block-title">{data.label}</span>
+    <div
+      className="ecosystem-block"
+      style={{
+        borderColor: kindColor,
+        boxShadow: ecosystemKindGlow(kindColor),
+      }}
+    >
+      <header className="ecosystem-block-header">
+        <div className="ecosystem-block-heading">
+          <EcosystemBlockKindIcon kind={data.blockKind} />
+          <span className="ecosystem-block-title">{data.label}</span>
+        </div>
         {!data.empty && <span className="ecosystem-block-count">{data.count}</span>}
       </header>
       {data.empty && <p className="ecosystem-block-empty">No resources discovered</p>}
@@ -61,18 +65,7 @@ function EcosystemBlockNode({ data }: { data: EcosystemBlockNodeData }) {
 }
 
 function EcosystemResourceNode({ data }: { data: EcosystemResourceNodeData }) {
-  return (
-    <div
-      className={`ecosystem-resource-node${data.dimmed ? " ecosystem-resource-node-dimmed" : ""}`}
-    >
-      <div className="ecosystem-resource-meta">
-        <span className="ecosystem-platform-badge">{data.platform}</span>
-        <ScopeBadge scope={data.scope} />
-      </div>
-      <span className="ecosystem-resource-label">{data.label}</span>
-      <CompatBadges compat={data.compat} />
-    </div>
-  );
+  return <EcosystemResourceCard {...data} />;
 }
 
 function ecosystemNodeTypes() {
@@ -279,33 +272,43 @@ export function EcosystemView({ refreshKey }: EcosystemViewProps) {
 
   return (
     <section className="panel ecosystem-panel">
-      <h2>Ecosystem</h2>
-      <p className="ecosystem-note">{inventoryCaption}</p>
+      <header className="ecosystem-panel-header">
+        <div className="ecosystem-panel-title">
+          <h2>Ecosystem</h2>
+          <span className="ecosystem-panel-sep" aria-hidden="true">
+            ·
+          </span>
+          <p className="ecosystem-note">{inventoryCaption}</p>
+        </div>
 
-      {payload && (
-        <PlatformFilter
-          detection={payload.detection}
-          value={filterPlatform}
-          onChange={setFilterPlatform}
-          dimmedCount={dimmedCount}
-        />
-      )}
-
-      {overlapCount > 0 && (
-        <ul className="graph-legend" aria-label="Overlap edges">
-          <li>
-            <span className="graph-legend-swatch" style={{ backgroundColor: "#81c995" }} />
-            overlaps (resolved)
-          </li>
-          <li>
-            <span
-              className="graph-legend-swatch ecosystem-legend-unresolved"
-              style={{ backgroundColor: "#fdd663" }}
+        <div className="ecosystem-panel-actions">
+          {payload && (
+            <PlatformFilter
+              detection={payload.detection}
+              value={filterPlatform}
+              onChange={setFilterPlatform}
+              dimmedCount={dimmedCount}
+              layout="inline"
             />
-            overlaps (unresolved)
-          </li>
-        </ul>
-      )}
+          )}
+
+          {overlapCount > 0 && (
+            <ul className="graph-legend graph-legend--inline" aria-label="Overlap edges">
+              <li>
+                <span className="graph-legend-swatch" style={{ backgroundColor: "#81c995" }} />
+                overlaps (resolved)
+              </li>
+              <li>
+                <span
+                  className="graph-legend-swatch ecosystem-legend-unresolved"
+                  style={{ backgroundColor: "#fdd663" }}
+                />
+                overlaps (unresolved)
+              </li>
+            </ul>
+          )}
+        </div>
+      </header>
 
       {loading && <p className="empty-state">Loading ecosystem inventory…</p>}
       {!loading && error && <p className="error-message">{error}</p>}

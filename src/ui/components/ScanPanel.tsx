@@ -87,6 +87,7 @@ function RescanIcon() {
 interface ScanPanelProps {
   projectPath: string;
   platform: string;
+  platformVersion?: string;
   onPlatformChange: (platform: string) => void;
   onBrowse: () => void;
   onRescan: () => void;
@@ -113,6 +114,7 @@ function projectButtonLabel(
 export function ScanPanel({
   projectPath,
   platform,
+  platformVersion,
   onPlatformChange,
   onBrowse,
   onRescan,
@@ -137,6 +139,8 @@ export function ScanPanel({
           options={PLATFORM_OPTIONS.map((option) => ({
             value: option.id,
             label: option.label,
+            sublabel:
+              option.id === platform && platformVersion ? platformVersion : undefined,
           }))}
           onChange={onPlatformChange}
           disabled={busy}

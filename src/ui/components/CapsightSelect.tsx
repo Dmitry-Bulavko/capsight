@@ -15,6 +15,7 @@ export interface CapsightSelectOptionBadge {
 export interface CapsightSelectOption {
   value: string;
   label: string;
+  sublabel?: string;
   badge?: CapsightSelectOptionBadge;
   ariaLabel?: string;
 }
@@ -32,14 +33,27 @@ export interface CapsightSelectProps {
 
 function optionAriaLabel(option: CapsightSelectOption): string {
   if (option.ariaLabel) return option.ariaLabel;
-  if (option.badge) return `${option.label} ${option.badge.text}`;
-  return option.label;
+  const parts = [option.label];
+  if (option.sublabel) parts.push(option.sublabel);
+  if (option.badge) parts.push(option.badge.text);
+  return parts.join(" ");
 }
 
-function SelectOptionRow({ option }: { option: CapsightSelectOption }) {
+function SelectOptionRow({
+  option,
+  showSublabel = true,
+}: {
+  option: CapsightSelectOption;
+  showSublabel?: boolean;
+}) {
   return (
     <span className="capsight-select-option-row">
-      <span className="capsight-select-option-label">{option.label}</span>
+      <span className="capsight-select-option-copy">
+        <span className="capsight-select-option-label">{option.label}</span>
+        {showSublabel && option.sublabel && (
+          <span className="capsight-select-option-sublabel">{option.sublabel}</span>
+        )}
+      </span>
       {option.badge && (
         <span className={`status-badge status-${option.badge.tone}`}>{option.badge.text}</span>
       )}
@@ -233,7 +247,7 @@ export function CapsightSelect({
                 onMouseEnter={() => setHighlightedIndex(index)}
                 onKeyDown={(event) => handleOptionKeyDown(event, index)}
               >
-                <SelectOptionRow option={option} />
+                <SelectOptionRow option={option} showSublabel={false} />
               </button>
             );
           })}
