@@ -179,6 +179,7 @@ export function ResourceDetailPanel({
       }
       aria-labelledby="resource-detail-title"
     >
+      <div className="resource-detail-panel-body">
       {detailLoading && <p className="resource-detail-status empty-state">Loading resource details…</p>}
       {!detailLoading && detailError && (
         <p className="resource-detail-status error-message">{detailError}</p>
@@ -429,6 +430,7 @@ export function ResourceDetailPanel({
           </div>
         </>
       )}
+      </div>
     </section>
   );
 }

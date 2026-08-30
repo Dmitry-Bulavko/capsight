@@ -732,6 +732,29 @@ body {
 
 .ecosystem-container .react-flow {
   background: radial-gradient(ellipse 120% 80% at 50% 0%, #141820 0%, #0b0d11 55%);
+  --xy-controls-button-background-color-default: #252830;
+  --xy-controls-button-background-color-hover-default: #30343c;
+  --xy-controls-button-color-default: #bdc1c6;
+  --xy-controls-button-color-hover-default: #e8eaed;
+  --xy-controls-button-border-color-default: #3c4043;
+  --xy-controls-box-shadow-default: none;
+}
+
+.ecosystem-container .react-flow__controls,
+.graph-container .react-flow__controls {
+  border: 1px solid #3c4043;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.graph-container .react-flow {
+  --xy-controls-button-background-color-default: #252830;
+  --xy-controls-button-background-color-hover-default: #30343c;
+  --xy-controls-button-color-default: #bdc1c6;
+  --xy-controls-button-color-hover-default: #e8eaed;
+  --xy-controls-button-border-color-default: #3c4043;
+  --xy-controls-box-shadow-default: none;
 }
 
 .ecosystem-container .react-flow__node {
@@ -890,12 +913,18 @@ body {
   margin-top: 0;
   min-width: 0;
   max-height: min(52rem, calc(100vh - 8rem));
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
   background: #1a1d24;
   border: 1px solid #3c4043;
   border-radius: 12px;
   color: #e8eaed;
+}
+
+.resource-detail-panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .resource-detail-status {
