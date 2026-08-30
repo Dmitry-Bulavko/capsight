@@ -35,21 +35,21 @@ Expose the merged inventory over the API and serve markdown resource bodies to t
 
 ## Acceptance
 
-- [ ] `GET /api/ecosystem` returns the inventory, detection record and per-resource compat verdicts (EC-01) in one payload
-- [ ] `GET /api/ecosystem/resource/:id` returns one resource's metadata, related files/folders and `overlaps` relations
-- [ ] `/content` serves only markdown-class resources; an `mcp_server` or `settings` id returns `415` with an explicit reason
-- [ ] An id not present in the current inventory returns `404` and performs no filesystem read
-- [ ] A symlink resolving outside every scanned root is refused
-- [ ] Files above the cap return truncated content with the flag set, never an error
-- [ ] Content route is covered by the Origin guard alongside the mutating routes
-- [ ] Test asserts no MCP `env`/`headers` value and no settings value appears in any ecosystem response
+- [x] `GET /api/ecosystem` returns the inventory, detection record and per-resource compat verdicts (EC-01) in one payload
+- [x] `GET /api/ecosystem/resource/:id` returns one resource's metadata, related files/folders and `overlaps` relations
+- [x] `/content` serves only markdown-class resources; an `mcp_server` or `settings` id returns `415` with an explicit reason (settings not inventory resources — MCP 415 tested)
+- [x] An id not present in the current inventory returns `404` and performs no filesystem read
+- [x] A symlink resolving outside every scanned root is refused
+- [x] Files above the cap return truncated content with the flag set, never an error
+- [x] Content route is covered by the Origin guard alongside the mutating routes
+- [x] Test asserts no MCP `env`/`headers` value and no settings value appears in any ecosystem response
 
 ## Done checklist
 
-- [ ] `npm run test` passes
-- [ ] `npm run typecheck` passes
-- [ ] No writes to scanned project's `.claude/**`
-- [ ] TASKS.md updated by orchestrator (not implementer)
+- [x] `npm run test` passes
+- [x] `npm run typecheck` passes
+- [x] No writes to scanned project's `.claude/**`
+- [x] TASKS.md updated by orchestrator (not implementer)
 
 ## Notes
 

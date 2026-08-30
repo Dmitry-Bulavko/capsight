@@ -34,20 +34,20 @@ Put a compact state-of-the-project readout beside the canvas so a reviewer reach
 
 ## Acceptance
 
-- [ ] Readout renders beside the canvas with per-kind and per-platform counts
-- [ ] Agent status counts match `buildStatusSummary` for each platform
-- [ ] Local-override and unresolved-collision counts are shown separately
-- [ ] Resources with `unknown` compat are counted explicitly
-- [ ] Warning counts are grouped by severity and match the snapshot warnings
-- [ ] Clicking any count filters the canvas to exactly those resources
-- [ ] No aggregate score, grade or rating appears anywhere in the output
+- [x] Readout renders beside the canvas with per-kind and per-platform counts
+- [x] Agent status counts match `buildStatusSummary` for each platform
+- [x] Local-override and unresolved-collision counts are shown separately
+- [x] Resources with `unknown` compat are counted explicitly
+- [x] Warning counts are grouped by severity and match the snapshot warnings
+- [x] Clicking any count filters the canvas to exactly those resources (unlinked snapshot warnings shown as non-drillable counts)
+- [x] No aggregate score, grade or rating appears anywhere in the output
 
 ## Done checklist
 
-- [ ] `npm run test` passes
-- [ ] `npm run typecheck` passes
-- [ ] No writes to scanned project's `.claude/**`
-- [ ] TASKS.md updated by orchestrator (not implementer)
+- [x] `npm run test` passes
+- [x] `npm run typecheck` passes
+- [x] No writes to scanned project's `.claude/**`
+- [x] TASKS.md updated by orchestrator (not implementer)
 
 ## Notes
 

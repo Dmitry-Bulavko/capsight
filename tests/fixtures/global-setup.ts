@@ -6,7 +6,12 @@ import {
   releaseFixtureRepoRoots,
   type FixtureRepoRootLease,
 } from "./fixture-runtime.js";
-import { PLATFORM_IDS, platformFixturesRoot } from "./coverage-report.js";
+import {
+  ECOSYSTEM_FIXTURE_NAMES,
+  PLATFORM_IDS,
+  ecosystemFixturesRoot,
+  platformFixturesRoot,
+} from "./coverage-report.js";
 
 /**
  * Give every fixture project a repository root, for the whole test run.
@@ -47,6 +52,19 @@ export default function setup(): () => void {
     }
     leases.push(acquireFixtureRepoRoots(projectRoots, runId));
   }
+
+  const ecosystemRoot = ecosystemFixturesRoot();
+  const ecosystemProjectRoots = fixtureProjectRoots(ecosystemRoot);
+  if (ecosystemProjectRoots.length !== ECOSYSTEM_FIXTURE_NAMES.length) {
+    throw new Error(
+      `Ecosystem fixture corpus at ${ecosystemRoot} must contain exactly ` +
+        `${ECOSYSTEM_FIXTURE_NAMES.length} <fixture>/project director` +
+        `${ECOSYSTEM_FIXTURE_NAMES.length === 1 ? "y" : "ies"}; found ` +
+        `${ecosystemProjectRoots.length}. Without repo-root markers every ` +
+        `ecosystem fixture scan would climb into the Capsight checkout.`,
+    );
+  }
+  leases.push(acquireFixtureRepoRoots(ecosystemProjectRoots, runId));
   return () => {
     for (const lease of leases) {
       releaseFixtureRepoRoots(lease);

@@ -16,6 +16,10 @@ vi.mock("../../src/application/scan.js", () => ({
   scan: vi.fn(),
 }));
 
+vi.mock("../../src/application/detect-platforms.js", () => ({
+  detectPlatforms: vi.fn(),
+}));
+
 const mockPlatform = vi.hoisted(() =>
   vi.fn((): NodeJS.Platform => process.platform as NodeJS.Platform),
 );
@@ -30,10 +34,12 @@ vi.mock("node:child_process", () => ({
 
 import { spawn } from "node:child_process";
 import { scan } from "../../src/application/scan.js";
+import { detectPlatforms } from "../../src/application/detect-platforms.js";
 
 const mockSpawn = vi.mocked(spawn);
 
 const mockScan = vi.mocked(scan);
+const mockDetectPlatforms = vi.mocked(detectPlatforms);
 
 function mockFolderDialog(path: string): void {
   mockSpawn.mockImplementation(() => {
@@ -166,6 +172,11 @@ describe("project API routes", () => {
   beforeEach(() => {
     clearLastScan();
     mockScan.mockReset();
+    mockDetectPlatforms.mockResolvedValue([
+      { platform: "claude", status: "detected", evidence: [] },
+      { platform: "cursor", status: "not-detected", evidence: [] },
+      { platform: "codex", status: "not-detected", evidence: [] },
+    ]);
     mockSpawn.mockReset();
     mockPlatform.mockImplementation(() => process.platform as NodeJS.Platform);
     resetBrowseInFlightForTests();
@@ -327,7 +338,7 @@ describe("project API routes", () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(result);
-      expect(mockScan).toHaveBeenCalledWith({ projectPath: validProjectPath });
+      expect(mockScan).toHaveBeenCalledWith({ projectPath: validProjectPath, platform: "claude" });
 
       const projectResponse = await request(app).get("/api/project");
       expect(projectResponse.status).toBe(200);
@@ -341,7 +352,7 @@ describe("project API routes", () => {
       const response = await request(app).post("/api/project/scan").send({});
 
       expect(response.status).toBe(200);
-      expect(mockScan).toHaveBeenCalledWith({ projectPath: getDefaultProjectPath() });
+      expect(mockScan).toHaveBeenCalledWith({ projectPath: getDefaultProjectPath(), platform: "claude" });
     });
 
     it("defaults project path when body contains blank projectPath", async () => {
@@ -351,7 +362,7 @@ describe("project API routes", () => {
       const response = await request(app).post("/api/project/scan").send({ projectPath: "   " });
 
       expect(response.status).toBe(200);
-      expect(mockScan).toHaveBeenCalledWith({ projectPath: getDefaultProjectPath() });
+      expect(mockScan).toHaveBeenCalledWith({ projectPath: getDefaultProjectPath(), platform: "claude" });
     });
 
     it("returns 400 when project path does not exist", async () => {

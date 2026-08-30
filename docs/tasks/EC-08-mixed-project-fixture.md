@@ -30,19 +30,19 @@ Add a fixture holding Claude, Cursor and Codex artifacts plus a local override i
 
 ## Acceptance
 
-- [ ] Fixture tree contains all artifact classes listed above
-- [ ] `expected.json` pins detection (Cursor and Codex both detected via `AGENTS.md`), the inventory, the overlap relation and every compat verdict including `unknown` ones
-- [ ] Golden runner passes and fails loudly on mismatch — no fail-open (H1-07)
-- [ ] Run is hermetic: passes with the developer's real home directories absent
-- [ ] Test asserts the MCP `env` value never appears in the inventory output
-- [ ] Correctness gate includes the ecosystem runner; corpus count updated in ROADMAP
+- [x] Fixture tree contains all artifact classes listed above
+- [x] `expected.json` pins detection (Cursor and Codex both detected via `AGENTS.md`), the inventory, the overlap relation and every compat verdict including `unknown` ones
+- [x] Golden runner passes and fails loudly on mismatch — no fail-open (H1-07)
+- [x] Run is hermetic: passes with the developer's real home directories absent
+- [x] Test asserts the MCP `env` value never appears in the inventory output
+- [x] Correctness gate includes the ecosystem runner; corpus count updated in ROADMAP
 
 ## Done checklist
 
-- [ ] `npm run test` passes
-- [ ] `npm run typecheck` passes
-- [ ] No writes to scanned project's `.claude/**`
-- [ ] TASKS.md updated by orchestrator (not implementer)
+- [x] `npm run test` passes
+- [x] `npm run typecheck` passes
+- [x] No writes to scanned project's `.claude/**`
+- [x] TASKS.md updated by orchestrator (not implementer)
 
 ## Notes
 

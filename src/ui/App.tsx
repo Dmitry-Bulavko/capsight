@@ -19,7 +19,6 @@ import {
   ContextSelector,
   DEFAULT_CONTEXT_PRESET,
 } from "./components/ContextSelector.js";
-import { ProjectSummary, type ResourceCounts } from "./components/ProjectSummary.js";
 import {
   loadStoredPlatform,
   loadStoredProjectPath,
@@ -27,7 +26,10 @@ import {
   saveStoredProjectPath,
   ScanPanel,
 } from "./components/ScanPanel.js";
+import type { ResourceCounts } from "./components/ProjectSummary.js";
 import { GraphView } from "./components/GraphView.js";
+import { EcosystemView } from "./components/EcosystemView.js";
+import { EcosystemSideRail } from "./components/EcosystemSideRail.js";
 import { WhyPanel } from "./components/WhyPanel.js";
 import { AgentEditor } from "./components/AgentEditor.js";
 import { EffectiveCapabilities } from "./components/EffectiveCapabilities.js";
@@ -88,7 +90,7 @@ export function App() {
     null,
   );
   const [editorPending, setEditorPending] = useState<EditorPendingState>(createEmptyEditorState);
-  const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
+  const [activeTab, setActiveTab] = useState<DashboardTab>("ecosystem");
 
   const loadDiscovery = useCallback(async () => {
     const project = await fetchProject();
@@ -380,7 +382,7 @@ export function App() {
               onAgentChange={setSelectedAgentId}
             />
           )}
-          {(needsScan || summary) && (
+          {(needsScan || summary) && activeTab !== "ecosystem" && (
             <ScanPanel
               projectPath={projectPath}
               platform={platform}
@@ -420,8 +422,26 @@ export function App() {
           />
 
           <main className="dashboard-content">
-            {activeTab === "overview" && resourceCounts && (
-              <ProjectSummary summary={summary} resourceCounts={resourceCounts} variant="stats" />
+            {activeTab === "ecosystem" && resourceCounts && (
+              <div className="ecosystem-tab">
+                <EcosystemView refreshKey={summary.scannedAt} />
+                <EcosystemSideRail
+                  summary={summary}
+                  resourceCounts={resourceCounts}
+                  projectPath={projectPath}
+                  platform={platform}
+                  onPlatformChange={handlePlatformChange}
+                  onBrowse={handleBrowse}
+                  onRescan={handleRescan}
+                  onFallbackScan={handleFallbackScan}
+                  browsing={browsing}
+                  scanning={scanning}
+                  browseUnavailable={browseUnavailable}
+                  fallbackPath={fallbackPath}
+                  onFallbackPathChange={setFallbackPath}
+                  error={error}
+                />
+              </div>
             )}
 
             {activeTab === "context" && (

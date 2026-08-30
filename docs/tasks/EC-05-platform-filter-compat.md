@@ -36,19 +36,19 @@ Let the viewer switch which agentic platform the canvas is read against, and mar
 
 ## Acceptance
 
-- [ ] Filter lists all three platforms plus **All**; not-detected platforms are selectable and marked as not detected
-- [ ] Each resource node shows one badge per platform in the three-valued scheme
-- [ ] Clicking a badge reveals fact ID, trust level and statement; a verdict with no matrix entry always renders `unknown`
-- [ ] Selecting a platform dims rather than removes non-consumed resources; counts state how many are dimmed
-- [ ] With a synthetic unknown platform version, every badge renders `unknown` and none renders `not-supported`
-- [ ] No badge copy asserts capability or breakage (§2.4 wording test)
+- [x] Filter lists all three platforms plus **All**; not-detected platforms are selectable and marked as not detected
+- [x] Each resource node shows one badge per platform in the three-valued scheme
+- [x] Clicking a badge reveals fact ID, trust level and statement; a verdict with no matrix entry always renders `unknown`
+- [x] Selecting a platform dims rather than removes non-consumed resources; counts state how many are dimmed
+- [x] With a synthetic unknown platform version, every badge renders `unknown` and none renders `not-supported`
+- [x] No badge copy asserts capability or breakage (§2.4 wording test)
 
 ## Done checklist
 
-- [ ] `npm run test` passes
-- [ ] `npm run typecheck` passes
-- [ ] No writes to scanned project's `.claude/**`
-- [ ] TASKS.md updated by orchestrator (not implementer)
+- [x] `npm run test` passes
+- [x] `npm run typecheck` passes
+- [x] No writes to scanned project's `.claude/**`
+- [x] TASKS.md updated by orchestrator (not implementer)
 
 ## Notes
 

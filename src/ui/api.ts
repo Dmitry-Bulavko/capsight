@@ -9,7 +9,12 @@ import type {
 } from "../core/model/index.js";
 import type { PlatformId } from "../adapters/platform.js";
 import type { ScanResult } from "../application/scan.js";
+import type { ResourceContentResult } from "../application/resource-content.js";
 import type { ScanStatusSummary } from "../application/scan-store.js";
+import type {
+  EcosystemApiPayload,
+  EcosystemResourceDetail,
+} from "../server/routes/ecosystem.js";
 
 export class ApiError extends Error {
   constructor(
@@ -131,3 +136,24 @@ export function resourceCountsFromScan(scan: ScanResult): {
     mcpServers: snapshot.mcpServers.length,
   };
 }
+
+export async function fetchEcosystem(): Promise<EcosystemApiPayload> {
+  return request<EcosystemApiPayload>("/api/ecosystem");
+}
+
+export async function fetchEcosystemResource(id: string): Promise<EcosystemResourceDetail> {
+  return request<EcosystemResourceDetail>(`/api/ecosystem/resource/${encodeURIComponent(id)}`);
+}
+
+export async function fetchEcosystemResourceContent(id: string): Promise<ResourceContentResult> {
+  return request<ResourceContentResult>(
+    `/api/ecosystem/resource/${encodeURIComponent(id)}/content`,
+  );
+}
+
+export type {
+  EcosystemApiPayload,
+  EcosystemResourceDetail,
+} from "../server/routes/ecosystem.js";
+export { isMarkdownContentKind } from "../application/resource-content.js";
+export type { ResourceContentResult } from "../application/resource-content.js";

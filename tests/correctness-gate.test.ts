@@ -21,6 +21,8 @@ import {
   buildCoverageReport,
   classifyFactCoverage,
   discoverFixtureNames,
+  ECOSYSTEM_FIXTURE_NAMES,
+  ecosystemFixturesRoot,
   findConfidentCapabilityMismatches,
   findUndeclaredFixtureDirectories,
   formatCoverageReport,
@@ -41,6 +43,9 @@ import {
   type FactRegistryConfidence,
   type PlatformId,
 } from "./fixtures/coverage-report.js";
+import {
+  runEcosystemGoldenFixture,
+} from "./fixtures/ecosystem-golden-runner.js";
 import {
   normalizeGoldenOutput,
   type NormalizedGoldenOutput,
@@ -114,14 +119,42 @@ const PLATFORM_COVERAGE = [
   }),
 ];
 
-const { mockDetectClaudeVersion } = vi.hoisted(() => ({
+const {
+  mockDetectClaudeVersion,
+  mockDetectCursorVersion,
+  mockDetectCodexVersion,
+} = vi.hoisted(() => ({
   mockDetectClaudeVersion: vi.fn<() => Promise<PlatformVersion>>(),
+  mockDetectCursorVersion: vi.fn<() => Promise<PlatformVersion>>(),
+  mockDetectCodexVersion: vi.fn<() => Promise<PlatformVersion>>(),
 }));
 
 vi.mock("../src/adapters/claude/version/index.js", () => ({
   detectClaudeVersion: mockDetectClaudeVersion,
   defaultCommandRunner: { run: vi.fn() },
 }));
+
+vi.mock("../src/adapters/cursor/version/index.js", async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import("../src/adapters/cursor/version/index.js")
+  >();
+  return {
+    ...actual,
+    detectCursorVersion: mockDetectCursorVersion,
+    defaultCommandRunner: { run: vi.fn() },
+  };
+});
+
+vi.mock("../src/adapters/codex/version/index.js", async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import("../src/adapters/codex/version/index.js")
+  >();
+  return {
+    ...actual,
+    detectCodexVersion: mockDetectCodexVersion,
+    defaultCommandRunner: { run: vi.fn() },
+  };
+});
 
 interface FixtureContextSpec {
   agentName: string;
@@ -511,11 +544,19 @@ describe("correctness gate rules", () => {
 
 describe("correctness gate", () => {
   const envSnapshot = { ...process.env };
+  const ECOSYSTEM_FIXTURES_ROOT = ecosystemFixturesRoot();
+  const ecosystemVersionMocks = {
+    mockDetectClaudeVersion,
+    mockDetectCursorVersion,
+    mockDetectCodexVersion,
+  };
 
   afterEach(() => {
     vi.unstubAllEnvs();
     restoreProcessEnv(envSnapshot);
     mockDetectClaudeVersion.mockReset();
+    mockDetectCursorVersion.mockReset();
+    mockDetectCodexVersion.mockReset();
   });
 
   for (const fixtureName of discoverFixtureNames(
@@ -531,6 +572,19 @@ describe("correctness gate", () => {
       );
 
       expect(mismatches, JSON.stringify(mismatches, null, 2)).toEqual([]);
+    });
+  }
+
+  for (const fixtureName of discoverFixtureNames(
+    ECOSYSTEM_FIXTURES_ROOT,
+    ECOSYSTEM_FIXTURE_NAMES,
+  )) {
+    it(`passes gate for ecosystem/${fixtureName} with every compat verdict pinned`, async () => {
+      const { actual, expected } = await runEcosystemGoldenFixture(
+        fixtureName,
+        ecosystemVersionMocks,
+      );
+      expect(actual, JSON.stringify(actual, null, 2)).toEqual(expected);
     });
   }
 
@@ -796,6 +850,14 @@ describe("correctness gate fixture corpus", () => {
 
     expect([...complete, ...pending].sort()).toEqual([...CLAUDE_FIXTURE_NAMES]);
     expect(complete.length).toBe(CLAUDE_FIXTURE_NAMES.length - pending.length);
+  });
+
+  it("runs the ecosystem gate over every complete ecosystem fixture", () => {
+    const complete = discoverFixtureNames(
+      ecosystemFixturesRoot(),
+      ECOSYSTEM_FIXTURE_NAMES,
+    );
+    expect(complete).toEqual([...ECOSYSTEM_FIXTURE_NAMES]);
   });
 
   it("prints the pending fixtures with a count", () => {

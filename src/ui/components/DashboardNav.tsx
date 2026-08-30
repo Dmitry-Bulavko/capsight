@@ -1,5 +1,5 @@
 export type DashboardTab =
-  | "overview"
+  | "ecosystem"
   | "context"
   | "agents"
   | "editor"
@@ -13,12 +13,12 @@ interface NavItem {
 }
 
 export const DASHBOARD_NAV: readonly NavItem[] = [
-  { id: "overview", label: "Overview", description: "Project scan & resources" },
+  { id: "ecosystem", label: "Ecosystem", description: "Declared inventory — all platforms" },
   { id: "context", label: "Context", description: "Agent & execution preset" },
   { id: "agents", label: "Agents", description: "Discovered definitions" },
   { id: "editor", label: "Editor", description: "In-memory tool toggles" },
   { id: "capabilities", label: "Capabilities", description: "Effective resolution" },
-  { id: "graph", label: "Graph", description: "Context-aware inspection" },
+  { id: "graph", label: "Graph", description: "Effective resolution — one context" },
 ] as const;
 
 interface DashboardNavProps {

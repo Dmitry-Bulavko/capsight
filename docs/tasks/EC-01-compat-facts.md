@@ -43,20 +43,20 @@ type CompatSupport = "supported" | "not-supported" | "unknown";
 
 ## Acceptance
 
-- [ ] `docs/COMPAT-FACTS.md` exists: one row per (resource class × platform) with statement, trust level and source link
-- [ ] Every class discovered by any of the three adapters appears in the corpus
-- [ ] `AGENTS.md` is recorded as consumed by Cursor and Codex, with both source references
-- [ ] `lookupCompat` returns `unknown` whenever no matrix entry is founded on the detected version — never `not-supported`
-- [ ] Every `supported` / `not-supported` verdict carries a `matrixRef` resolving to a real entry
-- [ ] Test asserts no verdict escapes the gate: for a synthetic unknown version, all verdicts collapse to `unknown`
-- [ ] `src/core/` gains no platform-specific path literal (invariant 1) — path patterns stay in adapters, classes stay neutral
+- [x] `docs/COMPAT-FACTS.md` exists: one row per (resource class × platform) with statement, trust level and source link
+- [x] Every class discovered by any of the three adapters appears in the corpus
+- [x] `AGENTS.md` is recorded as consumed by Cursor and Codex, with both source references
+- [x] `lookupCompat` returns `unknown` whenever no matrix entry is founded on the detected version — never `not-supported`
+- [x] Every `supported` / `not-supported` verdict carries a `matrixRef` resolving to a real entry
+- [x] Test asserts no verdict escapes the gate: for a synthetic unknown version, all verdicts collapse to `unknown`
+- [x] `src/core/` gains no platform-specific path literal (invariant 1) — path patterns stay in adapters, classes stay neutral
 
 ## Done checklist
 
-- [ ] `npm run test` passes
-- [ ] `npm run typecheck` passes
-- [ ] No writes to scanned project's `.claude/**`
-- [ ] TASKS.md updated by orchestrator (not implementer)
+- [x] `npm run test` passes
+- [x] `npm run typecheck` passes
+- [x] No writes to scanned project's `.claude/**`
+- [x] TASKS.md updated by orchestrator (not implementer)
 
 ## Notes
 

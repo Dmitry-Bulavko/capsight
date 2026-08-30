@@ -24,16 +24,19 @@ Within each milestone phase (M0, M1, …), task suffix **≥ 04** (e.g. M0-04, M
 
 ## Delegating to implementer
 
-- Cursor: launch Task subagent (`generalPurpose`) with the handoff path only.
+- Cursor: launch Task subagent (`subagent_type: implementer`) with the handoff path only.
 - Claude Code: invoke `@implementer` with the handoff path.
 - Pass **spec section IDs** from the handoff — do **not** paste or load all of [docs/SPEC.md](docs/SPEC.md) into the subagent prompt.
+- **EC phase:** all tasks EC-01…EC-08 go through implementer, including EC-01…03.
 
 ## After implementer returns
 
-1. Run `npm run test` and `npm run typecheck`.
-2. Verify acceptance criteria in the handoff.
-3. Mark task `done` in TASKS.md; update Current focus in ROADMAP.md.
-4. Check off Done checklist in the handoff file.
+1. Delegate to **reviewer** subagent (`subagent_type: reviewer`) in a **fresh** context — never the same thread as implementer.
+2. On reviewer `fail`, send findings back to implementer; do not mark done until reviewer passes.
+3. Run `npm run test` and `npm run typecheck`.
+4. Verify acceptance criteria in the handoff.
+5. Mark task `done` in TASKS.md; update Current focus in ROADMAP.md and [CONTINUATION.md](docs/CONTINUATION.md) when in an active phase.
+6. Check off Done checklist in the handoff file.
 
 ## Forbidden
 

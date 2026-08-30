@@ -73,6 +73,26 @@ describe("api mutation guard", () => {
     expect(res.body).toEqual({ error: "Content-Type must be application/json" });
   });
 
+  it("rejects ecosystem content GET from a foreign Origin", () => {
+    const { next, res } = runGuard({
+      method: "GET",
+      path: "/api/ecosystem/resource/claude:agent:backend/content",
+      headers: { origin: "https://evil.example" },
+    });
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(403);
+    expect(res.body).toEqual({ error: "Forbidden origin" });
+  });
+
+  it("allows ecosystem content GET without Origin", () => {
+    const { next } = runGuard({
+      method: "GET",
+      path: "/api/ecosystem/resource/claude:agent:backend/content",
+      headers: {},
+    });
+    expect(next).toHaveBeenCalledOnce();
+  });
+
   it("allows vite dev Origin on port 5173", () => {
     const { next } = runGuard({
       method: "POST",

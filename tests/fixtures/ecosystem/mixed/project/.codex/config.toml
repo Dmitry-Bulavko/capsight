@@ -1,0 +1,10 @@
+# Example Codex project config
+
+[mcp_servers.example]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-example"]
+env = { EXAMPLE_API_KEY = "capsight_ec08_mcp_env_secret_do_not_leak" }
+
+project_doc_fallback_filenames = [
+  "CLAUDE.md",
+]

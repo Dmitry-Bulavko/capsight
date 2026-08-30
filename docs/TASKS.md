@@ -202,20 +202,20 @@ D1-00 was found while verifying D1-01: fixture scans walk past the fixture proje
 
 ## EC — Ecosystem visualization
 
-Declared-layer visualization across all detected platforms (SPEC §7.4). Replaces the Overview tab. **Blocked on D1** — EC-01 states compatibility claims across three adapters, and two of them found nothing until D1-07/D1-08 land. Compat facts: [COMPAT-FACTS.md](./COMPAT-FACTS.md) (produced by EC-01).
+Declared-layer visualization across all detected platforms (SPEC §7.4). Replaces the Overview tab. Compat facts: [COMPAT-FACTS.md](./COMPAT-FACTS.md). **Phase complete** on `feat/ec-ecosystem`.
 
 Order: EC-01 → EC-02 → EC-03 → EC-04 → EC-05 → EC-06 → EC-07 → EC-08.
 
 | ID | Phase | Title | Status | Spec refs | Files | Acceptance |
 |----|-------|-------|--------|-----------|-------|------------|
-| EC-01 | EC | Cross-platform compatibility facts corpus | todo | §3, §6, §8.1–8.2, §2.4 | docs/COMPAT-FACTS.md, src/core/compat/ | Three-valued verdict; every non-unknown gated by a matrix entry |
-| EC-02 | EC | Multi-platform detection + merged inventory | todo | §7.1, §7.4, §5, §12.2 | src/application/detect-platforms.ts, ecosystem.ts, scan-store.ts | `AGENTS.md` alone detects Cursor + Codex; overlaps linked, not merged |
-| EC-03 | EC | Ecosystem API + guarded content endpoint | todo | §12.4, §7.1, inv 10 | src/server/routes/ecosystem.ts, src/application/resource-content.ts | Id-addressed reads only; markdown classes only; no secret in any response |
-| EC-04 | EC | Ecosystem canvas replaces Overview | todo | §7.4, §7.10, §2.3 | src/ui/components/EcosystemView.tsx, ecosystem-layout.ts, DashboardNav.tsx | Four blocks, `overlaps` edge only, read-only canvas, side rail keeps scan controls |
-| EC-05 | EC | Platform filter + compat badges | todo | §6, §8.2, §2.4, §14 | src/ui/components/PlatformFilter.tsx, CompatBadges.tsx | Three states; badge traceable to a fact; filter dims, never removes |
-| EC-06 | EC | Resource detail panel + rendered markdown | todo | §7.5, §12.4, inv 10 | src/ui/components/ResourceDetailPanel.tsx, MarkdownBody.tsx | Sanitized render; MCP/settings show redacted model, no body |
-| EC-07 | EC | Ecosystem health readout | todo | §11.4, §6, §2.4 | src/application/ecosystem-health.ts, src/ui/components/EcosystemHealth.tsx | Counts and conditions, no score; every count filters the canvas |
-| EC-08 | EC | Mixed-project golden fixture | todo | §11.1–11.3, inv 2 | tests/fixtures/ecosystem/mixed/, run-ecosystem-golden.test.ts | Hermetic; pins unknowns as well as confident verdicts |
+| EC-01 | EC | Cross-platform compatibility facts corpus | done | §3, §6, §8.1–8.2, §2.4 | docs/COMPAT-FACTS.md, src/core/compat/ | Three-valued verdict; every non-unknown gated by a matrix entry |
+| EC-02 | EC | Multi-platform detection + merged inventory | done | §7.1, §7.4, §5, §12.2 | src/application/detect-platforms.ts, ecosystem.ts, scan-store.ts | `AGENTS.md` alone detects Cursor + Codex; overlaps linked, not merged |
+| EC-03 | EC | Ecosystem API + guarded content endpoint | done | §12.4, §7.1, inv 10 | src/server/routes/ecosystem.ts, src/application/resource-content.ts | Id-addressed reads only; markdown classes only; no secret in any response |
+| EC-04 | EC | Ecosystem canvas replaces Overview | done | §7.4, §7.10, §2.3 | src/ui/components/EcosystemView.tsx, ecosystem-layout.ts, DashboardNav.tsx | Four blocks, `overlaps` edge only, read-only canvas, side rail keeps scan controls |
+| EC-05 | EC | Platform filter + compat badges | done | §6, §8.2, §2.4, §14 | src/ui/components/PlatformFilter.tsx, CompatBadges.tsx | Three states; badge traceable to a fact; filter dims, never removes |
+| EC-06 | EC | Resource detail panel + rendered markdown | done | §7.5, §12.4, inv 10 | src/ui/components/ResourceDetailPanel.tsx, MarkdownBody.tsx | Sanitized render; MCP/settings show redacted model, no body |
+| EC-07 | EC | Ecosystem health readout | done | §11.4, §6, §2.4 | src/application/ecosystem-health.ts, src/ui/components/EcosystemHealth.tsx | Counts and conditions, no score; every count filters the canvas |
+| EC-08 | EC | Mixed-project golden fixture | done | §11.1–11.3, inv 2 | tests/fixtures/ecosystem/mixed/, run-ecosystem-golden.test.ts | Hermetic; pins unknowns as well as confident verdicts |
 | D1-11 | D1 | Residual locale-sensitive sorts outside simulate.ts | done | §11.2 | managed-overlay.ts:281,335, plan.ts, generation/* | Sorts locale-independent; not golden-observable today |
 | D1-12 | D1 | `PowerShell(...)` rules cite `settings.bashPrefixRules`, whose fact S6 names only `Bash` | done | S6, §8.2 | settings-permissions.ts:153-156 | Attribution names a fact covering the tool, or says it does not |
 | D1-13 | D1 | `documentation-only` tier does not distinguish `[doc]` from `[ext]`/`[spike]` | done | §11.4, §8.1 | tests/fixtures/coverage-report.ts | Tier reflects the cited fact's own confidence, or is renamed |

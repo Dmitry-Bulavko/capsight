@@ -29,9 +29,15 @@ vi.mock("../../src/application/scan.js", () => ({
   scan: vi.fn(),
 }));
 
+vi.mock("../../src/application/detect-platforms.js", () => ({
+  detectPlatforms: vi.fn(),
+}));
+
 import { scan } from "../../src/application/scan.js";
+import { detectPlatforms } from "../../src/application/detect-platforms.js";
 
 const mockScan = vi.mocked(scan);
+const mockDetectPlatforms = vi.mocked(detectPlatforms);
 
 const mockVersion: PlatformVersion = {
   platform: "claude",
@@ -112,6 +118,11 @@ describe("CLI commands", () => {
   beforeEach(() => {
     clearLastScan();
     mockScan.mockReset();
+    mockDetectPlatforms.mockResolvedValue([
+      { platform: "claude", status: "detected", evidence: [] },
+      { platform: "cursor", status: "not-detected", evidence: [] },
+      { platform: "codex", status: "not-detected", evidence: [] },
+    ]);
   });
 
   afterEach(() => {
@@ -126,7 +137,7 @@ describe("CLI commands", () => {
       const output = await runScan("/mock/project");
 
       expect(output).toEqual(result);
-      expect(mockScan).toHaveBeenCalledWith({ projectPath: "/mock/project" });
+      expect(mockScan).toHaveBeenCalledWith({ projectPath: "/mock/project", platform: "claude" });
       expect(await getOrScan()).toBe(result);
     });
   });
@@ -165,7 +176,7 @@ describe("CLI commands", () => {
 
       await runStatus();
 
-      expect(mockScan).toHaveBeenCalledWith({ projectPath: process.cwd() });
+      expect(mockScan).toHaveBeenCalledWith({ projectPath: process.cwd(), platform: "claude" });
     });
   });
 
@@ -187,7 +198,7 @@ describe("CLI commands", () => {
       const agents = await runAgents();
 
       expect(agents).toEqual(mockAgents);
-      expect(mockScan).toHaveBeenCalledWith({ projectPath: process.cwd() });
+      expect(mockScan).toHaveBeenCalledWith({ projectPath: process.cwd(), platform: "claude" });
     });
   });
 
@@ -542,7 +553,7 @@ describe("CLI commands", () => {
 
       await runWarnings();
 
-      expect(mockScan).toHaveBeenCalledWith({ projectPath: process.cwd() });
+      expect(mockScan).toHaveBeenCalledWith({ projectPath: process.cwd(), platform: "claude" });
     });
   });
 

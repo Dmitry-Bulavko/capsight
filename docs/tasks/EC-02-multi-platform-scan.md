@@ -43,20 +43,20 @@ A `not-detected` platform is still listed (the filter in EC-05 can force-include
 
 ## Acceptance
 
-- [ ] `detectPlatforms(projectPath)` returns all three platforms with `detected` / `not-detected` and the evidence paths behind each verdict
-- [ ] A project with only `AGENTS.md` detects Cursor **and** Codex
-- [ ] `buildEcosystemInventory` returns resources grouped by kind (`agent` / `skill` / `mcp_server` / `instruction`), each carrying `platform`, `scope`, `resourceClass`, `path`, `id`
-- [ ] `scope === "local"` (and `"user"`) is preserved verbatim from `SourceInfo` — no new local-detection logic
-- [ ] Same-identity resources across scopes produce an `overlaps` relation reusing the adapter's collision verdict, including the no-winner case
-- [ ] Only detected platforms are scanned; a `not-detected` platform spawns no process
-- [ ] Existing single-platform surfaces (`/api/agents`, `/api/effective`, `/api/graph`) behave exactly as before
+- [x] `detectPlatforms(projectPath)` returns all three platforms with `detected` / `not-detected` and the evidence paths behind each verdict
+- [x] A project with only `AGENTS.md` detects Cursor **and** Codex
+- [x] `buildEcosystemInventory` returns resources grouped by kind (`agent` / `skill` / `mcp_server` / `instruction`), each carrying `platform`, `scope`, `resourceClass`, `path`, `id`
+- [x] `scope === "local"` (and `"user"`) is preserved verbatim from `SourceInfo` — no new local-detection logic
+- [x] Same-identity resources across scopes produce an `overlaps` relation reusing the adapter's collision verdict, including the no-winner case
+- [x] Only detected platforms are scanned; a `not-detected` platform spawns no process (exception: active platform force-scanned for single-platform backward compat)
+- [x] Existing single-platform surfaces (`/api/agents`, `/api/effective`, `/api/graph`) behave exactly as before
 
 ## Done checklist
 
-- [ ] `npm run test` passes
-- [ ] `npm run typecheck` passes
-- [ ] No writes to scanned project's `.claude/**`
-- [ ] TASKS.md updated by orchestrator (not implementer)
+- [x] `npm run test` passes
+- [x] `npm run typecheck` passes
+- [x] No writes to scanned project's `.claude/**`
+- [x] TASKS.md updated by orchestrator (not implementer)
 
 ## Notes
 

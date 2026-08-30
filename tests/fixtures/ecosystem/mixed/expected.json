@@ -1,0 +1,609 @@
+{
+  "detection": [
+    {
+      "platform": "claude",
+      "status": "detected",
+      "evidence": [
+        {
+          "platform": "claude",
+          "path": ".claude/agents/backend.md",
+          "scope": "project",
+          "matrixRef": "agent@markdown"
+        },
+        {
+          "platform": "claude",
+          "path": ".claude/settings.local.json",
+          "scope": "project",
+          "matrixRef": "settings@json"
+        },
+        {
+          "platform": "claude",
+          "path": ".claude/skills/api-helper/SKILL.md",
+          "scope": "project",
+          "matrixRef": "skill@directory"
+        },
+        {
+          "platform": "claude",
+          "path": ".claude/skills/shared-helper/SKILL.md",
+          "scope": "project",
+          "matrixRef": "skill@directory"
+        },
+        {
+          "platform": "claude",
+          "path": ".mcp.json",
+          "scope": "project",
+          "matrixRef": "mcp@json-config"
+        },
+        {
+          "platform": "claude",
+          "path": "CLAUDE.md",
+          "scope": "project",
+          "matrixRef": "instruction@CLAUDE.md"
+        }
+      ]
+    },
+    {
+      "platform": "codex",
+      "status": "detected",
+      "evidence": [
+        {
+          "platform": "codex",
+          "path": ".agents/skills/codex-helper/SKILL.md",
+          "scope": "project",
+          "matrixRef": "skill@directory"
+        },
+        {
+          "platform": "codex",
+          "path": ".codex/config.toml",
+          "scope": "project",
+          "matrixRef": "settings@toml"
+        },
+        {
+          "platform": "codex",
+          "path": "AGENTS.md",
+          "scope": "project",
+          "matrixRef": "instruction@AGENTS.md"
+        }
+      ]
+    },
+    {
+      "platform": "cursor",
+      "status": "detected",
+      "evidence": [
+        {
+          "platform": "cursor",
+          "path": ".cursor/agents/example.md",
+          "scope": "project",
+          "matrixRef": "agent@markdown"
+        },
+        {
+          "platform": "cursor",
+          "path": ".cursor/mcp.json",
+          "scope": "project",
+          "matrixRef": "mcp@json-config"
+        },
+        {
+          "platform": "cursor",
+          "path": ".cursor/rules/style.mdc",
+          "scope": "project",
+          "matrixRef": "instruction@rule-mdc"
+        },
+        {
+          "platform": "cursor",
+          "path": ".cursor/skills/lint/SKILL.md",
+          "scope": "project",
+          "matrixRef": "skill@directory"
+        },
+        {
+          "platform": "cursor",
+          "path": "AGENTS.md",
+          "scope": "project",
+          "matrixRef": "instruction@AGENTS.md"
+        }
+      ]
+    }
+  ],
+  "resources": {
+    "agent": [
+      {
+        "id": "claude:agent:.claude/agents/backend.md",
+        "kind": "agent",
+        "platform": "claude",
+        "scope": "project",
+        "resourceClass": "agent@markdown",
+        "name": "backend",
+        "path": ".claude/agents/backend.md",
+        "compat": {
+          "claude": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.agent-markdown",
+            "reason": "Claude Code discovers agents from markdown files under configured agents directories (A1, A2)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.cursor.agent-markdown",
+            "reason": "Cursor discovers subagents from markdown files under the agents directory (CA1)."
+          },
+          "codex": {
+            "support": "not-supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.codex.agent-markdown",
+            "reason": "Codex primary agent configuration is instruction-based (AGENTS.md), not markdown agent files (XA1)."
+          }
+        }
+      },
+      {
+        "id": "claude:agent:home/.claude/agents/backend.md",
+        "kind": "agent",
+        "platform": "claude",
+        "scope": "user",
+        "resourceClass": "agent@markdown",
+        "name": "backend",
+        "path": "home/.claude/agents/backend.md",
+        "compat": {
+          "claude": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.agent-markdown",
+            "reason": "Claude Code discovers agents from markdown files under configured agents directories (A1, A2)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.cursor.agent-markdown",
+            "reason": "Cursor discovers subagents from markdown files under the agents directory (CA1)."
+          },
+          "codex": {
+            "support": "not-supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.codex.agent-markdown",
+            "reason": "Codex primary agent configuration is instruction-based (AGENTS.md), not markdown agent files (XA1)."
+          }
+        }
+      },
+      {
+        "id": "codex:agent:codex-main:AGENTS.md",
+        "kind": "agent",
+        "platform": "codex",
+        "scope": "project",
+        "resourceClass": "agent@markdown",
+        "name": "main",
+        "path": "AGENTS.md",
+        "compat": {
+          "claude": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.agent-markdown",
+            "reason": "Claude Code discovers agents from markdown files under configured agents directories (A1, A2)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.cursor.agent-markdown",
+            "reason": "Cursor discovers subagents from markdown files under the agents directory (CA1)."
+          },
+          "codex": {
+            "support": "not-supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.codex.agent-markdown",
+            "reason": "Codex primary agent configuration is instruction-based (AGENTS.md), not markdown agent files (XA1)."
+          }
+        }
+      },
+      {
+        "id": "cursor:agent:.cursor/agents/example.md",
+        "kind": "agent",
+        "platform": "cursor",
+        "scope": "project",
+        "resourceClass": "agent@markdown",
+        "name": "example",
+        "path": ".cursor/agents/example.md",
+        "compat": {
+          "claude": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.agent-markdown",
+            "reason": "Claude Code discovers agents from markdown files under configured agents directories (A1, A2)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.cursor.agent-markdown",
+            "reason": "Cursor discovers subagents from markdown files under the agents directory (CA1)."
+          },
+          "codex": {
+            "support": "not-supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.codex.agent-markdown",
+            "reason": "Codex primary agent configuration is instruction-based (AGENTS.md), not markdown agent files (XA1)."
+          }
+        }
+      }
+    ],
+    "skill": [
+      {
+        "id": "claude:skill:skill:.claude/skills/api-helper/SKILL.md",
+        "kind": "skill",
+        "platform": "claude",
+        "scope": "project",
+        "resourceClass": "skill@directory",
+        "name": "api-helper",
+        "path": ".claude/skills/api-helper/SKILL.md",
+        "compat": {
+          "claude": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.skill-directory",
+            "reason": "Claude Code discovers skills from SKILL.md files in skill directories (K1)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.cursor.skill-directory",
+            "reason": "Cursor discovers skills from SKILL.md files in skill subdirectories (CS1)."
+          },
+          "codex": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.codex.skill-directory",
+            "reason": "Codex discovers skills from SKILL.md files under the agents skills directory (XS1)."
+          }
+        }
+      },
+      {
+        "id": "claude:skill:skill:.claude/skills/shared-helper/SKILL.md",
+        "kind": "skill",
+        "platform": "claude",
+        "scope": "project",
+        "resourceClass": "skill@directory",
+        "name": "shared-helper",
+        "path": ".claude/skills/shared-helper/SKILL.md",
+        "compat": {
+          "claude": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.skill-directory",
+            "reason": "Claude Code discovers skills from SKILL.md files in skill directories (K1)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.cursor.skill-directory",
+            "reason": "Cursor discovers skills from SKILL.md files in skill subdirectories (CS1)."
+          },
+          "codex": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.codex.skill-directory",
+            "reason": "Codex discovers skills from SKILL.md files under the agents skills directory (XS1)."
+          }
+        }
+      },
+      {
+        "id": "claude:skill:skill:home/.claude/skills/shared-helper/SKILL.md",
+        "kind": "skill",
+        "platform": "claude",
+        "scope": "user",
+        "resourceClass": "skill@directory",
+        "name": "shared-helper",
+        "path": "home/.claude/skills/shared-helper/SKILL.md",
+        "compat": {
+          "claude": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.skill-directory",
+            "reason": "Claude Code discovers skills from SKILL.md files in skill directories (K1)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.cursor.skill-directory",
+            "reason": "Cursor discovers skills from SKILL.md files in skill subdirectories (CS1)."
+          },
+          "codex": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.codex.skill-directory",
+            "reason": "Codex discovers skills from SKILL.md files under the agents skills directory (XS1)."
+          }
+        }
+      },
+      {
+        "id": "codex:skill:skill:.agents/skills/codex-helper/SKILL.md",
+        "kind": "skill",
+        "platform": "codex",
+        "scope": "project",
+        "resourceClass": "skill@directory",
+        "name": "codex-helper",
+        "path": ".agents/skills/codex-helper/SKILL.md",
+        "compat": {
+          "claude": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.skill-directory",
+            "reason": "Claude Code discovers skills from SKILL.md files in skill directories (K1)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.cursor.skill-directory",
+            "reason": "Cursor discovers skills from SKILL.md files in skill subdirectories (CS1)."
+          },
+          "codex": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.codex.skill-directory",
+            "reason": "Codex discovers skills from SKILL.md files under the agents skills directory (XS1)."
+          }
+        }
+      },
+      {
+        "id": "cursor:skill:skill:.cursor/skills/lint/SKILL.md",
+        "kind": "skill",
+        "platform": "cursor",
+        "scope": "project",
+        "resourceClass": "skill@directory",
+        "name": "lint",
+        "path": ".cursor/skills/lint/SKILL.md",
+        "compat": {
+          "claude": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.skill-directory",
+            "reason": "Claude Code discovers skills from SKILL.md files in skill directories (K1)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.cursor.skill-directory",
+            "reason": "Cursor discovers skills from SKILL.md files in skill subdirectories (CS1)."
+          },
+          "codex": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.codex.skill-directory",
+            "reason": "Codex discovers skills from SKILL.md files under the agents skills directory (XS1)."
+          }
+        }
+      }
+    ],
+    "mcp_server": [
+      {
+        "id": "claude:mcp_server:mcp:.mcp.json:github",
+        "kind": "mcp_server",
+        "platform": "claude",
+        "scope": "project",
+        "resourceClass": "mcp@json-config",
+        "name": "github",
+        "path": ".mcp.json",
+        "compat": {
+          "claude": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.mcp-json-config",
+            "reason": "Claude Code reads MCP servers declared in project .mcp.json (R4)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.cursor.mcp-json-config",
+            "reason": "Cursor reads MCP servers declared in project mcp.json configuration (CM1)."
+          },
+          "codex": {
+            "support": "not-supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.codex.mcp-json-config",
+            "reason": "Codex does not read JSON mcp.json configuration; MCP is declared in TOML (XM1)."
+          }
+        }
+      },
+      {
+        "id": "codex:mcp_server:mcp:.codex/config.toml:example",
+        "kind": "mcp_server",
+        "platform": "codex",
+        "scope": "project",
+        "resourceClass": "mcp@toml-config",
+        "name": "example",
+        "path": ".codex/config.toml",
+        "compat": {
+          "claude": {
+            "support": "not-supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.mcp-toml-config",
+            "reason": "Claude Code does not read Codex TOML mcp_servers blocks; it uses JSON MCP configuration (R4)."
+          },
+          "cursor": {
+            "support": "not-supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.cursor.mcp-toml-config",
+            "reason": "Cursor does not read Codex TOML mcp_servers blocks; it uses JSON MCP configuration (CM1)."
+          },
+          "codex": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.codex.mcp-toml-config",
+            "reason": "Codex reads MCP servers from TOML mcp_servers blocks (XM1)."
+          }
+        }
+      },
+      {
+        "id": "cursor:mcp_server:mcp:.cursor/mcp.json:github",
+        "kind": "mcp_server",
+        "platform": "cursor",
+        "scope": "project",
+        "resourceClass": "mcp@json-config",
+        "name": "github",
+        "path": ".cursor/mcp.json",
+        "compat": {
+          "claude": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.mcp-json-config",
+            "reason": "Claude Code reads MCP servers declared in project .mcp.json (R4)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.cursor.mcp-json-config",
+            "reason": "Cursor reads MCP servers declared in project mcp.json configuration (CM1)."
+          },
+          "codex": {
+            "support": "not-supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.codex.mcp-json-config",
+            "reason": "Codex does not read JSON mcp.json configuration; MCP is declared in TOML (XM1)."
+          }
+        }
+      }
+    ],
+    "instruction": [
+      {
+        "id": "claude:instruction:instruction:CLAUDE.md",
+        "kind": "instruction",
+        "platform": "claude",
+        "scope": "project",
+        "resourceClass": "instruction@CLAUDE.md",
+        "name": "CLAUDE.md",
+        "path": "CLAUDE.md",
+        "compat": {
+          "claude": {
+            "support": "supported",
+            "enforcement": "advisory",
+            "matrixRef": "compat.claude.instruction-claude-md",
+            "reason": "Claude Code loads CLAUDE.md files in the project instruction hierarchy (I1)."
+          },
+          "cursor": {
+            "support": "not-supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.cursor.instruction-claude-md",
+            "reason": "Cursor does not read CLAUDE.md; it loads AGENTS.md and project rules (CR3)."
+          },
+          "codex": {
+            "support": "unknown",
+            "enforcement": "unknown",
+            "reason": "No compatibility matrix entry for instruction@CLAUDE.md on codex; verdict is unknown (SPEC §8.2)."
+          }
+        }
+      },
+      {
+        "id": "codex:instruction:instruction:AGENTS.md",
+        "kind": "instruction",
+        "platform": "codex",
+        "scope": "project",
+        "resourceClass": "instruction@AGENTS.md",
+        "name": "AGENTS.md",
+        "path": "AGENTS.md",
+        "compat": {
+          "claude": {
+            "support": "not-supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.instruction-agents-md",
+            "reason": "Claude Code does not read AGENTS.md; it loads the CLAUDE.md instruction hierarchy (I1)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "advisory",
+            "matrixRef": "compat.cursor.instruction-agents-md",
+            "reason": "Cursor reads AGENTS.md at the project root and in nested subdirectories (CW3)."
+          },
+          "codex": {
+            "support": "supported",
+            "enforcement": "advisory",
+            "matrixRef": "compat.codex.instruction-agents-md",
+            "reason": "Codex walks AGENTS.md files from the repository root toward the working directory (XI2)."
+          }
+        }
+      },
+      {
+        "id": "cursor:instruction:instruction:.cursor/rules/style.mdc",
+        "kind": "instruction",
+        "platform": "cursor",
+        "scope": "project",
+        "resourceClass": "instruction@rule-mdc",
+        "name": "rule",
+        "path": ".cursor/rules/style.mdc",
+        "compat": {
+          "claude": {
+            "support": "not-supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.instruction-rule-mdc",
+            "reason": "Claude Code does not read Cursor rule (.mdc) files; it loads the CLAUDE.md hierarchy (I1)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "advisory",
+            "matrixRef": "compat.cursor.instruction-rule-mdc",
+            "reason": "Cursor reads .mdc rule files under the rules directory (CR1, CR4)."
+          },
+          "codex": {
+            "support": "not-supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.codex.instruction-rule-mdc",
+            "reason": "Codex does not read Cursor rule (.mdc) files; it loads AGENTS.md chains (XI2)."
+          }
+        }
+      },
+      {
+        "id": "cursor:instruction:instruction:AGENTS.md",
+        "kind": "instruction",
+        "platform": "cursor",
+        "scope": "project",
+        "resourceClass": "instruction@AGENTS.md",
+        "name": "AGENTS.md",
+        "path": "AGENTS.md",
+        "compat": {
+          "claude": {
+            "support": "not-supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.instruction-agents-md",
+            "reason": "Claude Code does not read AGENTS.md; it loads the CLAUDE.md instruction hierarchy (I1)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "advisory",
+            "matrixRef": "compat.cursor.instruction-agents-md",
+            "reason": "Cursor reads AGENTS.md at the project root and in nested subdirectories (CW3)."
+          },
+          "codex": {
+            "support": "supported",
+            "enforcement": "advisory",
+            "matrixRef": "compat.codex.instruction-agents-md",
+            "reason": "Codex walks AGENTS.md files from the repository root toward the working directory (XI2)."
+          }
+        }
+      }
+    ]
+  },
+  "overlaps": [
+    {
+      "ids": [
+        "claude:agent:.claude/agents/backend.md",
+        "claude:agent:home/.claude/agents/backend.md"
+      ],
+      "collision": {
+        "candidates": [
+          {
+            "platform": "claude",
+            "scope": "project",
+            "path": ".claude/agents/backend.md"
+          },
+          {
+            "platform": "claude",
+            "scope": "user",
+            "path": "home/.claude/agents/backend.md"
+          }
+        ],
+        "effective": {
+          "platform": "claude",
+          "scope": "project",
+          "path": ".claude/agents/backend.md"
+        },
+        "rule": "A1",
+        "matrixRef": "agent.collisionCrossScope",
+        "enforcement": "enforced"
+      }
+    }
+  ]
+}
