@@ -193,8 +193,8 @@ D1-00 was found while verifying D1-01: fixture scans walk past the fixture proje
 | D1-09 | D1 | Golden order must not depend on the checkout path | done | §11.2, §11.3, H1-22 | resolver.ts, instructions.ts, golden-normalize.ts | Order identical across ≥3 checkout paths |
 | D1-10 | D1 | Isolation and portability follow-ups (5 review findings) | done | §11.2, §11.3 | tests/fixtures/fixture-runtime.ts, global-setup.ts, .gitignore | Isolation asserted on all three platforms |
 | D1-02 | D1 | Complete settings-permissions fixture (S8–S10) | done | §3.5, §11.1–11.4, H1-28 | tests/fixtures/claude/settings-permissions/, matrix.ts | Each fact fixture-backed or doc-only with a reason |
-| D1-03 | D1 | S6/S7 rule-argument semantics — evaluate or refuse | in_progress | §3.5 S6–S7, §2.3, §14 | resolution/settings-permissions.ts, matrix.ts | Written decision per fact; no permission engine |
-| D1-04 | D1 | S11 additionalDirectories + enableAllProjectMcpServers | todo | §3.5 S11, §4.4, §8.2 | discovery/settings.ts, resolution/, matrix.ts | Two entries; trust interaction founded or unknown |
+| D1-03 | D1 | S6/S7 rule-argument semantics — evaluate or refuse | done | §3.5 S6–S7, §2.3, §14 | resolution/settings-permissions.ts, matrix.ts | Written decision per fact; no permission engine |
+| D1-04 | D1 | S11 additionalDirectories + enableAllProjectMcpServers | in_progress | §3.5 S11, §4.4, §8.2 | discovery/settings.ts, resolution/, matrix.ts | Two entries; trust interaction founded or unknown |
 | D1-05 | D1 | K8/K10/K11 skill overrides + command precedence | todo | §3.6, M1 #9, §8.2 | resolution/skills.ts, discovery/, matrix.ts | No `[ext]` fact drives a confident answer without a fixture |
 | D1-06 | D1 | Close remaining pendingFixture entries (A10, F9, K4, K5, R5, B2) | todo | §3, §11.1–11.4, H1-28 | tests/fixtures/claude/*, matrix.ts | No `pendingFixture` left in the Claude matrix |
 | D1-07 | D1 | Cursor matrix + fixture depth | todo | CURSOR-FACTS, §8, §11 | adapters/cursor/, tests/fixtures/cursor/ | ≥3 founded entries, ≥2 new fixtures, CT1 stays unknown |
@@ -217,3 +217,4 @@ Order: EC-01 → EC-02 → EC-03 → EC-04 → EC-05 → EC-06 → EC-07 → EC-
 | EC-07 | EC | Ecosystem health readout | todo | §11.4, §6, §2.4 | src/application/ecosystem-health.ts, src/ui/components/EcosystemHealth.tsx | Counts and conditions, no score; every count filters the canvas |
 | EC-08 | EC | Mixed-project golden fixture | todo | §11.1–11.3, inv 2 | tests/fixtures/ecosystem/mixed/, run-ecosystem-golden.test.ts | Hermetic; pins unknowns as well as confident verdicts |
 | D1-11 | D1 | Residual locale-sensitive sorts outside simulate.ts | todo (deferred) | §11.2 | managed-overlay.ts:281,335, plan.ts, generation/* | Sorts locale-independent; not golden-observable today |
+| D1-12 | D1 | `PowerShell(...)` rules cite `settings.bashPrefixRules`, whose fact S6 names only `Bash` | todo (deferred) | S6, §8.2 | settings-permissions.ts:153-156 | Attribution names a fact covering the tool, or says it does not |

@@ -4,7 +4,7 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**D1-00 and D1-01 done.** All three platforms now carry a §11.4 coverage report, and fixture runs are isolated from Capsight's own repository. **Scaffolding done — D1-00, D1-01, D1-09 and D1-10 are closed.** The corpus is isolated from this repository, portable across checkout paths, and its isolation guard is falsifiable on all three platforms. **D1-02 done; D1-03 is next.** The first evidence task landed and moved the §11.4 numbers by zero — see below, that is the honest result rather than a shortfall.
+**D1-00 and D1-01 done.** All three platforms now carry a §11.4 coverage report, and fixture runs are isolated from Capsight's own repository. **Scaffolding done — D1-00, D1-01, D1-09 and D1-10 are closed.** The corpus is isolated from this repository, portable across checkout paths, and its isolation guard is falsifiable on all three platforms. **D1-03 done; D1-04 is next.** Two evidence tasks have now landed and moved the §11.4 numbers by zero between them — see below. The `pendingFixture` backlog is 12 → 6, but five of the six retired entries turned out to be unprovable rather than proved.
 
 Previous: **EC phase written** — ecosystem visualization handoffs EC-01…EC-08, now blocked on D1.
 
@@ -86,6 +86,12 @@ The real progress measure for this phase is the `pendingFixture` backlog, which 
 | `settings.ruleScope` | **unpromotable** — `status` is `unknown` by construction, and H1-28 bars such an entry from ever reaching `fixture` |
 
 Three of the first four turned out to be debts that can never be paid rather than debts not yet paid. `FeatureCompatibility` gained a third field, `noFixturePossible`, so that state is machine-checkable instead of living in prose: every entry now declares exactly one of `fixture` / `pendingFixture` / `noFixturePossible`, asserted over all 39 entries.
+
+D1-03 continued the pattern and went further: it ended with **no production code at all**. S6 (`Bash(cmd:*)` prefix matching) and S7 (`Read`/`Edit` globs) were both refused as unprovable and moved to `noFixturePossible`.
+
+The refusal turned on a distinction worth recording, because the opposite move was available and tempting. D1-02 promoted S8 by treating a WebFetch rule without the `domain:` prefix as granting nothing. The parallel move for S6 would treat a mid-pattern `:*` the same way. It was refused because the facts are not parallel in form: S8 says the prefix is *required*, so a rule lacking it is malformed; S6 says only that `:*` is not a wildcard away from the end, so such a rule is still valid and merely matches something narrower. Review confirmed this independently by comparing the neighbours — S3 ("invalid") and S4 ("ignored and allow nothing") do use the language that licenses a confident `blocked` verdict, and S6 pointedly does not.
+
+Both entries also record *why* they are unprovable in a way a later reader can act on: not physical impossibility, but impossibility under a permanent scope choice — the evidence that would promote them is a verdict of the form "this command line would be approved", which is the permission engine §2.3 forbids this product to have.
 
 **This lowers the phase's ceiling.** The earlier estimate of 9 → roughly 20 fixture-verified assumed the twelve pending entries were mostly convertible. On the first sample, three of four were not. A more honest expectation is that D1 ends with a materially smaller `pendingFixture` list, a handful of promotions, and several facts formally recorded as unprovable by fixture — with the §11.4 count moving far less than the amount of work suggests.
 
