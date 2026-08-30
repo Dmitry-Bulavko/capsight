@@ -25,7 +25,7 @@ Verified corpus for the Capsight Cursor adapter. Trust levels: `[doc]` = officia
 
 | Path | Entity | Notes | Trust |
 |------|--------|-------|-------|
-| `.cursor/rules/**/*.mdc` | Rules (instructions) | Plain `.md` in `.cursor/rules/` is **ignored** — needs `.mdc` frontmatter | `[doc]` |
+| `.cursor/rules/**/*.mdc` | Rules (instructions) | Plain `.md` in `.cursor/rules/` is **ignored** — needs `.mdc` frontmatter (CR4) | `[doc]` |
 | `.cursor/skills/*/SKILL.md` | Skills | Each skill in its own subdirectory | `[doc]` |
 | `.cursor/agents/**/*.md` | Subagents | YAML frontmatter: `name`, `description` required | `[doc]` |
 | `.cursor/commands/**/*.md` | Commands | Slash commands; optional frontmatter | `[doc]` |
@@ -102,6 +102,7 @@ Capsight v1: discover plugin directories referenced from project; do not execute
 | CR1 | Rule frontmatter: `description`, `alwaysApply`, `globs` control application mode | `[doc]` |
 | CR2 | `alwaysApply: true` → always included; globs → file-scoped; description only → intelligent apply | `[doc]` |
 | CR3 | Map rules to core `instructions[]` with `type: "rule"`; `AGENTS.md` → `type: "AGENTS.md"` | `[ext]` |
+| CR4 | Plain `.md` in `.cursor/rules/` is **ignored** — rules need `.mdc` extension | `[doc]` |
 
 ---
 

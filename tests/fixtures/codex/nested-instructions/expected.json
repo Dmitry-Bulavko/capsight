@@ -1,0 +1,126 @@
+{
+  "discovery": {
+    "agents": [
+      {
+        "name": "main",
+        "description": "Primary Codex agent (AGENTS.md instruction chain)",
+        "source": {
+          "platform": "codex",
+          "scope": "project",
+          "path": "sub/AGENTS.md"
+        },
+        "status": "active",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      }
+    ],
+    "skills": [],
+    "instructions": [
+      {
+        "type": "AGENTS.md",
+        "path": "AGENTS.md",
+        "scope": "nested-project",
+        "sizeBytes": 75
+      },
+      {
+        "type": "AGENTS.md",
+        "path": "sub/AGENTS.md",
+        "scope": "project",
+        "sizeBytes": 42
+      }
+    ],
+    "mcpServers": [],
+    "settings": [],
+    "trust": {
+      "accepted": "unknown",
+      "projectPath": "."
+    },
+    "environment": {
+      "relevant": []
+    }
+  },
+  "resolutions": [
+    {
+      "agentName": "main",
+      "context": {
+        "preset": "main-session",
+        "isMainSession": true,
+        "isBackground": false,
+        "isFork": false,
+        "isTeammate": false,
+        "depth": 0,
+        "maxDepth": 3
+      },
+      "capabilities": [
+        {
+          "capabilityId": "instruction:AGENTS.md",
+          "kind": "instruction",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "codex",
+              "scope": "nested-project",
+              "path": "AGENTS.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Instruction \"AGENTS.md\" is in the effective chain (XI5).",
+              "source": {
+                "platform": "codex",
+                "scope": "nested-project",
+                "path": "AGENTS.md"
+              },
+              "matrixRef": "instruction.chain"
+            }
+          ]
+        },
+        {
+          "capabilityId": "instruction:sub/AGENTS.md",
+          "kind": "instruction",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "codex",
+              "scope": "project",
+              "path": "sub/AGENTS.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Instruction \"AGENTS.md\" is in the effective chain (XI5).",
+              "source": {
+                "platform": "codex",
+                "scope": "project",
+                "path": "sub/AGENTS.md"
+              },
+              "matrixRef": "instruction.chain"
+            }
+          ]
+        }
+      ],
+      "warnings": [
+        {
+          "category": "trust",
+          "severity": "info",
+          "message": "Codex project trust storage format is not documented (XT2).",
+          "evidence": [
+            {
+              "platform": "codex",
+              "scope": "unknown"
+            }
+          ],
+          "matrixRef": "trust.project",
+          "enforcement": "unknown"
+        }
+      ],
+      "unknownRate": 0
+    }
+  ]
+}

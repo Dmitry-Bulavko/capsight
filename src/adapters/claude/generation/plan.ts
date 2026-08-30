@@ -16,6 +16,14 @@ export interface ToolFrontmatterFieldChange {
   after?: string[];
 }
 
+/** Locale-independent string order (code unit comparison). */
+function compareStrings(left: string, right: string): number {
+  if (left === right) {
+    return 0;
+  }
+  return left < right ? -1 : 1;
+}
+
 function baselineToolEnabled(agent: Agent, toolName: string): boolean {
   const disallowed = agent.configuration.disallowedTools ?? [];
   if (disallowed.includes(toolName)) {
@@ -43,7 +51,7 @@ function desiredToolEnabled(
 }
 
 function sortUnique(values: string[]): string[] {
-  return [...new Set(values)].sort((left, right) => left.localeCompare(right));
+  return [...new Set(values)].sort(compareStrings);
 }
 
 function normalizeOptionalArray(values?: string[]): string[] | undefined {
@@ -77,9 +85,7 @@ export function computeAgentToolFrontmatter(
   let tools = useAllowlist ? [...agent.configuration.tools!] : undefined;
   let disallowedTools = [...(agent.configuration.disallowedTools ?? [])];
 
-  const pendingToolNames = Object.keys(pendingEdits).sort((left, right) =>
-    left.localeCompare(right),
-  );
+  const pendingToolNames = Object.keys(pendingEdits).sort(compareStrings);
 
   for (const toolName of pendingToolNames) {
     const desired = desiredToolEnabled(agent, pendingEdits, toolName);

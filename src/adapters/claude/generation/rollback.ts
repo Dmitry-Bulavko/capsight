@@ -25,6 +25,14 @@ export interface RestoreBackupResult {
   manifest: BackupManifest;
 }
 
+/** Locale-independent string order (code unit comparison). */
+function compareStrings(left: string, right: string): number {
+  if (left === right) {
+    return 0;
+  }
+  return left < right ? -1 : 1;
+}
+
 async function backupExists(projectPath: string, operationId: string): Promise<boolean> {
   try {
     await fs.access(path.join(backupDirForOperation(projectPath, operationId), "manifest.json"));
@@ -52,7 +60,7 @@ export async function restoreFromBackup(
     restoredFiles.push(entry.path);
   }
 
-  restoredFiles.sort((left, right) => left.localeCompare(right));
+  restoredFiles.sort(compareStrings);
 
   let verified = restoredFiles.length > 0;
   for (const entry of manifest.files) {

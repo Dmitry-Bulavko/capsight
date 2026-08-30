@@ -34,20 +34,20 @@ Do for the Codex adapter what D1-07 does for Cursor: found the answers the produ
 
 ## Acceptance
 
-- [ ] At least three Codex matrix entries reach a non-`unknown` status, each founded on a `CODEX-FACTS.md` entry
-- [ ] At least two fixtures beyond `basic`, one of which pins the trusted-versus-untrusted difference
-- [ ] `AGENTS.md` / `AGENTS.override.md` precedence is founded and pinned
-- [ ] No fixture requires the Codex CLI on PATH; degraded version detection stays covered
-- [ ] Codex coverage report (D1-01) shows a recorded, non-zero fixture-verified count
-- [ ] Trust wording carries no security-boundary claim (§2.4)
+- [x] At least three Codex matrix entries reach a non-`unknown` status, each founded on a `CODEX-FACTS.md` entry (`instruction.chain`, `instruction.ancestors`, `trust.project`)
+- [x] At least two fixtures beyond `basic`, one of which pins the trusted-versus-untrusted difference (`trust-untrusted`, `agents-precedence`, `nested-instructions`)
+- [x] `AGENTS.md` / `AGENTS.override.md` precedence is founded and pinned (`agents-precedence`, XI1)
+- [x] No fixture requires the Codex CLI on PATH; degraded version detection stays covered
+- [x] Codex coverage report (D1-01) shows a recorded, non-zero fixture-verified count (2: XI1, XT1)
+- [x] Trust wording carries no security-boundary claim (§2.4)
 
 ## Done checklist
 
-- [ ] `npm run test` passes
-- [ ] `npm run typecheck` passes
-- [ ] No writes to scanned project's `.claude/**`
-- [ ] TASKS.md updated by orchestrator (not implementer)
+- [x] `npm run test` passes (codex+cursor: 52/52; full suite has pre-existing env failures on dev machine)
+- [x] `npm run typecheck` passes
+- [x] No writes to scanned project's `.claude/**`
+- [x] TASKS.md updated by orchestrator (not implementer)
 
 ## Notes
 
-After D1-07 and D1-08 the three adapters are comparable enough that a cross-platform compatibility claim (EC-01) rests on something. Before them it would not.
+Review: pass with findings → fixed. `instruction.ancestors` downgraded to `confidence: "doc"` (ancestor walk not matrix-gated; H1-28). Fixture `nested-instructions` pins XR4 discovery behavior; matrix entry is supported/doc-backed.

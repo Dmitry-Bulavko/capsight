@@ -1,0 +1,121 @@
+{
+  "discovery": {
+    "agents": [
+      {
+        "name": "control",
+        "description": "Valid control agent so the fixture shows loaded vs skipped files",
+        "source": {
+          "platform": "cursor",
+          "scope": "project",
+          "path": ".cursor/agents/control.md"
+        },
+        "status": "active",
+        "configuration": {
+          "tools": [
+            "Read"
+          ],
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      },
+      {
+        "name": "missing-description",
+        "description": "",
+        "source": {
+          "platform": "cursor",
+          "scope": "project",
+          "path": ".cursor/agents/missing-description.md"
+        },
+        "status": "invalid",
+        "invalidReason": "no-description",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      },
+      {
+        "name": "missing-name",
+        "description": "",
+        "source": {
+          "platform": "cursor",
+          "scope": "project",
+          "path": ".cursor/agents/missing-name.md"
+        },
+        "status": "invalid",
+        "invalidReason": "no-name",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      }
+    ],
+    "skills": [],
+    "instructions": [],
+    "mcpServers": [],
+    "settings": [],
+    "trust": {
+      "accepted": "unknown",
+      "projectPath": "."
+    },
+    "environment": {
+      "relevant": []
+    }
+  },
+  "resolutions": [
+    {
+      "agentName": "control",
+      "context": {
+        "preset": "background-subagent",
+        "isMainSession": false,
+        "isBackground": true,
+        "isFork": false,
+        "isTeammate": false,
+        "depth": 0,
+        "maxDepth": 3
+      },
+      "capabilities": [
+        {
+          "capabilityId": "Read",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "cursor",
+              "scope": "project",
+              "path": ".cursor/agents/control.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "Cursor subagent tool pool semantics are not verified (CA4).",
+              "source": {
+                "platform": "cursor",
+                "scope": "project",
+                "path": ".cursor/agents/control.md"
+              },
+              "matrixRef": "agent.toolPool"
+            }
+          ]
+        }
+      ],
+      "warnings": [
+        {
+          "category": "trust",
+          "severity": "info",
+          "message": "Cursor project trust model is not documented (CT1).",
+          "evidence": [
+            {
+              "platform": "cursor",
+              "scope": "unknown"
+            }
+          ],
+          "matrixRef": "trust.project",
+          "enforcement": "unknown"
+        }
+      ],
+      "unknownRate": 1
+    }
+  ]
+}

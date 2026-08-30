@@ -1,14 +1,18 @@
 import { createHash } from "node:crypto";
+import path from "node:path";
 import type { PlatformVersion } from "../../../core/model/index.js";
 import type { CursorProjectSnapshot as ProjectSnapshot } from "../model/index.js";
 import { buildPlatformEnvironment } from "../environment/index.js";
 import { discoverAgents } from "./agents.js";
-import { discoverInstructions } from "./instructions.js";
+import { discoverIgnoredRuleFiles, discoverInstructions } from "./instructions.js";
 import { discoverMcpServers } from "./mcp.js";
 import type { WalkProjectScopesResult } from "./project-walk.js";
 import { discoverSettingsLayers } from "./settings.js";
 import { discoverSkills } from "./skills.js";
 import { readTrustState } from "./trust.js";
+import { CURSOR_PLATFORM } from "../model/index.js";
+import { FACT } from "../version/facts.js";
+import { gateWarning, MATRIX } from "../version/matrix.js";
 
 export interface BuildSnapshotInput {
   projectPath: string;
@@ -25,7 +29,7 @@ export async function buildProjectSnapshot(
 ): Promise<ProjectSnapshot> {
   const { projectPath, version, walk } = input;
 
-  const [agentResult, skills, instructions, mcpServers, settings, trust] =
+  const [agentResult, skills, instructions, mcpServers, settings, trust, ignoredRules] =
     await Promise.all([
       discoverAgents(walk.scopes, projectPath),
       discoverSkills(walk.scopes, projectPath),
@@ -33,7 +37,28 @@ export async function buildProjectSnapshot(
       discoverMcpServers(walk.scopes, projectPath),
       discoverSettingsLayers(),
       readTrustState(projectPath),
+      discoverIgnoredRuleFiles(walk.scopes, projectPath),
     ]);
+
+  const warnings = ignoredRules.map((entry) =>
+    gateWarning(
+      {
+        category: "unsupported",
+        severity: "warning",
+        message:
+          `Plain .md file "${path.basename(entry.path)}" in .cursor/rules/ is ignored by Cursor; use .mdc extension (${FACT.CR4}).`,
+        evidence: [
+          {
+            platform: CURSOR_PLATFORM,
+            scope: entry.scope,
+            path: entry.path,
+          },
+        ],
+        enforcement: "enforced",
+      },
+      MATRIX["rules.fileExtension"],
+    ),
+  );
 
   const environment = await buildPlatformEnvironment({ settingsLayers: settings });
   const scannedAt = new Date().toISOString();
@@ -62,7 +87,7 @@ export async function buildProjectSnapshot(
     instructions,
     mcpServers,
     settings,
-    warnings: [],
+    warnings,
     scannedAt,
   };
 }

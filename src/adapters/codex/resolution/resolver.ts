@@ -12,7 +12,7 @@ import type {
 } from "../model/index.js";
 import { CODEX_PLATFORM } from "../model/index.js";
 import { FACT } from "../version/facts.js";
-import { gateCapability, MATRIX } from "../version/matrix.js";
+import { gateCapability, gateWarning, MATRIX } from "../version/matrix.js";
 import type {
   DiscoveredInstruction,
   DiscoveredMcpServer,
@@ -66,6 +66,7 @@ export async function resolveEffectiveConfiguration(
   const capabilities: ResolvedCapability[] = [];
   const warnings: Warning[] = [];
   const instructionGate = gateCapability(MATRIX["instruction.chain"]);
+  const trustGate = gateCapability(MATRIX["trust.project"]);
 
   if (snapshot.trust.accepted === "unknown") {
     warnings.push({
@@ -76,30 +77,47 @@ export async function resolveEffectiveConfiguration(
       matrixRef: MATRIX["trust.project"],
       enforcement: "unknown",
     });
+  } else if (snapshot.trust.accepted === false) {
+    warnings.push(
+      gateWarning(
+        {
+          category: "trust",
+          severity: "warning",
+          message: `Project is untrusted; project .codex/ layers are not loaded (${FACT.XT1}).`,
+          evidence: [
+            {
+              platform: CODEX_PLATFORM,
+              scope: "project",
+              path: snapshot.trust.projectPath,
+            },
+          ],
+          enforcement: trustGate.enforcement,
+        },
+        MATRIX["trust.project"],
+      ),
+    );
   }
 
   for (const instruction of snapshot.instructions as DiscoveredInstruction[]) {
+    const source = {
+      platform: CODEX_PLATFORM,
+      scope: instruction.scope,
+      path: instruction.path,
+    };
+    const founded = !instructionGate.unfounded;
     capabilities.push({
       capabilityId: instructionCapabilityId(instruction),
       kind: "instruction",
-      status: "unknown",
+      status: founded ? "available" : "unknown",
       enforcement: instructionGate.enforcement,
-      sources: [
-        {
-          platform: CODEX_PLATFORM,
-          scope: instruction.scope,
-          path: instruction.path,
-        },
-      ],
+      sources: [source],
       reasons: [
         makeReason(
-          "unknown",
-          `Instruction "${instruction.type}" application semantics are not verified for Codex (${FACT.XI5}).`,
-          {
-            platform: CODEX_PLATFORM,
-            scope: instruction.scope,
-            path: instruction.path,
-          },
+          founded ? "declared" : "unknown",
+          founded
+            ? `Instruction "${instruction.type}" is in the effective chain (${FACT.XI5}).`
+            : `Instruction "${instruction.type}" application semantics are not verified for Codex (${FACT.XI5}).`,
+          source,
           MATRIX["instruction.chain"],
         ),
       ],

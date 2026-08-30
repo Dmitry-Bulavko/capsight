@@ -34,7 +34,7 @@
         "type": "AGENTS.md",
         "path": "AGENTS.md",
         "scope": "project",
-        "sizeBytes": 52
+        "sizeBytes": 53
       }
     ],
     "mcpServers": [
@@ -86,8 +86,8 @@
         {
           "capabilityId": "instruction:AGENTS.md",
           "kind": "instruction",
-          "status": "unknown",
-          "enforcement": "unknown",
+          "status": "available",
+          "enforcement": "enforced",
           "sources": [
             {
               "platform": "codex",
@@ -97,8 +97,8 @@
           ],
           "reasons": [
             {
-              "type": "unknown",
-              "message": "Instruction \"AGENTS.md\" application semantics are not verified for Codex (XI5).",
+              "type": "declared",
+              "message": "Instruction \"AGENTS.md\" is in the effective chain (XI5).",
               "source": {
                 "platform": "codex",
                 "scope": "project",
@@ -173,7 +173,7 @@
           "enforcement": "unknown"
         }
       ],
-      "unknownRate": 1
+      "unknownRate": 0.6666666666666666
     }
   ]
 }

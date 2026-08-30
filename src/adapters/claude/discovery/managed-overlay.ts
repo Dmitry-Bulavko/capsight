@@ -38,6 +38,14 @@ const SCOPE_PRIORITY: Record<Scope, number> = {
   unknown: 0,
 };
 
+/** Locale-independent string order (code unit comparison). */
+function compareStrings(left: string, right: string): number {
+  if (left === right) {
+    return 0;
+  }
+  return left < right ? -1 : 1;
+}
+
 const KNOWN_FRONTMATTER_KEYS = new Set([
   "name",
   "description",
@@ -281,7 +289,7 @@ function reconcileAgentCollisions(agents: Agent[], version: string): Agent[] {
       if (priorityDiff !== 0) {
         return priorityDiff;
       }
-      return (left.source.path ?? "").localeCompare(right.source.path ?? "");
+      return compareStrings(left.source.path ?? "", right.source.path ?? "");
     });
 
     const winner = sorted[0]!;
@@ -335,7 +343,7 @@ function reconcileAgentCollisions(agents: Agent[], version: string): Agent[] {
   }
 
   return [...resolved, ...invalidAgents].sort((left, right) =>
-    left.name.localeCompare(right.name),
+    compareStrings(left.name, right.name),
   );
 }
 

@@ -30,6 +30,12 @@ export const FACTS = [
   { id: "CR1", section: "6", statement: "Rule frontmatter: description, alwaysApply, globs", confidence: "doc" },
   { id: "CR2", section: "6", statement: "alwaysApply/globs control application mode", confidence: "doc" },
   { id: "CR3", section: "6", statement: "Map rules to instructions[] type rule", confidence: "ext" },
+  {
+    id: "CR4",
+    section: "6",
+    statement: "Plain .md in .cursor/rules/ is ignored — needs .mdc extension",
+    confidence: "doc",
+  },
   { id: "CM1", section: "7", statement: "Project MCP at .cursor/mcp.json", confidence: "doc" },
   { id: "CM2", section: "7", statement: "User MCP at ~/.cursor/mcp.json", confidence: "spike" },
   { id: "CM3", section: "7", statement: "Redact env values — key names only", confidence: "doc" },
@@ -47,3 +53,21 @@ export const FACT = Object.fromEntries(FACTS.map((fact) => [fact.id, fact.id])) 
   FactId,
   FactId
 >;
+
+const FACT_BY_ID = new Map<string, Fact>(FACTS.map((fact) => [fact.id, fact]));
+
+export function isFactId(value: string): value is FactId {
+  return FACT_BY_ID.has(value);
+}
+
+function getFact(id: FactId): Fact {
+  return FACT_BY_ID.get(id)!;
+}
+
+export function factConfidence(id: FactId): FactConfidence {
+  return getFact(id).confidence;
+}
+
+export function factsByConfidence(confidence: FactConfidence): readonly Fact[] {
+  return FACTS.filter((fact) => fact.confidence === confidence);
+}

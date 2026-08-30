@@ -16,7 +16,8 @@
           ],
           "skills": [
             "helper",
-            "restricted"
+            "restricted",
+            "deploy"
           ],
           "unknownFields": {}
         },
@@ -24,6 +25,19 @@
       }
     ],
     "skills": [
+      {
+        "name": "deploy",
+        "description": "Deploy command listed in skills frontmatter (D1-14 fixture)",
+        "kind": "command",
+        "source": {
+          "platform": "claude",
+          "scope": "project",
+          "path": ".claude/commands/deploy.md",
+          "matrixRef": "discovery.commandNamePrecedence"
+        },
+        "path": ".claude/commands/deploy.md",
+        "enforcement": "enforced"
+      },
       {
         "name": "helper",
         "description": "Preloaded helper skill for K1 fixture",
@@ -824,6 +838,37 @@
           ]
         },
         {
+          "capabilityId": "skill:deploy",
+          "kind": "skill",
+          "status": "unknown",
+          "enforcement": "advisory",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/preloader.md",
+              "fieldPath": "frontmatter.skills[2]"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/commands/deploy.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "Frontmatter skills list matched a command file; K1 covers skill content preload only, not slash commands.",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/preloader.md",
+                "fieldPath": "frontmatter.skills[2]"
+              }
+            }
+          ]
+        },
+        {
           "capabilityId": "skill:helper",
           "kind": "skill",
           "status": "preloaded",
@@ -888,7 +933,7 @@
         }
       ],
       "warnings": [],
-      "unknownRate": 0
+      "unknownRate": 0.029411764705882353
     }
   ]
 }

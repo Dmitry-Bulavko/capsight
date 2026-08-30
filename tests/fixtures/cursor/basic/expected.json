@@ -38,7 +38,7 @@
         "type": "rule",
         "path": ".cursor/rules/example.mdc",
         "scope": "project",
-        "sizeBytes": 94,
+        "sizeBytes": 100,
         "description": "Example project rule",
         "alwaysApply": true
       },
@@ -46,7 +46,7 @@
         "type": "AGENTS.md",
         "path": "AGENTS.md",
         "scope": "project",
-        "sizeBytes": 46
+        "sizeBytes": 47
       }
     ],
     "mcpServers": [

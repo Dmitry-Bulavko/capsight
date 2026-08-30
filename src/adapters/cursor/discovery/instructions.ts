@@ -52,6 +52,61 @@ async function collectMdcFiles(rootDir: string): Promise<string[]> {
   return results.sort();
 }
 
+/** Plain `.md` files under rules/ — ignored by Cursor (CR4). */
+async function collectIgnoredMdFiles(rootDir: string): Promise<string[]> {
+  const results: string[] = [];
+
+  async function walk(dir: string): Promise<void> {
+    let entries;
+    try {
+      entries = await fs.readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await walk(fullPath);
+      } else if (
+        entry.isFile() &&
+        entry.name.endsWith(".md") &&
+        !entry.name.endsWith(".mdc")
+      ) {
+        results.push(fullPath);
+      }
+    }
+  }
+
+  await walk(rootDir);
+  return results.sort();
+}
+
+/**
+ * Paths of plain `.md` rule files Cursor ignores. Used for CR4 warnings.
+ * @see docs/CURSOR-FACTS.md CR4
+ */
+export async function discoverIgnoredRuleFiles(
+  projectScopes: ProjectScopeLevel[],
+  projectPath: string,
+): Promise<Array<{ path: string; scope: Scope }>> {
+  const ignored: Array<{ path: string; scope: Scope }> = [];
+  const resolvedProject = path.resolve(projectPath);
+
+  for (const scope of projectScopes) {
+    if (!scope.rulesPath) {
+      continue;
+    }
+    const scopeType: Scope =
+      path.resolve(scope.path) === resolvedProject ? "project" : "nested-project";
+    for (const filePath of await collectIgnoredMdFiles(scope.rulesPath)) {
+      ignored.push({ path: filePath, scope: scopeType });
+    }
+  }
+
+  return ignored;
+}
+
 async function parseRuleFile(
   filePath: string,
   scope: Scope,

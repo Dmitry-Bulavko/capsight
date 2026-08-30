@@ -1,0 +1,6 @@
+---
+description: Valid project rule
+alwaysApply: true
+---
+
+Use TypeScript for all new code.

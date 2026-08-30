@@ -100,6 +100,24 @@ export async function buildSkillPreloadCapabilities(
       path: skill.path,
     };
 
+    if (skill.kind === "command") {
+      capabilities.push({
+        capabilityId: `skill:${skillName}`,
+        kind: "skill",
+        status: "unknown",
+        enforcement: "advisory",
+        sources: [agentFieldSource, skillSource],
+        reasons: [
+          makeReason(
+            "unknown",
+            "Frontmatter skills list matched a command file; K1 covers skill content preload only, not slash commands.",
+            agentFieldSource,
+          ),
+        ],
+      });
+      continue;
+    }
+
     if (await hasDisableModelInvocation(skill.path)) {
       capabilities.push(
         gateCapability(

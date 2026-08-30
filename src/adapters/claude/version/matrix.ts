@@ -315,15 +315,15 @@ const MATRIX_ENTRIES = [
     confidence: "doc",
     noFixturePossible:
       "A10 is a startup claim about the agent set as a whole: the budget is computed during " +
-      "discovery and its warning is carried on the snapshot, not on any agent's " +
-      "EffectiveConfiguration. A §11.2 golden records discovery entities and, per resolution, " +
-      "capabilities, reasons and warnings; a total summed over every user agent is a property " +
-      "of no single resolution, so no field of an expected.json holds the value this rule " +
-      "causes and the deletion test has nothing to move (H1-28). The threshold and the " +
-      "estimate are pinned by unit tests, which §11.4 deliberately does not count. A corpus " +
-      "case would also have to carry ~60 000 characters of agent description, recorded " +
-      "verbatim in the golden, to cross the 15 000-token budget — the lesser obstacle, and " +
-      "not the reason for this field.",
+      "discovery and its warning is carried on ProjectSnapshot.warnings, not on any agent's " +
+      "EffectiveConfiguration. Under the current §11.2 golden shape, expected.json records " +
+      "discovery entities and, per resolution, capabilities, reasons and warnings — but not " +
+      "snapshot-level warnings — so this rule has no channel to pin and the deletion test has " +
+      "nothing to move (H1-28). A NormalizedDiscovery.warnings channel could hold the value in " +
+      "principle; it is not added here because a corpus case would also have to carry ~60 000 " +
+      "characters of agent description, recorded verbatim in the golden, to cross the 15 000-token " +
+      "budget. The threshold and estimate are pinned by unit tests, which §11.4 deliberately " +
+      "does not count.",
     notes:
       "The invalid-agents fixture this entry used to owe covers the A7 skip reasons only; it " +
       "was never the missing piece, because the warning would not reach that fixture's golden.",
@@ -375,7 +375,10 @@ const MATRIX_ENTRIES = [
     verifiedFacts: [],
     notes:
       "The fixture pins the preload itself; K1's other half — that the field is a preload and " +
-      "not an access allowlist — needs a skill the agent does not list, which the corpus lacks.",
+      "not an access allowlist — needs a skill the agent does not list, which the corpus lacks. " +
+      "K1 covers skill content preload only: a `.claude/commands/*.md` name in `skills:` resolves " +
+      "unknown (D1-14), not preloaded. Deletion test: without the command-kind check the deploy " +
+      "entry would flip to preloaded with K1.",
   },
   {
     id: "skills.disableModelInvocation",

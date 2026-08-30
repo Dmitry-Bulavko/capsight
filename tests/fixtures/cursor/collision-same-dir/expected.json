@@ -1,0 +1,233 @@
+{
+  "discovery": {
+    "agents": [
+      {
+        "name": "planner",
+        "description": "Unambiguous agent used as the resolution subject for this fixture",
+        "source": {
+          "platform": "cursor",
+          "scope": "project",
+          "path": ".cursor/agents/planner.md"
+        },
+        "status": "active",
+        "configuration": {
+          "tools": [
+            "Read"
+          ],
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      },
+      {
+        "name": "reviewer",
+        "description": "CA3 candidate with the same name in a subfolder of the same agents directory",
+        "source": {
+          "platform": "cursor",
+          "scope": "project",
+          "path": ".cursor/agents/extra/reviewer-duplicate.md"
+        },
+        "status": "ambiguous",
+        "configuration": {
+          "tools": [
+            "Grep"
+          ],
+          "unknownFields": {}
+        },
+        "isPluginAgent": false,
+        "collision": {
+          "candidates": [
+            {
+              "platform": "cursor",
+              "scope": "project",
+              "path": ".cursor/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "cursor",
+              "scope": "project",
+              "path": ".cursor/agents/reviewer.md"
+            }
+          ],
+          "rule": "CA3",
+          "matrixRef": "collision.sameDir",
+          "enforcement": "enforced"
+        }
+      },
+      {
+        "name": "reviewer",
+        "description": "CA3 candidate declared at the root of the agents directory",
+        "source": {
+          "platform": "cursor",
+          "scope": "project",
+          "path": ".cursor/agents/reviewer.md"
+        },
+        "status": "ambiguous",
+        "configuration": {
+          "tools": [
+            "Read"
+          ],
+          "unknownFields": {}
+        },
+        "isPluginAgent": false,
+        "collision": {
+          "candidates": [
+            {
+              "platform": "cursor",
+              "scope": "project",
+              "path": ".cursor/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "cursor",
+              "scope": "project",
+              "path": ".cursor/agents/reviewer.md"
+            }
+          ],
+          "rule": "CA3",
+          "matrixRef": "collision.sameDir",
+          "enforcement": "enforced"
+        }
+      }
+    ],
+    "skills": [],
+    "instructions": [],
+    "mcpServers": [],
+    "settings": [],
+    "trust": {
+      "accepted": "unknown",
+      "projectPath": "."
+    },
+    "environment": {
+      "relevant": []
+    }
+  },
+  "resolutions": [
+    {
+      "agentName": "planner",
+      "context": {
+        "preset": "background-subagent",
+        "isMainSession": false,
+        "isBackground": true,
+        "isFork": false,
+        "isTeammate": false,
+        "depth": 0,
+        "maxDepth": 3
+      },
+      "capabilities": [
+        {
+          "capabilityId": "Read",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "cursor",
+              "scope": "project",
+              "path": ".cursor/agents/planner.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "Cursor subagent tool pool semantics are not verified (CA4).",
+              "source": {
+                "platform": "cursor",
+                "scope": "project",
+                "path": ".cursor/agents/planner.md"
+              },
+              "matrixRef": "agent.toolPool"
+            }
+          ]
+        }
+      ],
+      "warnings": [
+        {
+          "category": "trust",
+          "severity": "info",
+          "message": "Cursor project trust model is not documented (CT1).",
+          "evidence": [
+            {
+              "platform": "cursor",
+              "scope": "unknown"
+            }
+          ],
+          "matrixRef": "trust.project",
+          "enforcement": "unknown"
+        }
+      ],
+      "unknownRate": 1
+    },
+    {
+      "agentName": "reviewer",
+      "context": {
+        "preset": "background-subagent",
+        "isMainSession": false,
+        "isBackground": true,
+        "isFork": false,
+        "isTeammate": false,
+        "depth": 0,
+        "maxDepth": 3
+      },
+      "capabilities": [
+        {
+          "capabilityId": "Grep",
+          "kind": "tool",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "cursor",
+              "scope": "project",
+              "path": ".cursor/agents/extra/reviewer-duplicate.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "Cursor subagent tool pool semantics are not verified (CA4).",
+              "source": {
+                "platform": "cursor",
+                "scope": "project",
+                "path": ".cursor/agents/extra/reviewer-duplicate.md"
+              },
+              "matrixRef": "agent.toolPool"
+            }
+          ]
+        }
+      ],
+      "warnings": [
+        {
+          "category": "ambiguous-collision",
+          "severity": "warning",
+          "message": "Agent \"reviewer\" has a same-scope name collision; effective file is unknown (CA3).",
+          "evidence": [
+            {
+              "platform": "cursor",
+              "scope": "project",
+              "path": ".cursor/agents/extra/reviewer-duplicate.md"
+            },
+            {
+              "platform": "cursor",
+              "scope": "project",
+              "path": ".cursor/agents/reviewer.md"
+            }
+          ],
+          "matrixRef": "collision.sameDir",
+          "enforcement": "enforced"
+        },
+        {
+          "category": "trust",
+          "severity": "info",
+          "message": "Cursor project trust model is not documented (CT1).",
+          "evidence": [
+            {
+              "platform": "cursor",
+              "scope": "unknown"
+            }
+          ],
+          "matrixRef": "trust.project",
+          "enforcement": "unknown"
+        }
+      ],
+      "unknownRate": 1
+    }
+  ]
+}

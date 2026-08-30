@@ -4,7 +4,7 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**D1-00 and D1-01 done.** All three platforms now carry a §11.4 coverage report, and fixture runs are isolated from Capsight's own repository. **Scaffolding done — D1-00, D1-01, D1-09 and D1-10 are closed.** The corpus is isolated from this repository, portable across checkout paths, and its isolation guard is falsifiable on all three platforms. **Claude side of D1 is closed.** `pendingFixture` is empty across all 44 entries and coverage reads **92 / 0 / 11 / 34 / 47**. D1-07 (Cursor) is next and has not started; see [CONTINUATION.md](./CONTINUATION.md) for state and operating rules. Read the caveat on what `documentation-only` means before quoting these numbers.
+**D1 phase complete.** All D1-00…D1-16 tasks closed (including deferred D1-11/D1-12 and review findings D1-13…D1-16). Coverage: Claude **92/0/11/23+11ext/47**, Cursor **27/0/3**, Codex **26/0/2**. **EC-01** (cross-platform compatibility facts) is next — see [docs/tasks/EC-01-compat-facts.md](./tasks/EC-01-compat-facts.md) when handoff exists.
 
 Previous: **EC phase written** — ecosystem visualization handoffs EC-01…EC-08, now blocked on D1.
 
@@ -23,8 +23,8 @@ Previous: **V0-04 done** — custom `CapsightSelect` listbox with in-row status 
 | H1 — Correctness hardening | `done` | H1-29 closed; corpus 20/20 |
 | V0 — v0.1 UX polish | `done` | V0-01..V0-04 complete |
 | MP — Multi-platform | `done` | MP-C15 + MP-X15 golden gates |
-| D1 — Depth (evidence) | `in_progress` | No `pendingFixture` left (promoted or declared unpromotable); three coverage reports |
-| EC — Ecosystem visualization | `blocked` | Waits on D1-07 + D1-08 |
+| D1 — Depth (evidence) | `done` | D1-00…D1-16 closed; three-platform coverage reports honest |
+| EC — Ecosystem visualization | `todo` | EC-01 next |
 
 ## D1 scope note
 
@@ -103,9 +103,7 @@ K8 produced the disagreement the handoff asked for rather than a smoothed answer
 
 ## Caveat on `documentation-only`
 
-`entryFactCoverageTier` never consults `factConfidence`, so **any** cited fact lands in `documentation-only` regardless of whether §3 marks it `[doc]`, `[ext]` or `[spike]`. K10 is `[ext]` — an unconfirmed third-party claim — and now counts there purely because an entry that states no rule names it.
-
-This is the metric's designed behaviour rather than a regression (K12 already sat there the same way), but the tier's name overstates what an `[ext]` citation establishes, and the effect compounds every time an entry cites a fact. Treat `documentation-only` as "some entry refers to this", not as "this is documented". D1-13 owns the fix or the rename.
+**Closed by D1-13.** Matrix-referenced facts without fixture evidence are split by registry confidence: `documentation-only` (`[doc]`), `externally-cited` (`[ext]`), `spike-cited` (`[spike]`), `matrix-referenced-unknown`. Do not treat `documentation-only` as "any matrix citation".
 
 D1-06 closed the last six debts and produced the phase's only movement in `fixture-verified`, 9 → 11, by counting **F9 and K4 entire**. Review reproduced both deletion tests: without the plugin-field rule the golden does not merely differ, it becomes confident and wrong — the permission mode flips to `bypassPermissions` and all three warnings vanish.
 

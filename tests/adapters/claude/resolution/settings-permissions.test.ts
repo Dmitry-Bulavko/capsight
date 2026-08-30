@@ -385,6 +385,33 @@ describe("resolveSettingsPermissions", () => {
     ).toMatchObject({ status: "available" });
   });
 
+  it("attributes Bash(...) rules to S6 via settings.bashPrefixRules", () => {
+    const result = resolveSettingsPermissions({
+      layers: [layer("project", 30, { allow: ["Bash(npm run test:*)"] })],
+      capabilities: [availableTool("Bash")],
+      version: VERSION,
+    });
+
+    const rule = ruleCapability(result, "allow:Bash(npm run test:*)");
+    expect(rule?.reasons[0]?.matrixRef).toBe("settings.bashPrefixRules");
+    expect(rule?.reasons[0]?.message).not.toMatch(/S6 documents Bash.*only/);
+  });
+
+  it("does not attribute PowerShell(...) rules to S6 (settings.bashPrefixRules)", () => {
+    const result = resolveSettingsPermissions({
+      layers: [layer("project", 30, { allow: ["PowerShell(Get-Process:*)"] })],
+      capabilities: [availableTool("PowerShell")],
+      version: VERSION,
+    });
+
+    const rule = ruleCapability(result, "allow:PowerShell(Get-Process:*)");
+    expect(rule?.reasons[0]?.matrixRef).toBe("settings.ruleScope");
+    expect(rule?.reasons[0]?.matrixRef).not.toBe("settings.bashPrefixRules");
+    expect(rule?.reasons[0]?.message).toMatch(
+      /S6 documents Bash\(cmd:\*\) prefix matching only and does not cover PowerShell/,
+    );
+  });
+
   it("gives every rule a capability, including ones it cannot act on", () => {
     const result = resolveSettingsPermissions({
       layers: [

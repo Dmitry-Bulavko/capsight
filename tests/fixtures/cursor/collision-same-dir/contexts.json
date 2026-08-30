@@ -1,0 +1,11 @@
+[
+  {
+    "agentName": "planner",
+    "preset": "background-subagent"
+  },
+  {
+    "agentName": "reviewer",
+    "agentSourcePath": ".cursor/agents/extra/reviewer-duplicate.md",
+    "preset": "background-subagent"
+  }
+]

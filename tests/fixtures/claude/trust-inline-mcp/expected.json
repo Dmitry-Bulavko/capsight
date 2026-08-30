@@ -2510,7 +2510,7 @@
           ]
         },
         {
-          "capabilityId": "instruction:.claude/agents/hooked.md",
+          "capabilityId": "hooks:.claude/agents/hooked.md",
           "kind": "instruction",
           "status": "blocked",
           "enforcement": "enforced",

@@ -11,11 +11,11 @@ import type { ManagedSimulationResult } from "../src/application/simulate.js";
 import { buildExecutionContext } from "../src/adapters/claude/resolution/context.js";
 import type { ContextPreset } from "../src/core/model/index.js";
 import type { PermissionMode } from "../src/adapters/claude/model/index.js";
-import { FACTS as CLAUDE_FACTS } from "../src/adapters/claude/version/facts.js";
+import { FACTS as CLAUDE_FACTS, factConfidence as claudeFactConfidence } from "../src/adapters/claude/version/facts.js";
 import { VERSION_MATRIX as CLAUDE_MATRIX } from "../src/adapters/claude/version/matrix.js";
-import { FACTS as CURSOR_FACTS } from "../src/adapters/cursor/version/facts.js";
+import { FACTS as CURSOR_FACTS, factConfidence as cursorFactConfidence } from "../src/adapters/cursor/version/facts.js";
 import { VERSION_MATRIX as CURSOR_MATRIX } from "../src/adapters/cursor/version/matrix.js";
-import { FACTS as CODEX_FACTS } from "../src/adapters/codex/version/facts.js";
+import { FACTS as CODEX_FACTS, factConfidence as codexFactConfidence } from "../src/adapters/codex/version/facts.js";
 import { VERSION_MATRIX as CODEX_MATRIX } from "../src/adapters/codex/version/matrix.js";
 import {
   buildCoverageReport,
@@ -27,6 +27,7 @@ import {
   formatPendingFixtures,
   inspectFixtureCorpus,
   isConfidentCapabilityStatus,
+  matrixReferencedCount,
   pendingFixtureNames,
   platformFixturesRoot,
   resolveFixtureAddDirs,
@@ -37,6 +38,7 @@ import {
   PLATFORM_FIXTURE_NAMES,
   type CoverageFact,
   type CoverageMatrixEntry,
+  type FactRegistryConfidence,
   type PlatformId,
 } from "./fixtures/coverage-report.js";
 import {
@@ -57,12 +59,13 @@ const FIXTURES_ROOT = platformFixturesRoot("claude");
  * name different facts, so there is no denominator they share and no sum of
  * them that means anything (D1-01).
  */
-interface PlatformCoverage<Id extends string = string> {
+interface PlatformCoverage {
   platform: PlatformId;
-  facts: readonly CoverageFact<Id>[];
-  matrix: readonly CoverageMatrixEntry<Id>[];
+  facts: readonly CoverageFact[];
+  matrix: readonly CoverageMatrixEntry[];
   fixturesRoot: string;
   fixtureNames: readonly string[];
+  getFactConfidence: (id: string) => FactRegistryConfidence;
 }
 
 /**
@@ -76,17 +79,22 @@ function definePlatformCoverage<Id extends string>(coverage: {
   matrix: readonly CoverageMatrixEntry<NoInfer<Id>>[];
   fixturesRoot: string;
   fixtureNames: readonly string[];
-}): PlatformCoverage<Id> {
-  return coverage;
+  getFactConfidence: (id: Id) => FactRegistryConfidence;
+}): PlatformCoverage {
+  return {
+    ...coverage,
+    getFactConfidence: (id: string) => coverage.getFactConfidence(id as Id),
+  };
 }
 
-const PLATFORM_COVERAGE: readonly PlatformCoverage[] = [
+const PLATFORM_COVERAGE = [
   definePlatformCoverage({
     platform: "claude",
     facts: CLAUDE_FACTS,
     matrix: CLAUDE_MATRIX,
     fixturesRoot: platformFixturesRoot("claude"),
     fixtureNames: PLATFORM_FIXTURE_NAMES.claude,
+    getFactConfidence: claudeFactConfidence,
   }),
   definePlatformCoverage({
     platform: "cursor",
@@ -94,6 +102,7 @@ const PLATFORM_COVERAGE: readonly PlatformCoverage[] = [
     matrix: CURSOR_MATRIX,
     fixturesRoot: platformFixturesRoot("cursor"),
     fixtureNames: PLATFORM_FIXTURE_NAMES.cursor,
+    getFactConfidence: cursorFactConfidence,
   }),
   definePlatformCoverage({
     platform: "codex",
@@ -101,6 +110,7 @@ const PLATFORM_COVERAGE: readonly PlatformCoverage[] = [
     matrix: CODEX_MATRIX,
     fixturesRoot: platformFixturesRoot("codex"),
     fixtureNames: PLATFORM_FIXTURE_NAMES.codex,
+    getFactConfidence: codexFactConfidence,
   }),
 ];
 
@@ -540,6 +550,7 @@ describe("correctness gate", () => {
           coverage.facts,
           coverage.matrix,
           fixtures,
+          coverage.getFactConfidence,
         );
 
         // §11.4: the denominator is that platform's whole registry and cannot
@@ -550,6 +561,9 @@ describe("correctness gate", () => {
           report.runtimeObserved +
             report.fixtureVerified +
             report.documentationOnly +
+            report.externallyCited +
+            report.spikeCited +
+            report.matrixReferencedUnknown +
             report.unverified,
         ).toBe(coverage.facts.length);
 
@@ -568,24 +582,49 @@ describe("correctness gate", () => {
         expect(report.unverified).toBe(unreferenced.length);
         for (const fact of unreferenced) {
           expect(
-            classifyFactCoverage(fact.id, new Set(fixtures), coverage.matrix),
+            classifyFactCoverage(
+              fact.id,
+              new Set(fixtures),
+              coverage.matrix,
+              coverage.getFactConfidence,
+            ),
           ).toBe("unverified");
         }
 
-        // Every fact a matrix entry references is at least documentation-only.
-        expect(report.fixtureVerified + report.documentationOnly).toBe(
+        // Every fact a matrix entry references is at least matrix-referenced.
+        expect(matrixReferencedCount(report)).toBe(
           coverage.facts.length - unreferenced.length,
         );
 
         const formatted = formatCoverageReport(report, coverage.platform);
-        expect(formatted).toContain("platform            : " + coverage.platform);
-        expect(formatted).toContain(
-          "SPEC §3 facts       : " + coverage.facts.length,
-        );
-        expect(formatted).toContain(
-          "fixture-verified    : " + report.fixtureVerified,
-        );
-        expect(formatted).toContain("unverified          : " + report.unverified);
+        expect(formatted).toContain("platform");
+        expect(formatted).toContain("SPEC §3 facts");
+        expect(formatted).toContain("fixture-verified");
+        expect(formatted).toContain("unverified");
+        expect(formatted).toContain("externally-cited");
+        expect(formatted).toContain("spike-cited");
+        expect(formatted).toContain("matrix-referenced-unknown");
+
+        if (coverage.platform === "claude") {
+          const fixtureSet = new Set(fixtures);
+          expect(
+            classifyFactCoverage("K6", fixtureSet, CLAUDE_MATRIX, claudeFactConfidence),
+          ).toBe("documentation-only");
+          expect(
+            classifyFactCoverage("K10", fixtureSet, CLAUDE_MATRIX, claudeFactConfidence),
+          ).toBe("externally-cited");
+          expect(
+            classifyFactCoverage("K12", fixtureSet, CLAUDE_MATRIX, claudeFactConfidence),
+          ).toBe("fixture-verified");
+          expect(report.externallyCited).toBeGreaterThan(0);
+        }
+
+        if (coverage.platform === "cursor") {
+          const fixtureSet = new Set(fixtures);
+          expect(
+            classifyFactCoverage("CT1", fixtureSet, CURSOR_MATRIX, cursorFactConfidence),
+          ).toBe("matrix-referenced-unknown");
+        }
       },
     );
   }
@@ -594,6 +633,7 @@ describe("correctness gate", () => {
     const fixtures = ["tools-filters"];
     const factId = CLAUDE_FACTS[0]!.id;
     const facts = [{ id: factId }] as const;
+    const getConfidence = () => "doc" as const;
 
     const docEntryWithFixture = [
       {
@@ -609,7 +649,7 @@ describe("correctness gate", () => {
 
     // Fixture directory exists, but the entry never claimed fixture evidence.
     expect(
-      buildCoverageReport(facts, docEntryWithFixture, fixtures),
+      buildCoverageReport(facts, docEntryWithFixture, fixtures, getConfidence),
     ).toMatchObject({ fixtureVerified: 0, documentationOnly: 1 });
 
     // Entry claims fixture evidence, but the named fixture is not available.
@@ -618,6 +658,7 @@ describe("correctness gate", () => {
         facts,
         [{ ...docEntryWithFixture[0], confidence: "fixture" }],
         [],
+        getConfidence,
       ),
     ).toMatchObject({ fixtureVerified: 0, documentationOnly: 1 });
 
@@ -629,6 +670,7 @@ describe("correctness gate", () => {
         facts,
         [{ ...docEntryWithFixture[0], confidence: "fixture", verifiedFacts: [] }],
         fixtures,
+        getConfidence,
       ),
     ).toMatchObject({ fixtureVerified: 0, documentationOnly: 1 });
 
@@ -644,6 +686,7 @@ describe("correctness gate", () => {
           },
         ],
         fixtures,
+        getConfidence,
       ),
     ).toMatchObject({ fixtureVerified: 0, unverified: 1 });
 
@@ -653,6 +696,7 @@ describe("correctness gate", () => {
         facts,
         [{ ...docEntryWithFixture[0], confidence: "fixture" }],
         fixtures,
+        getConfidence,
       ),
     ).toMatchObject({ fixtureVerified: 1, documentationOnly: 0 });
 
@@ -663,6 +707,7 @@ describe("correctness gate", () => {
         facts,
         [{ ...docEntryWithFixture[0], confidence: "runtime-observed" }],
         fixtures,
+        getConfidence,
       ),
     ).toMatchObject({ runtimeObserved: 1, fixtureVerified: 0 });
   });
@@ -689,7 +734,7 @@ describe("correctness gate", () => {
         }
         const source = fs.readFileSync(full, "utf8");
         if (
-          /coverage-report|buildCoverageReport|formatCoverageReport|fixture-verified|documentation-only/.test(
+          /from ["'].*coverage-report|buildCoverageReport|formatCoverageReport|classifyFactCoverage|matrixReferencedCount/.test(
             source,
           )
         ) {

@@ -36,10 +36,16 @@ export interface CoverageMatrixEntry<Id extends string = string> {
   readonly verifiedFacts?: readonly Id[];
 }
 
+/** Trust level from a platform's `facts.ts` registry (SPEC §0.1.1). */
+export type FactRegistryConfidence = "doc" | "ext" | "spike" | "unknown";
+
 export type CoverageTier =
   | "runtime-observed"
   | "fixture-verified"
   | "documentation-only"
+  | "externally-cited"
+  | "spike-cited"
+  | "matrix-referenced-unknown"
   | "unverified";
 
 export interface CoverageReport {
@@ -48,6 +54,9 @@ export interface CoverageReport {
   runtimeObserved: number;
   fixtureVerified: number;
   documentationOnly: number;
+  externallyCited: number;
+  spikeCited: number;
+  matrixReferencedUnknown: number;
   unverified: number;
 }
 
@@ -164,8 +173,8 @@ export const CLAUDE_FIXTURE_NAMES = [
 /** Corpus each platform declares. Cursor and Codex carry one fixture each (MP). */
 export const PLATFORM_FIXTURE_NAMES = {
   claude: CLAUDE_FIXTURE_NAMES,
-  cursor: ["basic"],
-  codex: ["basic"],
+  cursor: ["basic", "collision-same-dir", "ignored-rules", "invalid-agents"],
+  codex: ["basic", "agents-precedence", "nested-instructions", "trust-untrusted"],
 } as const satisfies Record<PlatformId, readonly string[]>;
 
 export type FixtureCompleteness = "complete" | "incomplete" | "empty" | "missing";
@@ -179,9 +188,36 @@ export interface FixtureStatus {
 const COVERAGE_RANK: Record<CoverageTier, number> = {
   unverified: 0,
   "documentation-only": 1,
+  "externally-cited": 1,
+  "spike-cited": 1,
+  "matrix-referenced-unknown": 1,
   "fixture-verified": 2,
   "runtime-observed": 3,
 };
+
+/**
+ * Matrix-referenced facts that lack fixture or runtime evidence are split by
+ * the cited fact's own registry confidence (D1-13): `documentation-only`
+ * reserved for `[doc]` facts; `[ext]` and `[spike]` get honestly named tiers.
+ */
+function refineMatrixReferencedTier<Id extends string>(
+  factId: Id,
+  getFactConfidence: (id: Id) => FactRegistryConfidence,
+): Exclude<
+  CoverageTier,
+  "runtime-observed" | "fixture-verified" | "unverified"
+> {
+  switch (getFactConfidence(factId)) {
+    case "doc":
+      return "documentation-only";
+    case "ext":
+      return "externally-cited";
+    case "spike":
+      return "spike-cited";
+    case "unknown":
+      return "matrix-referenced-unknown";
+  }
+}
 
 export function resolutionKey(resolution: NormalizedResolution): string {
   const { agentName, context } = resolution;
@@ -419,6 +455,7 @@ export function classifyFactCoverage<Id extends string>(
   factId: Id,
   availableFixtures: ReadonlySet<string>,
   matrix: readonly CoverageMatrixEntry<Id>[],
+  getFactConfidence: (id: Id) => FactRegistryConfidence,
 ): CoverageTier {
   let tier: CoverageTier = "unverified";
 
@@ -430,6 +467,10 @@ export function classifyFactCoverage<Id extends string>(
     if (COVERAGE_RANK[candidate] > COVERAGE_RANK[tier]) {
       tier = candidate;
     }
+  }
+
+  if (tier === "documentation-only") {
+    return refineMatrixReferencedTier(factId, getFactConfidence);
   }
 
   return tier;
@@ -453,16 +494,22 @@ export function buildCoverageReport<Id extends string>(
   facts: readonly CoverageFact<Id>[],
   matrix: readonly CoverageMatrixEntry<Id>[],
   availableFixtures: readonly string[],
+  getFactConfidence: (id: Id) => FactRegistryConfidence,
 ): CoverageReport {
   const fixtureSet = new Set(availableFixtures);
 
   let runtimeObserved = 0;
   let fixtureVerified = 0;
   let documentationOnly = 0;
+  let externallyCited = 0;
+  let spikeCited = 0;
+  let matrixReferencedUnknown = 0;
   let unverified = 0;
 
   for (const fact of facts) {
-    switch (classifyFactCoverage(fact.id, fixtureSet, matrix)) {
+    switch (
+      classifyFactCoverage(fact.id, fixtureSet, matrix, getFactConfidence)
+    ) {
       case "runtime-observed":
         runtimeObserved += 1;
         break;
@@ -471,6 +518,15 @@ export function buildCoverageReport<Id extends string>(
         break;
       case "documentation-only":
         documentationOnly += 1;
+        break;
+      case "externally-cited":
+        externallyCited += 1;
+        break;
+      case "spike-cited":
+        spikeCited += 1;
+        break;
+      case "matrix-referenced-unknown":
+        matrixReferencedUnknown += 1;
         break;
       case "unverified":
         unverified += 1;
@@ -483,8 +539,29 @@ export function buildCoverageReport<Id extends string>(
     runtimeObserved,
     fixtureVerified,
     documentationOnly,
+    externallyCited,
+    spikeCited,
+    matrixReferencedUnknown,
     unverified,
   };
+}
+
+const COVERAGE_REPORT_LABEL_WIDTH = 26;
+
+function coverageReportLine(label: string, value: number | string): string {
+  return label.padEnd(COVERAGE_REPORT_LABEL_WIDTH) + ": " + value;
+}
+
+/** Counts every tier a matrix entry references (any evidence level). */
+export function matrixReferencedCount(report: CoverageReport): number {
+  return (
+    report.runtimeObserved +
+    report.fixtureVerified +
+    report.documentationOnly +
+    report.externallyCited +
+    report.spikeCited +
+    report.matrixReferencedUnknown
+  );
 }
 
 export function formatCoverageReport(
@@ -492,11 +569,14 @@ export function formatCoverageReport(
   platform: PlatformId,
 ): string {
   return [
-    "platform            : " + platform,
-    "SPEC §3 facts       : " + report.total,
-    "runtime-observed    : " + report.runtimeObserved,
-    "fixture-verified    : " + report.fixtureVerified,
-    "documentation-only  : " + report.documentationOnly,
-    "unverified          : " + report.unverified,
+    coverageReportLine("platform", platform),
+    coverageReportLine("SPEC §3 facts", report.total),
+    coverageReportLine("runtime-observed", report.runtimeObserved),
+    coverageReportLine("fixture-verified", report.fixtureVerified),
+    coverageReportLine("documentation-only", report.documentationOnly),
+    coverageReportLine("externally-cited", report.externallyCited),
+    coverageReportLine("spike-cited", report.spikeCited),
+    coverageReportLine("matrix-referenced-unknown", report.matrixReferencedUnknown),
+    coverageReportLine("unverified", report.unverified),
   ].join("\n");
 }

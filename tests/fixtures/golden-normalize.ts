@@ -160,6 +160,12 @@ function pathFromRecord(record: Record<string, unknown>): string | undefined {
   return undefined;
 }
 
+function omitUndefined<T extends Record<string, unknown>>(value: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, entry]) => entry !== undefined),
+  ) as Partial<T>;
+}
+
 function normalizeDiscovery(
   snapshot: ProjectSnapshot,
   projectRoot: string,
@@ -171,6 +177,13 @@ function normalizeDiscovery(
         const { id: _id, ...rest } = agent;
         return {
           ...rest,
+          ...(rest.configuration
+            ? {
+                configuration: omitUndefined(
+                  rest.configuration as unknown as Record<string, unknown>,
+                ),
+              }
+            : {}),
           source: normalizeSource(projectRoot, agent.source),
           // Collision evidence carries absolute paths too (A3/A4 fixtures).
           ...(agent.collision
@@ -285,6 +298,13 @@ function normalizeDiscovery(
   };
 }
 
+function isAgentHooksCapability(capability: ResolvedCapability): boolean {
+  return (
+    capability.capabilityId === "agent-hooks" ||
+    capability.sources.some((source) => source.fieldPath === "frontmatter.hooks")
+  );
+}
+
 function normalizeCapabilityId(
   capability: ResolvedCapability,
   projectRoot: string,
@@ -293,6 +313,13 @@ function normalizeCapabilityId(
     const sourcePath = capability.sources[0]?.path;
     if (sourcePath) {
       return `mcp-server:${toPosixRelative(projectRoot, sourcePath)}`;
+    }
+  }
+
+  if (isAgentHooksCapability(capability)) {
+    const sourcePath = capability.sources[0]?.path;
+    if (sourcePath) {
+      return `hooks:${toPosixRelative(projectRoot, sourcePath)}`;
     }
   }
 

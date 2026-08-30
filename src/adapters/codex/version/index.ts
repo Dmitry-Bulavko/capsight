@@ -6,11 +6,20 @@ export {
 } from "./detect.js";
 export {
   gateCapability,
+  gateWarning,
   isMatrixId,
   lookupFeature,
   MATRIX,
+  resolveEnforcement,
   VERSION_MATRIX,
   type FeatureCompatibility,
   type MatrixId,
 } from "./matrix.js";
-export { FACT, FACTS, type Fact, type FactId } from "./facts.js";
+export {
+  FACT,
+  FACTS,
+  factConfidence,
+  isFactId,
+  type Fact,
+  type FactId,
+} from "./facts.js";

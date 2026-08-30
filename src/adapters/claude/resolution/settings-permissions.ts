@@ -152,8 +152,10 @@ function ruleMatrixId(
     case "scoped":
       switch (parsed.tool) {
         case "Bash":
-        case "PowerShell":
           return MATRIX["settings.bashPrefixRules"];
+        case "PowerShell":
+          // S6 names Bash(cmd:*) only; PowerShell is not attributed to that fact.
+          return MATRIX["settings.ruleScope"];
         case "Read":
         case "Edit":
           return MATRIX["settings.pathRules"];
@@ -610,10 +612,14 @@ function resolveRule(
   }
 
   if (parsed.kind === "scoped") {
+    const s6Disclaimer =
+      parsed.tool === "PowerShell"
+        ? " S6 documents Bash(cmd:*) prefix matching only and does not cover PowerShell, so this rule is not attributed to that fact."
+        : "";
     return of(
       "unknown",
       "unknown",
-      `${quoted} narrows individual invocations of ${parsed.tool} rather than the tool itself; this product resolves what the platform applies and does not evaluate rule arguments (§2.3), so the effect of this rule is unknown.`,
+      `${quoted} narrows individual invocations of ${parsed.tool} rather than the tool itself; this product resolves what the platform applies and does not evaluate rule arguments (§2.3), so the effect of this rule is unknown.${s6Disclaimer}`,
     );
   }
 

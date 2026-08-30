@@ -82,7 +82,10 @@ describe("codex adapter", () => {
     });
 
     expect(effective.capabilities.length).toBeGreaterThan(0);
-    expect(effective.capabilities.every((cap) => cap.status === "unknown")).toBe(true);
-    expect(effective.unknownRate).toBe(1);
+    const instructionCap = effective.capabilities.find((cap) => cap.kind === "instruction");
+    expect(instructionCap?.status).toBe("available");
+    expect(instructionCap?.enforcement).toBe("enforced");
+    expect(effective.capabilities.some((cap) => cap.status === "unknown")).toBe(true);
+    expect(effective.unknownRate).toBeCloseTo(2 / 3);
   });
 });

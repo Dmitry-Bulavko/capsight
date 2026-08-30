@@ -8,6 +8,7 @@ export {
   gateCapability,
   gateCollision,
   gateDiscovery,
+  gateWarning,
   isMatrixId,
   lookupFeature,
   MATRIX,
@@ -15,4 +16,12 @@ export {
   type FeatureCompatibility,
   type MatrixId,
 } from "./matrix.js";
-export { FACT, FACTS, type Fact, type FactId } from "./facts.js";
+export {
+  FACT,
+  FACTS,
+  factConfidence,
+  factsByConfidence,
+  isFactId,
+  type Fact,
+  type FactId,
+} from "./facts.js";

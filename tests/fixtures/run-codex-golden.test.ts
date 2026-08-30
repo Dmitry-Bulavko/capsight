@@ -13,6 +13,7 @@ import {
   normalizeGoldenOutput,
   type NormalizedGoldenOutput,
 } from "./golden-normalize.js";
+import { resolveFixtureScanPath } from "./coverage-report.js";
 import {
   CHECKOUT_SHAPES,
   assertFixtureIsolated,
@@ -118,7 +119,7 @@ async function runGoldenFixture(
   const { resolve } = await import("../../src/application/resolve.js");
 
   const scanResult = await scan({
-    projectPath: projectRoot,
+    projectPath: resolveFixtureScanPath(fixtureDir),
     platform: "codex",
   });
 
@@ -171,6 +172,17 @@ describe("codex golden fixtures", () => {
     const { actual, expected } = await runGoldenFixture("basic");
     expect(actual).toEqual(expected);
   });
+
+  for (const fixtureName of [
+    "agents-precedence",
+    "nested-instructions",
+    "trust-untrusted",
+  ] as const) {
+    it(`matches expected discovery and resolution for codex/${fixtureName}`, async () => {
+      const { actual, expected } = await runGoldenFixture(fixtureName);
+      expect(actual).toEqual(expected);
+    });
+  }
 
   // §11.2/§13 invariant 2. Codex's `walkProjectScopes` climbs until it finds a
   // directory containing `.git`, exactly like Claude's, so a codex fixture scan

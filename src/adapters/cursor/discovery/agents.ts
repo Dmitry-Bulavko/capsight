@@ -9,7 +9,7 @@ import {
   parseFrontmatter,
 } from "../parsing/frontmatter.js";
 import { FACT } from "../version/facts.js";
-import { gateCollision, MATRIX } from "../version/matrix.js";
+import { gateCollision, gateDiscovery, MATRIX } from "../version/matrix.js";
 import { redactUnknownFields } from "./redact.js";
 import type { ProjectScopeLevel } from "./project-walk.js";
 import type { AgentDiscoveryResult, RawAgentFile } from "./types.js";
@@ -66,9 +66,10 @@ function sourceInfo(scope: Scope, filePath: string): SourceInfo {
 }
 
 function buildConfiguration(data: Record<string, unknown>): CursorAgentConfiguration {
+  const model = getStringField(data, "model");
   return {
-    tools: Array.isArray(data.tools) ? data.tools.map(String) : undefined,
-    model: getStringField(data, "model"),
+    ...(Array.isArray(data.tools) ? { tools: data.tools.map(String) } : {}),
+    ...(model !== undefined ? { model } : {}),
     unknownFields: redactUnknownFields(data, KNOWN_FRONTMATTER_KEYS),
   };
 }
@@ -118,8 +119,14 @@ function resolveCollisions(parsed: ParsedAgent[]): Agent[] {
   const agents: Agent[] = [];
   const invalidAgents: Agent[] = [];
 
+  const invalidGate = gateDiscovery(MATRIX["agent.invalid"]);
+  const collisionGate = gateCollision(MATRIX["collision.sameDir"]);
+
   for (const item of parsed) {
     if (item.kind === "invalid") {
+      if (invalidGate.unfounded) {
+        continue;
+      }
       invalidAgents.push({
         id: agentId(item.file.filePath),
         name: path.basename(item.file.filePath, ".md"),
@@ -153,7 +160,7 @@ function resolveCollisions(parsed: ParsedAgent[]): Agent[] {
   const ambiguousIds = new Set<string>();
   for (const byName of byAgentsRoot.values()) {
     for (const [, group] of byName) {
-      if (group.length > 1) {
+      if (group.length > 1 && !collisionGate.unfounded) {
         for (const item of group) {
           ambiguousIds.add(item.agent.id);
         }
@@ -161,7 +168,6 @@ function resolveCollisions(parsed: ParsedAgent[]): Agent[] {
     }
   }
 
-  const collisionGate = gateCollision(MATRIX["collision.sameDir"]);
   for (const item of valid.filter((entry) => ambiguousIds.has(entry.agent.id))) {
     const group = byAgentsRoot.get(item.file.agentsRoot)!.get(item.agent.name)!;
     agents.push({

@@ -19,6 +19,12 @@ export const FACTS = [
   { id: "XR1", section: "2", statement: "Repo root: directory containing .git", confidence: "doc" },
   { id: "XR2", section: "2", statement: "Custom root via project_root_markers", confidence: "doc" },
   { id: "XR3", section: "2", statement: "Layered .codex/config.toml root to cwd", confidence: "doc" },
+  {
+    id: "XR4",
+    section: "9",
+    statement: "Ancestor AGENTS.md above scan path included in walk",
+    confidence: "doc",
+  },
   { id: "XI1", section: "4", statement: "Global AGENTS.override.md else AGENTS.md", confidence: "doc" },
   { id: "XI2", section: "4", statement: "Project walk root to cwd for instructions", confidence: "doc" },
   { id: "XI3", section: "4", statement: "Fallback filenames from config", confidence: "doc" },
@@ -46,3 +52,17 @@ export const FACT = Object.fromEntries(FACTS.map((fact) => [fact.id, fact.id])) 
   FactId,
   FactId
 >;
+
+const FACT_BY_ID = new Map<string, Fact>(FACTS.map((fact) => [fact.id, fact]));
+
+export function isFactId(value: string): value is FactId {
+  return FACT_BY_ID.has(value);
+}
+
+function getFact(id: FactId): Fact {
+  return FACT_BY_ID.get(id)!;
+}
+
+export function factConfidence(id: FactId): FactConfidence {
+  return getFact(id).confidence;
+}

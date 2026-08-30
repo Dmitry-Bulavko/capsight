@@ -45,6 +45,14 @@ export interface PlanOptions {
   projectPath?: string;
 }
 
+/** Locale-independent string order (code unit comparison). */
+function compareStrings(left: string, right: string): number {
+  if (left === right) {
+    return 0;
+  }
+  return left < right ? -1 : 1;
+}
+
 export async function plan(options: PlanOptions): Promise<PlanResult> {
   const scanResult = options.snapshot
     ? { snapshot: options.snapshot, status: "complete" as const }
@@ -66,9 +74,7 @@ export async function plan(options: PlanOptions): Promise<PlanResult> {
 
   const agentsById = new Map(snapshot.agents.map((agent) => [agent.id, agent]));
   const files: PlanFileChange[] = [];
-  const agentIds = Object.keys(options.pending.byAgent).sort((left, right) =>
-    left.localeCompare(right),
-  );
+  const agentIds = Object.keys(options.pending.byAgent).sort(compareStrings);
 
   for (const agentId of agentIds) {
     const pendingEdits = options.pending.byAgent[agentId];
@@ -95,7 +101,7 @@ export async function plan(options: PlanOptions): Promise<PlanResult> {
     });
   }
 
-  files.sort((left, right) => left.path.localeCompare(right.path));
+  files.sort((left, right) => compareStrings(left.path, right.path));
 
   return {
     snapshotId: snapshot.id,

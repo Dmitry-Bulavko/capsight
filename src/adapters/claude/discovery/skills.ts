@@ -115,7 +115,7 @@ async function discoverCommands(
         path.basename(entry.name, ".md"),
       );
       if (skill) {
-        skills.push(skill);
+        skills.push({ ...skill, kind: "command" });
       }
     }
   }
@@ -168,6 +168,7 @@ export async function discoverSkills(
     for (const skill of await discoverCommands(path.join(claudeDir, "commands"), scopeType)) {
       addSkill({
         ...skill,
+        kind: "command",
         source: {
           ...skill.source,
           matrixRef: MATRIX["discovery.commandNamePrecedence"],

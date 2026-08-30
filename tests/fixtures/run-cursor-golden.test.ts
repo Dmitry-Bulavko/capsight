@@ -156,6 +156,13 @@ describe("cursor golden fixtures", () => {
     expect(actual).toEqual(expected);
   });
 
+  for (const fixtureName of ["ignored-rules", "collision-same-dir", "invalid-agents"] as const) {
+    it(`matches expected discovery and resolution for cursor/${fixtureName}`, async () => {
+      const { actual, expected } = await runGoldenFixture(fixtureName);
+      expect(actual).toEqual(expected);
+    });
+  }
+
   // §11.2/§13 invariant 2. The cursor golden passed identically with and
   // without the isolation hook, so a regression in it was invisible (H1-07).
   //

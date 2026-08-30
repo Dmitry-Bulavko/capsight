@@ -12,7 +12,7 @@ import type {
 } from "../model/index.js";
 import { CURSOR_PLATFORM } from "../model/index.js";
 import { FACT } from "../version/facts.js";
-import { gateCapability, MATRIX } from "../version/matrix.js";
+import { gateCapability, gateCollision, gateDiscovery, MATRIX } from "../version/matrix.js";
 import type { DiscoveredInstruction, DiscoveredMcpServer, DiscoveredSkill } from "../discovery/types.js";
 
 export class AgentNotFoundError extends Error {
@@ -60,7 +60,7 @@ export async function resolveEffectiveConfiguration(
   }
 
   const capabilities: ResolvedCapability[] = [];
-  const warnings: Warning[] = [];
+  const warnings: Warning[] = [...snapshot.warnings];
   const toolGate = gateCapability(MATRIX["agent.toolPool"]);
 
   if (snapshot.trust.accepted === "unknown") {

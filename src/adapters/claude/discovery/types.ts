@@ -11,6 +11,8 @@ export interface DiscoveredSkill {
   description?: string;
   source: SourceInfo;
   path: string;
+  /** `"command"` for `.claude/commands/*.md`; absent or `"skill"` for skill dirs. */
+  kind?: "skill" | "command";
   /**
    * Confidence that the platform actually attaches this skill (§6). Set only
    * for skills a version-sensitive discovery rule attached (K12); absent for

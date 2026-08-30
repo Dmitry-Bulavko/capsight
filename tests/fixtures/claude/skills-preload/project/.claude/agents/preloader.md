@@ -6,6 +6,7 @@ tools:
 skills:
   - helper
   - restricted
+  - deploy
 ---
 
 You preload project skills into context.

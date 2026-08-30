@@ -71,6 +71,19 @@ describe("computeAgentToolFrontmatter", () => {
     expect(next.tools).toEqual(["Read"]);
     expect(next.disallowedTools).toBeUndefined();
   });
+
+  it("sorts tool names by code unit order (locale-independent)", () => {
+    const agent: Agent = {
+      ...ALLOWLIST_AGENT,
+      configuration: {
+        tools: ["ä-tool", "z-tool"],
+        unknownFields: {},
+      },
+    };
+
+    const next = computeAgentToolFrontmatter(agent, {});
+    expect(next.tools).toEqual(["z-tool", "ä-tool"]);
+  });
 });
 
 describe("diffToolFrontmatter", () => {
