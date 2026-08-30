@@ -75,8 +75,20 @@ function normalizeSource(
   };
 }
 
+/**
+ * Locale-independent string order, for the same reason the resolver uses one:
+ * `localeCompare` follows the host's collation, so a golden ordered with it
+ * could be recorded on one machine and fail to reproduce on another.
+ */
+function compareStrings(left: string, right: string): number {
+  if (left === right) {
+    return 0;
+  }
+  return left < right ? -1 : 1;
+}
+
 function sortByKey<T>(items: T[], keyFn: (item: T) => string): T[] {
-  return [...items].sort((left, right) => keyFn(left).localeCompare(keyFn(right)));
+  return [...items].sort((left, right) => compareStrings(keyFn(left), keyFn(right)));
 }
 
 /**
@@ -91,7 +103,8 @@ function sortByKeys<T>(items: T[], keyFn: (item: T) => string[]): T[] {
     const rightKeys = keyFn(right);
     const length = Math.max(leftKeys.length, rightKeys.length);
     for (let index = 0; index < length; index += 1) {
-      const comparison = (leftKeys[index] ?? "").localeCompare(
+      const comparison = compareStrings(
+        leftKeys[index] ?? "",
         rightKeys[index] ?? "",
       );
       if (comparison !== 0) {

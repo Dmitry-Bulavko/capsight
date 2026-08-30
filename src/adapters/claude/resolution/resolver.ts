@@ -1,3 +1,4 @@
+import path from "node:path";
 import type {
   EffectiveConfiguration,
   ExecutionContext,
@@ -849,7 +850,63 @@ function computeUnknownRate(capabilities: ResolvedCapability[]): number {
   return unknownCount / capabilities.length;
 }
 
-function sortCapabilities(capabilities: ResolvedCapability[]): ResolvedCapability[] {
+/**
+ * Locale-independent string order. `localeCompare` without an explicit locale
+ * follows the host's collation, so it can order the same two ids differently on
+ * two machines. Capability order is part of the output contract, so it is
+ * compared by code unit instead.
+ */
+function compareStrings(left: string, right: string): number {
+  if (left === right) {
+    return 0;
+  }
+  return left < right ? -1 : 1;
+}
+
+/**
+ * Sort key for one capability. An instruction id is a hash of the *absolute*
+ * file path (`discovery/instructions.ts`), so ordering instructions on their id
+ * would make the order a function of where the project happens to be checked
+ * out. Instruction capabilities order on their source path relative to the
+ * project path instead: the scope walk stays inside one tree, so that relative
+ * path is the same string at every checkout location, including for a parent
+ * scope reached by walking up (`../CLAUDE.md`).
+ *
+ * The one instruction source outside that tree is the user-level
+ * `~/.claude/CLAUDE.md`, whose path relative to the project is a function of
+ * the checkout depth. It is keyed on its own absolute path and sorts after the
+ * project sources; discovery yields at most one of them, so it never ties.
+ */
+function capabilitySortKey(
+  capability: ResolvedCapability,
+  projectPath: string,
+): string {
+  if (capability.kind !== "instruction") {
+    return capability.capabilityId;
+  }
+
+  const source = capability.sources[0];
+  if (source?.path === undefined) {
+    return `0\u0000${capability.capabilityId}`;
+  }
+
+  if (source.scope === "user") {
+    return `1\u0000${toPosixPath(source.path)}`;
+  }
+
+  return `0\u0000${toPosixPath(
+    path.relative(path.resolve(projectPath), path.resolve(source.path)),
+  )}`;
+}
+
+function toPosixPath(value: string): string {
+  return value.split(path.sep).join("/");
+}
+
+function sortCapabilities(
+  capabilities: ResolvedCapability[],
+  projectPath: string,
+): ResolvedCapability[] {
   const kindOrder: Record<ResolvedCapability["kind"], number> = {
     permission: 0,
     tool: 1,
@@ -864,7 +921,10 @@ function sortCapabilities(capabilities: ResolvedCapability[]): ResolvedCapabilit
     if (kindDiff !== 0) {
       return kindDiff;
     }
-    return left.capabilityId.localeCompare(right.capabilityId);
+    return compareStrings(
+      capabilitySortKey(left, projectPath),
+      capabilitySortKey(right, projectPath),
+    );
   });
 }
 
@@ -973,16 +1033,19 @@ export async function resolveEffectiveConfiguration(
     ...buildInstructionCapabilities(snapshot, context, version),
   ];
 
-  const capabilities = sortCapabilities(
-    ambiguity
+  const withCollisionEffects = ambiguity
+    ? resolved.map((capability) =>
+        applyAmbiguity(capability, ambiguity, requested.name),
+      )
+    : shadowing
       ? resolved.map((capability) =>
-          applyAmbiguity(capability, ambiguity, requested.name),
+          applyShadowing(capability, shadowing, requested.name),
         )
-      : shadowing
-        ? resolved.map((capability) =>
-            applyShadowing(capability, shadowing, requested.name),
-          )
-        : resolved,
+      : resolved;
+
+  const capabilities = sortCapabilities(
+    withCollisionEffects,
+    snapshot.projectPath,
   );
 
   const warnings = [

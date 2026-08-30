@@ -30,9 +30,12 @@ import {
   type NormalizedGoldenOutput,
 } from "./golden-normalize.js";
 import {
+  CHECKOUT_SHAPES,
   cleanupFixtureHome,
+  cleanupRelocatedCheckouts,
   cleanupUnisolatedFixtures,
   fixtureHomeDir,
+  materializeFixtureAtCheckout,
   materializeUnisolatedFixture,
   restoreProcessEnv,
   selectFixtureAgent,
@@ -237,6 +240,7 @@ describe("golden fixtures", () => {
   afterAll(() => {
     cleanupFixtureHome();
     cleanupUnisolatedFixtures();
+    cleanupRelocatedCheckouts();
   });
 
   for (const fixtureName of discoverFixtureNames(
@@ -342,6 +346,43 @@ describe("golden fixtures", () => {
       expect(actual).toEqual(expected);
     } finally {
       fsSync.rmSync(plantedDir, { recursive: true, force: true });
+    }
+  });
+
+  // §11.2/§13 invariant 2, third leak of the H1-22 class: an instruction id is
+  // `sha256("instruction:" + absolute path)` (`discovery/instructions.ts`), and
+  // `sortCapabilities` used to break ties on that id, so the recorded order of
+  // the `instructions` fixture was a function of where the repository happened
+  // to be checked out. It reproduced at `/home/user/capsight` and reordered at
+  // `/home/runner/work/capsight/capsight`, which is where GitHub Actions checks
+  // out — the corpus could not have gone green in CI. The order now comes from
+  // the project-relative source path, so replaying the fixture from unrelated
+  // roots must reproduce the recorded golden byte for byte.
+  it("records the same golden from unrelated absolute checkout paths", async () => {
+    const fixtureDir = path.join(FIXTURES_ROOT, "instructions");
+    const orders: string[][] = [];
+
+    for (const shape of CHECKOUT_SHAPES) {
+      const relocated = materializeFixtureAtCheckout(fixtureDir, shape);
+      const { actual, expected } = await runGoldenFixture("instructions", {
+        fixtureDir: relocated,
+      });
+      expect(actual, `golden differs at ${shape}`).toEqual(expected);
+      orders.push(
+        actual.resolutions[0]!.capabilities
+          .filter((capability) => capability.kind === "instruction")
+          .map((capability) => capability.capabilityId),
+      );
+    }
+
+    // Three instruction sources, so the tie-break is actually exercised: two
+    // in the project root and one in the `app/` scope the fixture scans from.
+    for (const order of orders) {
+      expect(order).toEqual([
+        "instruction:CLAUDE.local.md",
+        "instruction:CLAUDE.md",
+        "instruction:app/CLAUDE.md",
+      ]);
     }
   });
 

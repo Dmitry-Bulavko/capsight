@@ -13,8 +13,11 @@ import {
   type NormalizedGoldenOutput,
 } from "./golden-normalize.js";
 import {
+  CHECKOUT_SHAPES,
   cleanupFixtureHome,
+  cleanupRelocatedCheckouts,
   fixtureHomeDir,
+  materializeFixtureAtCheckout,
   restoreProcessEnv,
   selectFixtureAgent,
 } from "./fixture-runtime.js";
@@ -79,8 +82,10 @@ function applyFixtureEnv(env: Record<string, string>, homeDir?: string): void {
 
 async function runGoldenFixture(
   fixtureName: string,
+  /** Fixture directory to read instead of the corpus one (relocation test). */
+  fixtureDirOverride?: string,
 ): Promise<{ actual: NormalizedGoldenOutput; expected: NormalizedGoldenOutput }> {
-  const fixtureDir = path.join(FIXTURES_ROOT, fixtureName);
+  const fixtureDir = fixtureDirOverride ?? path.join(FIXTURES_ROOT, fixtureName);
   const projectRoot = path.join(fixtureDir, "project");
   const contract = await loadFixtureContract(fixtureDir);
   const expected = JSON.parse(
@@ -138,10 +143,28 @@ describe("cursor golden fixtures", () => {
 
   afterAll(() => {
     cleanupFixtureHome();
+    cleanupRelocatedCheckouts();
   });
 
   it("matches expected discovery and resolution for cursor/basic", async () => {
     const { actual, expected } = await runGoldenFixture("basic");
     expect(actual).toEqual(expected);
+  });
+
+  // The claude corpus ordered instruction capabilities by an id derived from
+  // the absolute file path, which made the recorded order a function of the
+  // checkout location (D1-09). `cursor/basic` carries two instruction
+  // capabilities, so it is checked for the same exposure rather than assumed
+  // clear: its ids are `instruction:<type>:<basename>` and the capability list
+  // keeps discovery order, but only a replay from unrelated roots shows it.
+  it("records the same golden from unrelated absolute checkout paths", async () => {
+    for (const shape of CHECKOUT_SHAPES) {
+      const relocated = materializeFixtureAtCheckout(
+        path.join(FIXTURES_ROOT, "basic"),
+        shape,
+      );
+      const { actual, expected } = await runGoldenFixture("basic", relocated);
+      expect(actual, `golden differs at ${shape}`).toEqual(expected);
+    }
   });
 });

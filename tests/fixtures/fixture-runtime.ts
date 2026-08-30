@@ -44,10 +44,10 @@ export function cleanupFixtureHome(): void {
  * Git refuses to index a path named `.git`, so the marker cannot be committed
  * into a fixture tree; the test run creates it and removes it again
  * (`tests/fixtures/global-setup.ts`, `.gitignore`). The marker is created
- * *in place* rather than in a copy under `os.tmpdir()`, because instruction
- * capabilities are ordered by `sha256(absolute path)` (claude resolver
- * `sortCapabilities`): relocating a fixture reorders `capabilities` in the
- * normalized output, which would mean editing `expected.json`.
+ * *in place* rather than in a copy under `os.tmpdir()` because the corpus is
+ * the checked-out tree; a relocated copy now produces the identical golden
+ * (D1-09 removed the absolute path from capability ordering), which
+ * `materializeFixtureAtCheckout` relies on.
  *
  * Production behaviour is untouched — no `stopAt` override exists, so the
  * corpus exercises exactly the boundary logic a real scan takes; the fixture
@@ -90,10 +90,65 @@ export function removeFixtureRepoRoots(markers: readonly string[]): void {
 }
 
 /**
+ * Absolute checkout paths a run has to be indifferent to (§11.2, §13
+ * invariant 2). They are unrelated to each other and to the corpus one, and
+ * the first is the shape GitHub Actions checks out into by default — the one
+ * that would have kept the suite red in CI while it passed locally.
+ *
+ * Each is realized as a suffix under its own `os.tmpdir()` container: a test
+ * cannot create `/home/runner/...` on the machine it runs on, and does not
+ * need to. What the goldens were sensitive to is the absolute path *string*
+ * (it was hashed into instruction ids), and these four share no component
+ * with one another.
+ */
+export const CHECKOUT_SHAPES = [
+  "home/runner/work/capsight/capsight",
+  "home/alice/capsight",
+  "Users/bob/dev/capsight",
+  "srv/ci/build",
+] as const;
+
+let relocatedCheckouts: string[] = [];
+
+/**
+ * Copy a fixture so it can be replayed from an unrelated absolute path.
+ *
+ * The copy carries the repo-root marker `global-setup.ts` created in the
+ * corpus fixture before any test ran, so the scope walk still stops at
+ * `project/` — it is the checkout location that changes and nothing else.
+ */
+export function materializeFixtureAtCheckout(
+  fixtureDir: string,
+  shape: string,
+): string {
+  const source = path.resolve(fixtureDir);
+  const container = fs.mkdtempSync(
+    path.join(os.tmpdir(), "capsight-checkout-"),
+  );
+  relocatedCheckouts.push(container);
+  const target = path.join(container, ...shape.split("/"));
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.cpSync(source, target, { recursive: true });
+  const marker = path.join(target, "project", ".git");
+  if (!fs.existsSync(marker)) {
+    throw new Error(
+      `Relocated fixture ${target} has no repo-root marker; the walk would climb out of it.`,
+    );
+  }
+  return target;
+}
+
+export function cleanupRelocatedCheckouts(): void {
+  for (const container of relocatedCheckouts) {
+    fs.rmSync(container, { recursive: true, force: true });
+  }
+  relocatedCheckouts = [];
+}
+
+/**
  * Copy a fixture into a temp container, without the repo-root marker, so a
  * test can show what the unisolated walk does. Only the leak demonstration in
- * `run-golden.test.ts` uses this: a golden must never be recorded from a copy,
- * because the absolute path reaches capability ordering (see above).
+ * `run-golden.test.ts` uses this.
  */
 export function materializeUnisolatedFixture(fixtureDir: string): string {
   const source = path.resolve(fixtureDir);

@@ -24,12 +24,6 @@
     "skills": [],
     "instructions": [
       {
-        "type": "CLAUDE.md",
-        "path": "app/CLAUDE.md",
-        "scope": "project",
-        "sizeBytes": 63
-      },
-      {
         "type": "CLAUDE.local.md",
         "path": "CLAUDE.local.md",
         "scope": "nested-project",
@@ -40,6 +34,12 @@
         "path": "CLAUDE.md",
         "scope": "nested-project",
         "sizeBytes": 80
+      },
+      {
+        "type": "CLAUDE.md",
+        "path": "app/CLAUDE.md",
+        "scope": "project",
+        "sizeBytes": 63
       }
     ],
     "mcpServers": [],
@@ -792,6 +792,31 @@
           ]
         },
         {
+          "capabilityId": "instruction:CLAUDE.local.md",
+          "kind": "instruction",
+          "status": "available",
+          "enforcement": "advisory",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "CLAUDE.local.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Instruction source loaded into session context (I1).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "CLAUDE.local.md"
+              },
+              "matrixRef": "I1"
+            }
+          ]
+        },
+        {
           "capabilityId": "instruction:CLAUDE.md",
           "kind": "instruction",
           "status": "available",
@@ -836,31 +861,6 @@
                 "platform": "claude",
                 "scope": "project",
                 "path": "app/CLAUDE.md"
-              },
-              "matrixRef": "I1"
-            }
-          ]
-        },
-        {
-          "capabilityId": "instruction:CLAUDE.local.md",
-          "kind": "instruction",
-          "status": "available",
-          "enforcement": "advisory",
-          "sources": [
-            {
-              "platform": "claude",
-              "scope": "nested-project",
-              "path": "CLAUDE.local.md"
-            }
-          ],
-          "reasons": [
-            {
-              "type": "declared",
-              "message": "Instruction source loaded into session context (I1).",
-              "source": {
-                "platform": "claude",
-                "scope": "nested-project",
-                "path": "CLAUDE.local.md"
               },
               "matrixRef": "I1"
             }

@@ -318,60 +318,6 @@
           ]
         },
         {
-          "capabilityId": "settings-permission:project:allow:mcp__*",
-          "kind": "permission",
-          "status": "blocked",
-          "enforcement": "enforced",
-          "sources": [
-            {
-              "platform": "claude",
-              "scope": "project",
-              "path": ".claude/settings.json",
-              "fieldPath": "permissions.allow[1]"
-            }
-          ],
-          "reasons": [
-            {
-              "type": "denied",
-              "message": "permissions.allow entry \"mcp__*\" is an unanchored glob and grants nothing (S4).",
-              "source": {
-                "platform": "claude",
-                "scope": "project",
-                "path": ".claude/settings.json",
-                "fieldPath": "permissions.allow[1]"
-              },
-              "matrixRef": "settings.allowGlobIneffective"
-            }
-          ]
-        },
-        {
-          "capabilityId": "settings-permission:project:allow:mcp__github(issues)",
-          "kind": "permission",
-          "status": "blocked",
-          "enforcement": "enforced",
-          "sources": [
-            {
-              "platform": "claude",
-              "scope": "project",
-              "path": ".claude/settings.json",
-              "fieldPath": "permissions.allow[5]"
-            }
-          ],
-          "reasons": [
-            {
-              "type": "denied",
-              "message": "permissions.allow entry \"mcp__github(issues)\" uses the bracket syntax, which MCP permission rules do not support, so it grants nothing (S3).",
-              "source": {
-                "platform": "claude",
-                "scope": "project",
-                "path": ".claude/settings.json",
-                "fieldPath": "permissions.allow[5]"
-              },
-              "matrixRef": "settings.mcpRuleSyntax"
-            }
-          ]
-        },
-        {
           "capabilityId": "settings-permission:project:allow:Read(/src/**)",
           "kind": "permission",
           "status": "unknown",
@@ -432,6 +378,60 @@
               "type": "version",
               "message": "Matrix entry \"settings.webFetchRules\" rests on non-[doc] fact(s) S8 but has no fixture-level evidence; enforcement is unknown (SPEC §8.2).",
               "matrixRef": "settings.webFetchRules"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:mcp__*",
+          "kind": "permission",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[1]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.allow entry \"mcp__*\" is an unanchored glob and grants nothing (S4).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.allow[1]"
+              },
+              "matrixRef": "settings.allowGlobIneffective"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:mcp__github(issues)",
+          "kind": "permission",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[5]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.allow entry \"mcp__github(issues)\" uses the bracket syntax, which MCP permission rules do not support, so it grants nothing (S3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.allow[5]"
+              },
+              "matrixRef": "settings.mcpRuleSyntax"
             }
           ]
         },
@@ -1542,60 +1542,6 @@
           ]
         },
         {
-          "capabilityId": "settings-permission:project:allow:mcp__*",
-          "kind": "permission",
-          "status": "blocked",
-          "enforcement": "enforced",
-          "sources": [
-            {
-              "platform": "claude",
-              "scope": "project",
-              "path": ".claude/settings.json",
-              "fieldPath": "permissions.allow[1]"
-            }
-          ],
-          "reasons": [
-            {
-              "type": "denied",
-              "message": "permissions.allow entry \"mcp__*\" is an unanchored glob and grants nothing (S4).",
-              "source": {
-                "platform": "claude",
-                "scope": "project",
-                "path": ".claude/settings.json",
-                "fieldPath": "permissions.allow[1]"
-              },
-              "matrixRef": "settings.allowGlobIneffective"
-            }
-          ]
-        },
-        {
-          "capabilityId": "settings-permission:project:allow:mcp__github(issues)",
-          "kind": "permission",
-          "status": "blocked",
-          "enforcement": "enforced",
-          "sources": [
-            {
-              "platform": "claude",
-              "scope": "project",
-              "path": ".claude/settings.json",
-              "fieldPath": "permissions.allow[5]"
-            }
-          ],
-          "reasons": [
-            {
-              "type": "denied",
-              "message": "permissions.allow entry \"mcp__github(issues)\" uses the bracket syntax, which MCP permission rules do not support, so it grants nothing (S3).",
-              "source": {
-                "platform": "claude",
-                "scope": "project",
-                "path": ".claude/settings.json",
-                "fieldPath": "permissions.allow[5]"
-              },
-              "matrixRef": "settings.mcpRuleSyntax"
-            }
-          ]
-        },
-        {
           "capabilityId": "settings-permission:project:allow:Read(/src/**)",
           "kind": "permission",
           "status": "unknown",
@@ -1656,6 +1602,60 @@
               "type": "version",
               "message": "Matrix entry \"settings.webFetchRules\" rests on non-[doc] fact(s) S8 but has no fixture-level evidence; enforcement is unknown (SPEC §8.2).",
               "matrixRef": "settings.webFetchRules"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:mcp__*",
+          "kind": "permission",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[1]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.allow entry \"mcp__*\" is an unanchored glob and grants nothing (S4).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.allow[1]"
+              },
+              "matrixRef": "settings.allowGlobIneffective"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:allow:mcp__github(issues)",
+          "kind": "permission",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.allow[5]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "permissions.allow entry \"mcp__github(issues)\" uses the bracket syntax, which MCP permission rules do not support, so it grants nothing (S3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.allow[5]"
+              },
+              "matrixRef": "settings.mcpRuleSyntax"
             }
           ]
         },
