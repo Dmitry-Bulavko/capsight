@@ -208,7 +208,13 @@ describe("S11 settings keys", () => {
     // no accepted trust record does not withhold this approval, and the
     // capability says so instead of leaving the reader to guess.
     const trustReason = capability!.reasons.find((entry) => entry.type === "trust");
-    expect(trustReason?.message).toMatch(/trust is never applied to servers declared in \.mcp\.json/);
+    expect(trustReason?.message).toMatch(
+      /servers declared in \.mcp\.json load without a trust check \(R4\)/,
+    );
+    // §7.2 is what limits the scope of blocked_by_trust; R4 is the separate
+    // list of what loads without a trust check. Each proposition cites the
+    // rule that founds it, so a reader chasing the reference finds it there.
+    expect(trustReason?.message).toContain("§7.2 limits blocked_by_trust");
   });
 
   it("does not read a false value as the opposite claim", () => {

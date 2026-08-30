@@ -290,18 +290,19 @@ export function projectMcpApprovalReason(
   return approval.value
     ? reason(
         "declared",
-        'Settings set "enableAllProjectMcpServers" to true, so MCP servers declared in the ' +
-          "project's .mcp.json are approved without a prompt (S11). Approval is not an " +
-          "observation that a server starts or a statement about what it does: an ordinary " +
-          "scan does not start MCP servers.",
+        'Settings set "enableAllProjectMcpServers" to true, so MCP servers declared in ' +
+          ".mcp.json are approved without a prompt (S11). Approval is not an observation " +
+          "that a server starts or a statement about what it does: an ordinary scan does " +
+          "not start MCP servers.",
         approval.source,
         MATRIX["settings.projectMcpAutoApproval"],
       )
     : reason(
         "unknown",
         'Settings set "enableAllProjectMcpServers" to false. §3.5 states what the key does ' +
-          "when it approves the project's .mcp.json servers and not what a false value leaves " +
-          "in place, so whether each server is prompted for individually is not determined.",
+          "when it approves the servers declared in .mcp.json and not what a false value " +
+          "leaves in place, so whether each server is prompted for individually is not " +
+          "determined.",
         approval.source,
         MATRIX["settings.projectMcpAutoApproval"],
       );
@@ -312,9 +313,10 @@ export function projectMcpApprovalReason(
  * project whose `.mcp.json` declares nothing.
  *
  * Trust is stated rather than assumed. §7.2 applies `blocked_by_trust` only to
- * R1 and R5 and names servers from `.mcp.json` as outside it (R4), so trust
- * does not withhold this approval; §3 describes no further interaction between
- * the key and the trust dialog, and none is invented here.
+ * R1 and R5 and names servers from `.mcp.json` as outside it, and R4 is what
+ * says such a server loads without a trust check, so trust does not withhold
+ * this approval; §3 describes no further interaction between the key and the
+ * trust dialog, and none is invented here.
  */
 function buildProjectMcpApprovalCapability(
   approval: { value: boolean; source: SourceInfo; contested: boolean },
@@ -326,10 +328,10 @@ function buildProjectMcpApprovalCapability(
     reasons.push(
       reason(
         "trust",
-        "Project trust does not withhold this approval: trust is never applied to servers " +
-          "declared in .mcp.json, and blocked_by_trust covers inline agent servers and agent " +
-          "frontmatter hooks only (R4). §3 states no further interaction between this setting " +
-          "and the trust dialog.",
+        "Project trust does not withhold this approval: servers declared in .mcp.json load " +
+          "without a trust check (R4), and §7.2 limits blocked_by_trust to inline agent " +
+          "servers (R1) and agent frontmatter hooks (R5). §3 states no further interaction " +
+          "between this setting and the trust dialog.",
         approval.source,
         MATRIX["settings.projectMcpAutoApproval"],
       ),

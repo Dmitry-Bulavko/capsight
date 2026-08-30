@@ -664,7 +664,7 @@
           "reasons": [
             {
               "type": "declared",
-              "message": "Settings set \"enableAllProjectMcpServers\" to true, so MCP servers declared in the project's .mcp.json are approved without a prompt (S11). Approval is not an observation that a server starts or a statement about what it does: an ordinary scan does not start MCP servers.",
+              "message": "Settings set \"enableAllProjectMcpServers\" to true, so MCP servers declared in .mcp.json are approved without a prompt (S11). Approval is not an observation that a server starts or a statement about what it does: an ordinary scan does not start MCP servers.",
               "source": {
                 "platform": "claude",
                 "scope": "project",
@@ -675,7 +675,7 @@
             },
             {
               "type": "trust",
-              "message": "Project trust does not withhold this approval: trust is never applied to servers declared in .mcp.json, and blocked_by_trust covers inline agent servers and agent frontmatter hooks only (R4). §3 states no further interaction between this setting and the trust dialog.",
+              "message": "Project trust does not withhold this approval: servers declared in .mcp.json load without a trust check (R4), and §7.2 limits blocked_by_trust to inline agent servers (R1) and agent frontmatter hooks (R5). §3 states no further interaction between this setting and the trust dialog.",
               "source": {
                 "platform": "claude",
                 "scope": "project",
@@ -1447,7 +1447,7 @@
             },
             {
               "type": "declared",
-              "message": "Settings set \"enableAllProjectMcpServers\" to true, so MCP servers declared in the project's .mcp.json are approved without a prompt (S11). Approval is not an observation that a server starts or a statement about what it does: an ordinary scan does not start MCP servers.",
+              "message": "Settings set \"enableAllProjectMcpServers\" to true, so MCP servers declared in .mcp.json are approved without a prompt (S11). Approval is not an observation that a server starts or a statement about what it does: an ordinary scan does not start MCP servers.",
               "source": {
                 "platform": "claude",
                 "scope": "project",
@@ -2033,7 +2033,7 @@
           "reasons": [
             {
               "type": "declared",
-              "message": "Settings set \"enableAllProjectMcpServers\" to true, so MCP servers declared in the project's .mcp.json are approved without a prompt (S11). Approval is not an observation that a server starts or a statement about what it does: an ordinary scan does not start MCP servers.",
+              "message": "Settings set \"enableAllProjectMcpServers\" to true, so MCP servers declared in .mcp.json are approved without a prompt (S11). Approval is not an observation that a server starts or a statement about what it does: an ordinary scan does not start MCP servers.",
               "source": {
                 "platform": "claude",
                 "scope": "project",
@@ -2044,7 +2044,7 @@
             },
             {
               "type": "trust",
-              "message": "Project trust does not withhold this approval: trust is never applied to servers declared in .mcp.json, and blocked_by_trust covers inline agent servers and agent frontmatter hooks only (R4). §3 states no further interaction between this setting and the trust dialog.",
+              "message": "Project trust does not withhold this approval: servers declared in .mcp.json load without a trust check (R4), and §7.2 limits blocked_by_trust to inline agent servers (R1) and agent frontmatter hooks (R5). §3 states no further interaction between this setting and the trust dialog.",
               "source": {
                 "platform": "claude",
                 "scope": "project",
@@ -2816,7 +2816,7 @@
             },
             {
               "type": "declared",
-              "message": "Settings set \"enableAllProjectMcpServers\" to true, so MCP servers declared in the project's .mcp.json are approved without a prompt (S11). Approval is not an observation that a server starts or a statement about what it does: an ordinary scan does not start MCP servers.",
+              "message": "Settings set \"enableAllProjectMcpServers\" to true, so MCP servers declared in .mcp.json are approved without a prompt (S11). Approval is not an observation that a server starts or a statement about what it does: an ordinary scan does not start MCP servers.",
               "source": {
                 "platform": "claude",
                 "scope": "project",
