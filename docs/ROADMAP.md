@@ -4,7 +4,7 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**D1 phase opened and sequenced ahead of EC** — foundation before surface. The §11.4 metric stands at 9 of 92 Claude facts fixture-verified, and Cursor and Codex have no coverage denominator at all while every one of their matrix entries is `unknown`. D1 closes that; EC then builds the visualization on top of adapters that actually found their answers. **D1-01 (per-platform coverage denominator) is next** — measurement before work, so every later task is judged by its effect on three real numbers.
+**D1-00 and D1-01 done.** All three platforms now carry a §11.4 coverage report, and fixture runs are isolated from Capsight's own repository. **D1-09 (portable golden ordering) is next** — it precedes the rest of the phase because the corpus currently fails on a standard CI checkout path.
 
 Previous: **EC phase written** — ecosystem visualization handoffs EC-01…EC-08, now blocked on D1.
 
@@ -38,11 +38,25 @@ documentation-only     : 31
 unverified             : 52
 ```
 
-Cursor and Codex have **no report at all** — `coverage-report.ts` hardcodes the Claude facts registry and fixtures root. Their matrices hold three and three entries, every one `status: "unknown"`, so `resolveEnforcement` returns `unknown` for everything those adapters are asked.
+Measured after D1-01, which gave the two newer adapters a denominator for the first time:
+
+| platform | facts | runtime-observed | fixture-verified | documentation-only | unverified | fixtures |
+|---|---|---|---|---|---|---|
+| claude | 92 | 0 | 9 | 31 | 52 | 20 |
+| cursor | 26 | 0 | 0 | 4 | 22 | 1 |
+| codex | 25 | 0 | 0 | 4 | 21 | 1 |
+
+Cursor and Codex sit at zero fixture-verified for a structural reason, not merely a thin corpus: their `FeatureCompatibility` interfaces carry no `verifiedFacts` field, and every matrix entry is `confidence: "doc"` with `status: "unknown"`, so `entryFactCoverageTier` cannot return anything above `documentation-only` however many fixtures are added. D1-07 and D1-08 have to add that field before their numbers can move at all.
 
 The concrete target is the matrix's own `pendingFixture` field: twelve entries name the fixture that still owes them evidence, covering A10, F9, K4, K5, R5, S6, S7, S8, S9, S10 and B2. Emptying that field is what finishing D1 means on the Claude side. It is a ceiling, not a promise — some of those facts will end the phase still `unknown`, with the reason recorded, and that is a result rather than a shortfall (§14, H1-28).
 
-Four facts reach no matrix entry whatsoever and so count `unverified` by construction: S11, K8, K10, K11. D1-04 and D1-05 own them.
+**52 of the 92 Claude facts reach no matrix entry at all** — that is precisely why `unverified` is 52. An earlier draft of this section said "four", having checked only the four IDs it named; the real figure is the whole unreferenced set (`A2, A5, A6, A7, A8, F1, F5, F6, F7, F10, T4, T5, T6, P3, …`). D1-04 and D1-05 own four of them (S11, K8, K10, K11); the remaining 48 are not scoped by any task in this phase, and closing them is larger than D1.
+
+So D1's honest ceiling is narrower than the gap: the phase converts the twelve `pendingFixture` debts and four named facts, and leaves the rest visible and counted.
+
+## Known corpus defect (D1-09)
+
+Instruction `capabilityId` is `sha256("instruction:" + absolute path)`, and `sortCapabilities` orders by that hash *before* `golden-normalize` rewrites ids to relative paths. Golden order is therefore a function of where the repository is checked out. `claude/instructions` and `cursor/basic` reproduce at `/home/user/capsight` and `/workspace/capsight` but reorder — and fail — at `/home/runner/work/...`, the default GitHub Actions path. The corpus is not portable, and this must be fixed before any CI runs the suite.
 
 ## EC scope note
 
