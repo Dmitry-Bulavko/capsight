@@ -4,7 +4,7 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**D1-00 and D1-01 done.** All three platforms now carry a §11.4 coverage report, and fixture runs are isolated from Capsight's own repository. **Scaffolding done — D1-00, D1-01, D1-09 and D1-10 are closed.** The corpus is isolated from this repository, portable across checkout paths, and its isolation guard is falsifiable on all three platforms. **D1-04 done; D1-05 is next.** The metric moved for the first time in the phase: S11 went from `unverified` to `documentation-only`, so Claude now reads **92 / 0 / 9 / 32 / 51**. The `pendingFixture` backlog stands at 6, and five of the six entries retired so far turned out to be unprovable rather than proved.
+**D1-00 and D1-01 done.** All three platforms now carry a §11.4 coverage report, and fixture runs are isolated from Capsight's own repository. **Scaffolding done — D1-00, D1-01, D1-09 and D1-10 are closed.** The corpus is isolated from this repository, portable across checkout paths, and its isolation guard is falsifiable on all three platforms. **D1-05 done; D1-06 is next.** Claude coverage reads **92 / 0 / 9 / 36 / 47** — `unverified` has fallen from 52 to 47 across the phase. The `pendingFixture` backlog stands at 6. Read the caveat on what `documentation-only` actually means before quoting that number.
 
 Previous: **EC phase written** — ecosystem visualization handoffs EC-01…EC-08, now blocked on D1.
 
@@ -96,6 +96,16 @@ Both entries also record *why* they are unprovable in a way a later reader can a
 D1-04 broke the pattern, and it is worth naming why it could. S6, S7, S9 and S10 all asked the product to state what a rule does to a *specific* invocation — a command line, a path, a subagent that has no capability kind. S11 asks only what two settings keys are and what they widen, which is discovery. So it produced code where the others produced refusals, and it moved the fact from having no consumer at all to being read by the resolver.
 
 Both new entries are `confidence: "fixture"` with `verifiedFacts: []` — the D1-02 shape again, because each pins one clause of S11 rather than the fact entire. `fixture-verified` therefore stays at 9. The lesson is consistent across all three evidence tasks so far: **the §11.4 fact count is a far slower measure than the work behind it**, and entry-level confidence is where the progress actually shows.
+
+D1-05 produced the phase's largest single movement — four facts (K8, K10, K11, K6) out of `unverified` — and its most useful correction. **The handoff's premise was wrong.** It assumed `.claude/commands/*.md` was not discovered and warned that adding a discovery path merely to state a rule would be scope creep. In fact `discoverCommands` already existed on `main` and the skills-first walk was already deciding name collisions — with no matrix entry, no gate and no fixture. That is an `[ext]` fact driving a confident discovery output, the M1 acceptance #9 violation this phase exists to close. Founding K11 added no discovery path; it attached the gate and the evidence to a mechanism that was already running blind.
+
+K8 produced the disagreement the handoff asked for rather than a smoothed answer: the rule as implemented is **S2's, not K8's**. K8 speaks of a *global* deny; S2 says a deny at any level is not overridden. The fixture's deny is project-layer, so the rule rests on S2, the broader statement, rather than on reading K8's "global" more widely than it is written.
+
+## Caveat on `documentation-only`
+
+`entryFactCoverageTier` never consults `factConfidence`, so **any** cited fact lands in `documentation-only` regardless of whether §3 marks it `[doc]`, `[ext]` or `[spike]`. K10 is `[ext]` — an unconfirmed third-party claim — and now counts there purely because an entry that states no rule names it.
+
+This is the metric's designed behaviour rather than a regression (K12 already sat there the same way), but the tier's name overstates what an `[ext]` citation establishes, and the effect compounds every time an entry cites a fact. Treat `documentation-only` as "some entry refers to this", not as "this is documented". D1-13 owns the fix or the rename.
 
 **This lowers the phase's ceiling.** The earlier estimate of 9 → roughly 20 fixture-verified assumed the twelve pending entries were mostly convertible. On the first sample, three of four were not. A more honest expectation is that D1 ends with a materially smaller `pendingFixture` list, a handful of promotions, and several facts formally recorded as unprovable by fixture — with the §11.4 count moving far less than the amount of work suggests.
 
