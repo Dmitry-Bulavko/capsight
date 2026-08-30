@@ -190,8 +190,8 @@ D1-00 was found while verifying D1-01: fixture scans walk past the fixture proje
 |----|-------|-------|--------|-----------|-------|------------|
 | D1-00 | D1 | Fixture runs must not read Capsight's own `.claude/` | done | §11.2, inv 2, H1-22 | tests/fixtures/fixture-runtime.ts, run-*-golden.test.ts | Repo's own agents cannot change a golden |
 | D1-01 | D1 | Per-platform coverage denominator | done | §11.4, §11.3 | tests/fixtures/coverage-report.ts, correctness-gate.test.ts | Three reports; no hardcoded Claude root |
-| D1-09 | D1 | Golden order must not depend on the checkout path | in_progress | §11.2, §11.3, H1-22 | resolver.ts, instructions.ts, golden-normalize.ts | Order identical across ≥3 checkout paths |
-| D1-10 | D1 | D1-00 review follow-ups (crash residue, concurrent runs, silent no-op) | todo | §11.2, §11.3 | tests/fixtures/fixture-runtime.ts, global-setup.ts, .gitignore | Isolation asserted on all three platforms |
+| D1-09 | D1 | Golden order must not depend on the checkout path | done | §11.2, §11.3, H1-22 | resolver.ts, instructions.ts, golden-normalize.ts | Order identical across ≥3 checkout paths |
+| D1-10 | D1 | Isolation and portability follow-ups (5 review findings) | in_progress | §11.2, §11.3 | tests/fixtures/fixture-runtime.ts, global-setup.ts, .gitignore | Isolation asserted on all three platforms |
 | D1-02 | D1 | Complete settings-permissions fixture (S8–S10) | todo | §3.5, §11.1–11.4, H1-28 | tests/fixtures/claude/settings-permissions/, matrix.ts | Each fact fixture-backed or doc-only with a reason |
 | D1-03 | D1 | S6/S7 rule-argument semantics — evaluate or refuse | todo | §3.5 S6–S7, §2.3, §14 | resolution/settings-permissions.ts, matrix.ts | Written decision per fact; no permission engine |
 | D1-04 | D1 | S11 additionalDirectories + enableAllProjectMcpServers | todo | §3.5 S11, §4.4, §8.2 | discovery/settings.ts, resolution/, matrix.ts | Two entries; trust interaction founded or unknown |

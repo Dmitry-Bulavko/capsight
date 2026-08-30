@@ -4,7 +4,7 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**D1-00 and D1-01 done.** All three platforms now carry a §11.4 coverage report, and fixture runs are isolated from Capsight's own repository. **D1-09 (portable golden ordering) is next** — it precedes the rest of the phase because the corpus currently fails on a standard CI checkout path.
+**D1-00 and D1-01 done.** All three platforms now carry a §11.4 coverage report, and fixture runs are isolated from Capsight's own repository. **D1-09 done** — the corpus is now reproducible from any checkout path, so CI is unblocked. **D1-10 (isolation follow-ups) is next**, then D1-02.
 
 Previous: **EC phase written** — ecosystem visualization handoffs EC-01…EC-08, now blocked on D1.
 
@@ -54,9 +54,11 @@ The concrete target is the matrix's own `pendingFixture` field: twelve entries n
 
 So D1's honest ceiling is narrower than the gap: the phase converts the twelve `pendingFixture` debts and four named facts, and leaves the rest visible and counted.
 
-## Known corpus defect (D1-09)
+## Corpus portability (closed by D1-09)
 
-Instruction `capabilityId` is `sha256("instruction:" + absolute path)`, and `sortCapabilities` orders by that hash *before* `golden-normalize` rewrites ids to relative paths. Golden order is therefore a function of where the repository is checked out. `claude/instructions` and `cursor/basic` reproduce at `/home/user/capsight` and `/workspace/capsight` but reorder — and fail — at `/home/runner/work/...`, the default GitHub Actions path. The corpus is not portable, and this must be fixed before any CI runs the suite.
+Instruction `capabilityId` was `sha256("instruction:" + absolute path)` and `sortCapabilities` ordered by that hash, so golden order was a function of the checkout location: the corpus reproduced at `/home/user/capsight` but reordered at `/home/runner/work/...`, the default GitHub Actions path. D1-09 sorts instruction capabilities on their project-relative path instead and drops the locale-sensitive comparator alongside it. Both re-recorded goldens were verified to be pure permutations, and the portability test replays four unrelated checkout shapes. `cursor/basic` was checked empirically and needed no change.
+
+The corpus is portable; CI can run the suite from any path.
 
 ## EC scope note
 

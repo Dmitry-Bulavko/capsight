@@ -68,4 +68,6 @@ So the **order** of instruction capabilities in `expected.json` is a function of
 
 ## Notes
 
+**The recorded order is lexical and carries no semantic meaning — do not claim otherwise.** The implementation report described the resulting `CLAUDE.local.md, CLAUDE.md, app/CLAUDE.md` as "parents before the scoped file, matching the instruction hierarchy". The review established that this is post-hoc: the order holds only because `.` (0x2E) sorts below `C`, and it contradicts SPEC §3.8 I1, which puts `~/.claude/CLAUDE.md` first and `CLAUDE.local.md` last. Nothing in the code or docs asserts the hierarchy reading, and nothing later should — the sort key exists to be stable across checkouts, not to express precedence. The order it replaced was equally meaningless, so nothing regressed.
+
 Found by the reviewer during D1-00/D1-01. It runs before the rest of the phase because every later D1 task adds fixtures to a corpus that is currently not portable, and because CI cannot be trusted until it is.
