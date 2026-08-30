@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { buildEcosystemInventory } from "../../src/application/ecosystem.js";
-import {
-  buildEcosystemHealth,
-  healthFilterResourceIds,
-} from "../../src/application/ecosystem-health.js";
-import { buildStatusSummary } from "../../src/application/scan-store.js";
+import { buildEcosystemHealth } from "../../src/application/ecosystem-health.js";
+import { healthFilterResourceIds } from "../../src/application/ecosystem-health-filter.js";
+import { buildStatusSummary } from "../../src/application/scan-status-summary.js";
 import type { ScanResult } from "../../src/application/scan.js";
 import { RESOURCE_CLASS } from "../../src/core/compat/resource-class.js";
 import type { Agent, ProjectSnapshot, Warning } from "../../src/core/model/index.js";

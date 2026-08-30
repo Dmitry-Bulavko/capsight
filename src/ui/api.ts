@@ -155,5 +155,5 @@ export type {
   EcosystemApiPayload,
   EcosystemResourceDetail,
 } from "../server/routes/ecosystem.js";
-export { isMarkdownContentKind } from "../application/resource-content.js";
+export { isMarkdownContentKind } from "../core/model/ecosystem.js";
 export type { ResourceContentResult } from "../application/resource-content.js";

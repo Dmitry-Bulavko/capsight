@@ -26,7 +26,7 @@ import {
 import {
   healthFilterResourceIds as resolveHealthFilterIds,
   type HealthFilterId,
-} from "../../application/ecosystem-health.js";
+} from "../../application/ecosystem-health-filter.js";
 import { CompatBadges } from "./CompatBadges.js";
 import { EcosystemHealth } from "./EcosystemHealth.js";
 import {

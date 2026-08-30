@@ -5,7 +5,7 @@ import type {
   EcosystemResourceDetail,
   RelatedPathEntry,
 } from "../../server/routes/ecosystem.js";
-import { isMarkdownContentKind } from "../../application/resource-content.js";
+import { isMarkdownContentKind } from "../../core/model/ecosystem.js";
 import {
   buildCompatBadgeTrace,
   CompatBadges,

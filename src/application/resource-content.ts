@@ -3,6 +3,7 @@ import type { FileHandle } from "node:fs/promises";
 import path from "node:path";
 import { parse as parseYaml } from "yaml";
 import type { InventoryResource, PlatformDetection } from "../core/model/index.js";
+import { isMarkdownContentKind } from "../core/model/ecosystem.js";
 
 export const RESOURCE_CONTENT_MAX_BYTES = 512 * 1024;
 
@@ -24,9 +25,7 @@ export class ResourceContentError extends Error {
   }
 }
 
-export function isMarkdownContentKind(kind: InventoryResource["kind"]): boolean {
-  return kind === "agent" || kind === "skill" || kind === "instruction";
-}
+export { isMarkdownContentKind } from "../core/model/ecosystem.js";
 
 function isPathContained(filePath: string, roots: readonly string[]): boolean {
   const normalized = path.resolve(filePath);

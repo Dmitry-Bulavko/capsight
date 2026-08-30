@@ -8,6 +8,10 @@ import type { Enforcement, Scope, SourceInfo } from "./index.js";
 
 export type InventoryResourceKind = "agent" | "skill" | "mcp_server" | "instruction";
 
+export function isMarkdownContentKind(kind: InventoryResourceKind): boolean {
+  return kind === "agent" || kind === "skill" || kind === "instruction";
+}
+
 export type PlatformDetectionStatus = "detected" | "not-detected";
 
 export interface PlatformDetection {

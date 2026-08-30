@@ -13,7 +13,8 @@ import type {
   Warning,
 } from "../core/model/index.js";
 import type { InventoryResourceWithCompat } from "../server/routes/ecosystem.js";
-import { buildStatusSummary, type ScanStatusSummary } from "./scan-store.js";
+import type { ScanStatusSummary } from "./scan-status-summary.js";
+import { buildStatusSummary } from "./scan-status-summary.js";
 import type { ScanResult } from "./scan.js";
 
 export type HealthFilterId = string;
@@ -367,38 +368,4 @@ export function buildEcosystemHealth(input: BuildEcosystemHealthInput): Ecosyste
     ),
     warnings,
   };
-}
-
-export function healthFilterResourceIds(
-  health: EcosystemHealthSummary,
-  filterId: HealthFilterId | null,
-): string[] | null {
-  if (!filterId) {
-    return null;
-  }
-
-  const links: HealthCountLink[] = [
-    health.localOverrides,
-    health.unresolvedCollisions,
-    health.compatUnknown,
-    health.warnings.info,
-    health.warnings.warning,
-    health.warnings.critical,
-  ];
-
-  for (const platform of health.platforms) {
-    links.push(
-      platform.agents.active,
-      platform.agents.invalid,
-      platform.agents.ambiguous,
-      platform.agents.shadowed,
-      platform.skills,
-      platform.instructions,
-      platform.mcpNotSupported,
-      platform.mcpUnknown,
-    );
-  }
-
-  const match = links.find((link) => link.id === filterId);
-  return match ? match.resourceIds : null;
 }

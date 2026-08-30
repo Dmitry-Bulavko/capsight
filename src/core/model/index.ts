@@ -216,6 +216,7 @@ export type {
   PlatformDetection,
   PlatformDetectionStatus,
 } from "./ecosystem.js";
+export { isMarkdownContentKind } from "./ecosystem.js";
 
 export interface ProjectSnapshot<
   TConfiguration extends AgentConfiguration = AgentConfiguration,
