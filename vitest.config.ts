@@ -6,6 +6,10 @@ export default defineConfig({
     globals: true,
     environment: "node",
     include: ["tests/**/*.test.ts"],
+    // Fixture projects get a repository root for the duration of the run, so a
+    // fixture scan stops at `project/` instead of walking into the Capsight
+    // checkout and reading its `.claude/agents/` (D1-00, §13 invariant 2).
+    globalSetup: ["tests/fixtures/global-setup.ts"],
   },
   resolve: {
     alias: {

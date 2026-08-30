@@ -31,7 +31,9 @@ import {
 } from "./golden-normalize.js";
 import {
   cleanupFixtureHome,
+  cleanupUnisolatedFixtures,
   fixtureHomeDir,
+  materializeUnisolatedFixture,
   restoreProcessEnv,
   selectFixtureAgent,
 } from "./fixture-runtime.js";
@@ -108,13 +110,18 @@ interface RunGoldenOptions {
    * golden does not depend on the order the scan happened to produce.
    */
   mutateSnapshot?: (snapshot: ClaudeProjectSnapshot) => ClaudeProjectSnapshot;
+  /**
+   * Fixture directory the run reads, instead of the corpus one. Only the leak
+   * demonstration overrides it, with an unisolated copy.
+   */
+  fixtureDir?: string;
 }
 
 async function runGoldenFixture(
   fixtureName: string,
   options: RunGoldenOptions = {},
 ): Promise<{ actual: NormalizedGoldenOutput; expected: NormalizedGoldenOutput }> {
-  const fixtureDir = path.join(FIXTURES_ROOT, fixtureName);
+  const fixtureDir = options.fixtureDir ?? path.join(FIXTURES_ROOT, fixtureName);
   const projectRoot = path.join(fixtureDir, "project");
   const contract = await loadFixtureContract(fixtureDir);
   const expected = JSON.parse(
@@ -229,6 +236,7 @@ describe("golden fixtures", () => {
 
   afterAll(() => {
     cleanupFixtureHome();
+    cleanupUnisolatedFixtures();
   });
 
   for (const fixtureName of discoverFixtureNames(
@@ -293,6 +301,47 @@ describe("golden fixtures", () => {
       expect(isolated.actual).toEqual(isolated.expected);
     } finally {
       fsSync.rmSync(dirtyHome, { recursive: true, force: true });
+    }
+  });
+
+  // §11.2/§13 invariant 2, second leak of the H1-22 class: `walkProjectScopes`
+  // climbs until it finds a directory containing `.git`, and a fixture tree
+  // carries none, so a fixture run walked into the Capsight checkout and read
+  // this repository's own `.claude/agents/`. Adding `reviewer.md` there
+  // collided with `add-dir`'s own `reviewer` agent (A1) and broke five
+  // goldens. The run now gives each fixture project its own repository root
+  // (`tests/fixtures/global-setup.ts`), so nothing above `project/` is reached.
+  it("keeps an agent declared above the fixture project out of a golden", async () => {
+    const fixtureDir = path.join(FIXTURES_ROOT, "add-dir");
+    // Same name and shape as Capsight's own `.claude/agents/reviewer.md`,
+    // planted directly above `project/` — where the checkout's own scope sat.
+    const plant = (root: string): void => {
+      const agentsDir = path.join(root, ".claude", "agents");
+      fsSync.mkdirSync(agentsDir, { recursive: true });
+      fsSync.writeFileSync(
+        path.join(agentsDir, "reviewer.md"),
+        "---\nname: reviewer\ndescription: Ambient agent that must not be seen.\ntools: Read\n---\n\nPlanted by the test.\n",
+        "utf8",
+      );
+    };
+
+    // The plant is real: on a copy without the repo-root marker the walk
+    // reaches the ancestor, and the planted `reviewer` collides with the
+    // fixture's own — the exact failure this repository's `reviewer.md` caused.
+    const leaky = materializeUnisolatedFixture(fixtureDir);
+    plant(leaky);
+    await expect(
+      runGoldenFixture("add-dir", { fixtureDir: leaky }),
+    ).rejects.toThrow(/agent reviewer is declared by 2 entries/);
+
+    // The isolated corpus fixture cannot see the same plant one level above it.
+    const plantedDir = path.join(fixtureDir, ".claude");
+    plant(fixtureDir);
+    try {
+      const { actual, expected } = await runGoldenFixture("add-dir");
+      expect(actual).toEqual(expected);
+    } finally {
+      fsSync.rmSync(plantedDir, { recursive: true, force: true });
     }
   });
 

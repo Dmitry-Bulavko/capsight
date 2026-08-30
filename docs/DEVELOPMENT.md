@@ -75,3 +75,30 @@ version.txt    # Claude Code version
 contexts.json  # execution contexts
 expected.json  # golden expectations
 ```
+
+Optional entries a fixture may add: `cwd.txt` (scan starts at that path inside
+`project/`, exercising the upward walk), `add-dirs.json`, `plugin-roots.json`
+and `managed-bundle/`.
+
+### Fixture isolation
+
+A golden must depend on the fixture, not on the machine (SPEC §13 invariant 2).
+Two ambient inputs would otherwise reach it, and the test run neutralizes both:
+
+- `$HOME` points at an empty temp directory, so `~/.claude/settings.json` and
+  `~/.claude.json` cannot reach a golden (H1-22).
+- Each fixture `project/` is given a `.git` directory for the duration of the
+  run (`tests/fixtures/global-setup.ts`), so the upward scope walk stops at the
+  fixture project instead of climbing into the Capsight checkout and reading
+  *this* repository's `.claude/agents/` (D1-00).
+
+The repo-root marker is created and removed by the run, not committed: git
+refuses to index a path named `.git`. It is created in place rather than in a
+copy under `os.tmpdir()`, because instruction capabilities are ordered by
+`sha256(absolute path)` — relocating a fixture would reorder `capabilities` in
+the normalized output. For the same reason, **never record a golden from a copy
+of a fixture**; record it from the corpus directory.
+
+`npm run test` therefore leaves `tests/fixtures/*/*/project/.git/` behind only
+if a run is killed mid-way; the path is gitignored, and the next run reuses and
+keeps it rather than deleting a marker another run may still need.

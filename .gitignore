@@ -9,3 +9,8 @@ dist/
 Thumbs.db
 *.tsbuildinfo
 coverage/
+
+# Repo-root markers the fixture runner creates for the duration of a test run
+# (D1-00): a fixture scan must stop at its own project, not walk into this
+# repository. Removed on teardown; ignored so a crashed run leaves no noise.
+tests/fixtures/*/*/project/.git/
