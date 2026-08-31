@@ -178,11 +178,64 @@ S0-DECISION requires **all four** criteria before re-opening the observed layer.
 
 ---
 
+## Partial go addendum (S9P-02)
+
+**Date:** 2026-08-31  
+**Task:** [S9P-02-invocation-only-contract.md](tasks/S9P-02-invocation-only-contract.md)  
+**Contract:** [S9P-UX-CONTRACT.md](S9P-UX-CONTRACT.md)
+
+### Verdict change (narrow)
+
+| Field | S9-01 | S9P-02 addendum |
+|-------|-------|-----------------|
+| Full observed layer (S9-02–S9-07) | remain deferred | **unchanged — remain deferred** |
+| Invocation-only partial (S9P) | not authorized | **authorized — S9P-03+** |
+| Criterion 1 — invocation-only UX | product not committed | **committed** via [S9P-UX-CONTRACT.md](S9P-UX-CONTRACT.md) |
+| Criterion 1 — structural pool | not satisfied | **unchanged — not satisfied** |
+
+### Criterion 1 update
+
+The **invocation-only branch** of criterion 1 is now **satisfied**: Capsight product sign-off on a one-sided observed matrix with explicit UX semantics (§9.3 surfaced in UI per contract). The **structural pool branch** remains failed; S9-04 (`resolved != observed` structural gate) stays **cancelled**.
+
+### Authorized work (S9P-03+)
+
+| Task | Title | Condition |
+|------|-------|-----------|
+| S9P-03 | ObservedCapability core model | authorized |
+| S9P-04 | Dev-only observe CLI | authorized |
+| S9P-05 | Invocation-side observation collector | authorized |
+| S9P-06 | UI — one-sided observed status | authorized — must follow S9P-UX-CONTRACT |
+| S9P-07 | S9P phase gate | authorized |
+
+**Still blocked:** S9-02–S9-07 full sequence; S9-04 structural comparison; scan-path auto-observation.
+
+### Prerequisites met
+
+| Prerequisite | Status |
+|--------------|--------|
+| S9P-01 probe harness + fixture payload infrastructure | done — [S9P-PROBE-FINDINGS.md](S9P-PROBE-FINDINGS.md) |
+| S9P-02 invocation-only UX contract | done — [S9P-UX-CONTRACT.md](S9P-UX-CONTRACT.md) |
+
+### S9P partial gate (criterion mapping)
+
+| Criterion | S9P partial status |
+|-----------|-------------------|
+| 1. Invocation-only UX acceptance | **Pass** (S9P-02) |
+| 2. Live fixture probes | **Partial** — harness + doc-derived payload (S9P-01); live re-run when credentials available |
+| 3. §9.4 safety | **Pass** |
+| 4. Documented revision | **Pass** |
+
+S9P partial path proceeds; full §9 reopen still requires structural pool or a future comprehensive revisit.
+
+---
+
 ## References
 
 | Artifact | Path |
 |----------|------|
 | S0 decision | [S0-DECISION.md](S0-DECISION.md) |
+| S9P UX contract | [S9P-UX-CONTRACT.md](S9P-UX-CONTRACT.md) |
+| S9P probe findings | [S9P-PROBE-FINDINGS.md](S9P-PROBE-FINDINGS.md) |
 | S0-01 findings | [tasks/S0-01-findings.md](tasks/S0-01-findings.md) |
 | S0-02 findings | [tasks/S0-02-findings.md](tasks/S0-02-findings.md) |
 | S0-03 findings | [tasks/S0-03-findings.md](tasks/S0-03-findings.md) |

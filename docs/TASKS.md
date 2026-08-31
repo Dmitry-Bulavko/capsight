@@ -426,8 +426,8 @@ Order: S9P-01 → S9P-02 → S9P-03 → S9P-04 → S9P-05 → S9P-06 → S9P-07.
 | ID | Phase | Title | Status | Spec refs | Files | Acceptance |
 |----|-------|-------|--------|-----------|-------|------------|
 | S9P-01 | S9P | Live probe harness + recorded payloads | done | §9.2, §9.4 | probing/, tests/fixtures/probes/ | Doc-derived payload + 6 schema tests |
-| S9P-02 | S9P | Invocation-only UX contract | in_progress | §9.3 | docs/S9P-UX-CONTRACT.md | Partial go documented |
-| S9P-03 | S9P | ObservedCapability core model | todo | §9.3 | src/core/observed/ | §9.3 invariants in tests |
+| S9P-02 | S9P | Invocation-only UX contract | done | §9.3 | docs/S9P-UX-CONTRACT.md | Partial go in S9-DECISION |
+| S9P-03 | S9P | ObservedCapability core model | in_progress | §9.3 | src/core/observed/ | §9.3 invariants in tests |
 | S9P-04 | S9P | Dev-only observe CLI | todo | §9.4, §12.5 | src/cli/ | Fixture-only command |
 | S9P-05 | S9P | Invocation-side observation collector | todo | §9.3 | probing/invocation-collector.ts | Hook events → ObservedCapability |
 | S9P-06 | S9P | UI — one-sided observed status | todo | §9.3, §7.5 | src/ui/ | Disclaimer + badge visible |
