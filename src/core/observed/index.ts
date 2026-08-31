@@ -14,3 +14,9 @@ export {
   type ObservedCapabilityValidationCode,
   type ObservedCapabilityValidationError,
 } from "./normalize.js";
+
+export {
+  indexObservedCapabilities,
+  OBSERVED_UI_DISCLAIMER,
+  type ObservedSessionPayload,
+} from "./session.js";

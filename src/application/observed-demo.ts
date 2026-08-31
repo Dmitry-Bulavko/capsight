@@ -1,6 +1,6 @@
 /**
- * Dev/demo observed payload bridge (S9P-06).
- * NOT wired to scan — explicit fixture replay only.
+ * Dev/demo observed payload loader (S9P-06).
+ * Server-only — uses node:fs. UI imports from src/core/observed/session.ts instead.
  */
 
 import { readFile } from "node:fs/promises";
@@ -10,17 +10,16 @@ import {
   collectFromHookEvents,
   validateHookEventRecording,
 } from "../adapters/claude/probing/invocation-collector.js";
-import type { ObservedCapability } from "../core/observed/index.js";
+import {
+  OBSERVED_UI_DISCLAIMER,
+  type ObservedSessionPayload,
+} from "../core/observed/session.js";
 
-export const OBSERVED_UI_DISCLAIMER =
-  "Invocation-only observation. Tools are marked observed only when invoked or explicitly denied during a dev observation session. Not observed does not mean denied. Denied status reflects captured denial events (auto-mode only).";
-
-export interface ObservedSessionPayload {
-  mode: "dev-demo";
-  disclaimer: string;
-  sessionAt: string;
-  capabilities: ObservedCapability[];
-}
+export {
+  indexObservedCapabilities,
+  OBSERVED_UI_DISCLAIMER,
+  type ObservedSessionPayload,
+} from "../core/observed/session.js";
 
 const DEMO_RECORDING_PATH = path.join(
   fileURLToPath(new URL(".", import.meta.url)),
@@ -28,16 +27,6 @@ const DEMO_RECORDING_PATH = path.join(
 );
 
 let cachedPayload: ObservedSessionPayload | null | undefined;
-
-export function indexObservedCapabilities(
-  capabilities: readonly ObservedCapability[],
-): Map<string, ObservedCapability> {
-  const map = new Map<string, ObservedCapability>();
-  for (const capability of capabilities) {
-    map.set(capability.capabilityId, capability);
-  }
-  return map;
-}
 
 export async function loadObservedDemoPayload(): Promise<ObservedSessionPayload | null> {
   if (cachedPayload !== undefined) {

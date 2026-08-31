@@ -42,7 +42,7 @@ import { DriftBanner } from "./components/DriftBanner.js";
 import { DashboardNav, type DashboardTab } from "./components/DashboardNav.js";
 import { SimulationView } from "./components/SimulationView.js";
 import type { ManagedSimulationResult } from "./api.js";
-import { indexObservedCapabilities } from "../application/observed-demo.js";
+import { indexObservedCapabilities } from "../core/observed/session.js";
 import {
   clearAgentPending,
   countPendingChanges,

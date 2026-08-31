@@ -1,5 +1,5 @@
 import type { ObservedCapability, ObservedStatus } from "../../core/observed/index.js";
-import { OBSERVED_UI_DISCLAIMER } from "../../application/observed-demo.js";
+import { OBSERVED_UI_DISCLAIMER } from "../../core/observed/session.js";
 
 export const OBSERVED_STATUS_LABELS: Record<ObservedStatus, string> = {
   available: "Observed: invoked",

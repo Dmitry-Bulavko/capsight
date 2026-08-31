@@ -17,7 +17,7 @@ import type {
 } from "../application/plan.js";
 import type { ManagedSimulationResult } from "../application/simulate.js";
 import type { ScanStatusSummary } from "../application/scan-store.js";
-import type { ObservedSessionPayload } from "../application/observed-demo.js";
+import type { ObservedSessionPayload } from "../core/observed/session.js";
 import type {
   EcosystemApiPayload,
   EcosystemResourceDetail,
