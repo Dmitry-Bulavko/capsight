@@ -1,3 +1,4 @@
+import path from "node:path";
 import type {
   ResolutionReason,
   ResolvedCapability,
@@ -41,6 +42,52 @@ const KNOWN_TOOL_NAMES: ReadonlySet<string> = new Set<string>([
 
 /** Unanchored globs S4 names as granting nothing. */
 const UNANCHORED_ALLOW_GLOBS: ReadonlySet<string> = new Set(["*", "mcp__*"]);
+
+/** How S7 classifies path-glob anchoring in a `Read(...)` / `Edit(...)` argument. */
+export type PathGlobAnchor =
+  /** Argument starts with `//`; S7 anchors at the filesystem root. */
+  | "absolute"
+  /** Argument starts with `/` but not `//`; S7 anchors at the project root. */
+  | "project-root"
+  /** No leading `/` or `//`; S7 does not name this anchoring form. */
+  | "no-leading-slash";
+
+/**
+ * Classify a Read/Edit rule argument by path-glob anchoring (S7). This is
+ * shape only — it does not decide whether a concrete path would match.
+ */
+export function classifyPathGlobAnchor(argument: string): PathGlobAnchor {
+  if (argument.startsWith("//")) {
+    return "absolute";
+  }
+  if (argument.startsWith("/")) {
+    return "project-root";
+  }
+  return "no-leading-slash";
+}
+
+/** How S6 classifies the `:*` suffix in a `Bash(...)` rule argument. */
+export type BashPrefixShape =
+  /** Argument ends with `:*`; S6 treats that suffix as a wildcard. */
+  | "trailing-wildcard"
+  /** Argument contains `:*` but not at the end; S6 does not treat it as a wildcard. */
+  | "mid-pattern-colon-star"
+  /** No `:*` in the argument; the rule is a literal prefix. */
+  | "literal-prefix";
+
+/**
+ * Classify a `Bash(...)` rule argument by where `:*` appears (S6). This is
+ * shape only — it does not decide whether a concrete command line would match.
+ */
+export function classifyBashPrefixShape(argument: string): BashPrefixShape {
+  if (argument.endsWith(":*")) {
+    return "trailing-wildcard";
+  }
+  if (argument.includes(":*")) {
+    return "mid-pattern-colon-star";
+  }
+  return "literal-prefix";
+}
 
 /** `Head(argument)`; the head never contains parentheses. */
 const SCOPED_RULE = /^([^()]+)\((.*)\)$/;
@@ -366,6 +413,49 @@ function buildProjectMcpApprovalCapability(
   );
 }
 
+/** Whether an additionalDirectories entry is an absolute filesystem path. */
+export type AdditionalDirectoryPathKind = "absolute" | "relative";
+
+/**
+ * Classify an additionalDirectories entry as absolute or relative (S11). A
+ * leading `/` is treated as absolute even on Windows, matching how settings
+ * paths are written in Claude Code documentation.
+ */
+export function classifyAdditionalDirectoryPath(entry: string): AdditionalDirectoryPathKind {
+  return path.isAbsolute(entry) || entry.startsWith("/") ? "absolute" : "relative";
+}
+
+const ADDITIONAL_DIRECTORY_GUARDRAIL =
+  "This is a configuration guardrail rather than a complete security boundary, and permission " +
+  "rules still apply to paths inside the directory — which paths a rule covers is a question " +
+  "this product does not evaluate (§2.3).";
+
+function additionalDirectoryReasonMessage(
+  quoted: string,
+  entry: string,
+): { type: ResolutionReason["type"]; message: string } {
+  const kind = classifyAdditionalDirectoryPath(entry);
+  const base =
+    `${quoted} extends the file access of a session in this project beyond the project root (S11). `;
+
+  if (kind === "absolute") {
+    return {
+      type: "declared",
+      message:
+        base +
+        "The path is absolute. " +
+        ADDITIONAL_DIRECTORY_GUARDRAIL,
+    };
+  }
+
+  return {
+    type: "unknown",
+    message:
+      `${quoted} is declared in permissions.additionalDirectories (S11). ` +
+      "The entry is a relative path and is reported verbatim; §3.5 does not state how relative entries resolve.",
+  };
+}
+
 /**
  * `permissions.additionalDirectories`, one capability per declared entry (S11).
  *
@@ -392,12 +482,21 @@ function buildAdditionalDirectoryCapabilities(
         fieldPath: `permissions.additionalDirectories[${index}]`,
       };
       const quoted = `permissions.additionalDirectories entry "${entry}"`;
+      const uncontested = additionalDirectoryReasonMessage(quoted, entry);
       return gateCapability(
         {
           capabilityId: `settings-additional-directory:${layer.scope}:${entry}`,
           kind: "permission" as const,
-          status: contested ? ("unknown" as const) : ("available" as const),
-          enforcement: contested ? ("unknown" as const) : ("enforced" as const),
+          status: contested
+            ? ("unknown" as const)
+            : uncontested.type === "unknown"
+              ? ("unknown" as const)
+              : ("available" as const),
+          enforcement: contested
+            ? ("unknown" as const)
+            : uncontested.type === "unknown"
+              ? ("unknown" as const)
+              : ("enforced" as const),
           sources: [source],
           reasons: [
             contested
@@ -411,13 +510,8 @@ function buildAdditionalDirectoryCapabilities(
                   MATRIX["settings.additionalDirectories"],
                 )
               : reason(
-                  "declared",
-                  `${quoted} extends the file access of a session in this project beyond the ` +
-                    "project root (S11). The path is reported as written: §3.5 does not state " +
-                    "how a relative entry resolves. This is a configuration guardrail rather " +
-                    "than a complete security boundary, and permission rules still apply to " +
-                    "paths inside the directory — which paths a rule covers is a question this " +
-                    "product does not evaluate (§2.3).",
+                  uncontested.type,
+                  uncontested.message,
                   source,
                   MATRIX["settings.additionalDirectories"],
                 ),
@@ -483,6 +577,114 @@ interface RuleOutcome {
   reasons: ResolutionReason[];
   sources: SourceInfo[];
   matrixId: MatrixId;
+}
+
+function bashPrefixShapeMessage(
+  quoted: string,
+  shape: BashPrefixShape,
+  action: SettingsPermissionAction,
+): string {
+  const invocationLimit =
+    action === "deny"
+      ? "What a deny rule in this form leaves of the tool is not determined (§2.3)."
+      : "Whether a particular command line matches is not evaluated (§2.3), so the effect of this rule on the capability set is not determined.";
+
+  switch (shape) {
+    case "trailing-wildcard":
+      return (
+        `${quoted} uses Bash prefix matching with a trailing :* wildcard suffix (S6). ` +
+        invocationLimit
+      );
+    case "mid-pattern-colon-star":
+      return (
+        `${quoted} contains :* away from the end of the pattern; S6 recognizes :* as a ` +
+        `wildcard suffix only at the end, so this occurrence is part of the literal prefix ` +
+        `(S6). ${invocationLimit}`
+      );
+    case "literal-prefix":
+      return (
+        `${quoted} narrows Bash by a literal prefix with no :* wildcard suffix (S6). ` +
+        invocationLimit
+      );
+  }
+}
+
+function pathGlobAnchorMessage(
+  quoted: string,
+  anchor: PathGlobAnchor,
+  action: SettingsPermissionAction,
+): string {
+  const pathMatchLimit =
+    action === "deny"
+      ? "What a deny rule in this form leaves of the tool is not determined (§2.3)."
+      : "Whether a particular path matches is not evaluated (§2.3), so the effect of this rule on the capability set is not determined.";
+
+  switch (anchor) {
+    case "project-root":
+      return (
+        `${quoted} uses a path glob anchored at the project root with a leading / (S7). ` +
+        pathMatchLimit
+      );
+    case "absolute":
+      return (
+        `${quoted} uses a path glob anchored at the filesystem root with a leading // (S7). ` +
+        pathMatchLimit
+      );
+    case "no-leading-slash":
+      return (
+        `${quoted} uses a path glob without a leading / or //; S7 names anchoring only for ` +
+        `those forms, so the glob shape is undetermined.`
+      );
+  }
+}
+
+function resolvePathGlobRule(
+  entry: IndexedSettingsRule,
+  matrixId: MatrixId,
+): RuleOutcome {
+  const { parsed, rule, source } = entry;
+  const quoted = `permissions.${rule.action} entry "${rule.raw}"`;
+  const anchor = classifyPathGlobAnchor((parsed as { argument: string }).argument);
+  if (anchor === "no-leading-slash") {
+    return {
+      status: "unknown",
+      reasons: [
+        reason(
+          "unknown",
+          pathGlobAnchorMessage(quoted, anchor, rule.action),
+          source,
+          matrixId,
+        ),
+      ],
+      sources: [source],
+      matrixId,
+    };
+  }
+  return {
+    status: "available",
+    reasons: [
+      reason("declared", pathGlobAnchorMessage(quoted, anchor, rule.action), source, matrixId),
+    ],
+    sources: [source],
+    matrixId,
+  };
+}
+
+function resolveBashPrefixRule(
+  entry: IndexedSettingsRule,
+  matrixId: MatrixId,
+): RuleOutcome {
+  const { parsed, rule, source } = entry;
+  const quoted = `permissions.${rule.action} entry "${rule.raw}"`;
+  const shape = classifyBashPrefixShape((parsed as { argument: string }).argument);
+  return {
+    status: "available",
+    reasons: [
+      reason("declared", bashPrefixShapeMessage(quoted, shape, rule.action), source, matrixId),
+    ],
+    sources: [source],
+    matrixId,
+  };
 }
 
 /**
@@ -612,6 +814,12 @@ function resolveRule(
   }
 
   if (parsed.kind === "scoped") {
+    if (parsed.tool === "Bash") {
+      return resolveBashPrefixRule(entry, matrixId);
+    }
+    if (parsed.tool === "Read" || parsed.tool === "Edit") {
+      return resolvePathGlobRule(entry, matrixId);
+    }
     const s6Disclaimer =
       parsed.tool === "PowerShell"
         ? " S6 documents Bash(cmd:*) prefix matching only and does not cover PowerShell, so this rule is not attributed to that fact."

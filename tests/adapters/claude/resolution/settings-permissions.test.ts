@@ -3,6 +3,9 @@ import type { ResolvedCapability } from "../../../../src/core/model/index.js";
 import type { SettingsLayer } from "../../../../src/adapters/claude/discovery/types.js";
 import { parseSettingsPermissions } from "../../../../src/adapters/claude/discovery/settings.js";
 import {
+  classifyAdditionalDirectoryPath,
+  classifyBashPrefixShape,
+  classifyPathGlobAnchor,
   parseSettingsPermissionRule,
   resolveDisableBypassPermissionsMode,
   resolveProjectMcpApproval,
@@ -159,16 +162,37 @@ describe("S11 settings keys", () => {
       "settings-additional-directory:project:/opt/shared-docs",
       "settings-additional-directory:project:../vendor-lib",
     ]);
-    for (const capability of capabilities) {
-      // The evidence the matrix entry claims: without this rule the file-access
-      // surface the settings widen is absent from the reported set entirely.
-      expect(capability.status).toBe("available");
-      expect(capability.enforcement).toBe("enforced");
-      expect(capability.sources[0]?.path).toBe("/project/.claude/project.json");
-      expect(capability.reasons[0]?.matrixRef).toBe("settings.additionalDirectories");
-    }
-    // The entry text is not resolved against anything (§3.5 says nothing about it).
-    expect(capabilities[1]?.reasons[0]?.message).toContain('"../vendor-lib"');
+    expect(capabilities[0]).toMatchObject({
+      status: "available",
+      enforcement: "enforced",
+    });
+    expect(capabilities[0]?.sources[0]?.path).toBe("/project/.claude/project.json");
+    expect(capabilities[0]?.reasons[0]?.matrixRef).toBe("settings.additionalDirectories");
+    expect(capabilities[0]?.reasons[0]?.message).toMatch(/absolute/);
+
+    expect(capabilities[1]).toMatchObject({
+      status: "unknown",
+      enforcement: "unknown",
+    });
+    expect(capabilities[1]?.reasons[0]?.matrixRef).toBe("settings.additionalDirectories");
+    expect(capabilities[1]?.reasons[0]?.message).toMatch(/reported verbatim/);
+    expect(capabilities[1]?.reasons[0]?.message).toMatch(/§3\.5 does not state how relative entries resolve/);
+  });
+
+  it("classifies additionalDirectories paths as absolute or relative (S11)", () => {
+    expect(classifyAdditionalDirectoryPath("/opt/shared-docs")).toBe("absolute");
+    expect(classifyAdditionalDirectoryPath("../vendor-lib")).toBe("relative");
+  });
+
+  it("reports relative additionalDirectories as unknown (H1-28 deletion path)", () => {
+    const [capability] = directoryCapabilities([
+      layer("project", 30, { additionalDirectories: ["../vendor-lib"] }),
+    ]);
+
+    expect(capability).toMatchObject({ status: "unknown", enforcement: "unknown" });
+    expect(capability?.reasons[0]?.matrixRef).toBe("settings.additionalDirectories");
+    expect(capability?.reasons[0]?.message).toMatch(/reported verbatim/);
+    expect(capability?.reasons[0]?.message).toMatch(/§3\.5 does not state how relative entries resolve/);
   });
 
   it("leaves two layers declaring the key undetermined rather than merging them", () => {
@@ -368,7 +392,7 @@ describe("resolveSettingsPermissions", () => {
     }
   });
 
-  it("leaves an argument-scoped rule unknown without touching the tool", () => {
+  it("reports path-scoped Edit deny shape without touching the tool (S7)", () => {
     const result = resolveSettingsPermissions({
       layers: [layer("project", 30, { deny: ["Edit(//etc/secrets/**)"] })],
       capabilities: [availableTool("Edit")],
@@ -376,13 +400,52 @@ describe("resolveSettingsPermissions", () => {
     });
 
     expect(ruleCapability(result, "Edit(//etc/secrets/**)")).toMatchObject({
-      status: "unknown",
-      enforcement: "unknown",
+      status: "available",
+      enforcement: "enforced",
     });
+    expect(ruleCapability(result, "Edit(//etc/secrets/**)")?.reasons[0]?.matrixRef).toBe(
+      "settings.pathRules",
+    );
+    expect(ruleCapability(result, "Edit(//etc/secrets/**)")?.reasons[0]?.message).toMatch(
+      /leading \/\//,
+    );
     // The rule narrows invocations, not the tool: Edit is still in the session.
     expect(
       result.capabilities.find((capability) => capability.capabilityId === "Edit"),
     ).toMatchObject({ status: "available" });
+  });
+
+  it("attributes Read(...) rules to S7 via settings.pathRules", () => {
+    const result = resolveSettingsPermissions({
+      layers: [layer("project", 30, { allow: ["Read(/src/**)"] })],
+      capabilities: [availableTool("Read")],
+      version: VERSION,
+    });
+
+    const rule = ruleCapability(result, "allow:Read(/src/**)");
+    expect(rule?.reasons[0]?.matrixRef).toBe("settings.pathRules");
+    expect(rule?.reasons[0]?.message).toMatch(/project root/);
+    expect(rule?.status).toBe("available");
+    expect(rule?.enforcement).toBe("enforced");
+  });
+
+  it("classifies path glob anchors per S7 without matching paths (§2.3)", () => {
+    expect(classifyPathGlobAnchor("/src/**")).toBe("project-root");
+    expect(classifyPathGlobAnchor("//etc/secrets/**")).toBe("absolute");
+    expect(classifyPathGlobAnchor("src/**")).toBe("no-leading-slash");
+  });
+
+  it("resolves unanchored path globs as unknown (H1-28 deletion path)", () => {
+    const result = resolveSettingsPermissions({
+      layers: [layer("project", 30, { allow: ["Read(src/**)"] })],
+      capabilities: [availableTool("Read")],
+      version: VERSION,
+    });
+
+    const rule = ruleCapability(result, "allow:Read(src/**)");
+    expect(rule).toMatchObject({ status: "unknown", enforcement: "unknown" });
+    expect(rule?.reasons[0]?.matrixRef).toBe("settings.pathRules");
+    expect(rule?.reasons[0]?.message).toMatch(/without a leading/);
   });
 
   it("attributes Bash(...) rules to S6 via settings.bashPrefixRules", () => {
@@ -394,7 +457,64 @@ describe("resolveSettingsPermissions", () => {
 
     const rule = ruleCapability(result, "allow:Bash(npm run test:*)");
     expect(rule?.reasons[0]?.matrixRef).toBe("settings.bashPrefixRules");
-    expect(rule?.reasons[0]?.message).not.toMatch(/S6 documents Bash.*only/);
+    expect(rule?.reasons[0]?.message).toMatch(/trailing :\*/);
+    expect(rule?.status).toBe("available");
+    expect(rule?.enforcement).toBe("enforced");
+  });
+
+  it("classifies Bash prefix shapes per S6 without matching commands (§2.3)", () => {
+    expect(classifyBashPrefixShape("npm run test:*")).toBe("trailing-wildcard");
+    expect(classifyBashPrefixShape("npm:* run test")).toBe("mid-pattern-colon-star");
+    expect(classifyBashPrefixShape("npm run test:unit")).toBe("literal-prefix");
+  });
+
+  it("reports mid-pattern :* as literal prefix, not as granting nothing (S6)", () => {
+    const result = resolveSettingsPermissions({
+      layers: [layer("project", 30, { deny: ["Bash(npm:* run test)"] })],
+      capabilities: [availableTool("Bash")],
+      version: VERSION,
+    });
+
+    const rule = ruleCapability(result, "deny:Bash(npm:* run test)");
+    expect(rule).toMatchObject({ status: "available", enforcement: "enforced" });
+    expect(rule?.reasons[0]?.matrixRef).toBe("settings.bashPrefixRules");
+    expect(rule?.reasons[0]?.message).toMatch(/part of the literal prefix/);
+    expect(rule?.reasons[0]?.message).not.toMatch(/grants nothing/);
+  });
+
+  it("still blocks allow Bash(...) behind a bare Bash deny (S2)", () => {
+    const result = resolveSettingsPermissions({
+      layers: [
+        layer("project", 30, { deny: ["Bash"], allow: ["Bash(npm run test:*)"] }),
+      ],
+      capabilities: [availableTool("Bash")],
+      version: VERSION,
+    });
+
+    expect(ruleCapability(result, "allow:Bash(npm run test:*)")).toMatchObject({
+      status: "blocked",
+      enforcement: "enforced",
+    });
+    expect(ruleCapability(result, "allow:Bash(npm run test:*)")?.reasons[0]?.matrixRef).toBe(
+      "settings.denyPrecedence",
+    );
+  });
+
+  it("evaluates deny Bash(...) shape even when bare Bash is also denied (S6)", () => {
+    const result = resolveSettingsPermissions({
+      layers: [
+        layer("project", 30, {
+          deny: ["Bash", "Bash(npm run cover:*)"],
+        }),
+      ],
+      capabilities: [availableTool("Bash")],
+      version: VERSION,
+    });
+
+    const rule = ruleCapability(result, "deny:Bash(npm run cover:*)");
+    expect(rule).toMatchObject({ status: "available", enforcement: "enforced" });
+    expect(rule?.reasons[0]?.matrixRef).toBe("settings.bashPrefixRules");
+    expect(rule?.reasons[0]?.message).toMatch(/trailing :\*/);
   });
 
   it("does not attribute PowerShell(...) rules to S6 (settings.bashPrefixRules)", () => {

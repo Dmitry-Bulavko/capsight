@@ -140,11 +140,26 @@
             {
               "action": "deny",
               "index": 2,
-              "raw": "Edit(//etc/secrets/**)"
+              "raw": "Bash(npm run cover:*)"
             },
             {
               "action": "deny",
               "index": 3,
+              "raw": "Bash(npm:* run test)"
+            },
+            {
+              "action": "deny",
+              "index": 4,
+              "raw": "Bash(npm run test:unit)"
+            },
+            {
+              "action": "deny",
+              "index": 5,
+              "raw": "Edit(//etc/secrets/**)"
+            },
+            {
+              "action": "deny",
+              "index": 6,
               "raw": "WebFetch(example.org)"
             }
           ],
@@ -218,8 +233,8 @@
         {
           "capabilityId": "settings-additional-directory:project:../vendor-lib",
           "kind": "permission",
-          "status": "available",
-          "enforcement": "enforced",
+          "status": "unknown",
+          "enforcement": "unknown",
           "sources": [
             {
               "platform": "claude",
@@ -230,8 +245,8 @@
           ],
           "reasons": [
             {
-              "type": "declared",
-              "message": "permissions.additionalDirectories entry \"../vendor-lib\" extends the file access of a session in this project beyond the project root (S11). The path is reported as written: §3.5 does not state how a relative entry resolves. This is a configuration guardrail rather than a complete security boundary, and permission rules still apply to paths inside the directory — which paths a rule covers is a question this product does not evaluate (§2.3).",
+              "type": "unknown",
+              "message": "permissions.additionalDirectories entry \"../vendor-lib\" is declared in permissions.additionalDirectories (S11). The entry is a relative path and is reported verbatim; §3.5 does not state how relative entries resolve.",
               "source": {
                 "platform": "claude",
                 "scope": "project",
@@ -258,7 +273,7 @@
           "reasons": [
             {
               "type": "declared",
-              "message": "permissions.additionalDirectories entry \"/opt/shared-docs\" extends the file access of a session in this project beyond the project root (S11). The path is reported as written: §3.5 does not state how a relative entry resolves. This is a configuration guardrail rather than a complete security boundary, and permission rules still apply to paths inside the directory — which paths a rule covers is a question this product does not evaluate (§2.3).",
+              "message": "permissions.additionalDirectories entry \"/opt/shared-docs\" extends the file access of a session in this project beyond the project root (S11). The path is absolute. This is a configuration guardrail rather than a complete security boundary, and permission rules still apply to paths inside the directory — which paths a rule covers is a question this product does not evaluate (§2.3).",
               "source": {
                 "platform": "claude",
                 "scope": "project",
@@ -398,8 +413,8 @@
         {
           "capabilityId": "settings-permission:project:allow:Read(/src/**)",
           "kind": "permission",
-          "status": "unknown",
-          "enforcement": "unknown",
+          "status": "available",
+          "enforcement": "enforced",
           "sources": [
             {
               "platform": "claude",
@@ -410,19 +425,14 @@
           ],
           "reasons": [
             {
-              "type": "unknown",
-              "message": "permissions.allow entry \"Read(/src/**)\" narrows individual invocations of Read rather than the tool itself; this product resolves what the platform applies and does not evaluate rule arguments (§2.3), so the effect of this rule is unknown.",
+              "type": "declared",
+              "message": "permissions.allow entry \"Read(/src/**)\" uses a path glob anchored at the project root with a leading / (S7). Whether a particular path matches is not evaluated (§2.3), so the effect of this rule on the capability set is not determined.",
               "source": {
                 "platform": "claude",
                 "scope": "project",
                 "path": ".claude/settings.json",
                 "fieldPath": "permissions.allow[3]"
               },
-              "matrixRef": "settings.pathRules"
-            },
-            {
-              "type": "version",
-              "message": "Matrix entry \"settings.pathRules\" rests on non-[doc] fact(s) S7 but has no fixture-level evidence; enforcement is unknown (SPEC §8.2).",
               "matrixRef": "settings.pathRules"
             }
           ]
@@ -563,10 +573,10 @@
           ]
         },
         {
-          "capabilityId": "settings-permission:project:deny:Edit(//etc/secrets/**)",
+          "capabilityId": "settings-permission:project:deny:Bash(npm run cover:*)",
           "kind": "permission",
-          "status": "unknown",
-          "enforcement": "unknown",
+          "status": "available",
+          "enforcement": "enforced",
           "sources": [
             {
               "platform": "claude",
@@ -577,19 +587,95 @@
           ],
           "reasons": [
             {
-              "type": "unknown",
-              "message": "permissions.deny entry \"Edit(//etc/secrets/**)\" narrows individual invocations of Edit rather than the tool itself; this product resolves what the platform applies and does not evaluate rule arguments (§2.3), so the effect of this rule is unknown.",
+              "type": "declared",
+              "message": "permissions.deny entry \"Bash(npm run cover:*)\" uses Bash prefix matching with a trailing :* wildcard suffix (S6). What a deny rule in this form leaves of the tool is not determined (§2.3).",
               "source": {
                 "platform": "claude",
                 "scope": "project",
                 "path": ".claude/settings.json",
                 "fieldPath": "permissions.deny[2]"
               },
-              "matrixRef": "settings.pathRules"
-            },
+              "matrixRef": "settings.bashPrefixRules"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:deny:Bash(npm run test:unit)",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
             {
-              "type": "version",
-              "message": "Matrix entry \"settings.pathRules\" rests on non-[doc] fact(s) S7 but has no fixture-level evidence; enforcement is unknown (SPEC §8.2).",
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[4]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "permissions.deny entry \"Bash(npm run test:unit)\" narrows Bash by a literal prefix with no :* wildcard suffix (S6). What a deny rule in this form leaves of the tool is not determined (§2.3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[4]"
+              },
+              "matrixRef": "settings.bashPrefixRules"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:deny:Bash(npm:* run test)",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[3]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "permissions.deny entry \"Bash(npm:* run test)\" contains :* away from the end of the pattern; S6 recognizes :* as a wildcard suffix only at the end, so this occurrence is part of the literal prefix (S6). What a deny rule in this form leaves of the tool is not determined (§2.3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[3]"
+              },
+              "matrixRef": "settings.bashPrefixRules"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:deny:Edit(//etc/secrets/**)",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[5]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "permissions.deny entry \"Edit(//etc/secrets/**)\" uses a path glob anchored at the filesystem root with a leading // (S7). What a deny rule in this form leaves of the tool is not determined (§2.3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[5]"
+              },
               "matrixRef": "settings.pathRules"
             }
           ]
@@ -604,7 +690,7 @@
               "platform": "claude",
               "scope": "project",
               "path": ".claude/settings.json",
-              "fieldPath": "permissions.deny[3]"
+              "fieldPath": "permissions.deny[6]"
             }
           ],
           "reasons": [
@@ -615,7 +701,7 @@
                 "platform": "claude",
                 "scope": "project",
                 "path": ".claude/settings.json",
-                "fieldPath": "permissions.deny[3]"
+                "fieldPath": "permissions.deny[6]"
               },
               "matrixRef": "settings.webFetchRules"
             }
@@ -1559,7 +1645,7 @@
           ]
         }
       ],
-      "unknownRate": 0.08333333333333333
+      "unknownRate": 0.058823529411764705
     },
     {
       "agentName": "permissive",
@@ -1602,8 +1688,8 @@
         {
           "capabilityId": "settings-additional-directory:project:../vendor-lib",
           "kind": "permission",
-          "status": "available",
-          "enforcement": "enforced",
+          "status": "unknown",
+          "enforcement": "unknown",
           "sources": [
             {
               "platform": "claude",
@@ -1614,8 +1700,8 @@
           ],
           "reasons": [
             {
-              "type": "declared",
-              "message": "permissions.additionalDirectories entry \"../vendor-lib\" extends the file access of a session in this project beyond the project root (S11). The path is reported as written: §3.5 does not state how a relative entry resolves. This is a configuration guardrail rather than a complete security boundary, and permission rules still apply to paths inside the directory — which paths a rule covers is a question this product does not evaluate (§2.3).",
+              "type": "unknown",
+              "message": "permissions.additionalDirectories entry \"../vendor-lib\" is declared in permissions.additionalDirectories (S11). The entry is a relative path and is reported verbatim; §3.5 does not state how relative entries resolve.",
               "source": {
                 "platform": "claude",
                 "scope": "project",
@@ -1642,7 +1728,7 @@
           "reasons": [
             {
               "type": "declared",
-              "message": "permissions.additionalDirectories entry \"/opt/shared-docs\" extends the file access of a session in this project beyond the project root (S11). The path is reported as written: §3.5 does not state how a relative entry resolves. This is a configuration guardrail rather than a complete security boundary, and permission rules still apply to paths inside the directory — which paths a rule covers is a question this product does not evaluate (§2.3).",
+              "message": "permissions.additionalDirectories entry \"/opt/shared-docs\" extends the file access of a session in this project beyond the project root (S11). The path is absolute. This is a configuration guardrail rather than a complete security boundary, and permission rules still apply to paths inside the directory — which paths a rule covers is a question this product does not evaluate (§2.3).",
               "source": {
                 "platform": "claude",
                 "scope": "project",
@@ -1782,8 +1868,8 @@
         {
           "capabilityId": "settings-permission:project:allow:Read(/src/**)",
           "kind": "permission",
-          "status": "unknown",
-          "enforcement": "unknown",
+          "status": "available",
+          "enforcement": "enforced",
           "sources": [
             {
               "platform": "claude",
@@ -1794,19 +1880,14 @@
           ],
           "reasons": [
             {
-              "type": "unknown",
-              "message": "permissions.allow entry \"Read(/src/**)\" narrows individual invocations of Read rather than the tool itself; this product resolves what the platform applies and does not evaluate rule arguments (§2.3), so the effect of this rule is unknown.",
+              "type": "declared",
+              "message": "permissions.allow entry \"Read(/src/**)\" uses a path glob anchored at the project root with a leading / (S7). Whether a particular path matches is not evaluated (§2.3), so the effect of this rule on the capability set is not determined.",
               "source": {
                 "platform": "claude",
                 "scope": "project",
                 "path": ".claude/settings.json",
                 "fieldPath": "permissions.allow[3]"
               },
-              "matrixRef": "settings.pathRules"
-            },
-            {
-              "type": "version",
-              "message": "Matrix entry \"settings.pathRules\" rests on non-[doc] fact(s) S7 but has no fixture-level evidence; enforcement is unknown (SPEC §8.2).",
               "matrixRef": "settings.pathRules"
             }
           ]
@@ -1947,10 +2028,10 @@
           ]
         },
         {
-          "capabilityId": "settings-permission:project:deny:Edit(//etc/secrets/**)",
+          "capabilityId": "settings-permission:project:deny:Bash(npm run cover:*)",
           "kind": "permission",
-          "status": "unknown",
-          "enforcement": "unknown",
+          "status": "available",
+          "enforcement": "enforced",
           "sources": [
             {
               "platform": "claude",
@@ -1961,19 +2042,95 @@
           ],
           "reasons": [
             {
-              "type": "unknown",
-              "message": "permissions.deny entry \"Edit(//etc/secrets/**)\" narrows individual invocations of Edit rather than the tool itself; this product resolves what the platform applies and does not evaluate rule arguments (§2.3), so the effect of this rule is unknown.",
+              "type": "declared",
+              "message": "permissions.deny entry \"Bash(npm run cover:*)\" uses Bash prefix matching with a trailing :* wildcard suffix (S6). What a deny rule in this form leaves of the tool is not determined (§2.3).",
               "source": {
                 "platform": "claude",
                 "scope": "project",
                 "path": ".claude/settings.json",
                 "fieldPath": "permissions.deny[2]"
               },
-              "matrixRef": "settings.pathRules"
-            },
+              "matrixRef": "settings.bashPrefixRules"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:deny:Bash(npm run test:unit)",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
             {
-              "type": "version",
-              "message": "Matrix entry \"settings.pathRules\" rests on non-[doc] fact(s) S7 but has no fixture-level evidence; enforcement is unknown (SPEC §8.2).",
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[4]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "permissions.deny entry \"Bash(npm run test:unit)\" narrows Bash by a literal prefix with no :* wildcard suffix (S6). What a deny rule in this form leaves of the tool is not determined (§2.3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[4]"
+              },
+              "matrixRef": "settings.bashPrefixRules"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:deny:Bash(npm:* run test)",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[3]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "permissions.deny entry \"Bash(npm:* run test)\" contains :* away from the end of the pattern; S6 recognizes :* as a wildcard suffix only at the end, so this occurrence is part of the literal prefix (S6). What a deny rule in this form leaves of the tool is not determined (§2.3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[3]"
+              },
+              "matrixRef": "settings.bashPrefixRules"
+            }
+          ]
+        },
+        {
+          "capabilityId": "settings-permission:project:deny:Edit(//etc/secrets/**)",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/settings.json",
+              "fieldPath": "permissions.deny[5]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "permissions.deny entry \"Edit(//etc/secrets/**)\" uses a path glob anchored at the filesystem root with a leading // (S7). What a deny rule in this form leaves of the tool is not determined (§2.3).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/settings.json",
+                "fieldPath": "permissions.deny[5]"
+              },
               "matrixRef": "settings.pathRules"
             }
           ]
@@ -1988,7 +2145,7 @@
               "platform": "claude",
               "scope": "project",
               "path": ".claude/settings.json",
-              "fieldPath": "permissions.deny[3]"
+              "fieldPath": "permissions.deny[6]"
             }
           ],
           "reasons": [
@@ -1999,7 +2156,7 @@
                 "platform": "claude",
                 "scope": "project",
                 "path": ".claude/settings.json",
-                "fieldPath": "permissions.deny[3]"
+                "fieldPath": "permissions.deny[6]"
               },
               "matrixRef": "settings.webFetchRules"
             }
@@ -2906,7 +3063,7 @@
           ]
         }
       ],
-      "unknownRate": 0.08333333333333333
+      "unknownRate": 0.058823529411764705
     }
   ]
 }

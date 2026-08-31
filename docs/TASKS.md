@@ -326,6 +326,14 @@ Order: D3-01 → D3-02 → D3-03 → D3-04 → D3-05.
 | D3-04 | D3 | Claude skills/instructions/remaining | done | §3.6, §3.8, §3.10, §11.4 | matrix.ts, fixtures | K7, K9, I4, N1, P3, M4, M5 closed or refused |
 | D3-05 | D3 | D3 gate — unverified below 45 | done | §11.4, D2-06 | EVIDENCE-LEDGER, coverage-report | Total unverified < 45; ledger matches buildCoverageReport |
 
-## S6/S7/S11 — Settings semantics (planned)
+## SS — Settings semantics (S6/S7/S11)
 
-H1 outcome: recorded as unknown. Evaluate or implement prefix/glob/additionalDirectories matching.
+H1 outcome items that still resolve `unknown`: S6 prefix matching, S7 path globs, S11 relative additionalDirectories.
+
+Order: SS-01 → SS-02 → SS-03.
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| SS-01 | SS | S6 Bash(cmd:*) prefix rule shape | done | §3.5 S6, §2.3 | settings-permissions.ts, matrix.ts, fixture | S6 pins non-unknown rule shape; fixture + deletion test |
+| SS-02 | SS | S7 Read/Edit path glob anchoring | done | §3.5 S7, §2.3 | settings-permissions.ts, matrix.ts, fixture | S7 pins / vs // anchoring; fixture + deletion test |
+| SS-03 | SS | S11 additionalDirectories relative paths | done | §3.5 S11 | settings-permissions.ts, matrix.ts, fixture | Relative entries honestly unknown; absolute pinned |

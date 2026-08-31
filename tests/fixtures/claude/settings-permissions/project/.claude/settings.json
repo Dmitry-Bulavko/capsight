@@ -12,6 +12,9 @@
     "deny": [
       "Bash",
       "Write",
+      "Bash(npm run cover:*)",
+      "Bash(npm:* run test)",
+      "Bash(npm run test:unit)",
       "Edit(//etc/secrets/**)",
       "WebFetch(example.org)"
     ],

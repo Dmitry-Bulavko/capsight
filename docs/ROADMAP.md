@@ -4,14 +4,14 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**S6/S7/S11 — Settings semantics** is next (planned; handoffs pending). D3 evidence wave 2 is complete.
+**SS — Settings semantics (S6/S7/S11)** is the active phase. D3 evidence wave 2 is complete.
 
 Previous: **D3 complete** — unverified 87→37; all Claude entry-owed priority-2 clusters closed.
 
 ## Phase order (post-G1)
 
 ```
-F0 (review follow-ups) → G1-04 (drift demo) → D3 (evidence wave 2) → S6/S7/S11 (settings semantics)
+F0 (review follow-ups) → G1-04 (drift demo) → D3 (evidence wave 2) → SS (settings semantics S6/S7/S11)
 ```
 
 Previous: **D1 phase complete** — evidence depth for three platforms.
@@ -40,6 +40,7 @@ Previous: **V0-04 done** — custom `CapsightSelect` listbox with in-row status 
 | F0 — Review follow-ups | `done` | No UI prose-matching; warning enforcement visible; CLI/API warnings shared |
 | G1-04 — Drift demonstration | `done` | Confident rule downgrades on version exceed, neighbors stay confident |
 | D3 — Evidence wave 2 | `done` | Unverified below 45; Claude entry-owed closed |
+| SS — Settings semantics | `done` | S6/S7 shape pinned; S11 relative paths honest unknown |
 
 ## Surface rule
 
@@ -261,10 +262,10 @@ Coverage over the fixed §3 denominator ends at **9 fixture-verified / 31 docume
 
 ### Still not implemented, and visible as such
 
-- S6 prefix matching and S7 gitignore-glob matching: the rules are recorded and resolve `unknown` rather than being evaluated.
-- S11 (`additionalDirectories`, `enableAllProjectMcpServers`).
-- The identity of an F8 substitute model, which the simulation still asserts (H1-29).
+- The identity of an F8 substitute model, which the simulation still asserts (H1-29) — **closed in F0-04**.
 - The observed layer (§9), excluded from v0.1 by the S0 decision.
+
+**SS phase (done):** S6 `:*` position shape and S7 `/` vs `//` anchoring are fixture-pinned in `settings-permissions`; relative `additionalDirectories` stay `unknown` (§3.5 does not define resolution base).
 
 ## S0 outcome
 

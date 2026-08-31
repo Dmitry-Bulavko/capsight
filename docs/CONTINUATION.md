@@ -1,21 +1,21 @@
 # Capsight continuation
 
-**Active phase:** S6/S7/S11 — Settings semantics (planned)  
-**Next task:** handoffs not yet created
+**Active phase:** none — SS complete  
+**Next:** pick next roadmap item or user direction
 
-## Phase order
+## Completed this session
 
 ```
-F0 ✓ → G1-04 ✓ → D3 ✓ → S6/S7/S11
+F0 ✓ → G1-04 ✓ → D3 ✓ → SS ✓
 ```
 
-## D3 — done
+**826 tests**, typecheck green. Commits: `7866e7f` (F0/G1-04/D3), SS pending push.
 
-All five tasks closed. Unverified **87 → 37** (gate < 45). **817 tests**, typecheck green.
+## SS outcome
 
-## S6/S7/S11
-
-H1 outcome: prefix Bash matching, gitignore globs Read/Edit, additionalDirectories recorded as unknown. Needs handoffs before orchestration continues.
+- **S6:** `Bash(...)` `:*` position shape → `available/enforced` via `settings.bashPrefixRules`
+- **S7:** `Read(/...)` / `Edit(//...)` anchoring → `available/enforced` via `settings.pathRules`
+- **S11:** absolute additionalDirectories pinned; relative entries `unknown` (verbatim, no invented resolution)
 
 ## Orchestration
 
