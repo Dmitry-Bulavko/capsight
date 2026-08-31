@@ -361,8 +361,8 @@ Order: SS-04 → SS-05.
 
 | ID | Phase | Title | Status | Spec refs | Files | Acceptance |
 |----|-------|-------|--------|-----------|-------|------------|
-| SS-04 | SS-deep | S6 — command prefix matching depth | done | §3.5 S6, §2.3 | settings-permissions.ts, matrix.ts, fixture | Prefix matching pinned or refused in writing; D4-06 gate unchanged |
-| SS-05 | SS-deep | S7 — path glob matching depth | in_progress | §3.5 S7, §2.3 | settings-permissions.ts, matrix.ts, fixture | Glob matching pinned or refused; D4-06 gate unchanged |
+| SS-04 | SS-deep | S6 — command prefix matching depth | done | §3.5 S6, §2.3 | settings-permissions.ts, matrix.ts, fixture | Matching half refused in writing; shape pins unchanged |
+| SS-05 | SS-deep | S7 — path glob matching depth | done | §3.5 S7, §2.3 | settings-permissions.ts, matrix.ts, fixture | Matching half refused; anchoring pins unchanged |
 
 ## B1 — Builtin discovery channel
 
@@ -372,7 +372,7 @@ Order: B1-01.
 
 | ID | Phase | Title | Status | Spec refs | Files | Acceptance |
 |----|-------|-------|--------|-----------|-------|------------|
-| B1-01 | B1 | Synthetic builtin inventory in discovery | todo | §3.9 B1, B4, §11.1 | discovery/agents.ts, matrix.ts, fixtures | Six builtins listed; B4 override pin or honest refusal |
+| B1-01 | B1 | Synthetic builtin inventory in discovery | in_progress | §3.9 B1, B4, §11.1 | discovery/agents.ts, matrix.ts, fixtures | Six builtins listed; B4 override pin or honest refusal |
 
 ## Deferred backlog
 

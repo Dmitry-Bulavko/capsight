@@ -583,6 +583,10 @@ interface RuleOutcome {
 const BASH_PREFIX_MATCHING_REFUSAL =
   "Which command lines match the prefix is not evaluated (§2.3).";
 
+/** SS-05: S7 names glob matching; whether a concrete path matches is §2.3 out of scope. */
+const PATH_GLOB_MATCHING_REFUSAL =
+  "Whether a particular path matches the glob is not evaluated (§2.3).";
+
 function bashPrefixShapeMessage(
   quoted: string,
   shape: BashPrefixShape,
@@ -620,8 +624,8 @@ function pathGlobAnchorMessage(
 ): string {
   const pathMatchLimit =
     action === "deny"
-      ? "What a deny rule in this form leaves of the tool is not determined (§2.3)."
-      : "Whether a particular path matches is not evaluated (§2.3), so the effect of this rule on the capability set is not determined.";
+      ? `${PATH_GLOB_MATCHING_REFUSAL} What a deny rule in this form leaves of the tool is not determined.`
+      : `${PATH_GLOB_MATCHING_REFUSAL} The effect of this rule on the capability set is not determined.`;
 
   switch (anchor) {
     case "project-root":

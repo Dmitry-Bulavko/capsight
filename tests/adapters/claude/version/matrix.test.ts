@@ -417,6 +417,14 @@ describe("VERSION_MATRIX", () => {
     expect(entry?.notes).toMatch(/§2\.3/);
     expect(entry?.verifiedFacts).toEqual([]);
   });
+
+  it("documents SS-05 refusal for S7 glob matching semantics", () => {
+    const entry = VERSION_MATRIX.find((item) => item.id === "settings.pathRules");
+    expect(entry?.notes).toMatch(/SS-05 evaluated/);
+    expect(entry?.notes).toMatch(/noFixturePossible \(matching half\)/);
+    expect(entry?.notes).toMatch(/§2\.3/);
+    expect(entry?.verifiedFacts).toEqual([]);
+  });
 });
 
 describe("compareSemver", () => {

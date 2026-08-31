@@ -1,28 +1,22 @@
 # Capsight continuation
 
-**Active phase:** SS-deep — Settings argument depth (Evidence wave 4)  
-**Next task:** SS-04 (S6 command prefix matching depth)
+**Active phase:** B1 — Builtin discovery channel  
+**Next task:** B1-01 (synthetic builtin inventory in discovery)
 
-## D4 outcome (complete)
+## SS-deep outcome (complete)
 
-| Metric | Before | After |
-|--------|--------|-------|
-| entry-owed | 19 | **0** |
-| unverified total | 37 | **18** |
+SS-04/05 refused S6/S7 *matching* depth in writing (§2.3). SS-01…03 shape pins unchanged. D4-06 gate held.
 
-## Phase queue (evidence first)
+## Phase queue
 
 ```
-SS-deep (SS-04 → SS-05) → B1 (B1-01) → G1-MP → §9
+B1 (B1-01) → G1-MP → §9
 ```
 
 ## Handoffs ready
 
-| Phase | Handoffs |
-|-------|----------|
-| SS-deep | `docs/tasks/SS-04-*.md`, `SS-05-*.md` |
-| B1 | `docs/tasks/B1-01-*.md` |
+`docs/tasks/B1-01-builtin-discovery-channel.md`
 
 ## Orchestration
 
-One task `in_progress`; implementer + fresh reviewer per task. D4-06 gate must not regress.
+One task `in_progress`; implementer + fresh reviewer per task.

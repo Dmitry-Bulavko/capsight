@@ -1051,10 +1051,17 @@ const MATRIX_ENTRIES = [
       "Edit(//etc/secrets/**) (filesystem-root // anchoring). Each resolves available/enforced " +
       "through this entry, so the rule is the operative cause of a confident golden value " +
       "(H1-28). Only the / vs // anchoring clause is pinned — not whether a concrete path " +
-      "matches the glob (§2.3). S7 also states gitignore-like glob syntax generally; that half " +
-      "is not exercised by any fixture and rests on documentation alone in §11.4. The stage " +
-      "does not lower the tool-level Read or Edit capability on the strength of a path-scoped " +
-      "deny: S7 says which paths the rule covers, not what is left of the tool.",
+      "matches the glob (§2.3). SS-05 evaluated the other S7 clause — glob matching — and " +
+      "refused: deciding whether e.g. `/src/foo.ts` or `/etc/secrets/key` matches " +
+      "`Read(/src/**)` or `Edit(//etc/secrets/**)` is a per-invocation approval question " +
+      "(§2.3); no fixture can make matching semantics the operative cause of a confident " +
+      "golden without building a permission engine. noFixturePossible (matching half): a fixture " +
+      "would need to assert which concrete paths match a glob, which is exactly the runtime " +
+      "verdict §2.3 forbids; anchoring classification (SS-02) is the honest ceiling. S7 also " +
+      "states gitignore-like glob syntax generally; that half is not exercised by any fixture " +
+      "and rests on documentation alone in §11.4. The stage does not lower the tool-level Read " +
+      "or Edit capability on the strength of a path-scoped deny: S7 says which paths the rule " +
+      "covers, not what is left of the tool.",
   },
   {
     id: "settings.webFetchRules",

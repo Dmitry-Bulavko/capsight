@@ -426,7 +426,7 @@
           "reasons": [
             {
               "type": "declared",
-              "message": "permissions.allow entry \"Read(/src/**)\" uses a path glob anchored at the project root with a leading / (S7). Whether a particular path matches is not evaluated (§2.3), so the effect of this rule on the capability set is not determined.",
+              "message": "permissions.allow entry \"Read(/src/**)\" uses a path glob anchored at the project root with a leading / (S7). Whether a particular path matches the glob is not evaluated (§2.3). The effect of this rule on the capability set is not determined.",
               "source": {
                 "platform": "claude",
                 "scope": "project",
@@ -669,7 +669,7 @@
           "reasons": [
             {
               "type": "declared",
-              "message": "permissions.deny entry \"Edit(//etc/secrets/**)\" uses a path glob anchored at the filesystem root with a leading // (S7). What a deny rule in this form leaves of the tool is not determined (§2.3).",
+              "message": "permissions.deny entry \"Edit(//etc/secrets/**)\" uses a path glob anchored at the filesystem root with a leading // (S7). Whether a particular path matches the glob is not evaluated (§2.3). What a deny rule in this form leaves of the tool is not determined.",
               "source": {
                 "platform": "claude",
                 "scope": "project",
@@ -1881,7 +1881,7 @@
           "reasons": [
             {
               "type": "declared",
-              "message": "permissions.allow entry \"Read(/src/**)\" uses a path glob anchored at the project root with a leading / (S7). Whether a particular path matches is not evaluated (§2.3), so the effect of this rule on the capability set is not determined.",
+              "message": "permissions.allow entry \"Read(/src/**)\" uses a path glob anchored at the project root with a leading / (S7). Whether a particular path matches the glob is not evaluated (§2.3). The effect of this rule on the capability set is not determined.",
               "source": {
                 "platform": "claude",
                 "scope": "project",
@@ -2124,7 +2124,7 @@
           "reasons": [
             {
               "type": "declared",
-              "message": "permissions.deny entry \"Edit(//etc/secrets/**)\" uses a path glob anchored at the filesystem root with a leading // (S7). What a deny rule in this form leaves of the tool is not determined (§2.3).",
+              "message": "permissions.deny entry \"Edit(//etc/secrets/**)\" uses a path glob anchored at the filesystem root with a leading // (S7). Whether a particular path matches the glob is not evaluated (§2.3). What a deny rule in this form leaves of the tool is not determined.",
               "source": {
                 "platform": "claude",
                 "scope": "project",

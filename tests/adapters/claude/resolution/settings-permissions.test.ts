@@ -429,6 +429,23 @@ describe("resolveSettingsPermissions", () => {
     expect(rule?.enforcement).toBe("enforced");
   });
 
+  it("refuses S7 glob matching beyond anchoring without a permission engine (SS-05)", () => {
+    const result = resolveSettingsPermissions({
+      layers: [layer("project", 30, { allow: ["Read(/src/**)"] })],
+      capabilities: [availableTool("Read")],
+      version: VERSION,
+    });
+
+    const rule = ruleCapability(result, "allow:Read(/src/**)");
+    expect(rule).toMatchObject({ status: "available", enforcement: "enforced" });
+    expect(rule?.reasons[0]?.matrixRef).toBe("settings.pathRules");
+    expect(rule?.reasons[0]?.message).toMatch(/project root/);
+    expect(rule?.reasons[0]?.message).toMatch(
+      /Whether a particular path matches the glob is not evaluated/,
+    );
+    expect(rule?.reasons[0]?.message).not.toMatch(/would match|is approved|grants nothing/);
+  });
+
   it("classifies path glob anchors per S7 without matching paths (§2.3)", () => {
     expect(classifyPathGlobAnchor("/src/**")).toBe("project-root");
     expect(classifyPathGlobAnchor("//etc/secrets/**")).toBe("absolute");

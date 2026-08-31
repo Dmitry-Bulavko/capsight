@@ -4,9 +4,9 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**SS-deep — Settings argument depth** is the active phase (Evidence depth wave 4). SS-01…03 pinned S6/S7/S11 *shape*; SS-04/05 evaluate whether prefix/glob *matching* is documentable without §2.3 permission engine.
+**B1 — Builtin discovery channel** is the active phase. SS-deep closed: S6/S7 *matching* depth refused in writing (§2.3); SS-01…03 shape pins unchanged.
 
-Previous: **D4 complete** — zero `entry-owed`; unverified **18** (terminal refusals only).
+Previous: **SS-deep complete** — prefix/glob matching honestly unknown beyond shape.
 
 ## Phase order (active backlog)
 
@@ -42,7 +42,7 @@ Completed chain: `F0 → G1-04 → D3 → SS → D4`.
 | D3 — Evidence wave 2 | `done` | Unverified below 45; Claude entry-owed closed |
 | SS — Settings semantics | `done` | S6/S7 shape pinned; S11 relative paths honest unknown |
 | D4 — Evidence depth (multi-platform) | `done` | Zero `entry-owed`; unverified ≤ 18 |
-| SS-deep — Settings argument depth | `todo` | S6 prefix / S7 glob matching only if documentable |
+| SS-deep — Settings argument depth | `done` | S6/S7 matching refused; shape pins from SS unchanged |
 | B1 — Builtin discovery channel | `todo` | Synthetic builtin inventory unblocks B1/B4 fixtures |
 | G1-MP — Drift on Cursor/Codex | `deferred` | maxVersion on confident rule per platform |
 | §9 — Observed layer | `deferred` | Revisit [S0-DECISION.md](./S0-DECISION.md) when platform APIs mature |
