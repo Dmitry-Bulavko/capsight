@@ -24,11 +24,15 @@ import {
   ECOSYSTEM_FIXTURE_NAMES,
   ecosystemFixturesRoot,
   findConfidentCapabilityMismatches,
+  findStaleLedgerEntries,
   findUndeclaredFixtureDirectories,
+  findUnledgeredUnverifiedFacts,
   formatCoverageReport,
   formatPendingFixtures,
+  indexEvidenceLedger,
   inspectFixtureCorpus,
   isConfidentCapabilityStatus,
+  loadEvidenceLedgerGateIndex,
   matrixReferencedCount,
   pendingFixtureNames,
   platformFixturesRoot,
@@ -682,6 +686,53 @@ describe("correctness gate", () => {
       },
     );
   }
+
+  it("requires every unverified fact to have an evidence-ledger disposition (D2-06)", () => {
+    const ledgerEntries = loadEvidenceLedgerGateIndex();
+    const ledgerIndex = indexEvidenceLedger(ledgerEntries);
+    const ledgerCountByPlatform = new Map<PlatformId, number>();
+
+    for (const entry of ledgerEntries) {
+      ledgerCountByPlatform.set(
+        entry.platform,
+        (ledgerCountByPlatform.get(entry.platform) ?? 0) + 1,
+      );
+    }
+
+    for (const coverage of PLATFORM_COVERAGE) {
+      const fixtures = discoverFixtureNames(
+        coverage.fixturesRoot,
+        coverage.fixtureNames,
+      );
+      const report = buildCoverageReport(
+        coverage.facts,
+        coverage.matrix,
+        fixtures,
+        coverage.getFactConfidence,
+      );
+
+      const missing = findUnledgeredUnverifiedFacts(coverage, ledgerIndex);
+      expect(
+        missing,
+        coverage.platform +
+          ": unverified facts missing from docs/EVIDENCE-LEDGER.md Gate index:\n" +
+          missing.map((id) => "  " + coverage.platform + ":" + id).join("\n"),
+      ).toEqual([]);
+
+      const stale = findStaleLedgerEntries(coverage, ledgerIndex);
+      expect(
+        stale,
+        coverage.platform +
+          ": Gate index lists matrix-referenced facts (close the row or remove from index):\n" +
+          stale.map((id) => "  " + coverage.platform + ":" + id).join("\n"),
+      ).toEqual([]);
+
+      expect(
+        ledgerCountByPlatform.get(coverage.platform),
+        coverage.platform + ": Gate index row count must match unverified count",
+      ).toBe(report.unverified);
+    }
+  });
 
   it("counts a fact as fixture evidence only when the entry exercises it entire", () => {
     const fixtures = ["tools-filters"];

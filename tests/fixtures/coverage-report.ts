@@ -588,3 +588,167 @@ export function formatCoverageReport(
     coverageReportLine("unverified", report.unverified),
   ].join("\n");
 }
+
+/** Terminal dispositions in `docs/EVIDENCE-LEDGER.md` Gate index (D2-06). */
+export const EVIDENCE_LEDGER_DISPOSITIONS = [
+  "entry-owed",
+  "noFixturePossible",
+  "out-of-scope",
+] as const;
+
+export type EvidenceLedgerDisposition =
+  (typeof EVIDENCE_LEDGER_DISPOSITIONS)[number];
+
+export interface EvidenceLedgerEntry {
+  platform: PlatformId;
+  factId: string;
+  disposition: EvidenceLedgerDisposition;
+}
+
+const EVIDENCE_LEDGER_PATH = path.join(
+  __dirname,
+  "../../docs/EVIDENCE-LEDGER.md",
+);
+
+function ledgerKey(platform: PlatformId, factId: string): string {
+  return `${platform}:${factId}`;
+}
+
+/**
+ * Parses the `## Gate index` fenced block from `docs/EVIDENCE-LEDGER.md`.
+ * Each line is `platform:factId:disposition`.
+ */
+export function parseEvidenceLedgerGateIndex(
+  markdown: string,
+): EvidenceLedgerEntry[] {
+  const gateIndexHeader = "## Gate index";
+  const start = markdown.indexOf(gateIndexHeader);
+  if (start === -1) {
+    throw new Error("EVIDENCE-LEDGER.md missing ## Gate index section");
+  }
+
+  const afterHeader = markdown.slice(start);
+  const codeFenceStart = afterHeader.indexOf("```");
+  if (codeFenceStart === -1) {
+    throw new Error("EVIDENCE-LEDGER.md Gate index missing fenced block");
+  }
+
+  const contentStart = codeFenceStart + "```".length;
+  const blockStart = afterHeader.indexOf("\n", contentStart) + 1;
+  const fenceEnd = afterHeader.indexOf("```", blockStart);
+  if (fenceEnd === -1) {
+    throw new Error("EVIDENCE-LEDGER.md Gate index fenced block not closed");
+  }
+
+  const entries: EvidenceLedgerEntry[] = [];
+  for (const line of afterHeader.slice(blockStart, fenceEnd).split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed === "") {
+      continue;
+    }
+
+    const parts = trimmed.split(":");
+    if (parts.length !== 3) {
+      throw new Error(`Invalid gate index line: ${trimmed}`);
+    }
+
+    const [platform, factId, disposition] = parts as [
+      string,
+      string,
+      string,
+    ];
+
+    if (!PLATFORM_IDS.includes(platform as PlatformId)) {
+      throw new Error(`Unknown platform in gate index: ${platform}`);
+    }
+    if (
+      !EVIDENCE_LEDGER_DISPOSITIONS.includes(
+        disposition as EvidenceLedgerDisposition,
+      )
+    ) {
+      throw new Error(`Invalid disposition in gate index: ${disposition}`);
+    }
+
+    entries.push({
+      platform: platform as PlatformId,
+      factId,
+      disposition: disposition as EvidenceLedgerDisposition,
+    });
+  }
+
+  return entries;
+}
+
+/** Reads and parses the Gate index from the repo evidence ledger. */
+export function loadEvidenceLedgerGateIndex(
+  ledgerPath: string = EVIDENCE_LEDGER_PATH,
+): EvidenceLedgerEntry[] {
+  return parseEvidenceLedgerGateIndex(fs.readFileSync(ledgerPath, "utf8"));
+}
+
+/** Maps `platform:factId` to disposition; rejects duplicate keys. */
+export function indexEvidenceLedger(
+  entries: readonly EvidenceLedgerEntry[],
+): Map<string, EvidenceLedgerDisposition> {
+  const index = new Map<string, EvidenceLedgerDisposition>();
+  for (const entry of entries) {
+    const key = ledgerKey(entry.platform, entry.factId);
+    if (index.has(key)) {
+      throw new Error(`Duplicate gate index key: ${key}`);
+    }
+    index.set(key, entry.disposition);
+  }
+  return index;
+}
+
+/** Fact ids that are unverified in coverage but absent from the ledger. */
+export function findUnledgeredUnverifiedFacts(
+  coverage: {
+    platform: PlatformId;
+    facts: readonly CoverageFact[];
+    matrix: readonly CoverageMatrixEntry[];
+  },
+  ledgerIndex: ReadonlyMap<string, EvidenceLedgerDisposition>,
+): string[] {
+  const referenced = new Set(
+    coverage.matrix.flatMap((entry) => [...entry.factRefs]),
+  );
+  const missing: string[] = [];
+
+  for (const fact of coverage.facts) {
+    if (referenced.has(fact.id)) {
+      continue;
+    }
+    if (!ledgerIndex.has(ledgerKey(coverage.platform, fact.id))) {
+      missing.push(fact.id);
+    }
+  }
+
+  return missing.sort();
+}
+
+/** Fact ids listed in the ledger but now matrix-referenced (stale rows). */
+export function findStaleLedgerEntries(
+  coverage: {
+    platform: PlatformId;
+    facts: readonly CoverageFact[];
+    matrix: readonly CoverageMatrixEntry[];
+  },
+  ledgerIndex: ReadonlyMap<string, EvidenceLedgerDisposition>,
+): string[] {
+  const referenced = new Set(
+    coverage.matrix.flatMap((entry) => [...entry.factRefs]),
+  );
+  const stale: string[] = [];
+
+  for (const fact of coverage.facts) {
+    if (!referenced.has(fact.id)) {
+      continue;
+    }
+    if (ledgerIndex.has(ledgerKey(coverage.platform, fact.id))) {
+      stale.push(fact.id);
+    }
+  }
+
+  return stale.sort();
+}

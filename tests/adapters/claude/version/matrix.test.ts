@@ -53,6 +53,18 @@ const M1_MATRIX_IDS = [
   "trust.frontmatterHooks",
   "instructions.hierarchy",
   "instructions.builtinKind",
+  "discovery.upwardWalkAgents",
+  "discovery.recursiveAgentDirs",
+  "discovery.pluginScopedId",
+  "discovery.invalidAgentSkip",
+  "discovery.pluginFilenameFallback",
+  "agent.frontmatterRequired",
+  "agent.toolsAgentTypesIgnored",
+  "agent.toolsMissingAgent",
+  "agent.modelResolution",
+  "agent.initialPromptMainSession",
+  "skills.skillToolWithoutPreload",
+  "skills.skillToolWhitelist",
   "discovery.addDirAgents",
   "discovery.addDirSkills",
   "discovery.commandNamePrecedence",
@@ -504,6 +516,16 @@ describe("resolveEnforcement", () => {
       resolveEnforcement({ matrixId: MATRIX[FACT.P4], version: "2.1.223" })
         .enforcement,
     ).toBe("enforced");
+    withEntry("agent.disallowedTools", { maxVersion: "2.1.10" }, () => {
+      expect(
+        resolveEnforcement({ matrixId: MATRIX["agent.disallowedTools"], version: "2.1.5" })
+          .enforcement,
+      ).toBe("enforced");
+      expect(
+        resolveEnforcement({ matrixId: MATRIX["agent.disallowedTools"], version: "2.1.11" })
+          .enforcement,
+      ).toBe("unknown");
+    });
     // agent.collisionSameDir is registered with status "unknown" (A4).
     expect(
       resolveEnforcement({

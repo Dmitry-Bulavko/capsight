@@ -4,7 +4,9 @@ export type DashboardTab =
   | "agents"
   | "editor"
   | "capabilities"
-  | "graph";
+  | "warnings"
+  | "graph"
+  | "simulation";
 
 interface NavItem {
   id: DashboardTab;
@@ -18,7 +20,9 @@ export const DASHBOARD_NAV: readonly NavItem[] = [
   { id: "agents", label: "Agents", description: "Discovered definitions" },
   { id: "editor", label: "Editor", description: "In-memory tool toggles" },
   { id: "capabilities", label: "Capabilities", description: "Effective resolution" },
+  { id: "warnings", label: "Warnings", description: "Resolver & security findings" },
   { id: "graph", label: "Graph", description: "Effective resolution — one context" },
+  { id: "simulation", label: "Simulation", description: "Managed policy overlay preview" },
 ] as const;
 
 interface DashboardNavProps {

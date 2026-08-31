@@ -61,7 +61,8 @@ export async function resolveEffectiveConfiguration(
 
   const capabilities: ResolvedCapability[] = [];
   const warnings: Warning[] = [...snapshot.warnings];
-  const toolGate = gateCapability(MATRIX["agent.toolPool"]);
+  const version = snapshot.version.version;
+  const toolGate = gateCapability(MATRIX["agent.toolPool"], version);
 
   if (snapshot.trust.accepted === "unknown") {
     warnings.push({

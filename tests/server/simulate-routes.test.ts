@@ -111,7 +111,7 @@ describe("simulate API routes", () => {
           expect.objectContaining({
             agentName: "backend",
             declared: "blocked-model",
-            effective: "claude-sonnet-4",
+            effective: "unknown",
           }),
         ]),
       );

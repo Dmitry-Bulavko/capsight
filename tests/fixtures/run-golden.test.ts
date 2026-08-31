@@ -591,6 +591,39 @@ describe("golden fixtures", () => {
     });
   }
 
+  // §8.4 / G1: version above a rule's matrix maxVersion downgrades only the
+  // capabilities that rule gates — not the whole resolution.
+  it("version-drift scopes downgrade when the detected version exceeds a matrix maxVersion", async () => {
+    const { actual, expected } = await runGoldenFixture("version-drift");
+    expect(actual).toEqual(expected);
+
+    const atDepth0 = actual.resolutions.find((entry) => entry.context.depth === 0);
+    const atDepth3 = actual.resolutions.find((entry) => entry.context.depth === 3);
+    expect(atDepth0, "depth-0 resolution").toBeDefined();
+    expect(atDepth3, "depth-3 resolution").toBeDefined();
+
+    const agentAt0 = atDepth0!.capabilities.find(
+      (capability) => capability.capabilityId === "Agent",
+    );
+    const agentAt3 = atDepth3!.capabilities.find(
+      (capability) => capability.capabilityId === "Agent",
+    );
+    const readAt3 = atDepth3!.capabilities.find(
+      (capability) => capability.capabilityId === "Read",
+    );
+
+    expect(agentAt0?.status).toBe("available");
+    expect(agentAt0?.enforcement).toBe("enforced");
+    expect(agentAt3?.status).toBe("unknown");
+    expect(agentAt3?.enforcement).toBe("unknown");
+    expect(readAt3?.status).toBe("available");
+
+    const versionReason = agentAt3!.reasons.find((reason) => reason.type === "version");
+    expect(versionReason?.matrixRef).toBe("agent.depthLimitDefault");
+    expect(versionReason?.message).toContain("unsupported");
+    expect(versionReason?.message).toContain("requires <= 2.1.216");
+  });
+
   // Fixtures from the declared SPEC §11.1 corpus that do not yet satisfy the
   // §11.2 contract are surfaced as todos instead of being silently skipped.
   for (const status of inspectFixtureCorpus(

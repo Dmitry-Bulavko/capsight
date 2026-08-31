@@ -1,3 +1,3 @@
 # Version drift fixture project
 
-Pinned to a Claude Code version whose N5 subagent depth default was never observed.
+Pinned to Claude Code 2.1.217 — above the matrix maxVersion for `agent.depthLimitDefault` (2.1.216) — so the depth-limit verdict downgrades to unknown, not a confident denial.

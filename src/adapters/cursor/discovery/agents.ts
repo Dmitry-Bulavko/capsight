@@ -115,12 +115,12 @@ async function parseAgentFile(file: RawAgentFile): Promise<ParsedAgent> {
   return { kind: "valid", file, agent };
 }
 
-function resolveCollisions(parsed: ParsedAgent[]): Agent[] {
+function resolveCollisions(parsed: ParsedAgent[], version: string): Agent[] {
   const agents: Agent[] = [];
   const invalidAgents: Agent[] = [];
 
-  const invalidGate = gateDiscovery(MATRIX["agent.invalid"]);
-  const collisionGate = gateCollision(MATRIX["collision.sameDir"]);
+  const invalidGate = gateDiscovery(MATRIX["agent.invalid"], version);
+  const collisionGate = gateCollision(MATRIX["collision.sameDir"], version);
 
   for (const item of parsed) {
     if (item.kind === "invalid") {
@@ -261,10 +261,11 @@ export async function discoverAgentSources(
 export async function discoverAgents(
   projectScopes: ProjectScopeLevel[],
   projectPath: string,
+  version: string,
 ): Promise<AgentDiscoveryResult> {
   const rawFiles = await discoverAgentSources(projectScopes, projectPath);
   const parsed = await Promise.all(rawFiles.map(parseAgentFile));
-  const agents = resolveCollisions(parsed);
+  const agents = resolveCollisions(parsed, version);
   const invalidCount = agents.filter((a) => a.status === "invalid").length;
   return { agents, invalidCount };
 }

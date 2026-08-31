@@ -27,6 +27,7 @@ import type {
   InventoryResource,
   InventoryResourceKind,
   OverlapRelation,
+  Warning,
 } from "../../core/model/index.js";
 
 const ALL_COMPAT_ENTRIES = mergeCompatEntries(
@@ -49,6 +50,8 @@ export interface EcosystemApiPayload {
   resources: Record<InventoryResourceKind, InventoryResourceWithCompat[]>;
   overlaps: OverlapRelation[];
   health: EcosystemHealthSummary;
+  /** Snapshot-level warnings aggregated across platform scans (§7.7). */
+  snapshotWarnings: Warning[];
 }
 
 export interface RelatedPathEntry {
@@ -193,12 +196,21 @@ export function buildEcosystemApiPayload(
     resources[kind] = inventory.resources[kind].map((resource) => withCompat(resource, scans));
   }
 
+  const snapshotWarnings: Warning[] = [];
+  for (const platform of PLATFORM_IDS) {
+    const scan = scans[platform];
+    if (scan) {
+      snapshotWarnings.push(...scan.snapshot.warnings);
+    }
+  }
+
   return {
     projectPath: inventory.projectPath,
     detection: inventory.detection,
     resources,
     overlaps: inventory.overlaps,
     health: buildEcosystemHealth({ inventory, scans, resources }),
+    snapshotWarnings,
   };
 }
 

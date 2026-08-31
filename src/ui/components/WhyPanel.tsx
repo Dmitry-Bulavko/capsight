@@ -1,3 +1,18 @@
+import { VERSION_MATRIX as CLAUDE_MATRIX } from "../../adapters/claude/version/matrix.js";
+import {
+  factConfidence as claudeFactConfidence,
+  isFactId as isClaudeFactId,
+} from "../../adapters/claude/version/facts.js";
+import { VERSION_MATRIX as CODEX_MATRIX } from "../../adapters/codex/version/matrix.js";
+import {
+  factConfidence as codexFactConfidence,
+  isFactId as isCodexFactId,
+} from "../../adapters/codex/version/facts.js";
+import { VERSION_MATRIX as CURSOR_MATRIX } from "../../adapters/cursor/version/matrix.js";
+import {
+  factConfidence as cursorFactConfidence,
+  isFactId as isCursorFactId,
+} from "../../adapters/cursor/version/facts.js";
 import type {
   ExecutionContext,
   ResolvedCapability,
@@ -22,7 +37,7 @@ const STATUS_ICONS: Record<ResolvedCapability["status"], string> = {
   unknown: "?",
 };
 
-const ENFORCEMENT_LABELS: Record<ResolvedCapability["enforcement"], string> = {
+export const ENFORCEMENT_LABELS: Record<ResolvedCapability["enforcement"], string> = {
   enforced: "Enforced",
   advisory: "Advisory",
   unknown: "Unknown",
@@ -37,6 +52,54 @@ const PRESET_LABELS: Record<ExecutionContext["preset"], string> = {
   plan: "Plan",
   teammate: "Teammate",
 };
+
+/** UI tier labels aligned with fact registry confidence (§8.1). */
+export type EvidenceTier = "fixture" | "doc" | "ext" | "spike" | "unknown";
+
+type MatrixConfidence = "doc" | "fixture" | "runtime-observed";
+
+interface MatrixEntryLike {
+  id: string;
+  confidence: MatrixConfidence;
+}
+
+const MATRIX_ENTRY_BY_ID = new Map<string, MatrixEntryLike>(
+  [...CLAUDE_MATRIX, ...CURSOR_MATRIX, ...CODEX_MATRIX].map((entry) => [entry.id, entry]),
+);
+
+export function matrixConfidenceToTier(confidence: MatrixConfidence): EvidenceTier {
+  switch (confidence) {
+    case "fixture":
+      return "fixture";
+    case "doc":
+      return "doc";
+    case "runtime-observed":
+      return "spike";
+  }
+}
+
+export function resolveEvidenceTier(matrixRef: string): EvidenceTier {
+  const entry = MATRIX_ENTRY_BY_ID.get(matrixRef);
+  if (entry) {
+    return matrixConfidenceToTier(entry.confidence);
+  }
+
+  if (isClaudeFactId(matrixRef)) {
+    return claudeFactConfidence(matrixRef);
+  }
+  if (isCursorFactId(matrixRef)) {
+    return cursorFactConfidence(matrixRef);
+  }
+  if (isCodexFactId(matrixRef)) {
+    return codexFactConfidence(matrixRef);
+  }
+
+  return "unknown";
+}
+
+export function evidenceTierClassName(tier: EvidenceTier): string {
+  return `why-evidence-tier why-evidence-tier-${tier}`;
+}
 
 function formatContext(context: ExecutionContext): string {
   const label = PRESET_LABELS[context.preset];
@@ -106,11 +169,14 @@ function collectEvidence(capability: ResolvedCapability): string[] {
   return [...refs];
 }
 
-function formatFactRef(matrixRef: string): string {
-  if (matrixRef.startsWith("matrix://")) {
-    return matrixRef;
-  }
-  return `[${matrixRef}]`;
+export function EvidenceLine({ matrixRef }: { matrixRef: string }) {
+  const tier = resolveEvidenceTier(matrixRef);
+  return (
+    <span className="why-evidence-line">
+      <span className={evidenceTierClassName(tier)}>{tier}</span>
+      <code className="why-evidence-ref">{matrixRef}</code>
+    </span>
+  );
 }
 
 interface WhyPanelProps {
@@ -163,9 +229,10 @@ export function WhyPanel({ explain, loading = false, error = null, onClose }: Wh
               <dd>
                 ✓ {ENFORCEMENT_LABELS[capability.enforcement]}
                 {factRefs.length > 0 && (
-                  <span className="why-fact-refs">
-                    {" "}
-                    {factRefs.map((ref) => formatFactRef(ref)).join(" ")}
+                  <span className="why-enforcement-evidence">
+                    {factRefs.map((ref) => (
+                      <EvidenceLine key={ref} matrixRef={ref} />
+                    ))}
                   </span>
                 )}
               </dd>
@@ -203,9 +270,7 @@ export function WhyPanel({ explain, loading = false, error = null, onClose }: Wh
               {capability.reasons.map((reason, index) => (
                 <li key={`${reason.type}-${index}`}>
                   {reason.message}
-                  {reason.matrixRef && (
-                    <span className="why-fact-refs"> {formatFactRef(reason.matrixRef)}</span>
-                  )}
+                  {reason.matrixRef && <EvidenceLine matrixRef={reason.matrixRef} />}
                 </li>
               ))}
             </ol>
@@ -214,9 +279,11 @@ export function WhyPanel({ explain, loading = false, error = null, onClose }: Wh
           {evidence.length > 0 && (
             <section className="why-section">
               <h3>Evidence</h3>
-              <ul className="why-list mono">
+              <ul className="why-evidence-list">
                 {evidence.map((ref) => (
-                  <li key={ref}>{ref}</li>
+                  <li key={ref}>
+                    <EvidenceLine matrixRef={ref} />
+                  </li>
                 ))}
               </ul>
             </section>

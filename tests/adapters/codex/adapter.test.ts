@@ -86,6 +86,6 @@ describe("codex adapter", () => {
     expect(instructionCap?.status).toBe("available");
     expect(instructionCap?.enforcement).toBe("enforced");
     expect(effective.capabilities.some((cap) => cap.status === "unknown")).toBe(true);
-    expect(effective.unknownRate).toBeCloseTo(2 / 3);
+    expect(effective.unknownRate).toBeCloseTo(3 / 4);
   });
 });

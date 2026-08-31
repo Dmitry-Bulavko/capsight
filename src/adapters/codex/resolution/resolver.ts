@@ -65,8 +65,9 @@ export async function resolveEffectiveConfiguration(
 
   const capabilities: ResolvedCapability[] = [];
   const warnings: Warning[] = [];
-  const instructionGate = gateCapability(MATRIX["instruction.chain"]);
-  const trustGate = gateCapability(MATRIX["trust.project"]);
+  const version = snapshot.version.version;
+  const instructionGate = gateCapability(MATRIX["instruction.chain"], version);
+  const trustGate = gateCapability(MATRIX["trust.project"], version);
 
   if (snapshot.trust.accepted === "unknown") {
     warnings.push({
@@ -94,6 +95,7 @@ export async function resolveEffectiveConfiguration(
           enforcement: trustGate.enforcement,
         },
         MATRIX["trust.project"],
+        version,
       ),
     );
   }

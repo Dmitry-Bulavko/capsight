@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   buildCoverageReport,
   classifyFactCoverage,
+  findStaleLedgerEntries,
+  findUnledgeredUnverifiedFacts,
   formatCoverageReport,
+  indexEvidenceLedger,
+  parseEvidenceLedgerGateIndex,
   type CoverageMatrixEntry,
   type FactRegistryConfidence,
 } from "./coverage-report.js";
@@ -145,5 +149,59 @@ describe("coverage tier by registry confidence", () => {
     expect(formatted).toContain("externally-cited");
     expect(formatted).toContain("spike-cited");
     expect(formatted).toContain("matrix-referenced-unknown");
+  });
+});
+
+describe("evidence ledger gate index", () => {
+  const sampleMarkdown = `
+## Gate index
+
+\`\`\`
+claude:T4:out-of-scope
+claude:T6:noFixturePossible
+cursor:CT2:out-of-scope
+codex:XS2:noFixturePossible
+\`\`\`
+`;
+
+  it("parses platform:factId:disposition lines", () => {
+    expect(parseEvidenceLedgerGateIndex(sampleMarkdown)).toEqual([
+      { platform: "claude", factId: "T4", disposition: "out-of-scope" },
+      { platform: "claude", factId: "T6", disposition: "noFixturePossible" },
+      { platform: "cursor", factId: "CT2", disposition: "out-of-scope" },
+      { platform: "codex", factId: "XS2", disposition: "noFixturePossible" },
+    ]);
+  });
+
+  it("flags unverified facts that lack a ledger disposition", () => {
+    const coverage = {
+      platform: "claude" as const,
+      facts: [{ id: "T4" }, { id: "T5" }],
+      matrix: [{ factRefs: ["DOC" as const], confidence: "doc" as const }],
+    };
+    const ledgerIndex = indexEvidenceLedger(
+      parseEvidenceLedgerGateIndex(sampleMarkdown),
+    );
+
+    expect(findUnledgeredUnverifiedFacts(coverage, ledgerIndex)).toEqual([
+      "T5",
+    ]);
+    expect(findStaleLedgerEntries(coverage, ledgerIndex)).toEqual([]);
+  });
+
+  it("flags ledger rows for facts that became matrix-referenced", () => {
+    const coverage = {
+      platform: "claude" as const,
+      facts: [{ id: "T4" }, { id: "T5" }],
+      matrix: [{ factRefs: ["T4"], confidence: "doc" as const }],
+    };
+    const ledgerIndex = indexEvidenceLedger(
+      parseEvidenceLedgerGateIndex(sampleMarkdown),
+    );
+
+    expect(findUnledgeredUnverifiedFacts(coverage, ledgerIndex)).toEqual([
+      "T5",
+    ]);
+    expect(findStaleLedgerEntries(coverage, ledgerIndex)).toEqual(["T4"]);
   });
 });

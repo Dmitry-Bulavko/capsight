@@ -144,7 +144,7 @@ describe("managed simulation fixture", () => {
       expect.objectContaining({
         agentName: "backend",
         declared: "blocked-model",
-        effective: "claude-sonnet-4",
+        effective: "unknown",
         matrixRef: "F8",
         enforcement: "enforced",
         effectiveEnforcement: "unknown",

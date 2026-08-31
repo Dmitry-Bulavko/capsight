@@ -12,6 +12,7 @@ import {
   fetchEcosystem,
   fetchEcosystemResource,
   fetchEcosystemResourceContent,
+  fetchGraph,
   isMarkdownContentKind,
   type EcosystemResourceDetail,
   type ResourceContentResult,
@@ -34,12 +35,23 @@ import { EcosystemBlockKindIcon } from "./EcosystemBlockKindIcon.js";
 import { EcosystemHealth } from "./EcosystemHealth.js";
 import { EcosystemResourceCard } from "./EcosystemResourceCard.js";
 import {
+  DEFAULT_CONTEXT_PRESET,
+} from "./ContextSelector.js";
+import {
   PLATFORM_FILTER_ALL,
   PlatformFilter,
   platformFilterLabel,
   type PlatformFilterValue,
 } from "./PlatformFilter.js";
-import { ResourceDetailPanel } from "./ResourceDetailPanel.js";
+import {
+  evaluateEcosystemBridge,
+  ResourceDetailPanel,
+  type EcosystemBridgeEvaluation,
+  type EcosystemBridgeTarget,
+} from "./ResourceDetailPanel.js";
+import type { Agent } from "../../core/model/index.js";
+import type { InspectionGraph } from "../../core/graph/build-graph.js";
+import type { PlatformId } from "../../adapters/platform.js";
 
 function EcosystemBlockNode({ data }: { data: EcosystemBlockNodeData }) {
   const kindColor = ecosystemBlockKindColor(data.blockKind);
@@ -96,9 +108,21 @@ function contentErrorMessage(error: unknown): string {
 
 interface EcosystemViewProps {
   refreshKey?: string;
+  agents?: Agent[];
+  currentPlatform?: PlatformId;
+  restoreResourceId?: string | null;
+  onRestoreResourceConsumed?: () => void;
+  onBridgeToEffective?: (target: EcosystemBridgeTarget, resourceId: string) => void;
 }
 
-export function EcosystemView({ refreshKey }: EcosystemViewProps) {
+export function EcosystemView({
+  refreshKey,
+  agents = [],
+  currentPlatform = "claude",
+  restoreResourceId = null,
+  onRestoreResourceConsumed,
+  onBridgeToEffective,
+}: EcosystemViewProps) {
   const [payload, setPayload] = useState<Awaited<ReturnType<typeof fetchEcosystem>> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -112,6 +136,8 @@ export function EcosystemView({ refreshKey }: EcosystemViewProps) {
   const [contentLoading, setContentLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [contentError, setContentError] = useState<string | null>(null);
+  const [bridgeGraph, setBridgeGraph] = useState<InspectionGraph | null>(null);
+  const [bridgeGraphLoading, setBridgeGraphLoading] = useState(false);
   const nodeTypes = useMemo(() => ecosystemNodeTypes(), []);
 
   useEffect(() => {
@@ -142,6 +168,14 @@ export function EcosystemView({ refreshKey }: EcosystemViewProps) {
       cancelled = true;
     };
   }, [refreshKey]);
+
+  useEffect(() => {
+    if (!restoreResourceId) {
+      return;
+    }
+    setSelectedResourceId(restoreResourceId);
+    onRestoreResourceConsumed?.();
+  }, [restoreResourceId, onRestoreResourceConsumed]);
 
   useEffect(() => {
     if (!selectedResourceId) {
@@ -205,6 +239,47 @@ export function EcosystemView({ refreshKey }: EcosystemViewProps) {
     };
   }, [selectedResourceId]);
 
+  useEffect(() => {
+    if (!detail?.resource || detail.resource.platform !== "claude" || detail.resource.kind === "agent") {
+      setBridgeGraph(null);
+      setBridgeGraphLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setBridgeGraph(null);
+    setBridgeGraphLoading(true);
+
+    async function loadBridgeGraph() {
+      try {
+        const graph = await fetchGraph(DEFAULT_CONTEXT_PRESET);
+        if (!cancelled) {
+          setBridgeGraph(graph);
+        }
+      } catch {
+        if (!cancelled) {
+          setBridgeGraph(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setBridgeGraphLoading(false);
+        }
+      }
+    }
+
+    void loadBridgeGraph();
+    return () => {
+      cancelled = true;
+    };
+  }, [detail?.resource?.id, detail?.resource?.platform, detail?.resource?.kind]);
+
+  const bridgeEvaluation = useMemo((): EcosystemBridgeEvaluation | null => {
+    if (!detail?.resource) {
+      return null;
+    }
+    return evaluateEcosystemBridge(detail.resource, agents, bridgeGraph);
+  }, [detail, agents, bridgeGraph]);
+
   const activeHealthFilterIds = useMemo(() => {
     if (!payload?.health || !healthFilterId) {
       return null;
@@ -255,6 +330,16 @@ export function EcosystemView({ refreshKey }: EcosystemViewProps) {
   const handleCloseDetail = useCallback(() => {
     setSelectedResourceId(null);
   }, []);
+
+  const handleBridgeRequest = useCallback(
+    (target: EcosystemBridgeTarget) => {
+      if (!selectedResourceId || !onBridgeToEffective) {
+        return;
+      }
+      onBridgeToEffective(target, selectedResourceId);
+    },
+    [selectedResourceId, onBridgeToEffective],
+  );
 
   useEffect(() => {
     if (!flowInstance || nodes.length === 0) return;
@@ -321,6 +406,7 @@ export function EcosystemView({ refreshKey }: EcosystemViewProps) {
             health={payload.health}
             activeFilterId={healthFilterId}
             onFilterChange={setHealthFilterId}
+            snapshotWarnings={payload.snapshotWarnings ?? []}
           />
           <div className="ecosystem-container" data-testid="ecosystem-canvas">
             <ReactFlow
@@ -353,6 +439,11 @@ export function EcosystemView({ refreshKey }: EcosystemViewProps) {
               contentError={contentError}
               contentUnavailable={detail ? !isMarkdownContentKind(detail.resource.kind) : false}
               onClose={handleCloseDetail}
+              agents={agents}
+              bridgeEvaluation={bridgeEvaluation}
+              bridgeEvaluationLoading={bridgeGraphLoading}
+              currentPlatform={currentPlatform}
+              onBridgeRequest={onBridgeToEffective ? handleBridgeRequest : undefined}
             />
           )}
         </div>

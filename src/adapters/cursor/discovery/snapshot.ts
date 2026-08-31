@@ -31,7 +31,7 @@ export async function buildProjectSnapshot(
 
   const [agentResult, skills, instructions, mcpServers, settings, trust, ignoredRules] =
     await Promise.all([
-      discoverAgents(walk.scopes, projectPath),
+      discoverAgents(walk.scopes, projectPath, version.version),
       discoverSkills(walk.scopes, projectPath),
       discoverInstructions(walk.scopes, projectPath),
       discoverMcpServers(walk.scopes, projectPath),
@@ -57,6 +57,7 @@ export async function buildProjectSnapshot(
         enforcement: "enforced",
       },
       MATRIX["rules.fileExtension"],
+      version.version,
     ),
   );
 

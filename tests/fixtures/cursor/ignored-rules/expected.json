@@ -23,6 +23,16 @@
     "instructions": [
       {
         "type": "rule",
+        "path": ".cursor/rules/scoped.mdc",
+        "scope": "project",
+        "sizeBytes": 118,
+        "description": "Scoped TypeScript rule",
+        "globs": [
+          "**/*.ts"
+        ]
+      },
+      {
+        "type": "rule",
         "path": ".cursor/rules/valid.mdc",
         "scope": "project",
         "sizeBytes": 92,
@@ -75,6 +85,30 @@
                 "path": ".cursor/agents/control.md"
               },
               "matrixRef": "agent.toolPool"
+            }
+          ]
+        },
+        {
+          "capabilityId": "instruction:.cursor/rules/scoped.mdc",
+          "kind": "instruction",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "cursor",
+              "scope": "project",
+              "path": ".cursor/rules/scoped.mdc"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "Instruction \"rule\" application semantics are not verified for Cursor.",
+              "source": {
+                "platform": "cursor",
+                "scope": "project",
+                "path": ".cursor/rules/scoped.mdc"
+              }
             }
           ]
         },

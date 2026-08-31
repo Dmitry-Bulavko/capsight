@@ -29,6 +29,10 @@ export interface FeatureCompatibility {
   feature: string;
   factRefs: readonly FactId[];
   minVersion?: string;
+  /** Inclusive upper bound; detected version above this resolves the entry as unsupported. */
+  maxVersion?: string;
+  changedIn?: readonly string[];
+  observedIn?: readonly string[];
   status: "supported" | "unsupported" | "changed" | "unknown";
   confidence: "doc" | "fixture" | "runtime-observed";
   /**
@@ -123,6 +127,82 @@ const MATRIX_ENTRIES = [
       "agents; the golden records both as status invalid with the specific " +
       "reasons. Deletion test (D1-07): with the validation removed those agents " +
       "resolve active in the golden.",
+  },
+  {
+    id: "discovery.mcpProject",
+    feature: "Project MCP servers load from .cursor/mcp.json",
+    factRefs: [FACT.CM1],
+    status: "supported",
+    confidence: "fixture",
+    fixture: "basic",
+    verifiedFacts: [FACT.CM1],
+    notes:
+      "CM1 entire: basic declares github in project .cursor/mcp.json and the golden " +
+      "records a configured server with that config path. Deletion test (D2-03): " +
+      "skip project-scope MCP discovery and mcpServers becomes empty.",
+  },
+  {
+    id: "mcp.envRedact",
+    feature: "MCP config records env key names only",
+    factRefs: [FACT.CM3],
+    status: "supported",
+    confidence: "fixture",
+    fixture: "basic",
+    verifiedFacts: [FACT.CM3],
+    notes:
+      "CM3 entire: basic carries GITHUB_TOKEN in mcp.json env and the golden records " +
+      "envKeys without values or secrets in configHash. Deletion test (D2-03): stop " +
+      "extracting env keys and envKeys leaves the golden while the hash input changes.",
+  },
+  {
+    id: "discovery.commands",
+    feature: "Slash commands discovered separately from skills",
+    factRefs: [FACT.CS3],
+    status: "supported",
+    confidence: "fixture",
+    fixture: "basic",
+    verifiedFacts: [FACT.CS3],
+    notes:
+      "CS3 entire: basic carries both a skill and a deploy command; the golden records " +
+      "kind skill and kind command as distinct entries. Deletion test (D2-03): omit " +
+      "commands-directory discovery and the deploy command leaves the golden.",
+  },
+  {
+    id: "discovery.ruleFrontmatter",
+    feature: "Rule frontmatter fields parsed into instruction metadata",
+    factRefs: [FACT.CR1],
+    status: "supported",
+    confidence: "fixture",
+    fixture: "ignored-rules",
+    verifiedFacts: [FACT.CR1],
+    notes:
+      "CR1 entire: ignored-rules carries alwaysApply on valid.mdc and globs on scoped.mdc; " +
+      "the golden records description, alwaysApply and globs on the matching rules. " +
+      "Deletion test (D2-03): stop parsing rule frontmatter and those fields leave the golden.",
+  },
+  {
+    id: "mcp.probe",
+    feature: "MCP server runtime availability",
+    factRefs: [FACT.CM4],
+    status: "unknown",
+    confidence: "doc",
+    noFixturePossible:
+      "CM4 requires explicit runtime confirmation; the resolver marks every MCP server " +
+      "unknown and an unknown claims nothing (§11.3), so no fixture can make this entry " +
+      "the operative cause of a confident golden value (H1-28).",
+    notes: "Probe requires explicit confirmation",
+  },
+  {
+    id: "version.degraded",
+    feature: "Degraded scan when cursor --version fails",
+    factRefs: [FACT.CV2],
+    status: "supported",
+    confidence: "doc",
+    noFixturePossible:
+      "CV2 is exercised by the version probe path, but golden fixtures mock " +
+      "detectCursorVersion from version.txt so no corpus fixture makes CLI failure " +
+      "the operative cause of a confident golden value (H1-28).",
+    notes: "Degraded mode continues read-only discovery when CLI missing",
   },
 ] as const satisfies readonly FeatureCompatibility[];
 
@@ -274,8 +354,72 @@ export function isMatrixId(value: string): value is MatrixId {
   return MATRIX_ENTRIES.some((entry) => entry.id === value);
 }
 
-export function lookupFeature(id: MatrixId): FeatureCompatibility | undefined {
-  return MATRIX_ENTRIES.find((entry) => entry.id === id);
+function parseSemver(version: string): [number, number, number] | null {
+  const match = version.match(/^(\d+)\.(\d+)\.(\d+)/);
+  if (!match) {
+    return null;
+  }
+  return [Number(match[1]), Number(match[2]), Number(match[3])];
+}
+
+/** @returns negative if a < b, positive if a > b, 0 if equal, null if unparsable */
+export function compareSemver(a: string, b: string): number | null {
+  const left = parseSemver(a);
+  const right = parseSemver(b);
+  if (!left || !right) {
+    return null;
+  }
+
+  for (let i = 0; i < 3; i++) {
+    if (left[i]! < right[i]!) {
+      return -1;
+    }
+    if (left[i]! > right[i]!) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+/**
+ * Resolve a matrix feature for a detected Cursor version.
+ * Unknown CLI version or missing matrix entry yields `status: "unknown"`.
+ */
+export function lookupFeature(
+  id: MatrixId,
+  version: string,
+): FeatureCompatibility | undefined {
+  const entry = VERSION_MATRIX.find((candidate) => candidate.id === id);
+  if (!entry) {
+    return undefined;
+  }
+
+  if (version === "unknown") {
+    return { ...entry, status: "unknown" };
+  }
+
+  if (entry.minVersion) {
+    const comparison = compareSemver(version, entry.minVersion);
+    if (comparison === null || comparison < 0) {
+      return { ...entry, status: "unsupported" };
+    }
+  }
+
+  if (entry.maxVersion) {
+    const comparison = compareSemver(version, entry.maxVersion);
+    if (comparison === null || comparison > 0) {
+      return { ...entry, status: "unsupported" };
+    }
+  }
+
+  return entry;
+}
+
+export interface ResolveEnforcementInput {
+  matrixId: MatrixId;
+  /** Detected Cursor version, or `"unknown"` in degraded mode (§8.3). */
+  version: string;
+  baseline?: Enforcement;
 }
 
 export interface EnforcementDecision {
@@ -284,20 +428,37 @@ export interface EnforcementDecision {
   matrixRef: MatrixId;
 }
 
-export function resolveEnforcement(matrixRef: MatrixId): EnforcementDecision {
-  const entry = lookupFeature(matrixRef);
-  if (!entry || entry.status === "unknown") {
-    return { enforcement: "unknown", unfounded: true, matrixRef };
+/**
+ * The single place where a resolver rule turns into an `enforcement` verdict.
+ * Version comparison never happens outside this module (§13 invariant 11).
+ */
+export function resolveEnforcement(input: ResolveEnforcementInput): EnforcementDecision {
+  const { matrixId, version } = input;
+  const baseline = input.baseline ?? "enforced";
+
+  const entry = MATRIX_ENTRIES.find((candidate) => candidate.id === matrixId);
+  if (!entry) {
+    return { enforcement: "unknown", unfounded: true, matrixRef: matrixId };
   }
-  return { enforcement: "enforced", unfounded: false, matrixRef };
+
+  if (version === "unknown") {
+    return { enforcement: "unknown", unfounded: true, matrixRef: matrixId };
+  }
+
+  const resolved = lookupFeature(matrixId, version)!;
+  if (resolved.status !== "supported") {
+    return { enforcement: "unknown", unfounded: true, matrixRef: matrixId };
+  }
+
+  return { enforcement: baseline, unfounded: false, matrixRef: matrixId };
 }
 
-export function gateCapability(matrixRef: MatrixId): EnforcementDecision {
-  return resolveEnforcement(matrixRef);
+export function gateCapability(matrixRef: MatrixId, version: string): EnforcementDecision {
+  return resolveEnforcement({ matrixId: matrixRef, version });
 }
 
-export function gateCollision(matrixRef: MatrixId): EnforcementDecision {
-  return resolveEnforcement(matrixRef);
+export function gateCollision(matrixRef: MatrixId, version: string): EnforcementDecision {
+  return resolveEnforcement({ matrixId: matrixRef, version });
 }
 
 export interface DiscoveryGate {
@@ -305,8 +466,8 @@ export interface DiscoveryGate {
   unfounded: boolean;
 }
 
-export function gateDiscovery(matrixRef: MatrixId): DiscoveryGate {
-  const decision = resolveEnforcement(matrixRef);
+export function gateDiscovery(matrixRef: MatrixId, version: string): DiscoveryGate {
+  const decision = resolveEnforcement({ matrixId: matrixRef, version });
   return {
     enforcement: decision.enforcement,
     unfounded: decision.unfounded,
@@ -317,8 +478,16 @@ export function gateDiscovery(matrixRef: MatrixId): DiscoveryGate {
  * Apply the matrix gate to a `Warning` that asserts platform behaviour.
  * When the matrix does not found the claim the warning becomes undetermined.
  */
-export function gateWarning(warning: Warning, matrixRef: MatrixId): Warning {
-  const decision = resolveEnforcement(matrixRef);
+export function gateWarning(
+  warning: Warning,
+  matrixRef: MatrixId,
+  version: string,
+): Warning {
+  const decision = resolveEnforcement({
+    matrixId: matrixRef,
+    version,
+    baseline: warning.enforcement ?? "enforced",
+  });
   return {
     ...warning,
     matrixRef,

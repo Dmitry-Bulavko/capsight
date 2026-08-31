@@ -1,9 +1,14 @@
-import type { ContextPreset } from "../../core/model/index.js";
+import type { Agent, ContextPreset, EffectiveConfiguration } from "../../core/model/index.js";
 import {
   CONTEXT_PRESETS,
   DEFAULT_CONTEXT_PRESET,
   DEFAULT_CONTEXT_REASON,
 } from "../../core/model/context-presets.js";
+import {
+  DeclaredEffectivePanel,
+  extractForkNotice,
+  ForkConfigurationNoticeView,
+} from "./DeclaredEffective.js";
 
 /** Re-exported so the UI shares the §4.3 default with the CLI and the API. */
 export { CONTEXT_PRESETS, DEFAULT_CONTEXT_PRESET, DEFAULT_CONTEXT_REASON };
@@ -29,6 +34,8 @@ interface ContextSelectorProps {
   loading?: boolean;
   error?: string | null;
   hasSelectedAgent?: boolean;
+  effective?: EffectiveConfiguration | null;
+  agent?: Agent | null;
 }
 
 export function ContextSelector({
@@ -38,7 +45,11 @@ export function ContextSelector({
   loading = false,
   error = null,
   hasSelectedAgent = true,
+  effective = null,
+  agent = null,
 }: ContextSelectorProps) {
+  const forkNotice = preset === "fork" && effective ? extractForkNotice(effective) : null;
+
   return (
     <section className="panel context-selector">
       <h2>Execution context</h2>
@@ -68,6 +79,8 @@ export function ContextSelector({
         <code>{DEFAULT_CONTEXT_PRESET}</code> — {DEFAULT_CONTEXT_REASON}
       </p>
 
+      {forkNotice && <ForkConfigurationNoticeView notice={forkNotice} />}
+
       {hasSelectedAgent && (
         <dl className="summary-grid context-effective">
           <div>
@@ -82,6 +95,10 @@ export function ContextSelector({
             </dd>
           </div>
         </dl>
+      )}
+
+      {hasSelectedAgent && !loading && !error && effective && (
+        <DeclaredEffectivePanel effective={effective} agent={agent} />
       )}
     </section>
   );

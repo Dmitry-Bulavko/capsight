@@ -22,6 +22,17 @@
     ],
     "skills": [
       {
+        "name": "deploy",
+        "description": "Deploy the application to staging",
+        "source": {
+          "platform": "cursor",
+          "scope": "project",
+          "path": ".cursor/commands/deploy.md"
+        },
+        "path": ".cursor/commands/deploy.md",
+        "kind": "command"
+      },
+      {
         "name": "example",
         "description": "Example skill for API routes",
         "source": {
@@ -207,6 +218,30 @@
                 "platform": "cursor",
                 "scope": "project",
                 "path": ".cursor/skills/example/SKILL.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "skill:deploy",
+          "kind": "skill",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "cursor",
+              "scope": "project",
+              "path": ".cursor/commands/deploy.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "Skill \"deploy\" (command) attachment semantics are not verified (CS2).",
+              "source": {
+                "platform": "cursor",
+                "scope": "project",
+                "path": ".cursor/commands/deploy.md"
               }
             }
           ]

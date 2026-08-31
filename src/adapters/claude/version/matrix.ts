@@ -42,6 +42,8 @@ export interface FeatureCompatibility {
   feature: string;
   factRefs: readonly FactId[];
   minVersion?: string;
+  /** Inclusive upper bound; detected version above this resolves the entry as unsupported. */
+  maxVersion?: string;
   changedIn?: readonly string[];
   observedIn?: readonly string[];
   status: "supported" | "unsupported" | "changed" | "unknown";
@@ -191,6 +193,7 @@ const MATRIX_ENTRIES = [
     id: "agent.depthLimitDefault",
     feature: "Default subagent spawn depth before 2.1.219",
     factRefs: [FACT.N5],
+    maxVersion: "2.1.216",
     changedIn: ["2.1.172", "2.1.217", "2.1.219"],
     observedIn: ["2.1.217"],
     status: "changed",
@@ -200,10 +203,10 @@ const MATRIX_ENTRIES = [
     notes:
       "N5 records three different defaults below 2.1.219 (5, then 1) and no fixture or probe " +
       "has observed any of them; the resolver only knows the 2.1.219+ default of 3. The " +
-      "version-drift fixture pins 2.1.217 and reproduces the discrepancy, so the depth-limit " +
-      "verdict is downgraded to unknown on those versions per §8.4 rather than guessed. Confidence " +
-      "downgraded to doc in H1-28: every expectation the drift fixture produces for this entry " +
-      "is unknown by design, so it evidences our downgrade and not the platform's defaults.",
+      "version-drift fixture pins 2.1.217 — above this entry's maxVersion — so the depth-limit " +
+      "verdict is downgraded to unknown per §8.4 rather than guessed. Confidence downgraded to " +
+      "doc in H1-28: every expectation the drift fixture produces for this entry is unknown by " +
+      "design, so it evidences our downgrade and not the platform's defaults.",
   },
   {
     id: FACT.P1,
@@ -340,9 +343,9 @@ const MATRIX_ENTRIES = [
     fixture: "managed-simulation",
     verifiedFacts: [],
     notes:
-      "The managed-simulation fixture records the F8 block (enforcement on modelChanges) and " +
-      "reports a substitute from allowlist order with effectiveEnforcement unknown. Which model " +
-      "the platform actually substitutes is not documented — only the block is a platform claim.",
+      "The managed-simulation fixture records the F8 block (enforcement on modelChanges) with " +
+      "effectiveEnforcement unknown for the substitute identity. Which model the platform " +
+      "actually substitutes is not documented — only the block is a platform claim.",
   },
   {
     id: "agent.pluginFieldLimits",
@@ -524,6 +527,204 @@ const MATRIX_ENTRIES = [
     notes:
       "I2 entire: the fixture resolves the same agent under both built-in kinds and both drop " +
       "instructions to denied/enforced, while the plain subagent context keeps all three sources.",
+  },
+  {
+    id: "discovery.upwardWalkAgents",
+    feature:
+      "Upward walk from cwd discovers every `.claude/agents/` between cwd and repo root",
+    factRefs: [FACT.A2],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "nested-project",
+    verifiedFacts: [FACT.A2],
+    notes:
+      "A2 entire: cwd.txt scans from svc/worker/ and the golden carries leaf at cwd, mid one " +
+      "hop up and outer at the repository root — three distinct agents directories on the walk " +
+      "path, each with an active agent. Deletion test: stop collecting intermediate scopes and " +
+      "only the leaf agent remains in the golden.",
+  },
+  {
+    id: "discovery.recursiveAgentDirs",
+    feature:
+      "Agent directories are scanned recursively; identity is the `name` field only",
+    factRefs: [FACT.A5],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "collision-same-dir",
+    verifiedFacts: [FACT.A5],
+    notes:
+      "A5 entire: the fixture's reviewer-duplicate.md lives under .claude/agents/extra/ but " +
+      "declares name reviewer, so recursive discovery surfaces it as a second reviewer " +
+      "candidate colliding on name rather than on path. Deletion test: scan only the agents " +
+      "root without recursing into subfolders and the extra/ file leaves the golden.",
+  },
+  {
+    id: "discovery.pluginScopedId",
+    feature:
+      "Plugin agent scoped id includes plugin name and subdirectory segments",
+    factRefs: [FACT.A6],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "plugin-agents",
+    verifiedFacts: [FACT.A6],
+    notes:
+      "A6 entire: agents/review/security.md in plugin my-plugin resolves " +
+      "pluginScopedId my-plugin:review:security in the golden. Deletion test: drop the " +
+      "subdirectory segments from the id builder and the same record becomes my-plugin:security.",
+  },
+  {
+    id: "discovery.invalidAgentSkip",
+    feature: "Invalid project agent files are registered with a skip reason",
+    factRefs: [FACT.A7],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "invalid-agents",
+    verifiedFacts: [FACT.A7],
+    notes:
+      "A7 entire: the fixture carries all five documented skip reasons — bad-yaml, no-name, " +
+      "bad-name-chars (dash and colon forms), and no-description — each as an invalid agent " +
+      "record with the matching invalidReason. Deletion test: stop emitting invalid records " +
+      "and every skipped file disappears from the golden.",
+  },
+  {
+    id: "discovery.pluginFilenameFallback",
+    feature:
+      "Plugin agent without usable frontmatter loads under its file name",
+    factRefs: [FACT.A8],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "plugin-agents",
+    verifiedFacts: [FACT.A8],
+    notes:
+      "A8 entire: nameless.md has no name field and still loads as nameless with status active. " +
+      "The inverse case — the identical project file is skipped (A7) — is pinned by " +
+      "invalid-agents, not here. Deletion test: treat unparseable plugin frontmatter like a " +
+      "project file and the nameless record becomes invalid.",
+  },
+  {
+    id: "agent.frontmatterRequired",
+    feature: "Required agent frontmatter fields `name` and `description`",
+    factRefs: [FACT.F1],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    fixture: "invalid-agents",
+    verifiedFacts: [],
+    notes:
+      "F1 names fourteen optional fields plus the two required ones; only the required half is " +
+      "pinned here via invalid-agents (no-name, no-description). Optional fields are exercised " +
+      "piecemeal across the corpus — tools and disallowedTools in tools-filters, skills in " +
+      "skills-preload, hooks and mcpServers in trust-inline-mcp — but no single fixture " +
+      "declares all fourteen, so F1 is not verified entire (H1-28).",
+  },
+  {
+    id: "agent.toolsAgentTypesIgnored",
+    feature:
+      "Agent(type1,type2) type list in subagent `tools` is ignored; the spawn tool itself is selected",
+    factRefs: [FACT.F5],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    noFixturePossible:
+      "F5 has two halves: the type list is ignored in a subagent definition, and the same syntax " +
+      "filters by type in a main session. The corpus resolves only subagent contexts (§11.2), so " +
+      "the main-session half has no channel to pin. The subagent half needs an agent whose tools " +
+      "list names Agent(types) while the golden asserts the Agent tool is available — but no " +
+      "fixture agent uses that pattern yet, and adding one without a main-session counterpart " +
+      "would exercise only half of the fact. Until a fixture carries both contexts, the " +
+      "operative cause of a confident golden value cannot be attributed to F5 entire (H1-28).",
+    notes:
+      "tools.ts implements the subagent half: patternMatchesTool treats agent-types like a plain " +
+      "Agent/Task head. Registered so the refusal is visible rather than silent.",
+  },
+  {
+    id: "agent.toolsMissingAgent",
+    feature: "Missing `Agent` in `tools` blocks subagent spawn",
+    factRefs: [FACT.F6],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "tools-filters",
+    verifiedFacts: [FACT.F6],
+    notes:
+      "F6 entire: the filtered agent whitelists Read, Write and mcp__github only; the golden " +
+      "resolves Agent denied/enforced with the F2 whitelist reason. Deletion test: add Agent " +
+      "to the whitelist and the same capability flips to available — a confident value moving " +
+      "(H1-28). F2 and F6 share the mechanism here; the fixture message cites F2 because that is " +
+      "the resolver path, but the spawn block is what F6 states.",
+  },
+  {
+    id: "agent.modelResolution",
+    feature: "Subagent model resolution order",
+    factRefs: [FACT.F7],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    noFixturePossible:
+      "F7 names a four-step chain (CLAUDE_CODE_SUBAGENT_MODEL → per-invocation parameter → " +
+      "frontmatter → parent session model). The environment fixture records the env-var key in " +
+      "snapshot.environment.relevant, and managed-simulation pins F8's allowlist block on " +
+      "modelChanges — but §11.2 goldens do not carry a resolved model field per resolution, so " +
+      "no fixture can make any step of the chain the operative cause of a confident golden " +
+      "value (H1-28). Pinning the chain would require inventing a model verdict channel this " +
+      "product does not yet emit.",
+    notes:
+      "Registered rather than omitted so F7 is distinguishable in §11.4 from a fact nobody has " +
+      "looked at.",
+  },
+  {
+    id: "agent.initialPromptMainSession",
+    feature: "`initialPrompt` applies only in main session",
+    factRefs: [FACT.F10],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    noFixturePossible:
+      "F10 is a main-session-only claim: initialPrompt is read at discovery but never reaches " +
+      "§11.2 resolution goldens, which exercise subagent contexts exclusively. A fixture could " +
+      "declare the field and show it in configuration, but that would pin discovery parsing only — " +
+      "not that the platform applies it in main session and drops it elsewhere — so the " +
+      "session-mode half has no confident verdict to move (H1-28).",
+    notes:
+      "Discovery stores initialPrompt in AgentConfiguration; resolution does not consume it yet.",
+  },
+  {
+    id: "skills.skillToolWithoutPreload",
+    feature:
+      "Subagent without `skills:` preload can still use the `Skill` tool against discovered skills",
+    factRefs: [FACT.K2],
+    minVersion: "2.1.133",
+    status: "supported",
+    confidence: "doc",
+    fixture: "skill-allowed-tools",
+    verifiedFacts: [],
+    notes:
+      "The runner agent declares no skills: list and no tools whitelist; the golden resolves " +
+      "Skill available/enforced while deployer is discovered but not preloaded. That pins the " +
+      "tool being offered without a preload, not K2 entire: \"discovers and invokes\" is an " +
+      "invocation claim, and an ordinary scan does not invoke anything (§2.1).",
+  },
+  {
+    id: "skills.skillToolWhitelist",
+    feature:
+      "Skill tool availability follows the agent `tools` / `disallowedTools` whitelist",
+    factRefs: [FACT.K3],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    fixture: "basic",
+    verifiedFacts: [],
+    notes:
+      "The basic fixture's backend agent whitelists Read and Grep only; Skill resolves " +
+      "denied/enforced with the F2 whitelist reason. That pins the tools-branch half of K3, not K3 " +
+      "entire: the fact also names disallowedTools, and no fixture agent lists Skill there while " +
+      "leaving it in the inherited pool, so that branch rests on documentation alone (H1-28). " +
+      "Deletion test: add Skill to the whitelist and the capability flips to available.",
   },
   {
     id: "discovery.addDirAgents",
@@ -1085,6 +1286,13 @@ export function lookupFeature(
     }
   }
 
+  if (entry.maxVersion) {
+    const comparison = compareSemver(version, entry.maxVersion);
+    if (comparison === null || comparison > 0) {
+      return { ...entry, status: "unsupported" };
+    }
+  }
+
   return entry;
 }
 
@@ -1195,7 +1403,8 @@ export function resolveEnforcement(
   if (resolved.status !== "supported") {
     return unknown(
       `Version matrix reports "${matrixId}" as ${resolved.status} on Claude Code ${version}` +
-        `${entry.minVersion ? ` (requires >= ${entry.minVersion})` : ""}; the feature resolves as unknown (SPEC §8.2).`,
+        `${entry.minVersion ? ` (requires >= ${entry.minVersion})` : ""}` +
+        `${entry.maxVersion ? ` (requires <= ${entry.maxVersion})` : ""}; the feature resolves as unknown (SPEC §8.2).`,
       true,
     );
   }

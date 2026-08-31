@@ -1,13 +1,20 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { ResourceContentResult } from "../../application/resource-content.js";
-import type { OverlapRelation } from "../../core/model/ecosystem.js";
-import type { SourceInfo } from "../../core/model/index.js";
+import { RESOURCE_CLASS } from "../../core/compat/resource-class.js";
+import type { InspectionGraph } from "../../core/graph/build-graph.js";
+import type { OverlapRelation, InventoryResourceKind } from "../../core/model/ecosystem.js";
+import { isMarkdownContentKind } from "../../core/model/ecosystem.js";
+import type { Agent, SourceInfo } from "../../core/model/index.js";
 import type {
   EcosystemResourceDetail,
+  InventoryResourceWithCompat,
   RelatedPathEntry,
 } from "../../server/routes/ecosystem.js";
-import { isMarkdownContentKind } from "../../core/model/ecosystem.js";
 import type { PlatformId } from "../../adapters/platform.js";
+import {
+  DEFAULT_CONTEXT_PRESET,
+  DEFAULT_CONTEXT_REASON,
+} from "./ContextSelector.js";
 import {
   ecosystemBlockKindColor,
   ecosystemBlockKindHint,
@@ -23,6 +30,201 @@ import { EcosystemBlockKindIcon } from "./EcosystemBlockKindIcon.js";
 import { MarkdownBody } from "./MarkdownBody.js";
 import { PlatformIconMark } from "./PlatformIconMark.js";
 import { PLATFORM_IDS } from "../../adapters/platform.js";
+
+export interface EcosystemBridgeTarget {
+  agentId: string;
+  capabilityId?: string;
+}
+
+export type EcosystemBridgeEvaluation =
+  | { state: "disabled"; reason: string }
+  | { state: "ready"; target: EcosystemBridgeTarget }
+  | {
+      state: "choose-agent";
+      capabilityId?: string;
+      candidateAgentIds: string[];
+      reason: string;
+    };
+
+export function parseInventoryResourceId(id: string): {
+  platform: string;
+  kind: InventoryResourceKind;
+  resourceId: string;
+} {
+  const firstColon = id.indexOf(":");
+  const secondColon = id.indexOf(":", firstColon + 1);
+  if (firstColon === -1 || secondColon === -1) {
+    return { platform: "unknown", kind: "agent", resourceId: id };
+  }
+  return {
+    platform: id.slice(0, firstColon),
+    kind: id.slice(firstColon + 1, secondColon) as InventoryResourceKind,
+    resourceId: id.slice(secondColon + 1),
+  };
+}
+
+function normalizePathKey(value: string): string {
+  return value.replace(/\\/g, "/");
+}
+
+function agentIdFromResourcePath(
+  agents: readonly Agent[],
+  resourcePath: string | undefined,
+): string | null {
+  if (!resourcePath) {
+    return null;
+  }
+  const normalized = normalizePathKey(resourcePath);
+  const agent = agents.find((entry) => normalizePathKey(entry.source.path ?? "") === normalized);
+  return agent?.id ?? null;
+}
+
+export function capabilityIdFromInventoryResource(
+  resource: InventoryResourceWithCompat,
+): string | null {
+  const { resourceId, kind } = parseInventoryResourceId(resource.id);
+
+  switch (kind) {
+    case "agent":
+      return null;
+    case "skill":
+      return resource.name ? `skill:${resource.name}` : null;
+    case "instruction":
+      return resource.name ? `instruction:${resource.name}` : null;
+    case "mcp_server":
+      if (resource.resourceClass === RESOURCE_CLASS.MCP_INLINE_AGENT) {
+        return null;
+      }
+      return `mcp-server:${resourceId}`;
+    default:
+      return null;
+  }
+}
+
+export function graphTargetNodeIdFromCapability(
+  capabilityId: string,
+  kind: InventoryResourceKind,
+): string {
+  if (kind === "skill") {
+    return `skill:${capabilityId}`;
+  }
+  if (kind === "instruction") {
+    return `instruction:${capabilityId}`;
+  }
+  return capabilityId;
+}
+
+export function findAgentIdsFromGraph(graph: InspectionGraph, targetNodeId: string): string[] {
+  const agentIds: string[] = [];
+  for (const edge of graph.edges) {
+    if (edge.target !== targetNodeId) {
+      continue;
+    }
+    const match = /^agent:(.+)$/.exec(edge.source);
+    if (match) {
+      agentIds.push(match[1]);
+    }
+  }
+  return [...new Set(agentIds)].sort((left, right) => left.localeCompare(right));
+}
+
+export function evaluateEcosystemBridge(
+  resource: InventoryResourceWithCompat,
+  agents: readonly Agent[],
+  graph: InspectionGraph | null,
+): EcosystemBridgeEvaluation {
+  if (resource.platform !== "claude") {
+    return {
+      state: "disabled",
+      reason: "Effective resolution is Claude-only in this product.",
+    };
+  }
+
+  const { kind, resourceId } = parseInventoryResourceId(resource.id);
+  const activeAgents = agents.filter((agent) => agent.status === "active");
+
+  if (kind === "agent") {
+    const agent = agents.find((entry) => entry.id === resourceId);
+    if (!agent) {
+      return {
+        state: "disabled",
+        reason: `Agent "${resourceId}" is not in the current scan — rescan or pick another resource.`,
+      };
+    }
+    return { state: "ready", target: { agentId: agent.id } };
+  }
+
+  if (resource.resourceClass === RESOURCE_CLASS.MCP_INLINE_AGENT) {
+    const ownerAgentId = agentIdFromResourcePath(agents, resource.path);
+    if (ownerAgentId) {
+      return { state: "ready", target: { agentId: ownerAgentId } };
+    }
+    if (activeAgents.length === 0) {
+      return {
+        state: "disabled",
+        reason: "Inline MCP servers resolve inside a specific agent — no active agent is available.",
+      };
+    }
+    return {
+      state: "choose-agent",
+      candidateAgentIds: activeAgents.map((agent) => agent.id),
+      reason: "Inline MCP servers resolve inside a specific agent's configuration — choose which agent to open.",
+    };
+  }
+
+  const capabilityId = capabilityIdFromInventoryResource(resource);
+  if (!capabilityId) {
+    return {
+      state: "disabled",
+      reason: "This declared resource has no unambiguous effective counterpart.",
+    };
+  }
+
+  const targetNodeId = graphTargetNodeIdFromCapability(capabilityId, kind);
+  const candidateAgentIds = graph ? findAgentIdsFromGraph(graph, targetNodeId) : [];
+
+  if (candidateAgentIds.length === 1) {
+    return {
+      state: "ready",
+      target: { agentId: candidateAgentIds[0], capabilityId },
+    };
+  }
+
+  if (candidateAgentIds.length > 1) {
+    return {
+      state: "choose-agent",
+      capabilityId,
+      candidateAgentIds,
+      reason:
+        "Several agents resolve this capability — choose which effective resolution to open.",
+    };
+  }
+
+  if (activeAgents.length === 0) {
+    return {
+      state: "disabled",
+      reason: "No active agent is available for effective resolution.",
+    };
+  }
+
+  return {
+    state: "choose-agent",
+    capabilityId,
+    candidateAgentIds: activeAgents.map((agent) => agent.id),
+    reason: "Choose which agent's effective resolution should load this resource.",
+  };
+}
+
+export function formatBridgeTransitionNotice(
+  agentName: string,
+  currentPlatform: PlatformId,
+): string {
+  const platformNote =
+    currentPlatform !== "claude"
+      ? " The scanned platform will switch to Claude before opening effective resolution."
+      : "";
+  return `This opens Effective resolution — one context using preset ${DEFAULT_CONTEXT_PRESET} for agent "${agentName}".${platformNote}`;
+}
 
 interface McpSnapshotModel {
   name?: string;
@@ -149,6 +351,11 @@ export interface ResourceDetailPanelProps {
   contentError?: string | null;
   contentUnavailable?: boolean;
   onClose: () => void;
+  agents?: Agent[];
+  bridgeEvaluation?: EcosystemBridgeEvaluation | null;
+  bridgeEvaluationLoading?: boolean;
+  currentPlatform?: PlatformId;
+  onBridgeRequest?: (target: EcosystemBridgeTarget) => void;
 }
 
 export function ResourceDetailPanel({
@@ -160,11 +367,72 @@ export function ResourceDetailPanel({
   contentError = null,
   contentUnavailable = false,
   onClose,
+  agents = [],
+  bridgeEvaluation = null,
+  bridgeEvaluationLoading = false,
+  currentPlatform = "claude",
+  onBridgeRequest,
 }: ResourceDetailPanelProps) {
+  const [bridgeConfirmOpen, setBridgeConfirmOpen] = useState(false);
+  const [selectedBridgeAgentId, setSelectedBridgeAgentId] = useState<string | null>(null);
+
   const resource = detail?.resource;
   const showContentSection =
     resource !== undefined && isMarkdownContentKind(resource.kind) && !contentUnavailable;
   const kindColor = resource ? ecosystemBlockKindColor(resource.kind) : undefined;
+
+  const bridgeAgentName = (agentId: string): string => {
+    const agent = agents.find((entry) => entry.id === agentId);
+    return agent?.name ?? agentId;
+  };
+
+  const resetBridgeUi = () => {
+    setBridgeConfirmOpen(false);
+    setSelectedBridgeAgentId(null);
+  };
+
+  const handleOpenBridgeConfirm = () => {
+    if (!bridgeEvaluation || bridgeEvaluation.state === "disabled") {
+      return;
+    }
+    if (bridgeEvaluation.state === "ready") {
+      setSelectedBridgeAgentId(bridgeEvaluation.target.agentId);
+    } else if (bridgeEvaluation.state === "choose-agent") {
+      setSelectedBridgeAgentId(bridgeEvaluation.candidateAgentIds[0] ?? null);
+    }
+    setBridgeConfirmOpen(true);
+  };
+
+  const handleConfirmBridge = () => {
+    if (!onBridgeRequest || !bridgeEvaluation || bridgeEvaluation.state === "disabled") {
+      return;
+    }
+
+    if (bridgeEvaluation.state === "ready") {
+      onBridgeRequest(bridgeEvaluation.target);
+      resetBridgeUi();
+      return;
+    }
+
+    if (!selectedBridgeAgentId) {
+      return;
+    }
+
+    onBridgeRequest({
+      agentId: selectedBridgeAgentId,
+      ...(bridgeEvaluation.capabilityId ? { capabilityId: bridgeEvaluation.capabilityId } : {}),
+    });
+    resetBridgeUi();
+  };
+
+  const bridgeDisabledReason =
+    bridgeEvaluation?.state === "disabled" ? bridgeEvaluation.reason : null;
+  const bridgeActionEnabled =
+    onBridgeRequest &&
+    bridgeEvaluation &&
+    bridgeEvaluation.state !== "disabled" &&
+    !bridgeEvaluationLoading;
+  const showBridgeSection = onBridgeRequest !== undefined;
 
   return (
     <section
@@ -214,6 +482,98 @@ export function ResourceDetailPanel({
               </button>
             </div>
           </header>
+
+          {showBridgeSection && (
+            <div className="resource-detail-bridge" data-testid="ecosystem-effective-bridge">
+              <h3 className="resource-detail-bridge-title">Effective resolution</h3>
+              {bridgeEvaluationLoading && (
+                <p className="resource-detail-bridge-note empty-state">
+                  Checking effective bridge…
+                </p>
+              )}
+              {!bridgeEvaluationLoading && bridgeDisabledReason && (
+                <p className="resource-detail-bridge-note resource-detail-bridge-disabled">
+                  {bridgeDisabledReason}
+                </p>
+              )}
+              {!bridgeEvaluationLoading && !bridgeDisabledReason && bridgeEvaluation && (
+                <>
+                  {!bridgeConfirmOpen && (
+                    <button
+                      type="button"
+                      className="resource-detail-bridge-action"
+                      disabled={!bridgeActionEnabled}
+                      onClick={handleOpenBridgeConfirm}
+                    >
+                      Open effective resolution
+                    </button>
+                  )}
+                  {bridgeConfirmOpen && (
+                    <div className="resource-detail-bridge-confirm">
+                      {bridgeEvaluation.state === "choose-agent" && (
+                        <fieldset className="resource-detail-bridge-agent-choice">
+                          <legend>{bridgeEvaluation.reason}</legend>
+                          <ul className="resource-detail-bridge-agent-list">
+                            {bridgeEvaluation.candidateAgentIds.map((agentId) => (
+                              <li key={agentId}>
+                                <label className="resource-detail-bridge-agent-option">
+                                  <input
+                                    type="radio"
+                                    name="bridge-agent"
+                                    value={agentId}
+                                    checked={selectedBridgeAgentId === agentId}
+                                    onChange={() => setSelectedBridgeAgentId(agentId)}
+                                  />
+                                  <span>{bridgeAgentName(agentId)}</span>
+                                  <code className="mono">{agentId}</code>
+                                </label>
+                              </li>
+                            ))}
+                          </ul>
+                        </fieldset>
+                      )}
+                      {bridgeEvaluation.state === "ready" && (
+                        <p className="resource-detail-bridge-note">
+                          {formatBridgeTransitionNotice(
+                            bridgeAgentName(bridgeEvaluation.target.agentId),
+                            currentPlatform,
+                          )}
+                        </p>
+                      )}
+                      {bridgeEvaluation.state === "choose-agent" && selectedBridgeAgentId && (
+                        <p className="resource-detail-bridge-note">
+                          {formatBridgeTransitionNotice(
+                            bridgeAgentName(selectedBridgeAgentId),
+                            currentPlatform,
+                          )}
+                        </p>
+                      )}
+                      <p className="resource-detail-bridge-context-note">
+                        <code>{DEFAULT_CONTEXT_PRESET}</code> — {DEFAULT_CONTEXT_REASON}
+                      </p>
+                      <div className="resource-detail-bridge-actions">
+                        <button
+                          type="button"
+                          className="resource-detail-bridge-action"
+                          disabled={!selectedBridgeAgentId}
+                          onClick={handleConfirmBridge}
+                        >
+                          Open effective resolution
+                        </button>
+                        <button
+                          type="button"
+                          className="resource-detail-bridge-cancel"
+                          onClick={resetBridgeUi}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
 
           <div className="resource-detail-accordions">
             <ResourceDetailAccordion title="Metadata">

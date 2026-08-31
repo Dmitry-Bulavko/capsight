@@ -29,6 +29,10 @@ export interface FeatureCompatibility {
   feature: string;
   factRefs: readonly FactId[];
   minVersion?: string;
+  /** Inclusive upper bound; detected version above this resolves the entry as unsupported. */
+  maxVersion?: string;
+  changedIn?: readonly string[];
+  observedIn?: readonly string[];
   status: "supported" | "unsupported" | "changed" | "unknown";
   confidence: "doc" | "fixture" | "runtime-observed";
   /**
@@ -96,6 +100,84 @@ const MATRIX_ENTRIES = [
       "and MCP are absent from discovery and the golden records an enforced warning that project " +
       "layers are not loaded — per §2.4 wording. XT2 storage format remains unknown " +
       "in production. Deletion test (D1-08): unfounding the entry downgrades the warning enforcement.",
+  },
+  {
+    id: "discovery.skills",
+    feature: "Skills discovered from .agents/skills/<name>/SKILL.md",
+    factRefs: [FACT.XS1],
+    status: "supported",
+    confidence: "fixture",
+    fixture: "basic",
+    verifiedFacts: [FACT.XS1],
+    notes:
+      "XS1 entire: basic declares example under .agents/skills/example/SKILL.md and the " +
+      "golden records the skill with that path. Deletion test (D2-04): skip skills-directory " +
+      "discovery and skills becomes empty.",
+  },
+  {
+    id: "discovery.skillFrontmatter",
+    feature: "Skill frontmatter name and description parsed from SKILL.md",
+    factRefs: [FACT.XS3],
+    status: "supported",
+    confidence: "fixture",
+    fixture: "basic",
+    verifiedFacts: [FACT.XS3],
+    notes:
+      "XS3 entire: basic carries name and description in SKILL.md frontmatter and the golden " +
+      "records both fields on the skill entry. Deletion test (D2-04): stop parsing skill " +
+      "frontmatter and description falls back to unknown in the golden.",
+  },
+  {
+    id: "discovery.mcpProject",
+    feature: "Project MCP servers load from .codex/config.toml mcp_servers",
+    factRefs: [FACT.XM1, FACT.XSet3],
+    status: "supported",
+    confidence: "fixture",
+    fixture: "basic",
+    verifiedFacts: [FACT.XM1, FACT.XSet3],
+    notes:
+      "XM1 and XSet3 entire: basic declares example and remote under [mcp_servers.*] in " +
+      "project .codex/config.toml and the golden records both with that config path. " +
+      "Deletion test (D2-04): skip project-scope MCP discovery and mcpServers becomes empty.",
+  },
+  {
+    id: "mcp.transport",
+    feature: "MCP transport inferred from command or url",
+    factRefs: [FACT.XM2],
+    status: "supported",
+    confidence: "fixture",
+    fixture: "basic",
+    verifiedFacts: [FACT.XM2],
+    notes:
+      "XM2 entire: basic carries command-based example (stdio) and url-based remote (http) " +
+      "servers; the golden records transport stdio and http respectively. Deletion test (D2-04): " +
+      "stop inferring transport and every server records transport unknown.",
+  },
+  {
+    id: "mcp.envRedact",
+    feature: "MCP config records env key names only",
+    factRefs: [FACT.XSet4],
+    status: "supported",
+    confidence: "fixture",
+    fixture: "basic",
+    verifiedFacts: [FACT.XSet4],
+    notes:
+      "XSet4 entire: basic carries EXAMPLE_API_KEY in mcp_servers.example env and the golden " +
+      "records envKeys without values or secrets in configHash. Deletion test (D2-04): stop " +
+      "extracting env keys and envKeys leaves the golden while the hash input changes.",
+  },
+  {
+    id: "discovery.settings",
+    feature: "Layered .codex/config.toml settings discovered root to cwd",
+    factRefs: [FACT.XR3],
+    status: "supported",
+    confidence: "fixture",
+    fixture: "basic",
+    verifiedFacts: [FACT.XR3],
+    notes:
+      "XR3 entire: basic carries project .codex/config.toml and the golden records a project " +
+      "settings layer at that path. Deletion test (D2-04): skip project config layering and " +
+      "the settings entry leaves the golden.",
   },
   {
     id: "mcp.probe",
@@ -269,8 +351,72 @@ export function isMatrixId(value: string): value is MatrixId {
   return MATRIX_ENTRIES.some((entry) => entry.id === value);
 }
 
-export function lookupFeature(id: MatrixId): FeatureCompatibility | undefined {
-  return MATRIX_ENTRIES.find((entry) => entry.id === id);
+function parseSemver(version: string): [number, number, number] | null {
+  const match = version.match(/^(\d+)\.(\d+)\.(\d+)/);
+  if (!match) {
+    return null;
+  }
+  return [Number(match[1]), Number(match[2]), Number(match[3])];
+}
+
+/** @returns negative if a < b, positive if a > b, 0 if equal, null if unparsable */
+export function compareSemver(a: string, b: string): number | null {
+  const left = parseSemver(a);
+  const right = parseSemver(b);
+  if (!left || !right) {
+    return null;
+  }
+
+  for (let i = 0; i < 3; i++) {
+    if (left[i]! < right[i]!) {
+      return -1;
+    }
+    if (left[i]! > right[i]!) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+/**
+ * Resolve a matrix feature for a detected Codex version.
+ * Unknown CLI version or missing matrix entry yields `status: "unknown"`.
+ */
+export function lookupFeature(
+  id: MatrixId,
+  version: string,
+): FeatureCompatibility | undefined {
+  const entry = VERSION_MATRIX.find((candidate) => candidate.id === id);
+  if (!entry) {
+    return undefined;
+  }
+
+  if (version === "unknown") {
+    return { ...entry, status: "unknown" };
+  }
+
+  if (entry.minVersion) {
+    const comparison = compareSemver(version, entry.minVersion);
+    if (comparison === null || comparison < 0) {
+      return { ...entry, status: "unsupported" };
+    }
+  }
+
+  if (entry.maxVersion) {
+    const comparison = compareSemver(version, entry.maxVersion);
+    if (comparison === null || comparison > 0) {
+      return { ...entry, status: "unsupported" };
+    }
+  }
+
+  return entry;
+}
+
+export interface ResolveEnforcementInput {
+  matrixId: MatrixId;
+  /** Detected Codex version, or `"unknown"` in degraded mode (§8.3). */
+  version: string;
+  baseline?: Enforcement;
 }
 
 export interface EnforcementDecision {
@@ -279,24 +425,49 @@ export interface EnforcementDecision {
   matrixRef: MatrixId;
 }
 
-export function resolveEnforcement(matrixRef: MatrixId): EnforcementDecision {
-  const entry = lookupFeature(matrixRef);
-  if (!entry || entry.status === "unknown") {
-    return { enforcement: "unknown", unfounded: true, matrixRef };
+/**
+ * The single place where a resolver rule turns into an `enforcement` verdict.
+ * Version comparison never happens outside this module (§13 invariant 11).
+ */
+export function resolveEnforcement(input: ResolveEnforcementInput): EnforcementDecision {
+  const { matrixId, version } = input;
+  const baseline = input.baseline ?? "enforced";
+
+  const entry = MATRIX_ENTRIES.find((candidate) => candidate.id === matrixId);
+  if (!entry) {
+    return { enforcement: "unknown", unfounded: true, matrixRef: matrixId };
   }
-  return { enforcement: "enforced", unfounded: false, matrixRef };
+
+  if (version === "unknown") {
+    return { enforcement: "unknown", unfounded: true, matrixRef: matrixId };
+  }
+
+  const resolved = lookupFeature(matrixId, version)!;
+  if (resolved.status !== "supported") {
+    return { enforcement: "unknown", unfounded: true, matrixRef: matrixId };
+  }
+
+  return { enforcement: baseline, unfounded: false, matrixRef: matrixId };
 }
 
-export function gateCapability(matrixRef: MatrixId): EnforcementDecision {
-  return resolveEnforcement(matrixRef);
+export function gateCapability(matrixRef: MatrixId, version: string): EnforcementDecision {
+  return resolveEnforcement({ matrixId: matrixRef, version });
 }
 
 /**
  * Apply the matrix gate to a `Warning` that asserts platform behaviour.
  * When the matrix does not found the claim the warning becomes undetermined.
  */
-export function gateWarning(warning: Warning, matrixRef: MatrixId): Warning {
-  const decision = resolveEnforcement(matrixRef);
+export function gateWarning(
+  warning: Warning,
+  matrixRef: MatrixId,
+  version: string,
+): Warning {
+  const decision = resolveEnforcement({
+    matrixId: matrixRef,
+    version,
+    baseline: warning.enforcement ?? "enforced",
+  });
   return {
     ...warning,
     matrixRef,

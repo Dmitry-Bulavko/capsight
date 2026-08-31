@@ -53,6 +53,19 @@
         "envKeys": [
           "EXAMPLE_API_KEY"
         ]
+      },
+      {
+        "name": "remote",
+        "source": {
+          "platform": "codex",
+          "scope": "project",
+          "path": ".codex/config.toml"
+        },
+        "configPath": ".codex/config.toml",
+        "transport": "http",
+        "definitionKind": "config-file",
+        "status": "configured",
+        "configHash": "d9deae206a24b8d6"
       }
     ],
     "settings": [
@@ -156,6 +169,31 @@
               "matrixRef": "mcp.probe"
             }
           ]
+        },
+        {
+          "capabilityId": "mcp:remote",
+          "kind": "mcp_server",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "codex",
+              "scope": "project",
+              "path": ".codex/config.toml"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "not-probed",
+              "message": "MCP server \"remote\" is configured but not probed (XM3).",
+              "source": {
+                "platform": "codex",
+                "scope": "project",
+                "path": ".codex/config.toml"
+              },
+              "matrixRef": "mcp.probe"
+            }
+          ]
         }
       ],
       "warnings": [
@@ -173,7 +211,7 @@
           "enforcement": "unknown"
         }
       ],
-      "unknownRate": 0.6666666666666666
+      "unknownRate": 0.75
     }
   ]
 }

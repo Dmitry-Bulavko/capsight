@@ -4,28 +4,37 @@ import type {
   HealthFilterId,
   PlatformHealthSection,
 } from "../../application/ecosystem-health.js";
+import type { Warning } from "../../core/model/index.js";
+import {
+  filterWarningsBySeverity,
+  parseHealthWarningFilter,
+  WarningsPanel,
+} from "./WarningsPanel.js";
 
 interface EcosystemHealthProps {
   health: EcosystemHealthSummary;
   activeFilterId: HealthFilterId | null;
   onFilterChange: (filterId: HealthFilterId | null) => void;
+  snapshotWarnings?: readonly Warning[];
 }
 
 function HealthCountButton({
   link,
   activeFilterId,
   onFilterChange,
+  isWarningSeverity = false,
 }: {
   link: HealthCountLink;
   activeFilterId: HealthFilterId | null;
   onFilterChange: (filterId: HealthFilterId | null) => void;
+  isWarningSeverity?: boolean;
 }) {
   if (link.count === 0) {
     return null;
   }
 
   const isActive = activeFilterId === link.id;
-  const canFilter = link.resourceIds.length > 0;
+  const canFilter = isWarningSeverity || link.resourceIds.length > 0;
 
   return (
     <button
@@ -33,7 +42,13 @@ function HealthCountButton({
       className={`ecosystem-health-count${isActive ? " ecosystem-health-count-active" : ""}`}
       disabled={!canFilter}
       aria-pressed={isActive}
-      title={canFilter ? `Show ${link.count} on canvas` : undefined}
+      title={
+        isWarningSeverity
+          ? `Show ${link.count} ${link.label} message${link.count === 1 ? "" : "s"}`
+          : canFilter
+            ? `Show ${link.count} on canvas`
+            : undefined
+      }
       onClick={() => {
         if (!canFilter) {
           return;
@@ -112,7 +127,12 @@ function PlatformHealthSectionView({
   );
 }
 
-export function EcosystemHealth({ health, activeFilterId, onFilterChange }: EcosystemHealthProps) {
+export function EcosystemHealth({
+  health,
+  activeFilterId,
+  onFilterChange,
+  snapshotWarnings = [],
+}: EcosystemHealthProps) {
   const globalLinks = [
     health.localOverrides,
     health.unresolvedCollisions,
@@ -121,6 +141,22 @@ export function EcosystemHealth({ health, activeFilterId, onFilterChange }: Ecos
     health.warnings.warning,
     health.warnings.critical,
   ];
+
+  const activeWarningSeverity = activeFilterId
+    ? parseHealthWarningFilter(activeFilterId)
+    : null;
+  const severityFilteredWarnings = filterWarningsBySeverity(
+    snapshotWarnings,
+    activeWarningSeverity,
+  );
+  const activeWarningLink =
+    activeWarningSeverity === "info"
+      ? health.warnings.info
+      : activeWarningSeverity === "warning"
+        ? health.warnings.warning
+        : activeWarningSeverity === "critical"
+          ? health.warnings.critical
+          : null;
 
   const hasGlobalCounts = globalLinks.some((link) => link.count > 0);
   const hasPlatformSections = health.platforms.some(
@@ -155,9 +191,20 @@ export function EcosystemHealth({ health, activeFilterId, onFilterChange }: Ecos
                 link={link}
                 activeFilterId={activeFilterId}
                 onFilterChange={onFilterChange}
+                isWarningSeverity={link.id.startsWith("warnings:")}
               />
             ))}
           </div>
+          {activeWarningSeverity && activeWarningLink && (
+            <WarningsPanel
+              warnings={severityFilteredWarnings}
+              scope="all"
+              severityFilter={activeWarningSeverity}
+              title={`${activeWarningLink.label} messages`}
+              emptyMessage="No messages for this severity."
+              compact
+            />
+          )}
         </section>
       )}
 

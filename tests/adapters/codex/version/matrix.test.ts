@@ -11,9 +11,11 @@ import {
   isFactId,
 } from "../../../../src/adapters/codex/version/facts.js";
 import {
+  compareSemver,
   gateCapability,
   gateWarning,
   isMatrixId,
+  lookupFeature,
   resolveEnforcement,
   MATRIX,
   VERSION_MATRIX,
@@ -30,6 +32,12 @@ const CODEX_MATRIX_IDS = [
   "instruction.chain",
   "instruction.ancestors",
   "trust.project",
+  "discovery.skills",
+  "discovery.skillFrontmatter",
+  "discovery.mcpProject",
+  "mcp.transport",
+  "mcp.envRedact",
+  "discovery.settings",
   "mcp.probe",
 ] as const;
 
@@ -182,22 +190,71 @@ describe("codex VERSION_MATRIX", () => {
 });
 
 describe("codex resolveEnforcement", () => {
-  it("enforces supported entries", () => {
-    expect(resolveEnforcement(MATRIX["instruction.chain"])).toEqual({
+  const DETECTED = "0.130.0";
+
+  it("enforces supported entries on a detected version", () => {
+    expect(
+      resolveEnforcement({ matrixId: MATRIX["instruction.chain"], version: DETECTED }),
+    ).toEqual({
       enforcement: "enforced",
       unfounded: false,
       matrixRef: "instruction.chain",
     });
   });
 
-  it("resolves unknown for missing or unknown-status entries", () => {
-    expect(resolveEnforcement(MATRIX["mcp.probe"]).enforcement).toBe("unknown");
-    expect(resolveEnforcement("agent.neverRegistered" as MatrixId).unfounded).toBe(true);
+  it("resolves unknown for missing, unknown-status, or undetected version entries", () => {
+    expect(
+      resolveEnforcement({ matrixId: MATRIX["mcp.probe"], version: DETECTED }).enforcement,
+    ).toBe("unknown");
+    expect(
+      resolveEnforcement({
+        matrixId: "agent.neverRegistered" as MatrixId,
+        version: DETECTED,
+      }).unfounded,
+    ).toBe(true);
     expect(isMatrixId("agent.neverRegistered")).toBe(false);
+    expect(
+      resolveEnforcement({ matrixId: MATRIX["instruction.chain"], version: "unknown" })
+        .enforcement,
+    ).toBe("unknown");
+  });
+
+  it("downgrades only rules outside their declared version range", () => {
+    withMatrixPatchSync(MATRIX["instruction.chain"], { minVersion: "99.0.0" }, () => {
+      expect(
+        resolveEnforcement({ matrixId: MATRIX["instruction.chain"], version: DETECTED })
+          .enforcement,
+      ).toBe("unknown");
+      expect(
+        resolveEnforcement({ matrixId: MATRIX["trust.project"], version: DETECTED }).enforcement,
+      ).toBe("enforced");
+    });
+  });
+});
+
+describe("codex lookupFeature", () => {
+  const DETECTED = "0.130.0";
+
+  it("marks entries unsupported below minVersion", () => {
+    withMatrixPatchSync(MATRIX["instruction.chain"], { minVersion: "99.0.0" }, () => {
+      expect(lookupFeature(MATRIX["instruction.chain"], DETECTED)?.status).toBe("unsupported");
+      expect(lookupFeature(MATRIX["instruction.chain"], "99.0.0")?.status).toBe("supported");
+    });
+  });
+
+  it("returns unknown status when CLI version is unavailable", () => {
+    expect(lookupFeature(MATRIX["instruction.chain"], "unknown")?.status).toBe("unknown");
+  });
+});
+
+describe("codex compareSemver", () => {
+  it("orders patch versions", () => {
+    expect(compareSemver("0.130.0", "0.131.0")).toBeLessThan(0);
   });
 });
 
 describe("codex gateWarning", () => {
+  const DETECTED = "0.130.0";
   const untrustedWarning: Warning = {
     category: "trust",
     severity: "warning",
@@ -207,20 +264,22 @@ describe("codex gateWarning", () => {
   };
 
   it("keeps enforcement when the matrix founds the warning", () => {
-    const gated = gateWarning(untrustedWarning, MATRIX["trust.project"]);
+    const gated = gateWarning(untrustedWarning, MATRIX["trust.project"], DETECTED);
     expect(gated.enforcement).toBe("enforced");
     expect(gated.matrixRef).toBe("trust.project");
   });
 
   it("downgrades when the matrix entry is unknown", () => {
-    const gated = gateWarning(untrustedWarning, MATRIX["mcp.probe"]);
+    const gated = gateWarning(untrustedWarning, MATRIX["mcp.probe"], DETECTED);
     expect(gated.enforcement).toBe("unknown");
   });
 });
 
 describe("codex gateCapability", () => {
+  const DETECTED = "0.130.0";
+
   it("founds instruction chain on a supported entry", () => {
-    expect(gateCapability(MATRIX["instruction.chain"])).toEqual({
+    expect(gateCapability(MATRIX["instruction.chain"], DETECTED)).toEqual({
       enforcement: "enforced",
       unfounded: false,
       matrixRef: "instruction.chain",
@@ -273,6 +332,24 @@ async function withMatrixPatch(
   Object.assign(entry, patch);
   try {
     await body();
+  } finally {
+    for (const key of Object.keys(entry) as Array<keyof FeatureCompatibility>) {
+      delete (entry as unknown as Record<string, unknown>)[key];
+    }
+    Object.assign(entry, original);
+  }
+}
+
+function withMatrixPatchSync(
+  id: MatrixId,
+  patch: Partial<FeatureCompatibility>,
+  body: () => void,
+): void {
+  const entry = VERSION_MATRIX.find((candidate) => candidate.id === id)!;
+  const original = { ...entry };
+  Object.assign(entry, patch);
+  try {
+    body();
   } finally {
     for (const key of Object.keys(entry) as Array<keyof FeatureCompatibility>) {
       delete (entry as unknown as Record<string, unknown>)[key];

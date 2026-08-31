@@ -6,10 +6,16 @@ import type {
   ExecutionContext,
   PlatformVersion,
   ResolvedCapability,
+  Warning,
 } from "../core/model/index.js";
 import type { PlatformId } from "../adapters/platform.js";
 import type { ScanResult } from "../application/scan.js";
 import type { ResourceContentResult } from "../application/resource-content.js";
+import type {
+  PlanPendingState,
+  PlanResult,
+} from "../application/plan.js";
+import type { ManagedSimulationResult } from "../application/simulate.js";
 import type { ScanStatusSummary } from "../application/scan-store.js";
 import type {
   EcosystemApiPayload,
@@ -82,6 +88,21 @@ export async function fetchEffectiveConfig(
   );
 }
 
+/** Mirrors `AgentWarning` from `GET /api/warnings`. */
+export interface AgentWarning extends Warning {
+  agentId: string;
+}
+
+export interface WarningsApiPayload {
+  warnings: AgentWarning[];
+  contextDefault?: { preset: ContextPreset; reason: string };
+}
+
+export async function fetchWarnings(context: ContextPreset): Promise<WarningsApiPayload> {
+  const params = new URLSearchParams({ context });
+  return request<WarningsApiPayload>(`/api/warnings?${params.toString()}`);
+}
+
 export interface CapabilityExplain {
   agentId: string;
   context: ExecutionContext;
@@ -152,8 +173,42 @@ export async function fetchEcosystemResourceContent(id: string): Promise<Resourc
 }
 
 export type {
+  PlanFieldChange,
+  PlanFileChange,
+  PlanPendingState,
+  PlanResult,
+  PlanWarning,
+} from "../application/plan.js";
+export type {
   EcosystemApiPayload,
   EcosystemResourceDetail,
 } from "../server/routes/ecosystem.js";
 export { isMarkdownContentKind } from "../core/model/ecosystem.js";
 export type { ResourceContentResult } from "../application/resource-content.js";
+
+export async function fetchPlan(
+  pending: PlanPendingState,
+  editSnapshotId: string,
+): Promise<PlanResult> {
+  return request<PlanResult>("/api/plan", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pending, editSnapshotId }),
+  });
+}
+
+export type {
+  ManagedSimulationDelta,
+  ManagedSimulationResult,
+} from "../application/simulate.js";
+
+export async function fetchSimulateManaged(
+  managedBundlePath: string,
+): Promise<ManagedSimulationResult> {
+  const trimmed = managedBundlePath.trim();
+  return request<ManagedSimulationResult>("/api/simulate/managed", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ managedBundlePath: trimmed }),
+  });
+}

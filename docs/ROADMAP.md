@@ -4,9 +4,9 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**V1 — UI Surface** is the active phase. The engine is ahead of the browser: seven API route groups have no UI client, and three spec obligations (§2.4, §7.4, invariant 3) are satisfied in the CLI but not on screen. V1 closes that before any new capability is added.
+**All planned phases complete** (V1 → D2 → P1 → G1). Next work is post-v0.1 backlog in ROADMAP (S1–S8/K12 remainders, observed layer revisit).
 
-Previous: **EC phase complete** — EC-01…EC-08 merged to `main` (PR #4). Ecosystem tab: declared inventory across Claude, Cursor, Codex with compat badges, detail panel, health readout, and mixed-project golden fixture.
+Previous: **G1 — Version drift guard complete** — version applicability on all three platforms, DriftBanner UI, version-drift golden pins scoped downgrade.
 
 Previous: **D1 phase complete** — evidence depth for three platforms.
 
@@ -27,10 +27,10 @@ Previous: **V0-04 done** — custom `CapsightSelect` listbox with in-row status 
 | MP — Multi-platform | `done` | MP-C15 + MP-X15 golden gates |
 | D1 — Depth (evidence) | `done` | D1-00…D1-16 closed; three-platform coverage reports honest |
 | EC — Ecosystem visualization | `done` | EC-01…EC-08 complete; ecosystem golden fixture |
-| V1 — UI Surface | `todo` | §2.4, §7.4 and invariant 3 observable in the browser |
-| D2 — Evidence depth | `todo` | Every fact either matrix-referenced or refused in writing |
-| P1 — Policy surface | `todo` | Managed simulation usable without the terminal |
-| G1 — Version drift guard | `todo` | §8.4 divergence detectable, not assumed away |
+| V1 — UI Surface | `done` | §2.4, §7.4 and invariant 3 observable in the browser |
+| D2 — Evidence depth | `done` | Every fact either matrix-referenced or refused in writing |
+| P1 — Policy surface | `done` | Managed simulation usable without the terminal |
+| G1 — Version drift guard | `done` | §8.4 divergence detectable, not assumed away |
 
 ## Surface rule
 

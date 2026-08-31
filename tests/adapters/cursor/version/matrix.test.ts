@@ -11,10 +11,12 @@ import {
   isFactId,
 } from "../../../../src/adapters/cursor/version/facts.js";
 import {
+  compareSemver,
   gateCollision,
   gateDiscovery,
   gateWarning,
   isMatrixId,
+  lookupFeature,
   resolveEnforcement,
   MATRIX,
   VERSION_MATRIX,
@@ -32,6 +34,12 @@ const CURSOR_MATRIX_IDS = [
   "collision.sameDir",
   "rules.fileExtension",
   "agent.invalid",
+  "discovery.mcpProject",
+  "mcp.envRedact",
+  "discovery.commands",
+  "discovery.ruleFrontmatter",
+  "mcp.probe",
+  "version.degraded",
 ] as const;
 
 const FIXTURES_ROOT = path.resolve(
@@ -163,22 +171,80 @@ describe("cursor VERSION_MATRIX", () => {
 });
 
 describe("cursor resolveEnforcement", () => {
-  it("enforces supported entries", () => {
-    expect(resolveEnforcement(MATRIX["rules.fileExtension"])).toEqual({
+  const DETECTED = "3.16.17";
+
+  it("enforces supported entries on a detected version", () => {
+    expect(
+      resolveEnforcement({ matrixId: MATRIX["rules.fileExtension"], version: DETECTED }),
+    ).toEqual({
       enforcement: "enforced",
       unfounded: false,
       matrixRef: "rules.fileExtension",
     });
   });
 
-  it("resolves unknown for missing or unknown-status entries", () => {
-    expect(resolveEnforcement(MATRIX["trust.project"]).enforcement).toBe("unknown");
-    expect(resolveEnforcement("agent.neverRegistered" as MatrixId).unfounded).toBe(true);
+  it("resolves unknown for missing, unknown-status, or undetected version entries", () => {
+    expect(
+      resolveEnforcement({ matrixId: MATRIX["trust.project"], version: DETECTED }).enforcement,
+    ).toBe("unknown");
+    expect(
+      resolveEnforcement({
+        matrixId: "agent.neverRegistered" as MatrixId,
+        version: DETECTED,
+      }).unfounded,
+    ).toBe(true);
     expect(isMatrixId("agent.neverRegistered")).toBe(false);
+    expect(
+      resolveEnforcement({ matrixId: MATRIX["rules.fileExtension"], version: "unknown" })
+        .enforcement,
+    ).toBe("unknown");
+  });
+
+  it("downgrades only rules outside their declared version range", () => {
+    withMatrixPatchSync(MATRIX["rules.fileExtension"], { minVersion: "99.0.0" }, () => {
+      expect(
+        resolveEnforcement({ matrixId: MATRIX["rules.fileExtension"], version: DETECTED })
+          .enforcement,
+      ).toBe("unknown");
+      expect(
+        resolveEnforcement({ matrixId: MATRIX["collision.sameDir"], version: DETECTED })
+          .enforcement,
+      ).toBe("enforced");
+    });
+  });
+});
+
+describe("cursor lookupFeature", () => {
+  const DETECTED = "3.16.17";
+
+  it("marks entries unsupported below minVersion", () => {
+    withMatrixPatchSync(MATRIX["rules.fileExtension"], { minVersion: "99.0.0" }, () => {
+      expect(lookupFeature(MATRIX["rules.fileExtension"], DETECTED)?.status).toBe("unsupported");
+      expect(lookupFeature(MATRIX["rules.fileExtension"], "99.0.0")?.status).toBe("supported");
+    });
+  });
+
+  it("marks entries unsupported above maxVersion", () => {
+    withMatrixPatchSync(MATRIX["rules.fileExtension"], { maxVersion: "3.0.0" }, () => {
+      expect(lookupFeature(MATRIX["rules.fileExtension"], DETECTED)?.status).toBe("unsupported");
+      expect(lookupFeature(MATRIX["rules.fileExtension"], "3.0.0")?.status).toBe("supported");
+    });
+  });
+
+  it("returns unknown status when CLI version is unavailable", () => {
+    expect(lookupFeature(MATRIX["rules.fileExtension"], "unknown")?.status).toBe("unknown");
+  });
+});
+
+describe("cursor compareSemver", () => {
+  it("orders patch versions", () => {
+    expect(compareSemver("3.16.17", "3.16.20")).toBeLessThan(0);
+    expect(compareSemver("3.16.20", "3.16.17")).toBeGreaterThan(0);
   });
 });
 
 describe("cursor gateWarning", () => {
+  const DETECTED = "3.16.17";
   const ignoredWarning: Warning = {
     category: "unsupported",
     severity: "warning",
@@ -188,20 +254,29 @@ describe("cursor gateWarning", () => {
   };
 
   it("keeps enforcement when the matrix founds the warning", () => {
-    const gated = gateWarning(ignoredWarning, MATRIX["rules.fileExtension"]);
+    const gated = gateWarning(ignoredWarning, MATRIX["rules.fileExtension"], DETECTED);
     expect(gated.enforcement).toBe("enforced");
     expect(gated.matrixRef).toBe("rules.fileExtension");
   });
 
   it("downgrades when the matrix entry is unknown", () => {
-    const gated = gateWarning(ignoredWarning, MATRIX["trust.project"]);
+    const gated = gateWarning(ignoredWarning, MATRIX["trust.project"], DETECTED);
     expect(gated.enforcement).toBe("unknown");
+  });
+
+  it("downgrades when the detected version is outside the entry range", () => {
+    withMatrixPatchSync(MATRIX["rules.fileExtension"], { minVersion: "99.0.0" }, () => {
+      const gated = gateWarning(ignoredWarning, MATRIX["rules.fileExtension"], DETECTED);
+      expect(gated.enforcement).toBe("unknown");
+    });
   });
 });
 
 describe("cursor gateCollision and gateDiscovery", () => {
+  const DETECTED = "3.16.17";
+
   it("founds same-directory collision on a supported entry", () => {
-    expect(gateCollision(MATRIX["collision.sameDir"])).toEqual({
+    expect(gateCollision(MATRIX["collision.sameDir"], DETECTED)).toEqual({
       enforcement: "enforced",
       unfounded: false,
       matrixRef: "collision.sameDir",
@@ -209,7 +284,7 @@ describe("cursor gateCollision and gateDiscovery", () => {
   });
 
   it("founds invalid-agent discovery on a supported entry", () => {
-    expect(gateDiscovery(MATRIX["agent.invalid"])).toEqual({
+    expect(gateDiscovery(MATRIX["agent.invalid"], DETECTED)).toEqual({
       enforcement: "enforced",
       unfounded: false,
     });
@@ -273,6 +348,94 @@ describe("cursor fixture deletion tests (H1-28)", () => {
       ).toBe(0);
     });
   });
+
+  it("discovery.mcpProject: skipping project MCP discovery empties mcpServers", async () => {
+    const baseline = await runCursorFixture("basic");
+    expect(baseline.discovery.mcpServers).toHaveLength(1);
+
+    const mcp = await import("../../../../src/adapters/cursor/discovery/mcp.js");
+    vi.spyOn(mcp, "discoverMcpServers").mockResolvedValue([]);
+    const withoutRule = await runCursorFixture("basic");
+    expect(withoutRule.discovery.mcpServers).toHaveLength(0);
+  });
+
+  it("mcp.envRedact: omitting env key extraction drops envKeys from discovery", async () => {
+    const baseline = await runCursorFixture("basic");
+    expect(
+      (baseline.discovery.mcpServers[0] as { envKeys?: string[] }).envKeys,
+    ).toEqual(["GITHUB_TOKEN"]);
+
+    const redact = await import("../../../../src/adapters/cursor/discovery/redact.js");
+    vi.spyOn(redact, "extractEnvKeys").mockReturnValue([]);
+    const withoutRule = await runCursorFixture("basic");
+    expect(
+      (withoutRule.discovery.mcpServers[0] as { envKeys?: string[] }).envKeys,
+    ).toBeUndefined();
+  });
+
+  it("discovery.commands: omitting command discovery drops command entries", async () => {
+    const baseline = await runCursorFixture("basic");
+    expect(
+      baseline.discovery.skills.filter(
+        (skill) => (skill as { kind?: string }).kind === "command",
+      ).length,
+    ).toBe(1);
+
+    const skills = await import("../../../../src/adapters/cursor/discovery/skills.js");
+    const discoverSkills = skills.discoverSkills;
+    vi.spyOn(skills, "discoverSkills").mockImplementation(async (scopes, projectPath) => {
+      const discovered = await discoverSkills(scopes, projectPath);
+      return discovered.filter((skill) => skill.kind !== "command");
+    });
+    const withoutRule = await runCursorFixture("basic");
+    expect(
+      withoutRule.discovery.skills.filter(
+        (skill) => (skill as { kind?: string }).kind === "command",
+      ).length,
+    ).toBe(0);
+  });
+
+  it("discovery.ruleFrontmatter: omitting frontmatter parsing drops rule metadata", async () => {
+    const baseline = await runCursorFixture("ignored-rules");
+    const validRule = baseline.discovery.instructions.find(
+      (instruction) =>
+        (instruction as { path?: string }).path === ".cursor/rules/valid.mdc",
+    ) as { description?: string; alwaysApply?: boolean } | undefined;
+    expect(validRule?.description).toBe("Valid project rule");
+    expect(validRule?.alwaysApply).toBe(true);
+    const scopedRule = baseline.discovery.instructions.find(
+      (instruction) =>
+        (instruction as { path?: string }).path === ".cursor/rules/scoped.mdc",
+    ) as { description?: string; globs?: string[] } | undefined;
+    expect(scopedRule?.description).toBe("Scoped TypeScript rule");
+    expect(scopedRule?.globs).toEqual(["**/*.ts"]);
+
+    const instructions = await import(
+      "../../../../src/adapters/cursor/discovery/instructions.js"
+    );
+    const discoverInstructions = instructions.discoverInstructions;
+    vi.spyOn(instructions, "discoverInstructions").mockImplementation(
+      async (scopes, projectPath) => {
+        const discovered = await discoverInstructions(scopes, projectPath);
+        return discovered.map((instruction) => {
+          if (instruction.type !== "rule") {
+            return instruction;
+          }
+          const { description: _d, alwaysApply: _a, globs: _g, ...rest } = instruction;
+          return rest;
+        });
+      },
+    );
+    const withoutRule = await runCursorFixture("ignored-rules");
+    for (const rulePath of [".cursor/rules/valid.mdc", ".cursor/rules/scoped.mdc"]) {
+      const stripped = withoutRule.discovery.instructions.find(
+        (instruction) => (instruction as { path?: string }).path === rulePath,
+      ) as { description?: string; alwaysApply?: boolean; globs?: string[] } | undefined;
+      expect(stripped?.description).toBeUndefined();
+      expect(stripped?.alwaysApply).toBeUndefined();
+      expect(stripped?.globs).toBeUndefined();
+    }
+  });
 });
 
 async function withMatrixPatch(
@@ -285,6 +448,24 @@ async function withMatrixPatch(
   Object.assign(entry, patch);
   try {
     await body();
+  } finally {
+    for (const key of Object.keys(entry) as Array<keyof FeatureCompatibility>) {
+      delete (entry as unknown as Record<string, unknown>)[key];
+    }
+    Object.assign(entry, original);
+  }
+}
+
+function withMatrixPatchSync(
+  id: MatrixId,
+  patch: Partial<FeatureCompatibility>,
+  body: () => void,
+): void {
+  const entry = VERSION_MATRIX.find((candidate) => candidate.id === id)!;
+  const original = { ...entry };
+  Object.assign(entry, patch);
+  try {
+    body();
   } finally {
     for (const key of Object.keys(entry) as Array<keyof FeatureCompatibility>) {
       delete (entry as unknown as Record<string, unknown>)[key];

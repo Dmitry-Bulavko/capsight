@@ -5,6 +5,7 @@ export {
   type DetectCodexVersionOptions,
 } from "./detect.js";
 export {
+  compareSemver,
   gateCapability,
   gateWarning,
   isMatrixId,
@@ -14,6 +15,7 @@ export {
   VERSION_MATRIX,
   type FeatureCompatibility,
   type MatrixId,
+  type ResolveEnforcementInput,
 } from "./matrix.js";
 export {
   FACT,

@@ -51,7 +51,8 @@ permissionMode
 
 - [ ] `permissionMode` renders declared and effective side by side, with the P1/P2 reason when they differ
 - [ ] A parent mode of `bypassPermissions` / `acceptEdits` / `auto` marks the declared value ineffective explicitly (P2)
-- [ ] `model` shows both values under F8; an unfounded substitute identity reads `unknown`
+- [ ] `model` shows both values under F8 when resolver reports model substitution; an unfounded substitute identity reads `unknown`
+- [ ] **F8 deferral (orchestrator):** Regular `EffectiveConfiguration` has no F8 delta — `availableModels` exists only in managed-bundle overlay (`agent.modelAllowlist` fixture: `managed-simulation`). Matrix pins F8 to simulate `modelChanges`, not effective warnings. Acceptance #3 for model pairs in the regular effective UI is **deferred to P1-03** (F8 substitute-model honesty in simulation delta). V1-02 ships permissionMode, plugin fields, and fork; do not add resolver logic in this task.
 - [ ] A plugin agent's `hooks`, `mcpServers` and `permissionMode` are marked ineffective with F9
 - [ ] Selecting the `fork` preset states that the agent's configuration does not apply and why (T3)
 - [ ] Nothing renders a pair for a field the resolver did not report on
@@ -66,3 +67,5 @@ permissionMode
 ## Notes
 
 If a case turns out not to be reported by the resolver at all, that is a finding, not a licence to compute it in the UI: record it and return it in the handoff.
+
+**F8 finding (2026-08-31):** Model declared/effective pairs are not emitted on regular `EffectiveConfiguration`. F8 is gated to managed simulation (`resolveManagedModel`, `modelChanges`). Orchestrator deferred F8 UI to P1-03; V1-02 acceptance for the three resolver-backed cases (permissionMode, plugin fields, fork) is sufficient to close this task.

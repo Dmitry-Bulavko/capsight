@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Background,
   Controls,
   ReactFlow,
+  type Node,
+  type NodeMouseHandler,
   type ReactFlowInstance,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -17,11 +19,45 @@ import {
 } from "../graph-layout.js";
 import { graphNodeTypes } from "./GraphNodeCard.js";
 
-interface GraphViewProps {
-  context: ContextPreset;
+const SELECTABLE_NODE_KINDS = new Set(["tool", "mcp_tool", "skill", "instruction"]);
+
+export function isGraphNodeSelectable(kind: string): boolean {
+  return SELECTABLE_NODE_KINDS.has(kind);
 }
 
-export function GraphView({ context }: GraphViewProps) {
+export function capabilityIdFromGraphNode(kind: string, label: string): string | null {
+  return isGraphNodeSelectable(kind) ? label : null;
+}
+
+export function enhanceLayoutNodeForSelection(
+  node: Node,
+  selectedCapabilityId: string | null,
+): Node {
+  const capabilityId = capabilityIdFromGraphNode(
+    String(node.data.kind),
+    String(node.data.label),
+  );
+  const selectable = capabilityId !== null;
+
+  return {
+    ...node,
+    className: selectable ? "graph-node-capability" : "graph-node-non-interactive",
+    selectable,
+    selected: selectable && capabilityId === selectedCapabilityId,
+  };
+}
+
+interface GraphViewProps {
+  context: ContextPreset;
+  selectedCapabilityId: string | null;
+  onSelectCapability: (capabilityId: string) => void;
+}
+
+export function GraphView({
+  context,
+  selectedCapabilityId,
+  onSelectCapability,
+}: GraphViewProps) {
   const [graph, setGraph] = useState<InspectionGraph | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,10 +99,25 @@ export function GraphView({ context }: GraphViewProps) {
     }
     const laidOut = layoutInspectionGraph(graph);
     return {
-      nodes: laidOut.nodes.map((node) => ({ ...node, type: "default" as const })),
+      nodes: laidOut.nodes.map((node) =>
+        enhanceLayoutNodeForSelection({ ...node, type: "default" as const }, selectedCapabilityId),
+      ),
       edges: laidOut.edges,
     };
-  }, [graph]);
+  }, [graph, selectedCapabilityId]);
+
+  const handleNodeClick: NodeMouseHandler = useCallback(
+    (_event, node) => {
+      const capabilityId = capabilityIdFromGraphNode(
+        String(node.data.kind),
+        String(node.data.label),
+      );
+      if (capabilityId) {
+        onSelectCapability(capabilityId);
+      }
+    },
+    [onSelectCapability],
+  );
 
   useEffect(() => {
     if (!flowInstance || nodes.length === 0) return;
@@ -115,6 +166,7 @@ export function GraphView({ context }: GraphViewProps) {
                 edges={edges}
                 nodeTypes={nodeTypes}
                 onInit={setFlowInstance}
+                onNodeClick={handleNodeClick}
                 minZoom={0.35}
                 maxZoom={1.5}
                 nodesDraggable={false}

@@ -10,8 +10,10 @@ import {
   fetchExplain,
   fetchProject,
   fetchProjectConfig,
+  fetchWarnings,
   formatVersion,
   scanProject,
+  type AgentWarning,
 } from "./api.js";
 import { AgentList } from "./components/AgentList.js";
 import { AgentSelector } from "./components/AgentSelector.js";
@@ -28,10 +30,16 @@ import {
 } from "./components/ScanPanel.js";
 import { GraphView } from "./components/GraphView.js";
 import { EcosystemView } from "./components/EcosystemView.js";
+import type { EcosystemBridgeTarget } from "./components/ResourceDetailPanel.js";
 import { WhyPanel } from "./components/WhyPanel.js";
 import { AgentEditor } from "./components/AgentEditor.js";
+import { DeclaredEffectivePanel } from "./components/DeclaredEffective.js";
 import { EffectiveCapabilities } from "./components/EffectiveCapabilities.js";
+import { WarningsPanel, type WarningScope } from "./components/WarningsPanel.js";
+import { DriftBanner } from "./components/DriftBanner.js";
 import { DashboardNav, type DashboardTab } from "./components/DashboardNav.js";
+import { SimulationView } from "./components/SimulationView.js";
+import type { ManagedSimulationResult } from "./api.js";
 import {
   clearAgentPending,
   countPendingChanges,
@@ -80,6 +88,15 @@ export function App() {
   );
   const [editorPending, setEditorPending] = useState<EditorPendingState>(createEmptyEditorState);
   const [activeTab, setActiveTab] = useState<DashboardTab>("ecosystem");
+  const [allAgentWarnings, setAllAgentWarnings] = useState<AgentWarning[]>([]);
+  const [allWarningsLoading, setAllWarningsLoading] = useState(false);
+  const [allWarningsError, setAllWarningsError] = useState<string | null>(null);
+  const [warningsScope, setWarningsScope] = useState<WarningScope>("agent");
+  const [ecosystemReturnState, setEcosystemReturnState] = useState<{ resourceId: string } | null>(
+    null,
+  );
+  const [restoreEcosystemResourceId, setRestoreEcosystemResourceId] = useState<string | null>(null);
+  const [simulationResult, setSimulationResult] = useState<ManagedSimulationResult | null>(null);
 
   const loadDiscovery = useCallback(async () => {
     const project = await fetchProject();
@@ -116,8 +133,26 @@ export function App() {
     setActiveTab("capabilities");
   }, []);
 
+  const handleSelectCapabilityFromGraph = useCallback((capabilityId: string) => {
+    setSelectedCapabilityId(capabilityId);
+  }, []);
+
   const handleCloseWhy = useCallback(() => {
     setSelectedCapabilityId(null);
+  }, []);
+
+  const handleReturnToEcosystem = useCallback(() => {
+    if (!ecosystemReturnState) {
+      return;
+    }
+    setRestoreEcosystemResourceId(ecosystemReturnState.resourceId);
+    setEcosystemReturnState(null);
+    setSelectedCapabilityId(null);
+    setActiveTab("ecosystem");
+  }, [ecosystemReturnState]);
+
+  const handleEcosystemBridgeConsumed = useCallback(() => {
+    setRestoreEcosystemResourceId(null);
   }, []);
 
   const handleClearPending = useCallback(() => {
@@ -126,6 +161,14 @@ export function App() {
   }, [selectedAgentId]);
 
   const editorPendingCount = totalPendingChanges(agents, editorPending);
+
+  const displayedWarnings =
+    warningsScope === "agent"
+      ? (effectiveConfig?.warnings ?? []).map((warning) => ({
+          ...warning,
+          ...(selectedAgentId ? { agentId: selectedAgentId } : {}),
+        }))
+      : allAgentWarnings;
 
   const runScan = useCallback(
     async (overridePath?: string, overridePlatform?: PlatformId) => {
@@ -149,6 +192,27 @@ export function App() {
       }
     },
     [loadDiscovery],
+  );
+
+  const handleBridgeToEffective = useCallback(
+    async (target: EcosystemBridgeTarget, resourceId: string) => {
+      setEcosystemReturnState({ resourceId });
+
+      const needsPlatformSwitch = platformRef.current !== "claude";
+      if (needsPlatformSwitch && projectPathRef.current.trim()) {
+        await runScan(undefined, "claude");
+      } else if (needsPlatformSwitch) {
+        setPlatform("claude");
+        platformRef.current = "claude";
+        saveStoredPlatform("claude");
+      }
+
+      setContextPreset(DEFAULT_CONTEXT_PRESET);
+      setSelectedAgentId(target.agentId);
+      setSelectedCapabilityId(target.capabilityId ?? null);
+      setActiveTab("capabilities");
+    },
+    [runScan],
   );
 
   const handlePlatformChange = useCallback(
@@ -268,6 +332,43 @@ export function App() {
       cancelled = true;
     };
   }, [selectedAgentId, contextPreset]);
+
+  useEffect(() => {
+    if (!summary) {
+      setAllAgentWarnings([]);
+      setAllWarningsError(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadAllWarnings() {
+      setAllWarningsLoading(true);
+      setAllWarningsError(null);
+      try {
+        const payload = await fetchWarnings(contextPreset);
+        if (!cancelled) {
+          setAllAgentWarnings(payload.warnings);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setAllAgentWarnings([]);
+          setAllWarningsError(
+            err instanceof Error ? err.message : "Failed to load warnings",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setAllWarningsLoading(false);
+        }
+      }
+    }
+
+    void loadAllWarnings();
+    return () => {
+      cancelled = true;
+    };
+  }, [summary, contextPreset]);
 
   useEffect(() => {
     if (!selectedAgentId || !selectedCapabilityId) {
@@ -410,8 +511,23 @@ export function App() {
           />
 
           <main className="dashboard-content">
+            <DriftBanner
+              platform={platform}
+              version={formatVersion(summary.version)}
+              effective={effectiveConfig}
+              loading={effectiveLoading}
+              onSelectCapability={handleSelectCapability}
+            />
+
             {activeTab === "ecosystem" && (
-              <EcosystemView refreshKey={summary.scannedAt} />
+              <EcosystemView
+                refreshKey={summary.scannedAt}
+                agents={agents}
+                currentPlatform={platform}
+                restoreResourceId={restoreEcosystemResourceId}
+                onRestoreResourceConsumed={handleEcosystemBridgeConsumed}
+                onBridgeToEffective={handleBridgeToEffective}
+              />
             )}
 
             {activeTab === "context" && (
@@ -422,6 +538,8 @@ export function App() {
                 loading={effectiveLoading}
                 error={effectiveError}
                 hasSelectedAgent={selectedAgentId !== null}
+                effective={effectiveConfig}
+                agent={selectedAgent}
               />
             )}
 
@@ -450,12 +568,28 @@ export function App() {
                   selectedCapabilityId ? " tab-capabilities--with-detail" : ""
                 }`}
               >
+                {ecosystemReturnState && (
+                  <div
+                    className="ecosystem-bridge-return-banner"
+                    data-testid="ecosystem-bridge-return-banner"
+                  >
+                    <p>
+                      Opened from declared inventory. Effective resolution — one context (
+                      <code>{contextPreset}</code>).
+                    </p>
+                    <button type="button" onClick={handleReturnToEcosystem}>
+                      Back to Ecosystem canvas
+                    </button>
+                  </div>
+                )}
+                <DeclaredEffectivePanel effective={effectiveConfig} agent={selectedAgent} />
                 <EffectiveCapabilities
                   effective={effectiveConfig}
                   loading={effectiveLoading}
                   error={effectiveError}
                   selectedCapabilityId={selectedCapabilityId}
                   onSelectCapability={handleSelectCapability}
+                  warnings={effectiveConfig?.warnings ?? []}
                 />
                 {selectedCapabilityId && (
                   <WhyPanel
@@ -474,8 +608,90 @@ export function App() {
               </section>
             )}
 
+            {activeTab === "warnings" && (
+              <div className="tab-warnings">
+                <div className="warnings-scope-toggle" role="group" aria-label="Warning scope">
+                  <button
+                    type="button"
+                    className={`warnings-scope-button${warningsScope === "agent" ? " warnings-scope-button-active" : ""}`}
+                    disabled={!selectedAgentId}
+                    onClick={() => setWarningsScope("agent")}
+                  >
+                    Current agent
+                  </button>
+                  <button
+                    type="button"
+                    className={`warnings-scope-button${warningsScope === "all" ? " warnings-scope-button-active" : ""}`}
+                    onClick={() => setWarningsScope("all")}
+                  >
+                    All active agents
+                  </button>
+                </div>
+                {warningsScope === "agent" && !selectedAgentId && (
+                  <section className="panel">
+                    <p className="empty-state">Select an agent in the header to view warnings.</p>
+                  </section>
+                )}
+                {(warningsScope === "all" || selectedAgentId) && (
+                  <>
+                    {allWarningsLoading && warningsScope === "all" && (
+                      <p className="empty-state">Loading warnings…</p>
+                    )}
+                    {allWarningsError && warningsScope === "all" && (
+                      <p className="error-message">{allWarningsError}</p>
+                    )}
+                    {effectiveLoading && warningsScope === "agent" && (
+                      <p className="empty-state">Loading warnings…</p>
+                    )}
+                    {effectiveError && warningsScope === "agent" && (
+                      <p className="error-message">{effectiveError}</p>
+                    )}
+                    {!allWarningsLoading &&
+                      !effectiveLoading &&
+                      !(warningsScope === "all" && allWarningsError) &&
+                      !(warningsScope === "agent" && effectiveError) && (
+                        <WarningsPanel
+                          warnings={displayedWarnings}
+                          scope={warningsScope}
+                          agentId={selectedAgentId}
+                          emptyMessage={
+                            warningsScope === "agent"
+                              ? "No warnings for this agent and context."
+                              : "No warnings across active agents."
+                          }
+                        />
+                      )}
+                  </>
+                )}
+              </div>
+            )}
+
             {activeTab === "graph" && (
-              <GraphView context={contextPreset} />
+              <div
+                className={`tab-graph${selectedCapabilityId ? " tab-graph--with-detail" : ""}`}
+              >
+                <GraphView
+                  context={contextPreset}
+                  selectedCapabilityId={selectedCapabilityId}
+                  onSelectCapability={handleSelectCapabilityFromGraph}
+                />
+                {selectedCapabilityId && selectedAgentId && (
+                  <WhyPanel
+                    explain={explainData}
+                    loading={explainLoading}
+                    error={explainError}
+                    onClose={handleCloseWhy}
+                  />
+                )}
+              </div>
+            )}
+
+            {activeTab === "simulation" && (
+              <SimulationView
+                platform={platform}
+                result={simulationResult}
+                onResult={setSimulationResult}
+              />
             )}
           </main>
         </div>

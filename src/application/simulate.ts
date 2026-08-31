@@ -48,9 +48,9 @@ export interface ModelChangeDelta {
   agentName: string;
   declared: string;
   /**
-   * Model the simulation reports after the block — the first `availableModels`
-   * entry. F8 documents that a substitution happens, not which model wins; this
-   * value follows our allowlist-order convention only.
+   * Substitute model identity after the block. F8 documents that a substitution
+   * happens, not which model wins — `"unknown"` unless a matrix-backed fact
+   * establishes the substitute (H1-29).
    */
   effective: string;
   source: SourceInfo;
@@ -213,7 +213,7 @@ function findModelChanges(
       agentId: agent.id,
       agentName: agent.name,
       declared: resolved.declared!,
-      effective: resolved.effective,
+      effective: "unknown",
       source: { ...agent.source, fieldPath: "frontmatter.model" },
       matrixRef: FACT.F8,
       enforcement: decision.enforcement,
