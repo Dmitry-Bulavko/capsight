@@ -337,3 +337,27 @@ Order: SS-01 → SS-02 → SS-03.
 | SS-01 | SS | S6 Bash(cmd:*) prefix rule shape | done | §3.5 S6, §2.3 | settings-permissions.ts, matrix.ts, fixture | S6 pins non-unknown rule shape; fixture + deletion test |
 | SS-02 | SS | S7 Read/Edit path glob anchoring | done | §3.5 S7, §2.3 | settings-permissions.ts, matrix.ts, fixture | S7 pins / vs // anchoring; fixture + deletion test |
 | SS-03 | SS | S11 additionalDirectories relative paths | done | §3.5 S11 | settings-permissions.ts, matrix.ts, fixture | Relative entries honestly unknown; absolute pinned |
+
+## D4 — Evidence depth (multi-platform)
+
+Target: close all Cursor/Codex `entry-owed` facts per [EVIDENCE-LEDGER.md](./EVIDENCE-LEDGER.md); unverified ≤ 18 (terminal refusals only). Gates D2-06 + D3-05 unchanged.
+
+Order: D4-01 → D4-02 → D4-03 → D4-04 → D4-05 → D4-06.
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| D4-01 | D4 | Cursor discovery/walk — matrix entries | in_progress | CURSOR-FACTS, §11.4 | cursor/matrix.ts, fixtures | CW1,CW2,CW3,CA1,CS1 referenced or refused |
+| D4-02 | D4 | Cursor rules/settings — matrix entries | todo | CURSOR-FACTS, §11.4 | cursor/matrix.ts, fixtures | CR2,CR3,CSet3 referenced or refused |
+| D4-03 | D4 | Codex version/walk — matrix entries | todo | CODEX-FACTS, §11.4 | codex/matrix.ts, fixtures | XV1,XV2,XV3,XR1,XR2 referenced or refused |
+| D4-04 | D4 | Codex instructions/trust — matrix entries | todo | CODEX-FACTS, §11.4 | codex/matrix.ts, fixtures | XI3,XI4,XA1,XT3 referenced or refused |
+| D4-05 | D4 | Codex settings/architecture — matrix entries | todo | CODEX-FACTS, §11.4 | codex/matrix.ts, fixtures | XA3,XSet1 referenced or refused |
+| D4-06 | D4 | D4 gate — zero entry-owed, unverified ≤ 18 | todo | §11.4, D2-06 | EVIDENCE-LEDGER, coverage-report | entry-owed=0; ledger matches report |
+
+## Deferred backlog
+
+| ID | Phase | Title | Status | Notes |
+|----|-------|-------|--------|-------|
+| G1-MP | G1 | Cursor/Codex maxVersion drift demo | deferred | After D4; mirror G1-04 on non-Claude matrix |
+| SS-deep | SS | S6 prefix / S7 glob matching depth | deferred | Only if documentable without §2.3 permission engine |
+| B1 | discovery | Builtin inventory discovery channel | deferred | Unblocks B1/B4 noFixturePossible |
+| §9 | S0 | Observed runtime layer | deferred | Revisit S0-DECISION when APIs mature |

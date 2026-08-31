@@ -1,21 +1,24 @@
 # Capsight continuation
 
-**Active phase:** none — SS complete  
-**Next:** pick next roadmap item or user direction
+**Active phase:** D4 — Evidence depth (multi-platform)  
+**Next task:** D4-01 (Cursor discovery/walk matrix entries)
 
-## Completed this session
+## Phase order
 
 ```
-F0 ✓ → G1-04 ✓ → D3 ✓ → SS ✓
+D4 (evidence wave 3) → deferred: G1-MP, SS-deep, B1, §9
 ```
 
-**826 tests**, typecheck green. Commits: `7866e7f` (F0/G1-04/D3), SS pending push.
+Completed: `F0 → G1-04 → D3 → SS`
 
-## SS outcome
+## D4 target
 
-- **S6:** `Bash(...)` `:*` position shape → `available/enforced` via `settings.bashPrefixRules`
-- **S7:** `Read(/...)` / `Edit(//...)` anchoring → `available/enforced` via `settings.pathRules`
-- **S11:** absolute additionalDirectories pinned; relative entries `unknown` (verbatim, no invented resolution)
+| Metric | Now | Gate |
+|--------|-----|------|
+| entry-owed | 19 (Cursor 8 + Codex 11) | 0 |
+| unverified total | 37 | ≤ 18 |
+
+Handoffs: `docs/tasks/D4-*.md`
 
 ## Orchestration
 
