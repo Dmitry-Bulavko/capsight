@@ -393,8 +393,8 @@ Order: D5-01 → D5-02 → D5-03 → D5-04 → D5-05 → D5-06 → D5-07.
 
 | ID | Phase | Title | Status | Spec refs | Files | Acceptance |
 |----|-------|-------|--------|-----------|-------|------------|
-| D5-01 | D5 | Promotion triage — doc-only → promotion-owed or refusal | todo | §8.1, §11.4, H1-28 | docs/EVIDENCE-PROMOTION.md | Every Claude doc-only fact classified; clusters assigned |
-| D5-02 | D5 | Claude context/tools promotion | todo | T1–T3, T5, F11, §11.1 | matrix.ts, tools-filters, background, fork | Cluster promoted or refused in writing |
+| D5-01 | D5 | Promotion triage — doc-only → promotion-owed or refusal | done | §8.1, §11.4, H1-28 | docs/EVIDENCE-PROMOTION.md | Every Claude doc-only fact classified; clusters assigned |
+| D5-02 | D5 | Claude context/tools promotion | in_progress | T1–T3, T5, F11, §11.1 | matrix.ts, tools-filters, background, fork | Cluster promoted or refused in writing |
 | D5-03 | D5 | Claude permissions/trust promotion | todo | P1, P5, R1, R2, R5, R6 | matrix.ts, permission-inheritance, trust fixtures | Same criterion |
 | D5-04 | D5 | Claude skills/instructions/builtins promotion | todo | K1, K7, K11, I1, B2, B4 | matrix.ts, skills/instructions/builtin fixtures | Same criterion |
 | D5-05 | D5 | Claude environment promotion | todo | E1–E9, B5, B6, N3, N4 | matrix.ts, environment, depth-limit | Same criterion; extend golden if needed |

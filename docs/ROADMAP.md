@@ -4,7 +4,7 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**D5 — Evidence depth wave 5 (fixture promotion)** is planned. Structural debt closed; target is doc-only → fixture-verified under H1-28.
+**D5 — Evidence depth wave 5** is active. Next: D5-01 promotion triage.
 
 Previous: **G1-MP complete** — three-platform drift demos. Baseline **41/145 fixture-verified (28%)**, unverified **18** terminal.
 
@@ -45,7 +45,7 @@ Completed chain: `… → D4 → SS-deep → B1 → G1-MP`.
 | SS-deep — Settings argument depth | `done` | S6/S7 matching refused; shape pins from SS unchanged |
 | B1 — Builtin discovery channel | `done` | Six builtins in discovery; B1 fixture-verified; B4 override pinned |
 | G1-MP — Drift on Cursor/Codex | `done` | maxVersion on confident rule per platform |
-| D5 — Evidence depth wave 5 | `planned` | doc-only → fixture-verified where H1-28 allows; floor gate |
+| D5 | Evidence depth wave 5 | `todo` | doc-only → fixture-verified where H1-28 allows; floor gate |
 | §9 — Observed layer | `deferred` | Revisit [S0-DECISION.md](./S0-DECISION.md) when platform APIs mature |
 
 ## Surface rule

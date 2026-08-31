@@ -1,7 +1,7 @@
 # Capsight continuation
 
-**Active phase:** D5 — Evidence depth wave 5 (planned, not started)  
-**Next task:** D5-01 (promotion triage → `docs/EVIDENCE-PROMOTION.md`)
+**Active phase:** D5 — Evidence depth wave 5  
+**Next task:** D5-01 (in progress)
 
 ## Why D5
 

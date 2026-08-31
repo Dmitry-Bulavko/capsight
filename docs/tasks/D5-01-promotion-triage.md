@@ -33,15 +33,15 @@ Pre-assign clusters to D5-02…05 per ROADMAP D5 scope note; flag surprises.
 
 ## Acceptance
 
-- [ ] All Claude doc-only facts (52) classified
-- [ ] Cursor/Codex doc-only facts classified (5 + 9)
-- [ ] Each `promotion-owed` row names target task (D5-02…06)
-- [ ] D5-07 gate target (fv ≥ 50) sanity-checked against promotion-owed count
-- [ ] `npm run test` and `npm run typecheck` pass (no product regressions)
+- [x] All Claude doc-only facts (52) classified
+- [x] Cursor/Codex doc-only facts classified (5 + 9)
+- [x] Each `promotion-owed` row names target task (D5-02…06)
+- [x] D5-07 gate target (fv ≥ 50) sanity-checked
+- [x] `npm run test` and `npm run typecheck` pass
 
 ## Done checklist
 
-- [ ] `npm run test` passes
-- [ ] `npm run typecheck` passes
-- [ ] No writes to scanned project's `.claude/**`
-- [ ] TASKS.md updated by orchestrator (not implementer)
+- [x] `npm run test` passes
+- [x] `npm run typecheck` passes
+- [x] No writes to scanned project's `.claude/**`
+- [x] TASKS.md updated by orchestrator (not implementer)
