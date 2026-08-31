@@ -131,13 +131,16 @@ const MATRIX_ENTRIES = [
     id: "settings.knownKeysOnly",
     feature: "Parse TOML for known keys; unknown keys as types only",
     factRefs: [FACT.XSet1],
+    maxVersion: "0.130.0",
     status: "supported",
     confidence: "fixture",
     fixture: "basic",
     verifiedFacts: [FACT.XSet1],
     notes:
       "XSet1 entire: basic carries experimental_feature_enabled in project .codex/config.toml " +
-      "and the golden records unknownFields with type boolean only. Deletion test (D4-05): " +
+      "and the golden records unknownFields with type boolean only. version-drift pins 0.131.0 — " +
+      "above this entry's maxVersion — so unknownFields are stripped per §8.4 while " +
+      "instruction.chain on the same fixture stays enforced. Deletion test (D4-05): " +
       "unfounding the entry strips unknownFields from settings layers in the golden.",
   },
   {

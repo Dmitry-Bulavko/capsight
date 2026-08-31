@@ -184,7 +184,14 @@ export const CLAUDE_FIXTURE_NAMES = [
 export const PLATFORM_FIXTURE_NAMES = {
   claude: CLAUDE_FIXTURE_NAMES,
   cursor: ["basic", "collision-same-dir", "ignored-rules", "invalid-agents", "version-drift"],
-  codex: ["basic", "agents-precedence", "nested-instructions", "trust-untrusted", "instruction-fallback"],
+  codex: [
+    "basic",
+    "agents-precedence",
+    "nested-instructions",
+    "trust-untrusted",
+    "instruction-fallback",
+    "version-drift",
+  ],
 } as const satisfies Record<PlatformId, readonly string[]>;
 
 export type FixtureCompleteness = "complete" | "incomplete" | "empty" | "missing";

@@ -25,14 +25,14 @@ Prove §8.4 scoped version downgrade on Codex: one confident fixture-backed matr
 
 ## Acceptance
 
-- [ ] At fixture version ≤ maxVersion, target rule enforced/supported on golden capability
-- [ ] Above maxVersion, scoped downgrade only; neighbor stays confident
-- [ ] Golden + H1-28 deletion test
-- [ ] `npm run test` and `npm run typecheck` pass
+- [x] At fixture version ≤ maxVersion, target rule enforced/supported on golden
+- [x] Above maxVersion, scoped downgrade only; neighbor stays confident
+- [x] Golden + H1-28 deletion test
+- [x] `npm run test` and `npm run typecheck` pass
 
 ## Done checklist
 
-- [ ] `npm run test` passes
-- [ ] `npm run typecheck` passes
-- [ ] No writes to scanned project's `.codex/**`
-- [ ] TASKS.md updated by orchestrator (not implementer)
+- [x] `npm run test` passes
+- [x] `npm run typecheck` passes
+- [x] No writes to scanned project's `.codex/**`
+- [x] TASKS.md updated by orchestrator (not implementer)

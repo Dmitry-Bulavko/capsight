@@ -1,27 +1,24 @@
 # Capsight continuation
 
-**Active phase:** G1-MP — Drift on Cursor/Codex  
-**Next task:** G1-MP-01 (Cursor maxVersion drift demo)
+**Active phase:** none — G1-MP complete  
+**Next:** §9 observed layer (deferred until platform APIs mature)
 
-## Evidence layer (stable)
+## G1-MP outcome
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| unverified | 18 / 145 | Honest floor (terminal dispositions) |
-| entry-owed | 0 | Closed (D4) |
-| fixture-verified | 41 / 145 (28%) | Growing slowly under H1-28 |
+| Platform | Rule | maxVersion | Fixture |
+|----------|------|------------|---------|
+| Cursor | `rules.fileExtension` | 3.16.17 | `cursor/version-drift` @ 3.16.18 |
+| Codex | `settings.knownKeysOnly` | 0.130.0 | `codex/version-drift` @ 0.131.0 |
 
-No new evidence wave planned — structural debt closed.
+**859 tests**; all three platforms now have corpus-backed drift demos (Claude G1-04).
 
-## Phase queue
+## Evidence layer (stable — no new wave)
 
-```
-G1-MP (G1-MP-01 → G1-MP-02) → §9
-```
-
-## Handoffs ready
-
-`docs/tasks/G1-MP-01-*.md`, `G1-MP-02-*.md`
+| Metric | Value |
+|--------|-------|
+| unverified | 18 / 145 (terminal) |
+| entry-owed | 0 |
+| fixture-verified | 41 / 145 (28%) |
 
 ## Orchestration
 

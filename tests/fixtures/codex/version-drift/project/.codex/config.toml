@@ -1,0 +1,15 @@
+# Example Codex project config
+
+experimental_feature_enabled = true
+
+project_doc_fallback_filenames = [
+  "CLAUDE.md",
+]
+
+[mcp_servers.example]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-example"]
+env = { EXAMPLE_API_KEY = "secret-value-redacted" }
+
+[mcp_servers.remote]
+url = "http://localhost:3000/mcp"

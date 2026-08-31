@@ -9,6 +9,8 @@ import type {
 } from "../../src/core/model/index.js";
 import { buildExecutionContext } from "../../src/adapters/codex/resolution/context.js";
 import type { ContextPreset } from "../../src/core/model/index.js";
+import type { FeatureCompatibility } from "../../src/adapters/codex/version/matrix.js";
+import { VERSION_MATRIX } from "../../src/adapters/codex/version/matrix.js";
 import {
   normalizeGoldenOutput,
   type NormalizedGoldenOutput,
@@ -158,6 +160,24 @@ async function runGoldenFixture(
   };
 }
 
+async function withMatrixPatch(
+  id: string,
+  patch: Partial<FeatureCompatibility>,
+  body: () => Promise<void>,
+): Promise<void> {
+  const entry = VERSION_MATRIX.find((candidate) => candidate.id === id)!;
+  const original = { ...entry };
+  Object.assign(entry, patch);
+  try {
+    await body();
+  } finally {
+    for (const key of Object.keys(entry) as Array<keyof FeatureCompatibility>) {
+      delete (entry as unknown as Record<string, unknown>)[key];
+    }
+    Object.assign(entry, original);
+  }
+}
+
 describe("codex golden fixtures", () => {
   const envSnapshot = { ...process.env };
 
@@ -189,6 +209,34 @@ describe("codex golden fixtures", () => {
       expect(actual).toEqual(expected);
     });
   }
+
+  // §8.4 / G1-MP-02: version above a supported rule's matrix maxVersion downgrades
+  // only the capabilities that rule gates — not the whole resolution.
+  it("version-drift scopes downgrade when the detected version exceeds a matrix maxVersion", async () => {
+    const { actual, expected } = await runGoldenFixture("version-drift");
+    expect(actual).toEqual(expected);
+
+    const settingsLayer = actual.discovery.settings[0] as {
+      unknownFields?: Record<string, string>;
+    };
+    expect(settingsLayer?.unknownFields).toBeUndefined();
+
+    expect(actual.resolutions[0]!.capabilities[0]).toMatchObject({
+      capabilityId: "instruction:AGENTS.md",
+      status: "available",
+      enforcement: "enforced",
+    });
+
+    await withMatrixPatch("settings.knownKeysOnly", { maxVersion: undefined }, async () => {
+      const withoutBound = await runGoldenFixture("version-drift");
+      const restoredLayer = withoutBound.actual.discovery.settings[0] as {
+        unknownFields?: Record<string, string>;
+      };
+      expect(restoredLayer?.unknownFields).toEqual({
+        experimental_feature_enabled: "boolean",
+      });
+    });
+  });
 
   // §11.2/§13 invariant 2. Codex's `walkProjectScopes` climbs until it finds a
   // directory containing `.git`, exactly like Claude's, so a codex fixture scan

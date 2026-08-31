@@ -4,9 +4,9 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**G1-MP — Drift on Cursor/Codex** is active. Evidence layer at honest ceiling; multi-platform version drift is the next correctness gap.
+**G1-MP complete** — Cursor/Codex maxVersion drift demos mirror G1-04. Deferred: §9 observed layer.
 
-Previous: **Evidence wave 4 complete** — SS-deep + B1; unverified **18** terminal; **41/145 fixture-verified (28%)**.
+Previous: **Evidence wave 4 complete** — unverified **18** terminal; **41/145 fixture-verified (28%)**.
 
 ## Phase order (active backlog)
 
@@ -44,7 +44,7 @@ Completed chain: `F0 → G1-04 → D3 → SS → D4 → SS-deep → B1`.
 | D4 — Evidence depth (multi-platform) | `done` | Zero `entry-owed`; unverified ≤ 18 |
 | SS-deep — Settings argument depth | `done` | S6/S7 matching refused; shape pins from SS unchanged |
 | B1 — Builtin discovery channel | `done` | Six builtins in discovery; B1 fixture-verified; B4 override pinned |
-| G1-MP — Drift on Cursor/Codex | `todo` | maxVersion on confident rule per platform |
+| G1-MP — Drift on Cursor/Codex | `done` | maxVersion on confident rule per platform |
 | §9 — Observed layer | `deferred` | Revisit [S0-DECISION.md](./S0-DECISION.md) when platform APIs mature |
 
 ## Surface rule

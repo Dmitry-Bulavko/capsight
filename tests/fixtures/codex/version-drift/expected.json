@@ -1,0 +1,217 @@
+{
+  "discovery": {
+    "agents": [
+      {
+        "name": "main",
+        "description": "Primary Codex agent (AGENTS.md instruction chain)",
+        "source": {
+          "platform": "codex",
+          "scope": "project",
+          "path": "AGENTS.md"
+        },
+        "status": "active",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      }
+    ],
+    "skills": [
+      {
+        "name": "example",
+        "description": "Example skill for API routes",
+        "source": {
+          "platform": "codex",
+          "scope": "project",
+          "path": ".agents/skills/example/SKILL.md"
+        },
+        "path": ".agents/skills/example/SKILL.md",
+        "kind": "skill"
+      }
+    ],
+    "instructions": [
+      {
+        "type": "AGENTS.md",
+        "path": "AGENTS.md",
+        "scope": "project",
+        "sizeBytes": 215
+      }
+    ],
+    "mcpServers": [
+      {
+        "name": "example",
+        "source": {
+          "platform": "codex",
+          "scope": "project",
+          "path": ".codex/config.toml"
+        },
+        "configPath": ".codex/config.toml",
+        "transport": "stdio",
+        "definitionKind": "config-file",
+        "status": "configured",
+        "configHash": "3e6d07b468600680",
+        "envKeys": [
+          "EXAMPLE_API_KEY"
+        ]
+      },
+      {
+        "name": "remote",
+        "source": {
+          "platform": "codex",
+          "scope": "project",
+          "path": ".codex/config.toml"
+        },
+        "configPath": ".codex/config.toml",
+        "transport": "http",
+        "definitionKind": "config-file",
+        "status": "configured",
+        "configHash": "d9deae206a24b8d6"
+      }
+    ],
+    "settings": [
+      {
+        "scope": "project",
+        "path": ".codex/config.toml",
+        "priority": 50
+      }
+    ],
+    "trust": {
+      "accepted": "unknown",
+      "projectPath": "."
+    },
+    "environment": {
+      "relevant": []
+    }
+  },
+  "resolutions": [
+    {
+      "agentName": "main",
+      "context": {
+        "preset": "main-session",
+        "isMainSession": true,
+        "isBackground": false,
+        "isFork": false,
+        "isTeammate": false,
+        "depth": 0,
+        "maxDepth": 3
+      },
+      "capabilities": [
+        {
+          "capabilityId": "instruction:AGENTS.md",
+          "kind": "instruction",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "codex",
+              "scope": "project",
+              "path": "AGENTS.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Instruction \"AGENTS.md\" is in the effective chain (XI5).",
+              "source": {
+                "platform": "codex",
+                "scope": "project",
+                "path": "AGENTS.md"
+              },
+              "matrixRef": "instruction.chain"
+            }
+          ]
+        },
+        {
+          "capabilityId": "skill:example",
+          "kind": "skill",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "codex",
+              "scope": "project",
+              "path": ".agents/skills/example/SKILL.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "unknown",
+              "message": "Skill \"example\" attachment semantics are not verified (XS2).",
+              "source": {
+                "platform": "codex",
+                "scope": "project",
+                "path": ".agents/skills/example/SKILL.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "mcp:example",
+          "kind": "mcp_server",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "codex",
+              "scope": "project",
+              "path": ".codex/config.toml"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "not-probed",
+              "message": "MCP server \"example\" is configured but not probed (XM3).",
+              "source": {
+                "platform": "codex",
+                "scope": "project",
+                "path": ".codex/config.toml"
+              },
+              "matrixRef": "mcp.probe"
+            }
+          ]
+        },
+        {
+          "capabilityId": "mcp:remote",
+          "kind": "mcp_server",
+          "status": "unknown",
+          "enforcement": "unknown",
+          "sources": [
+            {
+              "platform": "codex",
+              "scope": "project",
+              "path": ".codex/config.toml"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "not-probed",
+              "message": "MCP server \"remote\" is configured but not probed (XM3).",
+              "source": {
+                "platform": "codex",
+                "scope": "project",
+                "path": ".codex/config.toml"
+              },
+              "matrixRef": "mcp.probe"
+            }
+          ]
+        }
+      ],
+      "warnings": [
+        {
+          "category": "trust",
+          "severity": "info",
+          "message": "Codex project trust storage format is not documented (XT2).",
+          "evidence": [
+            {
+              "platform": "codex",
+              "scope": "unknown"
+            }
+          ],
+          "matrixRef": "trust.unreadable",
+          "enforcement": "unknown"
+        }
+      ],
+      "unknownRate": 0.75
+    }
+  ]
+}

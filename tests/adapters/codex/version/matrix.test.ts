@@ -243,6 +243,23 @@ describe("codex resolveEnforcement", () => {
       ).toBe("enforced");
     });
   });
+
+  it("downgrades settings.knownKeysOnly above maxVersion while neighbors stay enforced", () => {
+    withMatrixPatchSync(MATRIX["settings.knownKeysOnly"], { maxVersion: "0.130.0" }, () => {
+      expect(
+        resolveEnforcement({
+          matrixId: MATRIX["settings.knownKeysOnly"],
+          version: "0.131.0",
+        }).enforcement,
+      ).toBe("unknown");
+      expect(
+        resolveEnforcement({
+          matrixId: MATRIX["instruction.chain"],
+          version: "0.131.0",
+        }).enforcement,
+      ).toBe("enforced");
+    });
+  });
 });
 
 describe("codex lookupFeature", () => {
@@ -252,6 +269,15 @@ describe("codex lookupFeature", () => {
     withMatrixPatchSync(MATRIX["instruction.chain"], { minVersion: "99.0.0" }, () => {
       expect(lookupFeature(MATRIX["instruction.chain"], DETECTED)?.status).toBe("unsupported");
       expect(lookupFeature(MATRIX["instruction.chain"], "99.0.0")?.status).toBe("supported");
+    });
+  });
+
+  it("marks entries unsupported above maxVersion", () => {
+    withMatrixPatchSync(MATRIX["settings.knownKeysOnly"], { maxVersion: "0.130.0" }, () => {
+      expect(lookupFeature(MATRIX["settings.knownKeysOnly"], "0.131.0")?.status).toBe(
+        "unsupported",
+      );
+      expect(lookupFeature(MATRIX["settings.knownKeysOnly"], "0.130.0")?.status).toBe("supported");
     });
   });
 
@@ -389,6 +415,30 @@ describe("codex fixture deletion tests (H1-28)", () => {
         unknownFields?: Record<string, string>;
       };
       expect(strippedLayer?.unknownFields).toBeUndefined();
+    });
+  });
+
+  it("settings.knownKeysOnly: version above maxVersion strips unknownFields only", async () => {
+    const baseline = await runCodexFixture("version-drift");
+    const settingsLayer = baseline.discovery.settings[0] as {
+      unknownFields?: Record<string, string>;
+    };
+    expect(settingsLayer?.unknownFields).toBeUndefined();
+
+    expect(baseline.resolutions[0]!.capabilities[0]).toMatchObject({
+      capabilityId: "instruction:AGENTS.md",
+      status: "available",
+      enforcement: "enforced",
+    });
+
+    await withMatrixPatch(MATRIX["settings.knownKeysOnly"], { maxVersion: undefined }, async () => {
+      const withoutBound = await runCodexFixture("version-drift");
+      const restoredLayer = withoutBound.discovery.settings[0] as {
+        unknownFields?: Record<string, string>;
+      };
+      expect(restoredLayer?.unknownFields).toEqual({
+        experimental_feature_enabled: "boolean",
+      });
     });
   });
 });

@@ -383,7 +383,7 @@ Order: G1-MP-01 → G1-MP-02.
 | ID | Phase | Title | Status | Spec refs | Files | Acceptance |
 |----|-------|-------|--------|-----------|-------|------------|
 | G1-MP-01 | G1-MP | Cursor maxVersion drift demo | done | §8.4, §11.1 | cursor/matrix.ts, fixtures | Above max → scoped unknown; neighbor stays confident |
-| G1-MP-02 | G1-MP | Codex maxVersion drift demo | in_progress | §8.4, §11.1 | codex/matrix.ts, fixtures | Same criterion as G1-MP-01 |
+| G1-MP-02 | G1-MP | Codex maxVersion drift demo | done | §8.4, §11.1 | codex/matrix.ts, fixtures | Same criterion as G1-MP-01 |
 
 ## Deferred backlog
 
