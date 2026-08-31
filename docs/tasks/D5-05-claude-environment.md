@@ -40,4 +40,4 @@ E1, E2, E3, E4, E5, E6, E7, E8, E9, B5, B6, N3, N4 — currently doc-only via `d
 - [x] `npm run test` passes
 - [x] `npm run typecheck` passes
 - [x] No writes to scanned project's `.claude/**`
-- [ ] TASKS.md updated by orchestrator (not implementer)
+- [x] TASKS.md updated by orchestrator (not implementer)

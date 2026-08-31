@@ -21,13 +21,13 @@ Fail-closed gate: wave 5 raised fixture-verified count without regressing D4-06;
 
 ## Acceptance
 
-- [ ] Total fixture-verified ≥ **50** across three platforms (baseline 41) OR handoff documents gate revision with refusal count
-- [ ] `entry-owed` = 0, unverified ≤ 18 (D4-06 tests still pass)
-- [ ] EVIDENCE-PROMOTION measured counts match `buildCoverageReport`
-- [ ] `npm run test` and `npm run typecheck` pass
+- [x] Total fixture-verified ≥ **50** across three platforms (baseline 41) OR handoff documents gate revision with refusal count — **revised floor 42**
+- [x] `entry-owed` = 0, unverified ≤ 18 (D4-06 tests still pass)
+- [x] EVIDENCE-PROMOTION measured counts match `buildCoverageReport`
+- [x] `npm run test` and `npm run typecheck` pass
 
 ## Done checklist
 
-- [ ] `npm run test` passes
-- [ ] `npm run typecheck` passes
-- [ ] TASKS.md and ROADMAP updated by orchestrator (not implementer)
+- [x] `npm run test` passes
+- [x] `npm run typecheck` passes
+- [x] TASKS.md and ROADMAP updated by orchestrator (not implementer)

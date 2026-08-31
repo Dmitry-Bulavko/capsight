@@ -4,9 +4,9 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**D5 — Evidence depth wave 5** is active. Next: **D5-06** matrix housekeeping + multi-platform. D5-05 done — env cluster closed, fv +0.
+**D5 complete.** Fixture-verified **42/145 (29%)** — gate revised from 50 to honest +1 (F11). D4-06 unchanged (entry-owed **0**, unverified **18**).
 
-Previous: **G1-MP complete** — three-platform drift demos. Baseline **42/145 fixture-verified (29%)** after D5-02 F11; unverified **18** terminal.
+Next backlog: **§9 — Observed layer** (deferred; see [S0-DECISION.md](./S0-DECISION.md)).
 
 ## Phase order (active backlog)
 
@@ -45,7 +45,7 @@ Completed chain: `… → D4 → SS-deep → B1 → G1-MP`.
 | SS-deep — Settings argument depth | `done` | S6/S7 matching refused; shape pins from SS unchanged |
 | B1 — Builtin discovery channel | `done` | Six builtins in discovery; B1 fixture-verified; B4 override pinned |
 | G1-MP — Drift on Cursor/Codex | `done` | maxVersion on confident rule per platform |
-| D5 | Evidence depth wave 5 | `todo` | doc-only → fixture-verified where H1-28 allows; floor gate |
+| D5 | Evidence depth wave 5 | `done` | fv **42** (+1 F11); gate revised; D4-06 unchanged |
 | §9 — Observed layer | `deferred` | Revisit [S0-DECISION.md](./S0-DECISION.md) when platform APIs mature |
 
 ## Surface rule
@@ -62,10 +62,10 @@ Recomputed from `buildCoverageReport` + [EVIDENCE-LEDGER.md](./EVIDENCE-LEDGER.m
 
 | platform | facts | unverified | entry-owed | fixture-verified | documentation-only | externally-cited |
 |---|---|---|---|---|---|---|
-| claude | 92 | 10 | 0 | 18 | 52 | 12 |
+| claude | 92 | 10 | 0 | 19 | 52 | 12 |
 | cursor | 27 | 7 | 0 | 10 | 5 | 2 |
 | codex | 26 | 1 | 0 | 13 | 9 | 1 |
-| **total** | **145** | **18** | **0** | **41 (28%)** | **66** | **15** |
+| **total** | **145** | **18** | **0** | **42 (29%)** | **66** | **15** |
 
 All remaining unverified facts carry terminal ledger disposition (`noFixturePossible` or `out-of-scope`). D2-06, D3-05, and D4-06 gates are fail-closed — counts must not rise without an explicit gate change.
 
@@ -110,7 +110,9 @@ Waves 1–4 closed structural gaps (`entry-owed=0`, unverified **18** terminal).
 
 **Honest ceiling:** Facts already refused (`noFixturePossible`, §2.3 matching halves, §9 out-of-scope) are out of scope. Promotion that fails deletion test stays doc-only with reason recorded — not a task failure.
 
-**Gate (D5-07):** D4-06 unchanged (`entry-owed=0`, unverified ≤ 18); total fixture-verified ≥ **50** (from 41) OR explicit gate revision in handoff with measured refusal count; promotion refusals recorded in ledger.
+**Gate (D5-07):** D4-06 unchanged (`entry-owed=0`, unverified ≤ 18). Original target fixture-verified ≥ **50** revised to **42** — only F11 achieved full H1-28 promotion; eight targets closed as partial-pin with deletion tests at entry level.
+
+**D5 outcome (closed):** +1 fv (F11); claude 18→19 fv; total 41→42 (29%). No false promotions.
 
 ## D5 scope note (historical) — Evidence depth wave 4 (fixture + channels)
 

@@ -23,14 +23,14 @@ Close matrix consistency debts and promote any remaining low-hanging Cursor/Code
 
 ## Acceptance
 
-- [ ] No stale `pendingFixture` pointing at wrong fixture without documented reason
-- [ ] Cursor/Codex promotion-owed rows from D5-01 promoted or refused
-- [ ] D4-06 unchanged
-- [ ] `npm run test` and `npm run typecheck` pass
+- [x] No stale `pendingFixture` pointing at wrong fixture without documented reason
+- [x] Cursor/Codex promotion-owed rows from D5-01 promoted or refused
+- [x] D4-06 unchanged
+- [x] `npm run test` and `npm run typecheck` pass
 
 ## Done checklist
 
-- [ ] `npm run test` passes
-- [ ] `npm run typecheck` passes
-- [ ] No writes to scanned project config dirs
-- [ ] TASKS.md updated by orchestrator (not implementer)
+- [x] `npm run test` passes
+- [x] `npm run typecheck` passes
+- [x] No writes to scanned project config dirs
+- [x] TASKS.md updated by orchestrator (not implementer)

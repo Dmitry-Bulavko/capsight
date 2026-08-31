@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   factConfidence as claudeFactConfidence,
@@ -843,5 +846,150 @@ describe("D4-06 entry-owed gate", () => {
     expect(measuredTotal).toBe(ledger.total);
     expect(measuredTotal).toBeLessThanOrEqual(D4_UNVERIFIED_CEILING);
     expect(entryOwedTotal).toBe(0);
+  });
+});
+
+/** D5-01 measured baseline before wave promotions. */
+const D5_FIXTURE_VERIFIED_BASELINE = 41;
+/** Original D5-07 target (+9); revised after D5-02…06 honest outcomes. */
+const D5_ORIGINAL_GATE_TARGET = 50;
+/** Revised D5-07 floor: only F11 achieved full H1-28 promotion (+1). */
+const D5_FIXTURE_VERIFIED_FLOOR = 42;
+/** Promotion targets from D5-01 sanity (F11, R2, R5, R6, K1, K3, B2, B4, K7). */
+const D5_PROMOTION_TARGETS = 9;
+const D5_FULL_PROMOTIONS = 1;
+const D5_PARTIAL_PIN_FROM_TARGETS = 8;
+const D5_PROMOTION_REFUSED_FROM_TARGETS = 0;
+
+function parseEvidencePromotionMeasuredCounts(markdown: string): {
+  claude: number;
+  cursor: number;
+  codex: number;
+  total: number;
+} {
+  const match = markdown.match(
+    /\|\s*fixture-verified \(D5-07\)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*\*\*(\d+)\*\*\s*\|/,
+  );
+  if (!match) {
+    throw new Error(
+      "EVIDENCE-PROMOTION.md missing fixture-verified (D5-07) measured row",
+    );
+  }
+  return {
+    claude: Number(match[1]),
+    cursor: Number(match[2]),
+    codex: Number(match[3]),
+    total: Number(match[4]),
+  };
+}
+
+const EVIDENCE_PROMOTION_PATH = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../docs/EVIDENCE-PROMOTION.md",
+);
+
+function loadEvidencePromotionMeasuredCounts(): {
+  claude: number;
+  cursor: number;
+  codex: number;
+  total: number;
+} {
+  return parseEvidencePromotionMeasuredCounts(
+    fs.readFileSync(EVIDENCE_PROMOTION_PATH, "utf8"),
+  );
+}
+
+describe("D5-07 fixture-verified gate", () => {
+  it("parses the EVIDENCE-PROMOTION measured row", () => {
+    expect(
+      parseEvidencePromotionMeasuredCounts(`
+| fixture-verified (D5-07) | 19 | 10 | 13 | **42** |
+`),
+    ).toEqual({ claude: 19, cursor: 10, codex: 13, total: 42 });
+  });
+
+  it("keeps total fixture-verified at or above the revised D5 floor (42)", () => {
+    let totalFixtureVerified = 0;
+
+    for (const coverage of PLATFORM_COVERAGE) {
+      const fixtures = discoverFixtureNames(
+        coverage.fixturesRoot,
+        coverage.fixtureNames,
+      );
+      const report = buildCoverageReport(
+        coverage.facts,
+        coverage.matrix,
+        fixtures,
+        coverage.getFactConfidence,
+      );
+      totalFixtureVerified += report.fixtureVerified;
+    }
+
+    expect(totalFixtureVerified).toBeGreaterThanOrEqual(D5_FIXTURE_VERIFIED_FLOOR);
+    expect(totalFixtureVerified).toBeLessThan(D5_ORIGINAL_GATE_TARGET);
+    expect(totalFixtureVerified - D5_FIXTURE_VERIFIED_BASELINE).toBe(
+      D5_FULL_PROMOTIONS,
+    );
+  });
+
+  it("documents measured promotion outcomes from the nine D5 targets", () => {
+    expect(D5_PROMOTION_TARGETS).toBe(D5_ORIGINAL_GATE_TARGET - D5_FIXTURE_VERIFIED_BASELINE);
+    expect(D5_FULL_PROMOTIONS + D5_PARTIAL_PIN_FROM_TARGETS + D5_PROMOTION_REFUSED_FROM_TARGETS).toBe(
+      D5_PROMOTION_TARGETS,
+    );
+    expect(D5_PARTIAL_PIN_FROM_TARGETS).toBe(8);
+    expect(D5_PROMOTION_REFUSED_FROM_TARGETS).toBe(0);
+  });
+
+  it("does not regress D4-06 (entry-owed = 0, unverified ≤ 18)", () => {
+    const entryOwed = loadEvidenceLedgerGateIndex().filter(
+      (entry) => entry.disposition === "entry-owed",
+    );
+    expect(entryOwed).toEqual([]);
+
+    let totalUnverified = 0;
+    for (const coverage of PLATFORM_COVERAGE) {
+      const fixtures = discoverFixtureNames(
+        coverage.fixturesRoot,
+        coverage.fixtureNames,
+      );
+      const report = buildCoverageReport(
+        coverage.facts,
+        coverage.matrix,
+        fixtures,
+        coverage.getFactConfidence,
+      );
+      totalUnverified += report.unverified;
+    }
+
+    expect(totalUnverified).toBeLessThanOrEqual(D4_UNVERIFIED_CEILING);
+  });
+
+  it("matches docs/EVIDENCE-PROMOTION.md measured counts to buildCoverageReport", () => {
+    const promotion = loadEvidencePromotionMeasuredCounts();
+    let measuredTotal = 0;
+
+    for (const coverage of PLATFORM_COVERAGE) {
+      const fixtures = discoverFixtureNames(
+        coverage.fixturesRoot,
+        coverage.fixtureNames,
+      );
+      const report = buildCoverageReport(
+        coverage.facts,
+        coverage.matrix,
+        fixtures,
+        coverage.getFactConfidence,
+      );
+
+      measuredTotal += report.fixtureVerified;
+
+      expect(
+        report.fixtureVerified,
+        coverage.platform + ": buildCoverageReport vs EVIDENCE-PROMOTION",
+      ).toBe(promotion[coverage.platform]);
+    }
+
+    expect(measuredTotal).toBe(promotion.total);
+    expect(measuredTotal).toBe(D5_FIXTURE_VERIFIED_FLOOR);
   });
 });

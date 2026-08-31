@@ -399,7 +399,7 @@ Order: D5-01 → D5-02 → D5-03 → D5-04 → D5-05 → D5-06 → D5-07.
 | D5-04 | D5 | Claude skills/instructions/builtins promotion | done | K1, K7, K11, I1, B2, B4 | matrix.ts, skills/instructions/builtin fixtures | K1/K3/K7 partial-pin; B2/B4/I1/K11 deletion tests; fv +0 |
 | D5-05 | D5 | Claude environment promotion | done | E1–E9, B5, B6, N3, N4 | matrix.ts, environment, depth-limit | 10 refused, 3 partial-pin, E9 cited; fv +0 |
 | D5-06 | D5 | Matrix housekeeping + multi-platform opportunistic | done | §8.2, §11.4 | matrix.ts (all platforms) | depthLimitDefault cleared; CW2/XA3 refused; fv +0 |
-| D5-07 | D5 | D5 gate — fixture-verified floor ≥ 50 | in_progress | §11.4, D4-06 | coverage-report.test.ts, EVIDENCE-PROMOTION.md | fv ≥ 50; unverified ≤ 18; entry-owed = 0 |
+| D5-07 | D5 | D5 gate — fixture-verified floor ≥ 50 | done | §11.4, D4-06 | coverage-report.test.ts, EVIDENCE-PROMOTION.md | Gate revised: fv **42** (+1 F11); D4-06 unchanged |
 
 ## Deferred backlog
 
