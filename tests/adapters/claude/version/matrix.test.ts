@@ -265,6 +265,138 @@ function capabilityStatus(
   );
 }
 
+function skillPreloadStatus(
+  output: Awaited<ReturnType<typeof runClaudeFixture>>,
+  agentName: string,
+  preset: ContextPreset,
+  skillName: string,
+) {
+  return capabilityStatus(output, agentName, preset, `skill:${skillName}`);
+}
+
+function discoveryAgent(
+  output: Awaited<ReturnType<typeof runClaudeFixture>>,
+  name: string,
+) {
+  return (
+    output.discovery.agents as Array<{
+      name: string;
+      status?: string;
+      collision?: { rule?: string; effective?: { path?: string } };
+    }>
+  ).find((agent) => agent.name === name);
+}
+
+function k67FindingMessages(
+  output: Awaited<ReturnType<typeof runClaudeFixture>>,
+  agentName: string,
+  preset: ContextPreset,
+) {
+  return (
+    resolutionFor(output, agentName, preset)?.warnings
+      ?.filter((warning) => warning.message.includes("allowed-tools (K6, K7)"))
+      .map((warning) => warning.message) ?? []
+  );
+}
+
+/** Simulate removing the command-kind guard from K1 skill preload. */
+async function withCommandKindGuardRemoved(
+  body: () => Promise<void>,
+): Promise<void> {
+  const skillsModule = await import(
+    "../../../../src/adapters/claude/resolution/skills.js"
+  );
+  const original = skillsModule.buildSkillPreloadCapabilities;
+  const spy = vi
+    .spyOn(skillsModule, "buildSkillPreloadCapabilities")
+    .mockImplementation(async (agent, snapshot, context) => {
+      const patchedSnapshot = {
+        ...snapshot,
+        skills: (snapshot.skills as Array<{ kind?: string }>).map((skill) =>
+          skill.kind === "command" ? { ...skill, kind: "skill" as const } : skill,
+        ),
+      };
+      return original(agent, patchedSnapshot, context);
+    });
+
+  try {
+    await body();
+  } finally {
+    spy.mockRestore();
+  }
+}
+
+/** Simulate adding Skill to an agent's tools whitelist (K3 tools branch). */
+async function withSkillWhitelisted(body: () => Promise<void>): Promise<void> {
+  const toolsModule = await import("../../../../src/adapters/claude/resolution/tools.js");
+  const original = toolsModule.resolveAgentTools;
+  const spy = vi.spyOn(toolsModule, "resolveAgentTools").mockImplementation((input) => {
+    if (input.tools && !input.tools.includes("Skill")) {
+      return original({ ...input, tools: [...input.tools, "Skill"] });
+    }
+    return original(input);
+  });
+
+  try {
+    await body();
+  } finally {
+    spy.mockRestore();
+  }
+}
+
+/** Simulate removing B2 Write/Edit denials for explore/plan contexts. */
+async function withBuiltinReadOnlyRemoved(body: () => Promise<void>): Promise<void> {
+  const matrixModule = await import("../../../../src/adapters/claude/version/matrix.js");
+  const originalGate = matrixModule.gateCapability;
+  const spy = vi.spyOn(matrixModule, "gateCapability").mockImplementation((capability, matrixId, version) => {
+    if (
+      matrixId === MATRIX["builtin.readOnly"] &&
+      (capability.capabilityId === "Write" || capability.capabilityId === "Edit")
+    ) {
+      return {
+        ...capability,
+        status: "available",
+        enforcement: "enforced",
+        reasons: capability.reasons.filter((reason) => reason.matrixRef !== FACT.B2),
+      };
+    }
+    return originalGate(capability, matrixId, version);
+  });
+
+  try {
+    await body();
+  } finally {
+    spy.mockRestore();
+  }
+}
+
+/** Simulate wrongly suppressing K6/K7 findings when folder trust is not accepted. */
+async function withUntrustedFindingsSuppressed(
+  body: () => Promise<void>,
+): Promise<void> {
+  const findingsModule = await import(
+    "../../../../src/adapters/claude/resolution/security-findings.js"
+  );
+  const original = findingsModule.resolveSecurityFindings;
+  const spy = vi
+    .spyOn(findingsModule, "resolveSecurityFindings")
+    .mockImplementation(async (input) => {
+      const warnings = await original(input);
+      if (input.snapshot.trust?.accepted === false) {
+        return warnings.filter(
+          (warning) => !warning.message.includes("allowed-tools (K6, K7)"),
+        );
+      }
+      return warnings;
+    });
+
+  try {
+    await body();
+  } finally {
+    spy.mockRestore();
+  }
+}
+
 /** Simulate removing R2/R6 from the resolver — the platform trust rule they gate. */
 async function withTrustRuleDeleted(
   rule: typeof FACT.R2 | typeof FACT.R6,
@@ -669,6 +801,43 @@ describe("VERSION_MATRIX", () => {
       verifiedFacts: [],
     });
     expect(VERSION_MATRIX.find((entry) => entry.id === "trust.addDirSeparate")).toMatchObject({
+      confidence: "fixture",
+      verifiedFacts: [],
+    });
+  });
+
+  it("promotes D5-04 skills/instructions/builtins facts with fixture evidence (H1-28)", () => {
+    expect(VERSION_MATRIX.find((entry) => entry.id === "skills.preload")).toMatchObject({
+      confidence: "fixture",
+      verifiedFacts: [],
+    });
+    expect(VERSION_MATRIX.find((entry) => entry.id === "skills.skillToolWhitelist")).toMatchObject({
+      confidence: "fixture",
+      verifiedFacts: [],
+    });
+    expect(VERSION_MATRIX.find((entry) => entry.id === "skills.allowedToolsUntrusted")).toMatchObject(
+      {
+        confidence: "fixture",
+        verifiedFacts: [],
+      },
+    );
+    expect(VERSION_MATRIX.find((entry) => entry.id === "builtin.readOnly")).toMatchObject({
+      confidence: "fixture",
+      verifiedFacts: [],
+    });
+    expect(
+      VERSION_MATRIX.find((entry) => entry.id === "discovery.builtinNameOverride"),
+    ).toMatchObject({
+      confidence: "fixture",
+      verifiedFacts: [],
+    });
+    expect(VERSION_MATRIX.find((entry) => entry.id === "instructions.hierarchy")).toMatchObject({
+      confidence: "fixture",
+      verifiedFacts: [],
+    });
+    expect(
+      VERSION_MATRIX.find((entry) => entry.id === "discovery.commandNamePrecedence"),
+    ).toMatchObject({
       confidence: "fixture",
       verifiedFacts: [],
     });
@@ -1138,6 +1307,111 @@ describe("claude fixture deletion tests (H1-28, D5-02)", () => {
           status: "unknown",
           enforcement: "unknown",
         });
+      },
+    );
+  });
+});
+
+describe("claude fixture deletion tests (H1-28, D5-04)", () => {
+  const envSnapshot = { ...process.env };
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    restoreProcessEnv(envSnapshot);
+    mockDetectClaudeVersion.mockReset();
+    vi.restoreAllMocks();
+  });
+
+  it("skills.preload: removing the command-kind guard flips deploy to preloaded", async () => {
+    const baseline = await runClaudeFixture("skills-preload");
+    expect(skillPreloadStatus(baseline, "preloader", "foreground-subagent", "deploy")).toMatchObject(
+      {
+        status: "unknown",
+        enforcement: "advisory",
+      },
+    );
+
+    await withCommandKindGuardRemoved(async () => {
+      const withoutGuard = await runClaudeFixture("skills-preload");
+      expect(
+        skillPreloadStatus(withoutGuard, "preloader", "foreground-subagent", "deploy"),
+      ).toMatchObject({
+        status: "preloaded",
+        enforcement: "enforced",
+      });
+    });
+  });
+
+  it("skills.skillToolWhitelist: whitelisting Skill flips the capability to available", async () => {
+    const baseline = await runClaudeFixture("basic");
+    expect(toolStatus(baseline, "backend", "background-subagent", "Skill")).toMatchObject({
+      status: "denied",
+      enforcement: "enforced",
+    });
+
+    await withSkillWhitelisted(async () => {
+      const withSkill = await runClaudeFixture("basic");
+      expect(toolStatus(withSkill, "backend", "background-subagent", "Skill")).toMatchObject({
+        status: "available",
+        enforcement: "enforced",
+      });
+    });
+  });
+
+  it("skills.allowedToolsUntrusted: suppressing K6/K7 findings when trust is missing removes the warning", async () => {
+    const baseline = await runClaudeFixture("skill-allowed-tools");
+    expect(k67FindingMessages(baseline, "runner", "foreground-subagent")).toHaveLength(1);
+
+    await withUntrustedFindingsSuppressed(async () => {
+      const suppressed = await runClaudeFixture("skill-allowed-tools");
+      expect(k67FindingMessages(suppressed, "runner", "foreground-subagent")).toHaveLength(0);
+    });
+  });
+
+  it("builtin.readOnly: removing B2 restores Write and Edit under explore/plan", async () => {
+    const baseline = await runClaudeFixture("instructions");
+    expect(toolStatus(baseline, "docs-writer", "explore", "Write")).toMatchObject({
+      status: "denied",
+      enforcement: "enforced",
+    });
+    expect(toolStatus(baseline, "docs-writer", "plan", "Edit")).toMatchObject({
+      status: "denied",
+      enforcement: "enforced",
+    });
+
+    await withBuiltinReadOnlyRemoved(async () => {
+      const withoutRule = await runClaudeFixture("instructions");
+      expect(toolStatus(withoutRule, "docs-writer", "explore", "Write")).toMatchObject({
+        status: "available",
+        enforcement: "enforced",
+      });
+      expect(toolStatus(withoutRule, "docs-writer", "plan", "Edit")).toMatchObject({
+        status: "available",
+        enforcement: "enforced",
+      });
+    });
+  });
+
+  it("discovery.builtinNameOverride: unfounding B4 drops effective from the Explore collision", async () => {
+    const baseline = await runClaudeFixture("builtin-agents");
+    const shadowed = discoveryAgent(baseline, "Explore");
+    expect(shadowed?.status).toBe("shadowed");
+    expect(shadowed?.collision).toMatchObject({
+      rule: FACT.B4,
+      effective: {
+        path: ".claude/agents/Explore.md",
+      },
+    });
+
+    await withMatrixPatch(
+      MATRIX["discovery.builtinNameOverride"],
+      { status: "unknown" },
+      async () => {
+        const withoutRule = await runClaudeFixture("builtin-agents");
+        const ambiguous = discoveryAgent(withoutRule, "Explore");
+        expect(ambiguous?.status).toBe("ambiguous");
+        expect(ambiguous?.collision?.rule).toBe(FACT.B4);
+        expect(ambiguous?.collision?.effective).toBeUndefined();
       },
     );
   });

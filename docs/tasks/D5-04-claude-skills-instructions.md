@@ -35,14 +35,14 @@ Promote skills, instructions, and builtin facts from documentation-only to fixtu
 
 ## Acceptance
 
-- [ ] Each promotion-owed fact promoted or refused
-- [ ] B4: promote override collision to verifiedFacts if deletion test passes; F7/model stays partial
-- [ ] D4-06 unchanged
-- [ ] `npm run test` and `npm run typecheck` pass
+- [x] Each promotion-owed fact promoted or refused
+- [x] B4: promote override collision to verifiedFacts if deletion test passes; F7/model stays partial
+- [x] D4-06 unchanged
+- [x] `npm run test` and `npm run typecheck` pass
 
 ## Done checklist
 
-- [ ] `npm run test` passes
-- [ ] `npm run typecheck` passes
-- [ ] No writes to scanned project's `.claude/**`
-- [ ] TASKS.md updated by orchestrator (not implementer)
+- [x] `npm run test` passes
+- [x] `npm run typecheck` passes
+- [x] No writes to scanned project's `.claude/**`
+- [x] TASKS.md updated by orchestrator (not implementer)

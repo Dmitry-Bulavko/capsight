@@ -411,15 +411,15 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.K1],
     minVersion: "2.1.0",
     status: "supported",
-    confidence: "doc",
+    confidence: "fixture",
     fixture: "skills-preload",
     verifiedFacts: [],
     notes:
-      "The fixture pins the preload itself; K1's other half — that the field is a preload and " +
-      "not an access allowlist — needs a skill the agent does not list, which the corpus lacks. " +
-      "K1 covers skill content preload only: a `.claude/commands/*.md` name in `skills:` resolves " +
-      "unknown (D1-14), not preloaded. Deletion test: without the command-kind check the deploy " +
-      "entry would flip to preloaded with K1.",
+      "skills-preload pins helper/restricted preload and the command-kind guard: deploy in " +
+      "`skills:` resolves unknown, not preloaded. Deletion test (D5-04): drop the guard and the " +
+      "same entry flips to preloaded — a confident value moving (H1-28). K1's allowlist half " +
+      "needs a skill the agent does not list, which the corpus lacks, and the command guard is " +
+      "one edge of K1 rather than the fact entire, so K1 rests on documentation alone in §11.4.",
   },
   {
     id: "skills.disableModelInvocation",
@@ -490,15 +490,16 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.K7],
     minVersion: "2.1.0",
     status: "supported",
-    confidence: "doc",
+    confidence: "fixture",
     fixture: "skill-allowed-tools",
     verifiedFacts: [],
     notes:
       "skill-allowed-tools scans with trust.accepted false and emits K6/K7 security " +
       "findings for deployer's allowed-tools patterns — the pre-approval is recorded as a " +
-      "finding, not suppressed by missing trust. K7's `-p`/headless qualifier is not pinned: " +
-      "the fixture resolves foreground-subagent only, so that half rests on documentation " +
-      "alone in §11.4 (H1-28).",
+      "finding, not suppressed by missing trust. Deletion test (D5-04): wrongly suppress those " +
+      "findings when trust is missing and the Bash(git push:*) warning leaves the golden. K7's " +
+      "`-p`/headless qualifier is not pinned — the fixture resolves foreground-subagent only — " +
+      "so the fact is not verified entire and rests on documentation alone in §11.4 (H1-28).",
   },
   {
     id: "skills.disallowedToolsActive",
@@ -867,15 +868,16 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.K3],
     minVersion: "2.1.0",
     status: "supported",
-    confidence: "doc",
+    confidence: "fixture",
     fixture: "basic",
     verifiedFacts: [],
     notes:
       "The basic fixture's backend agent whitelists Read and Grep only; Skill resolves " +
-      "denied/enforced with the F2 whitelist reason. That pins the tools-branch half of K3, not K3 " +
-      "entire: the fact also names disallowedTools, and no fixture agent lists Skill there while " +
-      "leaving it in the inherited pool, so that branch rests on documentation alone (H1-28). " +
-      "Deletion test: add Skill to the whitelist and the capability flips to available.",
+      "denied/enforced with the F2 whitelist reason. Deletion test (D5-04): add Skill to the " +
+      "whitelist and the capability flips to available — a confident value moving (H1-28). That " +
+      "pins the tools-branch half of K3, not K3 entire: the fact also names disallowedTools, and " +
+      "no fixture agent lists Skill there while leaving it in the inherited pool, so that branch " +
+      "rests on documentation alone in §11.4.",
   },
   {
     id: "discovery.addDirAgents",
@@ -1212,9 +1214,10 @@ const MATRIX_ENTRIES = [
     notes:
       "The builtin-agents fixture declares a project agent named Explore with a model field; " +
       "discovery records the file-backed agent active and the synthetic Explore builtin " +
-      "shadowed with rule B4 and the override as effective. Drop mergeBuiltinAgents and the " +
-      "shadowed builtin and collision record leave the golden (H1-28). B4 model-retention " +
-      "clause is resolution (F7), not discovery, so the fact is not verified entire.",
+      "shadowed with rule B4 and the override as effective. Deletion test (D5-04): unfounding " +
+      "this entry flips the synthetic Explore from shadowed to ambiguous and drops effective " +
+      "from the collision record — a confident value moving (H1-28). B4 model-retention clause " +
+      "is resolution (F7), not discovery, so the fact is not verified entire.",
   },
   {
     id: "builtin.readOnly",
@@ -1230,10 +1233,10 @@ const MATRIX_ENTRIES = [
       "to tools-filters: instructions resolves its docs-writer agent under foreground-subagent, " +
       "explore and plan, and Write and Edit — both allowed by that agent's own tools whitelist " +
       "— resolve available in the first context and denied in the other two. Deletion test " +
-      "(D1-06): with the rule removed all four flip back to available. B2's other clause, that " +
-      "Explore and Plan carry read-only tools only, is not pinned — the rule names Write and " +
-      "Edit and no fixture asserts the rest of the built-in set — so the fact is not verified " +
-      "entire.",
+      "(D5-04): unfounding this entry flips all four back to available — a confident value " +
+      "moving (H1-28). B2's other clause, that Explore and Plan carry read-only tools only, is " +
+      "not pinned — the rule names Write and Edit and no fixture asserts the rest of the built-in " +
+      "set — so the fact is not verified entire.",
   },
   {
     id: FACT.E1,

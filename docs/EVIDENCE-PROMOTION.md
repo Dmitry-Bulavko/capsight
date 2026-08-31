@@ -67,17 +67,17 @@ Compat-matrix citations do not count toward platform coverage.
 
 | Fact | Matrix entry | Fixture | Disposition | Deletion probe (expected delta) |
 |------|--------------|---------|-------------|----------------------------------|
-| K1 | `skills.preload` | skills-preload | promotion-owed | Remove command-kind guard → `.claude/commands` name in `skills:` flips to preloaded |
+| K1 | `skills.preload` | skills-preload | partial-pin | Remove command-kind guard → `.claude/commands` name in `skills:` flips to preloaded; allowlist half unpinned (D5-04) |
 | K2 | `skills.skillToolWithoutPreload` | skill-allowed-tools | partial-pin | Skill tool offered without preload pinned; "discovers and invokes" is runtime, not scannable |
-| K3 | `skills.skillToolWhitelist` | basic | promotion-owed | Add Skill to backend whitelist → Skill capability available (tools branch) |
+| K3 | `skills.skillToolWhitelist` | basic | partial-pin | Add Skill to backend whitelist → Skill capability available (tools branch); disallowedTools branch unpinned (D5-04) |
 | K5 | `skills.missing` | — | promotion-refused | Product is unknown-only; no confident verdict to pin (`noFixturePossible`) |
 | K6 | `skills.denyBeatsAllowedTools` | skill-allowed-tools | partial-pin | Entry `confidence: fixture`; K6 not in `verifiedFacts` — deny-beats-pre-approval pinned at entry level |
-| K7 | `skills.allowedToolsUntrusted` | skill-allowed-tools | promotion-owed | Trust=false + K6/K7 findings pinned; `-p`/headless qualifier half unpinned → may end partial |
+| K7 | `skills.allowedToolsUntrusted` | skill-allowed-tools | partial-pin | Trust=false + K6/K7 findings pinned; `-p`/headless qualifier half unpinned (D5-04) |
 | K9 | `skills.disallowedToolsActive` | — | promotion-refused | Active-skill runtime pool; no §11.2 channel (`noFixturePossible`) |
 | I1 | `instructions.hierarchy` | instructions | partial-pin | Project/nested CLAUDE.md levels pinned; `~/.claude/CLAUDE.md` and managed policy absent |
 | I4 | `instructions.subagentPrompt` | — | promotion-refused | No system-prompt field in §11.2 goldens (`noFixturePossible`) |
-| B2 | `builtin.readOnly` | instructions | promotion-owed | Unfound B2 → Write/Edit available under explore/plan contexts (deletion test D1-06) |
-| B4 | `discovery.builtinNameOverride` | builtin-agents | promotion-owed | Drop mergeBuiltinAgents → synthetic Explore builtin and B4 collision record leave golden |
+| B2 | `builtin.readOnly` | instructions | partial-pin | Unfound B2 → Write/Edit available under explore/plan contexts; read-only-tools-only clause unpinned (D5-04) |
+| B4 | `discovery.builtinNameOverride` | builtin-agents | partial-pin | Unfound B4 → synthetic Explore collision drops effective; model clause is F7 (D5-04) |
 
 ### D5-05 — Environment
 
@@ -121,8 +121,8 @@ Compat-matrix citations do not count toward platform coverage.
 
 | Disposition | Count | D5 task |
 |-------------|-------|---------|
-| promotion-owed | 9 | D5-02 (1), D5-03 (3), D5-04 (5) |
-| partial-pin | 21 | — |
+| promotion-owed | 4 | D5-02 (1), D5-03 (3), D5-04 (0) |
+| partial-pin | 26 | — |
 | promotion-refused | 22 | — |
 | **sum** | **52** | |
 
@@ -178,10 +178,10 @@ All terminal refusals — opportunistic promotion in D5-06 only if a new golden 
 
 | Platform | doc-only | promotion-owed | partial-pin | promotion-refused |
 |----------|----------|----------------|-------------|-------------------|
-| claude | 52 | 9 | 21 | 22 |
+| claude | 52 | 4 | 26 | 22 |
 | cursor | 5 | 0 | 0 | 5 |
 | codex | 9 | 0 | 1 | 8 |
-| **total** | **66** | **9** | **22** | **35** |
+| **total** | **66** | **4** | **27** | **35** |
 
 ### promotion-owed by task
 
@@ -189,7 +189,7 @@ All terminal refusals — opportunistic promotion in D5-06 only if a new golden 
 |------|-------|
 | D5-02 | F11 (+ T1, T2, T3 partial-pin; T5 refused) |
 | D5-03 | R2, R5, R6 (+ P1, P5, R1, R4 partial-pin) |
-| D5-04 | K1, K3, K7, B2, B4 (+ K2, K6, I1 partial-pin) |
+| D5-04 | — (K1, K3, K7, B2, B4 partial-pin; K2, K6, I1 partial-pin) |
 | D5-05 | — (E1–E8, B5, B6, N3, N4 refused or partial-pin) |
 | D5-06 | Claude housekeeping (N5 pendingFixture, A1/F1/F3… partial-pin); Cursor/Codex refusals above |
 
@@ -197,7 +197,7 @@ All terminal refusals — opportunistic promotion in D5-06 only if a new golden 
 
 1. **T5 refused despite D5-02 candidate list** — tools-filters background context exists but T5 delta is masked by T2; promotion would double-count filter2, not T5.
 2. **D5-05 likely zero fv gain** — environment entries pin `discovery.environment` keys only; twelve rows are promotion-refused unless golden channels are added (handoff risk note confirmed).
-3. **K7 promotion-owed with partial outcome** — trust=false path pinned; `-p`/headless qualifier may keep fact doc-only even after D5-04.
+3. **K7 partial-pin (D5-04 closed)** — trust=false path and K6/K7 findings pinned at entry level; `-p`/headless qualifier keeps fact doc-only in §11.4.
 4. **F11 needs fixture extension** — not a matrix-only promotion; deletion probe requires new agent frontmatter.
 5. **N5 / `agent.depthLimitDefault`** — stale `pendingFixture: version-drift` (drift demo moved to `agent.tools` in G1-04); D5-06 housekeeping, not promotion.
 6. **K11 is externally-cited, not doc-only** — registry `[ext]`; `discovery.commandNamePrecedence` entry is fixture-backed at entry level but K11 sits in the externally-cited bucket (12 Claude ext facts). D5-04 handoff lists K11; promotion path is entry `verifiedFacts`, not doc-only triage.
