@@ -209,7 +209,10 @@ describe("cursor resolveEnforcement", () => {
   });
 
   it("downgrades only rules outside their declared version range", () => {
-    withMatrixPatchSync(MATRIX["rules.fileExtension"], { minVersion: "99.0.0" }, () => {
+    withMatrixPatchSync(
+      MATRIX["rules.fileExtension"],
+      { minVersion: "99.0.0", maxVersion: undefined },
+      () => {
       expect(
         resolveEnforcement({ matrixId: MATRIX["rules.fileExtension"], version: DETECTED })
           .enforcement,
@@ -218,7 +221,8 @@ describe("cursor resolveEnforcement", () => {
         resolveEnforcement({ matrixId: MATRIX["collision.sameDir"], version: DETECTED })
           .enforcement,
       ).toBe("enforced");
-    });
+    },
+    );
   });
 });
 
@@ -226,10 +230,14 @@ describe("cursor lookupFeature", () => {
   const DETECTED = "3.16.17";
 
   it("marks entries unsupported below minVersion", () => {
-    withMatrixPatchSync(MATRIX["rules.fileExtension"], { minVersion: "99.0.0" }, () => {
+    withMatrixPatchSync(
+      MATRIX["rules.fileExtension"],
+      { minVersion: "99.0.0", maxVersion: undefined },
+      () => {
       expect(lookupFeature(MATRIX["rules.fileExtension"], DETECTED)?.status).toBe("unsupported");
       expect(lookupFeature(MATRIX["rules.fileExtension"], "99.0.0")?.status).toBe("supported");
-    });
+    },
+    );
   });
 
   it("marks entries unsupported above maxVersion", () => {
@@ -273,10 +281,14 @@ describe("cursor gateWarning", () => {
   });
 
   it("downgrades when the detected version is outside the entry range", () => {
-    withMatrixPatchSync(MATRIX["rules.fileExtension"], { minVersion: "99.0.0" }, () => {
+    withMatrixPatchSync(
+      MATRIX["rules.fileExtension"],
+      { minVersion: "99.0.0", maxVersion: undefined },
+      () => {
       const gated = gateWarning(ignoredWarning, MATRIX["rules.fileExtension"], DETECTED);
       expect(gated.enforcement).toBe("unknown");
-    });
+    },
+    );
   });
 });
 
@@ -303,6 +315,29 @@ describe("cursor fixture deletion tests (H1-28)", () => {
   afterEach(() => {
     mockDetectCursorVersion.mockReset();
     vi.restoreAllMocks();
+  });
+
+  it("rules.fileExtension: version above maxVersion downgrades only the CR4 warning", async () => {
+    const baseline = await runCursorFixture("version-drift");
+    const cr4Warning = baseline.resolutions[0]!.warnings.find(
+      (warning) => warning.matrixRef === MATRIX["rules.fileExtension"],
+    );
+    expect(cr4Warning?.enforcement).toBe("unknown");
+
+    const scopedRule = baseline.discovery.instructions.find(
+      (instruction) =>
+        (instruction as { path?: string }).path === ".cursor/rules/scoped.mdc",
+    ) as { description?: string; globs?: string[] } | undefined;
+    expect(scopedRule?.description).toBe("Scoped TypeScript rule");
+    expect(scopedRule?.globs).toEqual(["**/*.ts"]);
+
+    await withMatrixPatch(MATRIX["rules.fileExtension"], { maxVersion: undefined }, async () => {
+      const withoutBound = await runCursorFixture("version-drift");
+      const after = withoutBound.resolutions[0]!.warnings.find(
+        (warning) => warning.matrixRef === MATRIX["rules.fileExtension"],
+      );
+      expect(after?.enforcement).toBe("enforced");
+    });
   });
 
   it("rules.fileExtension: removing ignored-rule detection drops the CR4 warning", async () => {

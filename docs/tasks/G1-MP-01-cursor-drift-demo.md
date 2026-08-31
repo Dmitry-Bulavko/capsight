@@ -25,14 +25,14 @@ Prove §8.4 scoped version downgrade on Cursor: one `status: "supported"` matrix
 
 ## Acceptance
 
-- [ ] At fixture version ≤ maxVersion, target rule resolves enforced/supported on at least one golden capability
-- [ ] With version above maxVersion, only that rule downgrades; at least one other rule stays enforced
-- [ ] Golden + H1-28 deletion test pin the downgrade
-- [ ] `npm run test` and `npm run typecheck` pass
+- [x] At fixture version ≤ maxVersion, target rule resolves enforced/supported on golden
+- [x] Above maxVersion, scoped downgrade only; neighbor stays confident
+- [x] Golden + H1-28 deletion test
+- [x] `npm run test` and `npm run typecheck` pass
 
 ## Done checklist
 
-- [ ] `npm run test` passes
-- [ ] `npm run typecheck` passes
-- [ ] No writes to scanned project's `.cursor/**`
-- [ ] TASKS.md updated by orchestrator (not implementer)
+- [x] `npm run test` passes
+- [x] `npm run typecheck` passes
+- [x] No writes to scanned project's `.cursor/**`
+- [x] TASKS.md updated by orchestrator (not implementer)

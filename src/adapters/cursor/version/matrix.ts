@@ -104,6 +104,7 @@ const MATRIX_ENTRIES = [
     id: "rules.fileExtension",
     feature: "Plain .md files in .cursor/rules/ are ignored",
     factRefs: [FACT.CR4],
+    maxVersion: "3.16.17",
     status: "supported",
     confidence: "fixture",
     fixture: "ignored-rules",
@@ -111,8 +112,10 @@ const MATRIX_ENTRIES = [
     notes:
       "CR4 entire: ignored-rules carries plain ignored.md alongside valid.mdc; " +
       "the golden records a warning with enforcement enforced naming the ignored " +
-      "file. Deletion test (D1-07): with the rule removed the warning leaves " +
-      "the golden and only the .mdc rule is discovered.",
+      "file. version-drift pins 3.16.18 — above this entry's maxVersion — so the " +
+      "CR4 warning downgrades to unknown per §8.4 while discovery.ruleFrontmatter " +
+      "metadata on the same fixture stays present. Deletion test (D1-07): with the " +
+      "rule removed the warning leaves the golden and only the .mdc rule is discovered.",
   },
   {
     id: "agent.invalid",

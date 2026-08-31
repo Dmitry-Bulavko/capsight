@@ -1,0 +1,7 @@
+---
+description: Scoped TypeScript rule
+globs:
+  - "**/*.ts"
+---
+
+Prefer strict TypeScript settings in matched files.

@@ -13,6 +13,8 @@ import {
   normalizeGoldenOutput,
   type NormalizedGoldenOutput,
 } from "./golden-normalize.js";
+import type { FeatureCompatibility } from "../../src/adapters/cursor/version/matrix.js";
+import { VERSION_MATRIX } from "../../src/adapters/cursor/version/matrix.js";
 import {
   CHECKOUT_SHAPES,
   assertFixtureIsolated,
@@ -136,6 +138,24 @@ async function runGoldenFixture(
   return { actual, expected };
 }
 
+async function withMatrixPatch(
+  id: string,
+  patch: Partial<FeatureCompatibility>,
+  body: () => Promise<void>,
+): Promise<void> {
+  const entry = VERSION_MATRIX.find((candidate) => candidate.id === id)!;
+  const original = { ...entry };
+  Object.assign(entry, patch);
+  try {
+    await body();
+  } finally {
+    for (const key of Object.keys(entry) as Array<keyof FeatureCompatibility>) {
+      delete (entry as unknown as Record<string, unknown>)[key];
+    }
+    Object.assign(entry, original);
+  }
+}
+
 describe("cursor golden fixtures", () => {
   const envSnapshot = { ...process.env };
 
@@ -162,6 +182,34 @@ describe("cursor golden fixtures", () => {
       expect(actual).toEqual(expected);
     });
   }
+
+  // §8.4 / G1-MP-01: version above a supported rule's matrix maxVersion downgrades
+  // only the capabilities that rule gates — not the whole resolution.
+  it("version-drift scopes downgrade when the detected version exceeds a matrix maxVersion", async () => {
+    const { actual, expected } = await runGoldenFixture("version-drift");
+    expect(actual).toEqual(expected);
+
+    const resolution = actual.resolutions[0]!;
+    const cr4Warning = resolution.warnings.find(
+      (warning) => warning.matrixRef === "rules.fileExtension",
+    );
+    expect(cr4Warning?.enforcement).toBe("unknown");
+
+    const scopedRule = actual.discovery.instructions.find(
+      (instruction) =>
+        (instruction as { path?: string }).path === ".cursor/rules/scoped.mdc",
+    ) as { description?: string; globs?: string[] } | undefined;
+    expect(scopedRule?.description).toBe("Scoped TypeScript rule");
+    expect(scopedRule?.globs).toEqual(["**/*.ts"]);
+
+    await withMatrixPatch("rules.fileExtension", { maxVersion: undefined }, async () => {
+      const withoutBound = await runGoldenFixture("version-drift");
+      const warningWithoutBound = withoutBound.actual.resolutions[0]!.warnings.find(
+        (warning) => warning.matrixRef === "rules.fileExtension",
+      );
+      expect(warningWithoutBound?.enforcement).toBe("enforced");
+    });
+  });
 
   // §11.2/§13 invariant 2. The cursor golden passed identically with and
   // without the isolation hook, so a regression in it was invisible (H1-07).

@@ -183,7 +183,7 @@ export const CLAUDE_FIXTURE_NAMES = [
 /** Corpus each platform declares. Cursor and Codex carry one fixture each (MP). */
 export const PLATFORM_FIXTURE_NAMES = {
   claude: CLAUDE_FIXTURE_NAMES,
-  cursor: ["basic", "collision-same-dir", "ignored-rules", "invalid-agents"],
+  cursor: ["basic", "collision-same-dir", "ignored-rules", "invalid-agents", "version-drift"],
   codex: ["basic", "agents-precedence", "nested-instructions", "trust-untrusted", "instruction-fallback"],
 } as const satisfies Record<PlatformId, readonly string[]>;
 
