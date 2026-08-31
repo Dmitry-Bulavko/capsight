@@ -1025,8 +1025,14 @@ const MATRIX_ENTRIES = [
       "(literal prefix, no :*). Each resolves available/enforced through this entry, " +
       "so the rule is the operative cause of a confident golden value (H1-28). Only the " +
       ":* position clause is pinned — trailing :* vs mid-pattern :* — not whether a concrete " +
-      "command line matches the prefix (§2.3). S6 also states prefix matching for " +
-      "Bash(cmd:*) generally; that half is not exercised by any fixture and rests on " +
+      "command line matches the prefix (§2.3). SS-04 evaluated the other S6 clause — prefix " +
+      "matching — and refused: deciding whether e.g. `npm run test` or `npm run test:unit` " +
+      "matches `Bash(npm run test:*)` is a per-invocation approval question (§2.3); no fixture " +
+      "can make matching semantics the operative cause of a confident golden without building " +
+      "a permission engine. noFixturePossible (matching half): a fixture would need to assert " +
+      "which command lines share a pattern's prefix, which is exactly the runtime verdict §2.3 " +
+      "forbids; shape classification (SS-01) is the honest ceiling. S6 also states prefix matching " +
+      "for Bash(cmd:*) generally; that half is not exercised by any fixture and rests on " +
       "documentation alone in §11.4. The fixture's allow `Bash(npm run test:*)` and local " +
       "allow `Bash(npm run test:unit)` remain inert behind bare Bash deny and are attributed " +
       "to settings.denyPrecedence instead.",

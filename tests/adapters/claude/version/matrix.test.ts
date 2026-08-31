@@ -409,6 +409,14 @@ describe("VERSION_MATRIX", () => {
     expect(disallowed?.factRefs).toEqual([FACT.F2, FACT.F3]);
     expect(disallowed?.fixture).toBe("tools-filters");
   });
+
+  it("documents SS-04 refusal for S6 prefix matching semantics", () => {
+    const entry = VERSION_MATRIX.find((item) => item.id === "settings.bashPrefixRules");
+    expect(entry?.notes).toMatch(/SS-04 evaluated/);
+    expect(entry?.notes).toMatch(/noFixturePossible \(matching half\)/);
+    expect(entry?.notes).toMatch(/§2\.3/);
+    expect(entry?.verifiedFacts).toEqual([]);
+  });
 });
 
 describe("compareSemver", () => {

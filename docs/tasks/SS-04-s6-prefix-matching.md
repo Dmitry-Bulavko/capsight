@@ -34,14 +34,14 @@ Evaluate whether S6 **prefix matching** (beyond `:*` shape pinned in SS-01) can 
 
 ## Acceptance
 
-- [ ] S6 prefix-matching question answered: fixture pins matching semantics OR written refusal in matrix
-- [ ] H1-28: any promotion has deletion test making S6 the operative cause
-- [ ] D4-06 gate unchanged (`entry-owed=0`, unverified ≤ 18)
-- [ ] `npm run test` and `npm run typecheck` pass
+- [x] S6 prefix-matching question answered — written refusal in matrix (matching half `noFixturePossible`)
+- [x] H1-28 — SS-01 shape pins unchanged; matching half not promoted
+- [x] D4-06 gate unchanged
+- [x] `npm run test` and `npm run typecheck` pass
 
 ## Done checklist
 
-- [ ] `npm run test` passes
-- [ ] `npm run typecheck` passes
-- [ ] No writes to scanned project's `.claude/**`
-- [ ] TASKS.md updated by orchestrator (not implementer)
+- [x] `npm run test` passes
+- [x] `npm run typecheck` passes
+- [x] No writes to scanned project's `.claude/**`
+- [x] TASKS.md updated by orchestrator (not implementer)

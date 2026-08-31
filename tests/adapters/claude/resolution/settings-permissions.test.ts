@@ -517,6 +517,21 @@ describe("resolveSettingsPermissions", () => {
     expect(rule?.reasons[0]?.message).toMatch(/trailing :\*/);
   });
 
+  it("refuses S6 prefix matching beyond shape without a permission engine (SS-04)", () => {
+    const result = resolveSettingsPermissions({
+      layers: [layer("project", 30, { deny: ["Bash(npm run test:*)"] })],
+      capabilities: [availableTool("Bash")],
+      version: VERSION,
+    });
+
+    const rule = ruleCapability(result, "deny:Bash(npm run test:*)");
+    expect(rule).toMatchObject({ status: "available", enforcement: "enforced" });
+    expect(rule?.reasons[0]?.matrixRef).toBe("settings.bashPrefixRules");
+    expect(rule?.reasons[0]?.message).toMatch(/trailing :\*/);
+    expect(rule?.reasons[0]?.message).toMatch(/Which command lines match the prefix is not evaluated/);
+    expect(rule?.reasons[0]?.message).not.toMatch(/would match|is approved|grants nothing/);
+  });
+
   it("does not attribute PowerShell(...) rules to S6 (settings.bashPrefixRules)", () => {
     const result = resolveSettingsPermissions({
       layers: [layer("project", 30, { allow: ["PowerShell(Get-Process:*)"] })],

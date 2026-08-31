@@ -361,8 +361,8 @@ Order: SS-04 → SS-05.
 
 | ID | Phase | Title | Status | Spec refs | Files | Acceptance |
 |----|-------|-------|--------|-----------|-------|------------|
-| SS-04 | SS-deep | S6 — command prefix matching depth | in_progress | §3.5 S6, §2.3 | settings-permissions.ts, matrix.ts, fixture | Prefix matching pinned or refused in writing; D4-06 gate unchanged |
-| SS-05 | SS-deep | S7 — path glob matching depth | todo | §3.5 S7, §2.3 | settings-permissions.ts, matrix.ts, fixture | Glob matching pinned or refused; D4-06 gate unchanged |
+| SS-04 | SS-deep | S6 — command prefix matching depth | done | §3.5 S6, §2.3 | settings-permissions.ts, matrix.ts, fixture | Prefix matching pinned or refused in writing; D4-06 gate unchanged |
+| SS-05 | SS-deep | S7 — path glob matching depth | in_progress | §3.5 S7, §2.3 | settings-permissions.ts, matrix.ts, fixture | Glob matching pinned or refused; D4-06 gate unchanged |
 
 ## B1 — Builtin discovery channel
 

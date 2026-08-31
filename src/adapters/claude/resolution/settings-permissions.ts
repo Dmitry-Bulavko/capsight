@@ -579,6 +579,10 @@ interface RuleOutcome {
   matrixId: MatrixId;
 }
 
+/** SS-04: S6 names prefix matching; which command lines match is §2.3 out of scope. */
+const BASH_PREFIX_MATCHING_REFUSAL =
+  "Which command lines match the prefix is not evaluated (§2.3).";
+
 function bashPrefixShapeMessage(
   quoted: string,
   shape: BashPrefixShape,
@@ -586,8 +590,8 @@ function bashPrefixShapeMessage(
 ): string {
   const invocationLimit =
     action === "deny"
-      ? "What a deny rule in this form leaves of the tool is not determined (§2.3)."
-      : "Whether a particular command line matches is not evaluated (§2.3), so the effect of this rule on the capability set is not determined.";
+      ? `${BASH_PREFIX_MATCHING_REFUSAL} What a deny rule in this form leaves of the tool is not determined.`
+      : `${BASH_PREFIX_MATCHING_REFUSAL} The effect of this rule on the capability set is not determined.`;
 
   switch (shape) {
     case "trailing-wildcard":

@@ -588,7 +588,7 @@
           "reasons": [
             {
               "type": "declared",
-              "message": "permissions.deny entry \"Bash(npm run cover:*)\" uses Bash prefix matching with a trailing :* wildcard suffix (S6). What a deny rule in this form leaves of the tool is not determined (§2.3).",
+              "message": "permissions.deny entry \"Bash(npm run cover:*)\" uses Bash prefix matching with a trailing :* wildcard suffix (S6). Which command lines match the prefix is not evaluated (§2.3). What a deny rule in this form leaves of the tool is not determined.",
               "source": {
                 "platform": "claude",
                 "scope": "project",
@@ -615,7 +615,7 @@
           "reasons": [
             {
               "type": "declared",
-              "message": "permissions.deny entry \"Bash(npm run test:unit)\" narrows Bash by a literal prefix with no :* wildcard suffix (S6). What a deny rule in this form leaves of the tool is not determined (§2.3).",
+              "message": "permissions.deny entry \"Bash(npm run test:unit)\" narrows Bash by a literal prefix with no :* wildcard suffix (S6). Which command lines match the prefix is not evaluated (§2.3). What a deny rule in this form leaves of the tool is not determined.",
               "source": {
                 "platform": "claude",
                 "scope": "project",
@@ -642,7 +642,7 @@
           "reasons": [
             {
               "type": "declared",
-              "message": "permissions.deny entry \"Bash(npm:* run test)\" contains :* away from the end of the pattern; S6 recognizes :* as a wildcard suffix only at the end, so this occurrence is part of the literal prefix (S6). What a deny rule in this form leaves of the tool is not determined (§2.3).",
+              "message": "permissions.deny entry \"Bash(npm:* run test)\" contains :* away from the end of the pattern; S6 recognizes :* as a wildcard suffix only at the end, so this occurrence is part of the literal prefix (S6). Which command lines match the prefix is not evaluated (§2.3). What a deny rule in this form leaves of the tool is not determined.",
               "source": {
                 "platform": "claude",
                 "scope": "project",
@@ -2043,7 +2043,7 @@
           "reasons": [
             {
               "type": "declared",
-              "message": "permissions.deny entry \"Bash(npm run cover:*)\" uses Bash prefix matching with a trailing :* wildcard suffix (S6). What a deny rule in this form leaves of the tool is not determined (§2.3).",
+              "message": "permissions.deny entry \"Bash(npm run cover:*)\" uses Bash prefix matching with a trailing :* wildcard suffix (S6). Which command lines match the prefix is not evaluated (§2.3). What a deny rule in this form leaves of the tool is not determined.",
               "source": {
                 "platform": "claude",
                 "scope": "project",
@@ -2070,7 +2070,7 @@
           "reasons": [
             {
               "type": "declared",
-              "message": "permissions.deny entry \"Bash(npm run test:unit)\" narrows Bash by a literal prefix with no :* wildcard suffix (S6). What a deny rule in this form leaves of the tool is not determined (§2.3).",
+              "message": "permissions.deny entry \"Bash(npm run test:unit)\" narrows Bash by a literal prefix with no :* wildcard suffix (S6). Which command lines match the prefix is not evaluated (§2.3). What a deny rule in this form leaves of the tool is not determined.",
               "source": {
                 "platform": "claude",
                 "scope": "project",
@@ -2097,7 +2097,7 @@
           "reasons": [
             {
               "type": "declared",
-              "message": "permissions.deny entry \"Bash(npm:* run test)\" contains :* away from the end of the pattern; S6 recognizes :* as a wildcard suffix only at the end, so this occurrence is part of the literal prefix (S6). What a deny rule in this form leaves of the tool is not determined (§2.3).",
+              "message": "permissions.deny entry \"Bash(npm:* run test)\" contains :* away from the end of the pattern; S6 recognizes :* as a wildcard suffix only at the end, so this occurrence is part of the literal prefix (S6). Which command lines match the prefix is not evaluated (§2.3). What a deny rule in this form leaves of the tool is not determined.",
               "source": {
                 "platform": "claude",
                 "scope": "project",
