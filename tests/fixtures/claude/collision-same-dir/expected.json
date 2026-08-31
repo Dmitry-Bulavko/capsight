@@ -2,6 +2,71 @@
   "discovery": {
     "agents": [
       {
+        "name": "Explore",
+        "description": "Built-in agent for exploring codebases (B1)",
+        "source": {
+          "platform": "claude",
+          "scope": "builtin"
+        },
+        "status": "active",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      },
+      {
+        "name": "Plan",
+        "description": "Built-in agent for planning tasks (B1)",
+        "source": {
+          "platform": "claude",
+          "scope": "builtin"
+        },
+        "status": "active",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      },
+      {
+        "name": "claude",
+        "description": "Built-in claude agent (B1)",
+        "source": {
+          "platform": "claude",
+          "scope": "builtin"
+        },
+        "status": "active",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      },
+      {
+        "name": "claude-code-guide",
+        "description": "Built-in Claude Code guide agent (B1)",
+        "source": {
+          "platform": "claude",
+          "scope": "builtin"
+        },
+        "status": "active",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      },
+      {
+        "name": "general-purpose",
+        "description": "Built-in general-purpose agent (B1)",
+        "source": {
+          "platform": "claude",
+          "scope": "builtin"
+        },
+        "status": "active",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      },
+      {
         "name": "planner",
         "description": "Unambiguous agent used as the resolution subject for this fixture",
         "source": {
@@ -85,6 +150,19 @@
           "matrixRef": "agent.collisionSameDir",
           "enforcement": "unknown"
         }
+      },
+      {
+        "name": "statusline-setup",
+        "description": "Built-in statusline setup agent (B1)",
+        "source": {
+          "platform": "claude",
+          "scope": "builtin"
+        },
+        "status": "active",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
       }
     ],
     "skills": [],

@@ -135,6 +135,174 @@
         }
       },
       {
+        "id": "claude:agent:27e82fd05b16e0ab",
+        "kind": "agent",
+        "platform": "claude",
+        "scope": "builtin",
+        "resourceClass": "agent@markdown",
+        "name": "general-purpose",
+        "compat": {
+          "claude": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.agent-markdown",
+            "reason": "Claude Code discovers agents from markdown files under configured agents directories (A1, A2)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.cursor.agent-markdown",
+            "reason": "Cursor discovers subagents from markdown files under the agents directory (CA1)."
+          },
+          "codex": {
+            "support": "not-supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.codex.agent-markdown",
+            "reason": "Codex primary agent configuration is instruction-based (AGENTS.md), not markdown agent files (XA1)."
+          }
+        }
+      },
+      {
+        "id": "claude:agent:2e901c22d31d3565",
+        "kind": "agent",
+        "platform": "claude",
+        "scope": "builtin",
+        "resourceClass": "agent@markdown",
+        "name": "statusline-setup",
+        "compat": {
+          "claude": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.agent-markdown",
+            "reason": "Claude Code discovers agents from markdown files under configured agents directories (A1, A2)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.cursor.agent-markdown",
+            "reason": "Cursor discovers subagents from markdown files under the agents directory (CA1)."
+          },
+          "codex": {
+            "support": "not-supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.codex.agent-markdown",
+            "reason": "Codex primary agent configuration is instruction-based (AGENTS.md), not markdown agent files (XA1)."
+          }
+        }
+      },
+      {
+        "id": "claude:agent:61e5cab06edb4d05",
+        "kind": "agent",
+        "platform": "claude",
+        "scope": "builtin",
+        "resourceClass": "agent@markdown",
+        "name": "Plan",
+        "compat": {
+          "claude": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.agent-markdown",
+            "reason": "Claude Code discovers agents from markdown files under configured agents directories (A1, A2)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.cursor.agent-markdown",
+            "reason": "Cursor discovers subagents from markdown files under the agents directory (CA1)."
+          },
+          "codex": {
+            "support": "not-supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.codex.agent-markdown",
+            "reason": "Codex primary agent configuration is instruction-based (AGENTS.md), not markdown agent files (XA1)."
+          }
+        }
+      },
+      {
+        "id": "claude:agent:873a142614ad3bc7",
+        "kind": "agent",
+        "platform": "claude",
+        "scope": "builtin",
+        "resourceClass": "agent@markdown",
+        "name": "claude-code-guide",
+        "compat": {
+          "claude": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.agent-markdown",
+            "reason": "Claude Code discovers agents from markdown files under configured agents directories (A1, A2)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.cursor.agent-markdown",
+            "reason": "Cursor discovers subagents from markdown files under the agents directory (CA1)."
+          },
+          "codex": {
+            "support": "not-supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.codex.agent-markdown",
+            "reason": "Codex primary agent configuration is instruction-based (AGENTS.md), not markdown agent files (XA1)."
+          }
+        }
+      },
+      {
+        "id": "claude:agent:9e40f30f278613ef",
+        "kind": "agent",
+        "platform": "claude",
+        "scope": "builtin",
+        "resourceClass": "agent@markdown",
+        "name": "Explore",
+        "compat": {
+          "claude": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.agent-markdown",
+            "reason": "Claude Code discovers agents from markdown files under configured agents directories (A1, A2)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.cursor.agent-markdown",
+            "reason": "Cursor discovers subagents from markdown files under the agents directory (CA1)."
+          },
+          "codex": {
+            "support": "not-supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.codex.agent-markdown",
+            "reason": "Codex primary agent configuration is instruction-based (AGENTS.md), not markdown agent files (XA1)."
+          }
+        }
+      },
+      {
+        "id": "claude:agent:d4e3f8d9adf93389",
+        "kind": "agent",
+        "platform": "claude",
+        "scope": "builtin",
+        "resourceClass": "agent@markdown",
+        "name": "claude",
+        "compat": {
+          "claude": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.claude.agent-markdown",
+            "reason": "Claude Code discovers agents from markdown files under configured agents directories (A1, A2)."
+          },
+          "cursor": {
+            "support": "supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.cursor.agent-markdown",
+            "reason": "Cursor discovers subagents from markdown files under the agents directory (CA1)."
+          },
+          "codex": {
+            "support": "not-supported",
+            "enforcement": "enforced",
+            "matrixRef": "compat.codex.agent-markdown",
+            "reason": "Codex primary agent configuration is instruction-based (AGENTS.md), not markdown agent files (XA1)."
+          }
+        }
+      },
+      {
         "id": "claude:agent:home/.claude/agents/backend.md",
         "kind": "agent",
         "platform": "claude",

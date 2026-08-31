@@ -2,6 +2,32 @@
   "discovery": {
     "agents": [
       {
+        "name": "Explore",
+        "description": "Built-in agent for exploring codebases (B1)",
+        "source": {
+          "platform": "claude",
+          "scope": "builtin"
+        },
+        "status": "active",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      },
+      {
+        "name": "Plan",
+        "description": "Built-in agent for planning tasks (B1)",
+        "source": {
+          "platform": "claude",
+          "scope": "builtin"
+        },
+        "status": "active",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      },
+      {
         "name": "broken",
         "description": "",
         "source": {
@@ -11,6 +37,45 @@
         },
         "status": "invalid",
         "invalidReason": "bad-yaml",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      },
+      {
+        "name": "claude",
+        "description": "Built-in claude agent (B1)",
+        "source": {
+          "platform": "claude",
+          "scope": "builtin"
+        },
+        "status": "active",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      },
+      {
+        "name": "claude-code-guide",
+        "description": "Built-in Claude Code guide agent (B1)",
+        "source": {
+          "platform": "claude",
+          "scope": "builtin"
+        },
+        "status": "active",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      },
+      {
+        "name": "general-purpose",
+        "description": "Built-in general-purpose agent (B1)",
+        "source": {
+          "platform": "claude",
+          "scope": "builtin"
+        },
+        "status": "active",
         "configuration": {
           "unknownFields": {}
         },
@@ -141,6 +206,19 @@
         },
         "isPluginAgent": true,
         "pluginScopedId": "my-plugin:review:security"
+      },
+      {
+        "name": "statusline-setup",
+        "description": "Built-in statusline setup agent (B1)",
+        "source": {
+          "platform": "claude",
+          "scope": "builtin"
+        },
+        "status": "active",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
       }
     ],
     "skills": [],
@@ -906,13 +984,13 @@
               "fieldPath": "frontmatter.hooks"
             }
           ],
-          "matrixRef": "agent.pluginFieldLimits",
-          "enforcement": "enforced",
           "ignoredField": {
             "field": "hooks",
             "declared": "{\"form\":\"object\",\"events\":[\"PreToolUse\"],\"count\":1}",
             "factRef": "F9"
-          }
+          },
+          "matrixRef": "agent.pluginFieldLimits",
+          "enforcement": "enforced"
         },
         {
           "category": "ignored-field",
@@ -926,13 +1004,13 @@
               "fieldPath": "frontmatter.mcpServers"
             }
           ],
-          "matrixRef": "agent.pluginFieldLimits",
-          "enforcement": "enforced",
           "ignoredField": {
             "field": "mcpServers",
             "declared": "[{\"name\":\"audit-server\",\"transport\":\"stdio\",\"commandName\":\"audit-server\",\"envKeys\":[],\"headerKeys\":[]}]",
             "factRef": "F9"
-          }
+          },
+          "matrixRef": "agent.pluginFieldLimits",
+          "enforcement": "enforced"
         },
         {
           "category": "ignored-field",
@@ -946,13 +1024,13 @@
               "fieldPath": "frontmatter.permissionMode"
             }
           ],
-          "matrixRef": "agent.pluginFieldLimits",
-          "enforcement": "enforced",
           "ignoredField": {
             "field": "permissionMode",
             "declared": "bypassPermissions",
             "factRef": "F9"
-          }
+          },
+          "matrixRef": "agent.pluginFieldLimits",
+          "enforcement": "enforced"
         }
       ],
       "unknownRate": 0

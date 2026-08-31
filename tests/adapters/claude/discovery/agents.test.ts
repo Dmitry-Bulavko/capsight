@@ -308,8 +308,8 @@ description: User agent of the same name
       // §8.4: without a detected version A1 is unfounded, so no file is named
       // effective and the whole group stays ambiguous.
       const degraded = await discoverAgents([scopeLevel(project, agentsPath)], project);
-      expect(degraded.agents).toHaveLength(2);
-      for (const agent of degraded.agents) {
+      const degradedFileAgents = degraded.agents.filter((a) => a.source.scope !== "builtin"); expect(degradedFileAgents).toHaveLength(2);
+      for (const agent of degradedFileAgents) {
         expect(agent.status).toBe("ambiguous");
         expect(agent.collision?.rule).toBe("A1");
         expect(agent.collision?.matrixRef).toBe("agent.collisionCrossScope");
@@ -431,6 +431,51 @@ description: Project agent
 
     expect(agents.filter((a: Agent) => a.isPluginAgent)).toEqual([]);
   });
+  it("synthesizes all six B1 builtins on every scan", async () => {
+    const project = await makeTempProject({});
+    const { agents } = await discoverAgents([scopeLevel(project)], project, [], "2.1.240");
+    const builtins = agents.filter((a) => a.source.scope === "builtin");
+    expect(builtins).toHaveLength(6);
+    expect(builtins.map((a) => a.name).sort()).toEqual(
+      [
+        "Explore",
+        "Plan",
+        "claude",
+        "claude-code-guide",
+        "general-purpose",
+        "statusline-setup",
+      ].sort(),
+    );
+    expect(builtins.every((a) => a.status === "active")).toBe(true);
+  });
+
+  it("shadows a builtin when a project agent reuses its name (B4)", async () => {
+    const project = await makeTempProject({
+      ".claude/agents/Explore.md": `---
+name: Explore
+description: Custom Explore
+model: sonnet
+---
+`,
+    });
+    const agentsPath = path.join(project, ".claude", "agents");
+    const { agents } = await discoverAgents([scopeLevel(project, agentsPath)], project, [], "2.1.240");
+
+    const custom = agents.find(
+      (a) => a.name === "Explore" && a.source.scope === "project",
+    );
+    const builtin = agents.find(
+      (a) => a.name === "Explore" && a.source.scope === "builtin",
+    );
+
+    expect(custom?.status).toBe("active");
+    expect(custom?.configuration.model).toBe("sonnet");
+    expect(builtin?.status).toBe("shadowed");
+    expect(builtin?.collision?.rule).toBe("B4");
+    expect(builtin?.collision?.matrixRef).toBe("discovery.builtinNameOverride");
+    expect(builtin?.collision?.effective?.scope).toBe("project");
+  });
+
 });
 
 describe("discoverAgents secret redaction (§0.1.8, §13 invariant 10)", () => {

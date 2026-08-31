@@ -28,7 +28,11 @@ export function estimateDescriptionTokens(description: string): number {
 
 /** User-defined agents counted toward the description budget (§7.7 A10). */
 export function isUserAgentForBudget(agent: Agent): boolean {
-  return !agent.isPluginAgent && agent.status !== "invalid";
+  return (
+    !agent.isPluginAgent &&
+    agent.source.scope !== "builtin" &&
+    agent.status !== "invalid"
+  );
 }
 
 function formatBreakdown(contributions: AgentDescriptionContribution[]): string {

@@ -1188,15 +1188,14 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.B1],
     minVersion: "2.1.0",
     status: "supported",
-    confidence: "doc",
-    noFixturePossible:
-      "B1 names six built-in agents. Discovery emits only file-backed agents from configured " +
-      "directories; synthetic builtins are not attached to discovery.agents, so no §11.2 golden " +
-      "can make the inventory the operative cause of a confident value (H1-28). Env-driven " +
-      "removal (B5, B6) is documented separately and pins only discovery.environment keys.",
+    confidence: "fixture",
+    fixture: "builtin-agents",
+    verifiedFacts: [FACT.B1],
     notes:
-      "Registered rather than omitted so B1 is distinguishable in §11.4 from facts nobody has " +
-      "looked at.",
+      "B1 entire: discovery synthesizes all six built-in names with scope builtin and no path. " +
+      "The builtin-agents fixture lists them active alongside a project agent; drop " +
+      "synthesizeBuiltinAgents and all six leave the golden (H1-28). Env-driven removal (B5, B6) " +
+      "is documented separately and pins only discovery.environment keys.",
   },
   {
     id: "discovery.builtinNameOverride",
@@ -1204,16 +1203,15 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.B4],
     minVersion: "2.1.0",
     status: "supported",
-    confidence: "doc",
-    noFixturePossible:
-      "The user-over-builtin override rule requires builtins to appear in discovery alongside " +
-      "user-defined agents so a project agent that reuses a built-in name can shadow the " +
-      "built-in while keeping its frontmatter model. Discovery does not synthesize builtins " +
-      "yet, so no collision record can name a builtin candidate and no model field can be " +
-      "compared against the built-in default (H1-28).",
+    confidence: "fixture",
+    fixture: "builtin-agents",
+    verifiedFacts: [],
     notes:
-      "Registered rather than omitted so B4 is distinguishable in §11.4 from facts nobody has " +
-      "looked at.",
+      "The builtin-agents fixture declares a project agent named Explore with a model field; " +
+      "discovery records the file-backed agent active and the synthetic Explore builtin " +
+      "shadowed with rule B4 and the override as effective. Drop mergeBuiltinAgents and the " +
+      "shadowed builtin and collision record leave the golden (H1-28). B4 model-retention " +
+      "clause is resolution (F7), not discovery, so the fact is not verified entire.",
   },
   {
     id: "builtin.readOnly",
@@ -1797,12 +1795,13 @@ export function gateWarning(
  * collision record can be emitted un-gated; a new rule cannot be spelled here
  * until its entry exists.
  */
-export type CollisionRule = typeof FACT.A1 | typeof FACT.A3 | typeof FACT.A4;
+export type CollisionRule = typeof FACT.A1 | typeof FACT.A3 | typeof FACT.A4 | typeof FACT.B4;
 
 const COLLISION_MATRIX_IDS: Record<CollisionRule, MatrixId> = {
   [FACT.A1]: "agent.collisionCrossScope",
   [FACT.A3]: "agent.collisionNested",
   [FACT.A4]: "agent.collisionSameDir",
+  [FACT.B4]: "discovery.builtinNameOverride",
 };
 
 export interface CollisionGate {

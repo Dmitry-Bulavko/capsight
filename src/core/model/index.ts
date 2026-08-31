@@ -12,6 +12,7 @@ export type Scope =
   | "plugin"
   | "local"
   | "nested-project"
+  | "builtin"
   | "unknown";
 
 export type ContextPreset =

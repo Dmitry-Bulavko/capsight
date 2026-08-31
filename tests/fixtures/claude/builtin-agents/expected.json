@@ -8,8 +8,48 @@
           "platform": "claude",
           "scope": "builtin"
         },
+        "status": "shadowed",
+        "configuration": {
+          "unknownFields": {}
+        },
+        "isPluginAgent": false,
+        "collision": {
+          "candidates": [
+            {
+              "platform": "claude",
+              "scope": "builtin"
+            },
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/Explore.md"
+            }
+          ],
+          "effective": {
+            "platform": "claude",
+            "scope": "project",
+            "path": ".claude/agents/Explore.md"
+          },
+          "rule": "B4",
+          "matrixRef": "discovery.builtinNameOverride",
+          "enforcement": "enforced"
+        }
+      },
+      {
+        "name": "Explore",
+        "description": "User-defined Explore agent that overrides the built-in",
+        "source": {
+          "platform": "claude",
+          "scope": "project",
+          "path": ".claude/agents/Explore.md"
+        },
         "status": "active",
         "configuration": {
+          "tools": [
+            "Read",
+            "Grep"
+          ],
+          "model": "sonnet",
           "unknownFields": {}
         },
         "isPluginAgent": false
@@ -67,23 +107,6 @@
         "isPluginAgent": false
       },
       {
-        "name": "observer",
-        "description": "Agent used to snapshot resolution-affecting environment variables",
-        "source": {
-          "platform": "claude",
-          "scope": "project",
-          "path": ".claude/agents/observer.md"
-        },
-        "status": "active",
-        "configuration": {
-          "tools": [
-            "Read"
-          ],
-          "unknownFields": {}
-        },
-        "isPluginAgent": false
-      },
-      {
         "name": "statusline-setup",
         "description": "Built-in statusline setup agent (B1)",
         "source": {
@@ -103,79 +126,22 @@
         "type": "CLAUDE.md",
         "path": "CLAUDE.md",
         "scope": "project",
-        "sizeBytes": 208
+        "sizeBytes": 99
       }
     ],
     "mcpServers": [],
-    "settings": [
-      {
-        "scope": "project",
-        "path": ".claude/settings.json",
-        "priority": 30
-      }
-    ],
+    "settings": [],
     "trust": {
       "accepted": false,
       "projectPath": "."
     },
     "environment": {
-      "relevant": [
-        {
-          "key": "ANTHROPIC_BASE_URL",
-          "origin": "settings.env",
-          "effect": "Injected into every session and tool invocation"
-        },
-        {
-          "key": "CLAUDE_AGENT_SDK_DISABLE_BUILTIN_AGENTS",
-          "origin": "process",
-          "effect": "Removes all built-in agent types"
-        },
-        {
-          "key": "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
-          "origin": "process",
-          "effect": "Disables memory in frontmatter"
-        },
-        {
-          "key": "CLAUDE_CODE_DISABLE_BACKGROUND_TASKS",
-          "origin": "process",
-          "effect": "All subagents run in foreground; only Filter 1 applies"
-        },
-        {
-          "key": "CLAUDE_CODE_DISABLE_EXPLORE_PLAN_AGENTS",
-          "origin": "process",
-          "effect": "Removes Explore and Plan built-in agents"
-        },
-        {
-          "key": "CLAUDE_CODE_FORK_SUBAGENT",
-          "origin": "process",
-          "effect": "Controls fork mode (1 enables in non-interactive/SDK, 0 disables everywhere)"
-        },
-        {
-          "key": "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS",
-          "origin": "process",
-          "effect": "Sets parallel subagent limit"
-        },
-        {
-          "key": "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH",
-          "origin": "process",
-          "effect": "Sets subagent nesting limit; affects Agent tool availability"
-        },
-        {
-          "key": "CLAUDE_CODE_SUBAGENT_MODEL",
-          "origin": "process",
-          "effect": "Overrides subagent model (inherit treated as unset)"
-        },
-        {
-          "key": "DEPLOY_API_TOKEN",
-          "origin": "settings.env",
-          "effect": "Injected into every session and tool invocation"
-        }
-      ]
+      "relevant": []
     }
   },
   "resolutions": [
     {
-      "agentName": "observer",
+      "agentName": "Explore",
       "context": {
         "preset": "foreground-subagent",
         "isMainSession": false,
@@ -183,7 +149,7 @@
         "isFork": false,
         "isTeammate": false,
         "depth": 0,
-        "maxDepth": 2
+        "maxDepth": 3
       },
       "capabilities": [
         {
@@ -195,7 +161,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -205,7 +171,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -219,7 +185,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -229,7 +195,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -243,7 +209,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -253,7 +219,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -267,7 +233,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -277,7 +243,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -291,7 +257,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -301,7 +267,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -315,7 +281,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -325,7 +291,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -339,7 +305,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -349,7 +315,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -363,7 +329,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -373,7 +339,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -387,7 +353,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -397,7 +363,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -411,7 +377,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -421,7 +387,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -435,7 +401,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -445,7 +411,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -459,7 +425,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -469,7 +435,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -477,23 +443,25 @@
         {
           "capabilityId": "Grep",
           "kind": "tool",
-          "status": "denied",
+          "status": "available",
           "enforcement": "enforced",
           "sources": [
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md",
+              "fieldPath": "frontmatter.tools[1]"
             }
           ],
           "reasons": [
             {
-              "type": "denied",
-              "message": "Not included in tools whitelist (F2).",
+              "type": "declared",
+              "message": "Allowed by tools pattern \"Grep\" (F2).",
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md",
+                "fieldPath": "frontmatter.tools[1]"
               }
             }
           ]
@@ -507,7 +475,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -517,7 +485,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -531,7 +499,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -541,7 +509,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -555,7 +523,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -565,7 +533,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -579,7 +547,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md",
+              "path": ".claude/agents/Explore.md",
               "fieldPath": "frontmatter.tools[0]"
             }
           ],
@@ -590,7 +558,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md",
+                "path": ".claude/agents/Explore.md",
                 "fieldPath": "frontmatter.tools[0]"
               }
             }
@@ -605,7 +573,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -615,7 +583,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -629,7 +597,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -639,7 +607,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -653,7 +621,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -663,7 +631,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -677,7 +645,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -687,7 +655,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -701,7 +669,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -711,7 +679,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -725,7 +693,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -735,7 +703,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -749,7 +717,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -759,7 +727,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -773,7 +741,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -783,7 +751,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -797,7 +765,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -807,7 +775,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -821,7 +789,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -831,7 +799,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -845,7 +813,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -855,7 +823,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -869,7 +837,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -879,7 +847,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]
@@ -893,7 +861,7 @@
             {
               "platform": "claude",
               "scope": "project",
-              "path": ".claude/agents/observer.md"
+              "path": ".claude/agents/Explore.md"
             }
           ],
           "reasons": [
@@ -903,7 +871,7 @@
               "source": {
                 "platform": "claude",
                 "scope": "project",
-                "path": ".claude/agents/observer.md"
+                "path": ".claude/agents/Explore.md"
               }
             }
           ]

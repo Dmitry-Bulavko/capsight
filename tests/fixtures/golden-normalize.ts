@@ -172,7 +172,7 @@ function normalizeDiscovery(
 ): NormalizedDiscovery {
   const agents = sortByKeys(
     snapshot.agents
-      .filter((agent) => isWithinProject(projectRoot, agent.source.path))
+      .filter((agent) => agent.source.scope === "builtin" || isWithinProject(projectRoot, agent.source.path))
       .map((agent) => {
         const { id: _id, ...rest } = agent;
         return {

@@ -856,15 +856,15 @@ describe("correctness gate", () => {
 describe("correctness gate fixture corpus", () => {
   /**
    * Fixtures from SPEC §11.1 that are not yet authored. The corpus is complete
-   * (20/20) since `plugin-agents` landed with plugin agent discovery (H1-23),
+   * (21/21) since `plugin-agents` landed with plugin agent discovery (H1-23),
    * so this list is empty. It stays here because the test below fails until it
    * matches reality: a fixture that stops being runnable has to be declared
    * rather than silently skipped.
    */
   const EXPECTED_PENDING_FIXTURES: string[] = [];
 
-  it("declares exactly the 20 SPEC §11.1 fixture names", () => {
-    expect(CLAUDE_FIXTURE_NAMES).toHaveLength(20);
+  it("declares exactly the 21 SPEC §11.1 fixture names", () => {
+    expect(CLAUDE_FIXTURE_NAMES).toHaveLength(21);
     expect([...CLAUDE_FIXTURE_NAMES]).toEqual([...CLAUDE_FIXTURE_NAMES].sort());
   });
 
@@ -914,7 +914,7 @@ describe("correctness gate fixture corpus", () => {
   it("prints the pending fixtures with a count", () => {
     const formatted = formatPendingFixtures(inspectFixtureCorpus(FIXTURES_ROOT, CLAUDE_FIXTURE_NAMES));
     expect(formatted).toContain(
-      "pending fixtures (SPEC §11.1): " + EXPECTED_PENDING_FIXTURES.length + " of 20",
+      "pending fixtures (SPEC §11.1): " + EXPECTED_PENDING_FIXTURES.length + " of 21",
     );
     for (const name of EXPECTED_PENDING_FIXTURES) {
       expect(formatted).toContain(name);

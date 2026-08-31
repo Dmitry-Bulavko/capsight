@@ -91,8 +91,8 @@ Matrix entries added in `src/adapters/claude/version/matrix.ts`; `tools-filters`
 | Fact | Matrix entry | Evidence |
 |------|--------------|----------|
 | T5 | `context.foregroundBackground` | matrix-referenced, documentation-only (tools-filters pins T2 via `context.filter2`, not T5) |
-| B1 | `discovery.builtinInventory` | `noFixturePossible` — discovery.agents has no builtin channel yet |
-| B4 | `discovery.builtinNameOverride` | `noFixturePossible` — override needs builtin inventory in discovery |
+| B1 | `discovery.builtinInventory` | fixture `builtin-agents`, six synthetic scope-builtin agents (fixture-verified) |
+| B4 | `discovery.builtinNameOverride` | fixture `builtin-agents`, B4 collision record partial (doc); model clause is F7 |
 
 ### Closed in D3-04 (priority-2 skills/instructions/remaining cluster)
 

@@ -19,6 +19,7 @@ import { pluginScopedId, resolvePluginInstallations } from "./plugins.js";
 import type { RawAgentFile, AgentDiscoveryResult } from "./types.js";
 import { FACT } from "../version/facts.js";
 import { gateCollision, gateDiscovery, MATRIX } from "../version/matrix.js";
+import { synthesizeBuiltinAgents } from "./builtins.js";
 import {
   redactMcpServers,
   redactUnknownFields,
@@ -33,6 +34,7 @@ const SCOPE_PRIORITY: Record<Scope, number> = {
   local: 25,
   user: 20,
   plugin: 10,
+  builtin: 5,
   unknown: 0,
 };
 
@@ -339,6 +341,47 @@ function resolveCollisions(parsed: ParsedAgent[], version: string): Agent[] {
   return [...agents, ...invalidAgents];
 }
 
+/**
+ * Attach synthetic B1 builtins and shadow any whose name an active file-backed
+ * agent reuses (B4). Builtins rank below every configured agents directory.
+ */
+function mergeBuiltinAgents(
+  fileAgents: Agent[],
+  version: string,
+): Agent[] {
+  const builtins = synthesizeBuiltinAgents();
+  const activeByName = new Map<string, Agent>();
+  for (const agent of fileAgents) {
+    if (agent.status === "active") {
+      activeByName.set(agent.name, agent);
+    }
+  }
+
+  const overrideGate = gateCollision(FACT.B4, version);
+  const merged: Agent[] = [...fileAgents];
+
+  for (const builtin of builtins) {
+    const override = activeByName.get(builtin.name);
+    if (override) {
+      merged.push({
+        ...builtin,
+        status: "shadowed",
+        collision: {
+          candidates: [builtin.source, override.source],
+          effective: override.source,
+          rule: FACT.B4,
+          matrixRef: overrideGate.matrixRef,
+          enforcement: overrideGate.enforcement,
+        },
+      });
+    } else {
+      merged.push(builtin);
+    }
+  }
+
+  return merged;
+}
+
 export async function discoverAgentSources(
   projectScopes: ProjectScopeLevel[],
   projectPath: string,
@@ -452,7 +495,8 @@ export async function discoverAgents(
     pluginRoots,
   );
   const parsed = await Promise.all(rawFiles.map(parseAgentFile));
-  const agents = gateDiscoveredAgents(resolveCollisions(parsed, version), version);
+  const fileAgents = gateDiscoveredAgents(resolveCollisions(parsed, version), version);
+  const agents = mergeBuiltinAgents(fileAgents, version);
   const invalidCount = agents.filter((a) => a.status === "invalid").length;
   return { agents, invalidCount };
 }

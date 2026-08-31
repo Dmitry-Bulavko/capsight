@@ -286,18 +286,18 @@ describe("D3-02 trust-cluster tier movement", () => {
 });
 
 describe("D3-03 discovery/builtins-cluster tier movement", () => {
-  const DISCOVERY_BUILTIN_CLUSTER = [FACT.T5, FACT.B1, FACT.B4] as const;
-
-  const fixtures = new Set(["tools-filters"]);
+  const fixtures = new Set(["tools-filters", "builtin-agents"]);
 
   it("moves discovery/builtins-cluster facts off unverified with honest tiers", () => {
-    expect(DISCOVERY_BUILTIN_CLUSTER).toHaveLength(3);
-
-    for (const id of DISCOVERY_BUILTIN_CLUSTER) {
-      expect(
-        classifyFactCoverage(id, fixtures, CLAUDE_MATRIX, claudeFactConfidence),
-      ).toBe("documentation-only");
-    }
+    expect(
+      classifyFactCoverage(FACT.T5, fixtures, CLAUDE_MATRIX, claudeFactConfidence),
+    ).toBe("documentation-only");
+    expect(
+      classifyFactCoverage(FACT.B1, fixtures, CLAUDE_MATRIX, claudeFactConfidence),
+    ).toBe("fixture-verified");
+    expect(
+      classifyFactCoverage(FACT.B4, fixtures, CLAUDE_MATRIX, claudeFactConfidence),
+    ).toBe("documentation-only");
   });
 });
 

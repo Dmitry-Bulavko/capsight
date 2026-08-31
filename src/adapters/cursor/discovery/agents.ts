@@ -22,6 +22,7 @@ const SCOPE_PRIORITY: Record<Scope, number> = {
   local: 25,
   user: 20,
   plugin: 10,
+  builtin: 5,
   unknown: 0,
 };
 

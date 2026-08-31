@@ -1,0 +1,7 @@
+[
+  {
+    "agentName": "Explore",
+    "agentSourcePath": ".claude/agents/Explore.md",
+    "preset": "foreground-subagent"
+  }
+]
