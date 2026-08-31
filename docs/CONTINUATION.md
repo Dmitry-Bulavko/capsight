@@ -1,24 +1,34 @@
 # Capsight continuation
 
-**Active phase:** none — G1-MP complete  
-**Next:** §9 observed layer (deferred until platform APIs mature)
+**Active phase:** D5 — Evidence depth wave 5 (planned, not started)  
+**Next task:** D5-01 (promotion triage → `docs/EVIDENCE-PROMOTION.md`)
 
-## G1-MP outcome
+## Why D5
 
-| Platform | Rule | maxVersion | Fixture |
-|----------|------|------------|---------|
-| Cursor | `rules.fileExtension` | 3.16.17 | `cursor/version-drift` @ 3.16.18 |
-| Codex | `settings.knownKeysOnly` | 0.130.0 | `codex/version-drift` @ 0.131.0 |
+Structural evidence closed (unverified 18 terminal, entry-owed 0). Maturity gap: **66 doc-only** vs **41 fixture-verified**. Claude alone: 52 doc-only, many with fixtures + empty `verifiedFacts`.
 
-**859 tests**; all three platforms now have corpus-backed drift demos (Claude G1-04).
+## Phase queue
 
-## Evidence layer (stable — no new wave)
+```
+D5-01 → D5-02 → D5-03 → D5-04 → D5-05 → D5-06 → D5-07 → §9
+```
 
-| Metric | Value |
-|--------|-------|
-| unverified | 18 / 145 (terminal) |
-| entry-owed | 0 |
-| fixture-verified | 41 / 145 (28%) |
+## Target gate (D5-07)
+
+- fixture-verified ≥ **50** (from 41)
+- unverified ≤ 18, entry-owed = 0 (D4-06 unchanged)
+
+## Handoffs ready
+
+| Task | Handoff |
+|------|---------|
+| D5-01 | `docs/tasks/D5-01-promotion-triage.md` |
+| D5-02 | `docs/tasks/D5-02-claude-context-tools.md` |
+| D5-03 | `docs/tasks/D5-03-claude-permissions-trust.md` |
+| D5-04 | `docs/tasks/D5-04-claude-skills-instructions.md` |
+| D5-05 | `docs/tasks/D5-05-claude-environment.md` |
+| D5-06 | `docs/tasks/D5-06-housekeeping-multiplatform.md` |
+| D5-07 | `docs/tasks/D5-07-fixture-verified-gate.md` |
 
 ## Orchestration
 

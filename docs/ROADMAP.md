@@ -4,19 +4,19 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**G1-MP complete** — Cursor/Codex maxVersion drift demos mirror G1-04. Deferred: §9 observed layer.
+**D5 — Evidence depth wave 5 (fixture promotion)** is planned. Structural debt closed; target is doc-only → fixture-verified under H1-28.
 
-Previous: **Evidence wave 4 complete** — unverified **18** terminal; **41/145 fixture-verified (28%)**.
+Previous: **G1-MP complete** — three-platform drift demos. Baseline **41/145 fixture-verified (28%)**, unverified **18** terminal.
 
 ## Phase order (active backlog)
 
 ```
-G1-MP → §9
+D5 (fixture promotion) → §9
 ```
 
-Evidence waves 1–4 closed structural debt (`entry-owed=0`, unverified floor). Remaining doc-only tiers are mostly honest partial pins under H1-28.
+Waves 1–4 closed `entry-owed` and unverified floor. Wave 5 promotes matrix-referenced facts that already have fixtures but lack `verifiedFacts` deletion tests.
 
-Completed chain: `F0 → G1-04 → D3 → SS → D4 → SS-deep → B1`.
+Completed chain: `… → D4 → SS-deep → B1 → G1-MP`.
 
 ## Phase status
 
@@ -45,6 +45,7 @@ Completed chain: `F0 → G1-04 → D3 → SS → D4 → SS-deep → B1`.
 | SS-deep — Settings argument depth | `done` | S6/S7 matching refused; shape pins from SS unchanged |
 | B1 — Builtin discovery channel | `done` | Six builtins in discovery; B1 fixture-verified; B4 override pinned |
 | G1-MP — Drift on Cursor/Codex | `done` | maxVersion on confident rule per platform |
+| D5 — Evidence depth wave 5 | `planned` | doc-only → fixture-verified where H1-28 allows; floor gate |
 | §9 — Observed layer | `deferred` | Revisit [S0-DECISION.md](./S0-DECISION.md) when platform APIs mature |
 
 ## Surface rule
@@ -82,22 +83,38 @@ D2 triaged 87 unreferenced facts; D3 closed Claude priority-2 clusters (35→10 
 
 **Honest ceiling:** Facts that cannot be fixture-promoted (home-path layers, spike-only probes, unknown registry confidence) stay unreferenced with terminal disposition — that is success, not failure.
 
-## D5 scope note — Evidence depth wave 4 (fixture + channels)
+## D5 scope note — Evidence depth wave 5 (fixture promotion)
 
-D4 closed every `entry-owed` row and held unverified at **18** terminal refusals. The remaining honesty gap is not unreferenced facts — it is **shallow fixture pins** and **discovery channels that block promotion**:
+Waves 1–4 closed structural gaps (`entry-owed=0`, unverified **18** terminal). Wave 5 targets the **maturity gap**: facts matrix-referenced at `documentation-only` that already have fixtures and resolver wiring but no H1-28 `verifiedFacts` promotion.
 
-| Gap | Examples | Phase |
-|-----|----------|-------|
-| Settings semantics depth | S6 prefix matching, S7 path glob matching beyond `/` vs `//` anchoring | SS-deep |
-| Missing discovery channel | B1 six builtins, B4 Explore override — discovery emits file-backed agents only | B1 |
-| Multi-platform drift demo | No Cursor/Codex `maxVersion` on a confident rule | G1-MP (deferred) |
-| Runtime observation | §9 observed layer | §9 (deferred) |
+**Baseline (post-B1/G1-MP):**
 
-**SS-deep honest ceiling:** If prefix or glob matching requires stating "this invocation would be approved", refuse in writing — same bar as D1-03 and §2.3.
+| platform | fixture-verified | documentation-only | unverified |
+|---|---|---|---|
+| claude | 18 / 92 (20%) | 52 | 10 |
+| cursor | 10 / 27 (37%) | 5 | 7 |
+| codex | 13 / 26 (50%) | 9 | 1 |
+| **total** | **41 / 145 (28%)** | **66** | **18** |
 
-**B1 gate:** Synthetic builtin records appear in discovery output; B1/B4 matrix entries either gain fixture evidence or record why still unpromotable.
+**Primary ROI:** Claude — 52 doc-only facts; many entries already carry `confidence: "fixture"` with `verifiedFacts: []` (entry-level pin without §11.4 fact promotion). Cursor/Codex doc-only rows are mostly terminal `noFixturePossible` (5 + 9); opportunistic only.
 
-**Gate (wave 4):** No regression on D4-06 (`entry-owed=0`, unverified ≤ 18); each SS-deep/B1 task ends with matrix + fixture or written refusal.
+**Promotion clusters (wave 5 tasks):**
+
+| Cluster | Facts (candidates) | Existing fixtures | Risk |
+|---|---|---|---|
+| Context / tools | T1, T2, T3, T5, F11 | tools-filters, background, fork | Medium — filter semantics |
+| Permissions / trust | P1, P5, R1, R2, R5, R6 | permission-inheritance, trust-inline-mcp, add-dir, nested-project | Medium — partial pins already |
+| Skills / instructions / builtins | K1, K7, K11, I1, B2, B4 | skills-preload, skill-allowed-tools, instructions, builtin-agents | Low–medium — B4 partial today |
+| Environment | E1–E9, B5, B6, N3, N4 | environment, depth-limit | High — discovery.environment channel may pin keys only |
+| Housekeeping | `agent.depthLimitDefault` pendingFixture, verifiedFacts audit | version-drift, depth-limit | Low — matrix consistency |
+
+**Honest ceiling:** Facts already refused (`noFixturePossible`, §2.3 matching halves, §9 out-of-scope) are out of scope. Promotion that fails deletion test stays doc-only with reason recorded — not a task failure.
+
+**Gate (D5-07):** D4-06 unchanged (`entry-owed=0`, unverified ≤ 18); total fixture-verified ≥ **50** (from 41) OR explicit gate revision in handoff with measured refusal count; promotion refusals recorded in ledger.
+
+## D5 scope note (historical) — Evidence depth wave 4 (fixture + channels)
+
+Wave 4 closed SS-deep (S6/S7 matching refusals) and B1 (builtin discovery channel). See phase status SS-deep + B1.
 
 ## Coverage baseline (measured 2026-08-30, `28a510b`) — historical
 

@@ -385,6 +385,22 @@ Order: G1-MP-01 → G1-MP-02.
 | G1-MP-01 | G1-MP | Cursor maxVersion drift demo | done | §8.4, §11.1 | cursor/matrix.ts, fixtures | Above max → scoped unknown; neighbor stays confident |
 | G1-MP-02 | G1-MP | Codex maxVersion drift demo | done | §8.4, §11.1 | codex/matrix.ts, fixtures | Same criterion as G1-MP-01 |
 
+## D5 — Evidence depth wave 5 (fixture promotion)
+
+Promote matrix-referenced doc-only facts to fixture-verified where H1-28 deletion tests pass. D4-06 gate must not regress.
+
+Order: D5-01 → D5-02 → D5-03 → D5-04 → D5-05 → D5-06 → D5-07.
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| D5-01 | D5 | Promotion triage — doc-only → promotion-owed or refusal | todo | §8.1, §11.4, H1-28 | docs/EVIDENCE-PROMOTION.md | Every Claude doc-only fact classified; clusters assigned |
+| D5-02 | D5 | Claude context/tools promotion | todo | T1–T3, T5, F11, §11.1 | matrix.ts, tools-filters, background, fork | Cluster promoted or refused in writing |
+| D5-03 | D5 | Claude permissions/trust promotion | todo | P1, P5, R1, R2, R5, R6 | matrix.ts, permission-inheritance, trust fixtures | Same criterion |
+| D5-04 | D5 | Claude skills/instructions/builtins promotion | todo | K1, K7, K11, I1, B2, B4 | matrix.ts, skills/instructions/builtin fixtures | Same criterion |
+| D5-05 | D5 | Claude environment promotion | todo | E1–E9, B5, B6, N3, N4 | matrix.ts, environment, depth-limit | Same criterion; extend golden if needed |
+| D5-06 | D5 | Matrix housekeeping + multi-platform opportunistic | todo | §8.2, §11.4 | matrix.ts (all platforms) | pendingFixture cleared; XA3/CW2 promoted or refused |
+| D5-07 | D5 | D5 gate — fixture-verified floor ≥ 50 | todo | §11.4, D4-06 | coverage-report.test.ts, EVIDENCE-PROMOTION.md | fv ≥ 50; unverified ≤ 18; entry-owed = 0 |
+
 ## Deferred backlog
 
 | ID | Phase | Title | Status | Notes |
