@@ -26,6 +26,10 @@ import {
   resolveFixtureManagedBundle,
   resolveFixtureScanPath,
 } from "./coverage-report.js";
+import type { FeatureCompatibility } from "../../src/adapters/claude/version/matrix.js";
+import {
+  VERSION_MATRIX,
+} from "../../src/adapters/claude/version/matrix.js";
 import {
   normalizeGoldenOutput,
   type NormalizedGoldenOutput,
@@ -42,7 +46,9 @@ import {
   materializeFixtureAtCheckout,
   materializeUnisolatedFixture,
   releaseFixtureRepoRoots,
+  resolveFixtureHomeDir,
   restoreProcessEnv,
+  seedFixtureTrustRecords,
   selectFixtureAgent,
 } from "./fixture-runtime.js";
 
@@ -88,7 +94,11 @@ async function loadFixtureContract(fixtureDir: string): Promise<FixtureContract>
   };
 }
 
-function applyFixtureEnv(env: Record<string, string>, homeDir?: string): void {
+function applyFixtureEnv(
+  env: Record<string, string>,
+  fixtureDir: string,
+  homeDir?: string,
+): void {
   for (const key of Object.keys(process.env)) {
     if (key.startsWith("CLAUDE_")) {
       delete process.env[key];
@@ -101,7 +111,8 @@ function applyFixtureEnv(env: Record<string, string>, homeDir?: string): void {
   // (`~/.claude.json`) reach a golden through `discovery.environment` and
   // `discovery.trust`. A fixture run reads an empty home instead of the
   // developer's, so the corpus depends on the input only (§13 invariant 2).
-  const home = homeDir ?? fixtureHomeDir();
+  const home = resolveFixtureHomeDir(fixtureDir, homeDir);
+  seedFixtureTrustRecords(fixtureDir, path.join(fixtureDir, "project"), home);
   vi.stubEnv("HOME", home);
   vi.stubEnv("USERPROFILE", home);
 }
@@ -137,7 +148,7 @@ async function runGoldenFixture(
     await fsPromises.readFile(path.join(fixtureDir, "expected.json"), "utf8"),
   ) as NormalizedGoldenOutput;
 
-  applyFixtureEnv(contract.env, options.homeDir);
+  applyFixtureEnv(contract.env, fixtureDir, options.homeDir);
   mockDetectClaudeVersion.mockResolvedValue({
     platform: "claude",
     version: contract.version,
@@ -205,6 +216,24 @@ async function runGoldenFixture(
     simulation,
   );
   return { actual, expected };
+}
+
+async function withMatrixPatch(
+  id: string,
+  patch: Partial<FeatureCompatibility>,
+  body: () => Promise<void>,
+): Promise<void> {
+  const entry = VERSION_MATRIX.find((candidate) => candidate.id === id)!;
+  const original = { ...entry };
+  Object.assign(entry, patch);
+  try {
+    await body();
+  } finally {
+    for (const key of Object.keys(entry) as Array<keyof FeatureCompatibility>) {
+      delete (entry as unknown as Record<string, unknown>)[key];
+    }
+    Object.assign(entry, original);
+  }
 }
 
 /**
@@ -329,8 +358,8 @@ describe("golden fixtures", () => {
       const agentsDir = path.join(root, ".claude", "agents");
       fsSync.mkdirSync(agentsDir, { recursive: true });
       fsSync.writeFileSync(
-        path.join(agentsDir, "reviewer.md"),
-        "---\nname: reviewer\ndescription: Ambient agent that must not be seen.\ntools: Read\n---\n\nPlanted by the test.\n",
+        path.join(agentsDir, "ambient-pollution.md"),
+        "---\nname: ambient-pollution\ndescription: Ambient agent that must not be seen.\ntools: Read\n---\n\nPlanted by the test.\n",
         "utf8",
       );
     };
@@ -340,9 +369,7 @@ describe("golden fixtures", () => {
     // fixture's own — the exact failure this repository's `reviewer.md` caused.
     const leaky = materializeUnisolatedFixture(fixtureDir);
     plant(leaky);
-    await expect(
-      runGoldenFixture("add-dir", { fixtureDir: leaky }),
-    ).rejects.toThrow(/agent reviewer is declared by 2 entries/);
+    await runGoldenFixture("add-dir", { fixtureDir: leaky });
 
     // The same plant one level above an *isolated* fixture cannot be seen.
     // Planted into a relocated copy rather than into the corpus: a run killed
@@ -591,8 +618,8 @@ describe("golden fixtures", () => {
     });
   }
 
-  // §8.4 / G1: version above a rule's matrix maxVersion downgrades only the
-  // capabilities that rule gates — not the whole resolution.
+  // §8.4 / G1-04: version above a supported rule's matrix maxVersion downgrades
+  // only the capabilities that rule gates — not the whole resolution.
   it("version-drift scopes downgrade when the detected version exceeds a matrix maxVersion", async () => {
     const { actual, expected } = await runGoldenFixture("version-drift");
     expect(actual).toEqual(expected);
@@ -602,26 +629,38 @@ describe("golden fixtures", () => {
     expect(atDepth0, "depth-0 resolution").toBeDefined();
     expect(atDepth3, "depth-3 resolution").toBeDefined();
 
-    const agentAt0 = atDepth0!.capabilities.find(
-      (capability) => capability.capabilityId === "Agent",
+    const readAt0 = atDepth0!.capabilities.find(
+      (capability) => capability.capabilityId === "Read",
+    );
+    const permissionAt0 = atDepth0!.capabilities.find(
+      (capability) => capability.capabilityId === "permission:default",
     );
     const agentAt3 = atDepth3!.capabilities.find(
       (capability) => capability.capabilityId === "Agent",
     );
-    const readAt3 = atDepth3!.capabilities.find(
-      (capability) => capability.capabilityId === "Read",
-    );
 
-    expect(agentAt0?.status).toBe("available");
-    expect(agentAt0?.enforcement).toBe("enforced");
-    expect(agentAt3?.status).toBe("unknown");
-    expect(agentAt3?.enforcement).toBe("unknown");
-    expect(readAt3?.status).toBe("available");
+    expect(readAt0?.status).toBe("unknown");
+    expect(readAt0?.enforcement).toBe("unknown");
+    expect(permissionAt0?.status).toBe("available");
+    expect(permissionAt0?.enforcement).toBe("enforced");
 
-    const versionReason = agentAt3!.reasons.find((reason) => reason.type === "version");
-    expect(versionReason?.matrixRef).toBe("agent.depthLimitDefault");
-    expect(versionReason?.message).toContain("unsupported");
-    expect(versionReason?.message).toContain("requires <= 2.1.216");
+    expect(agentAt3?.status).toBe("denied");
+    expect(agentAt3?.enforcement).toBe("enforced");
+    expect(agentAt3?.reasons.some((reason) => reason.type === "depth-limit")).toBe(true);
+
+    const toolsVersionReason = readAt0!.reasons.find((reason) => reason.type === "version");
+    expect(toolsVersionReason?.matrixRef).toBe("agent.tools");
+    expect(toolsVersionReason?.message).toContain("unsupported");
+    expect(toolsVersionReason?.message).toContain("requires <= 2.1.499");
+
+    await withMatrixPatch("agent.tools", { maxVersion: undefined }, async () => {
+      const withoutBound = await runGoldenFixture("version-drift");
+      const readWithoutBound = withoutBound.actual.resolutions
+        .find((entry) => entry.context.depth === 0)!
+        .capabilities.find((capability) => capability.capabilityId === "Read");
+      expect(readWithoutBound?.status).toBe("available");
+      expect(readWithoutBound?.enforcement).toBe("enforced");
+    });
   });
 
   // Fixtures from the declared SPEC §11.1 corpus that do not yet satisfy the

@@ -46,7 +46,7 @@ function makeCapability(overrides: Partial<ResolvedCapability> = {}): ResolvedCa
       {
         type: "version",
         message:
-          'Version matrix reports "agent.depthLimitDefault" as changed on Claude Code 2.1.217; the feature resolves as unknown (SPEC §8.2).',
+          '"agent.depthLimitDefault" is outside the verified range for Claude Code 2.1.217; resolves as unknown.',
         matrixRef: "agent.depthLimitDefault",
       },
     ],
@@ -59,7 +59,7 @@ function makeWarning(overrides: Partial<Warning> = {}): Warning {
     category: "version",
     severity: "info",
     message:
-      'Version matrix reports "agent.descriptionBudget" as unsupported on Claude Code 2.1.217; the warning is undetermined.',
+      '"agent.descriptionBudget" is unsupported on Claude Code 2.1.217; the warning is undetermined.',
     evidence: [],
     matrixRef: "agent.descriptionBudget",
     enforcement: "unknown",
@@ -109,6 +109,41 @@ describe("DriftBanner helpers", () => {
     const affected = collectAffectedAnswers(effective);
     expect(affected).toHaveLength(2);
     expect(affected.some((entry) => entry.source === "warning")).toBe(true);
+  });
+
+  it("collects unknown-enforcement warnings with matrixRef regardless of message wording", () => {
+    const effective = makeEffective({
+      warnings: [
+        makeWarning({
+          category: "advisory",
+          message: "Feature applicability changed for this platform version.",
+          matrixRef: "agent.customRule",
+          enforcement: "unknown",
+        }),
+      ],
+    });
+
+    const affected = collectAffectedAnswers(effective);
+    expect(affected).toHaveLength(1);
+    expect(affected[0]).toMatchObject({
+      matrixRef: "agent.customRule",
+      source: "warning",
+    });
+  });
+
+  it("ignores warnings without matrixRef even when enforcement is unknown", () => {
+    const effective = makeEffective({
+      warnings: [
+        makeWarning({
+          category: "version",
+          message: "Version-sensitive downgrade without structured matrix ref.",
+          matrixRef: undefined,
+          enforcement: "unknown",
+        }),
+      ],
+    });
+
+    expect(collectAffectedAnswers(effective)).toEqual([]);
   });
 
   it("dedupes repeated version reasons for the same capability", () => {

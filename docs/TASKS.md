@@ -289,3 +289,43 @@ Order: G1-01 → G1-02 → G1-03.
 | G1-01 | G1 | Version applicability per matrix entry | done | §8.1, §8.2, §8.4 | */version/matrix.ts, resolve-enforcement | A detected version outside a rule's range downgrades that rule, not the whole scan |
 | G1-02 | G1 | **UI:** drift banner + affected answers | done | §8.4, §2.4, inv 11 | src/ui/components/DriftBanner.tsx | User sees which answers the version gap touches; no blanket "unsupported" |
 | G1-03 | G1 | Drift fixture: version above the matrix | done | §11.1–11.3, §8.4 | tests/fixtures/claude/version-drift/ | Golden pins the downgrade, not a confident answer |
+
+## F0 — Review follow-ups
+
+Post-4420172 review: UI must not match resolver output by message substring; warning enforcement visible; CLI/API warnings DRY.
+
+Order: F0-01 → F0-02 → F0-03 → F0-04 → F0-05.
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| F0-01 | F0 | WarningItem renders enforcement | done | inv 3, §7.6 | WarningsPanel.tsx, styles.css | Each warning row shows enforcement; unknown visually distinct |
+| F0-02 | F0 | Fork + drift: match by type/matrixRef, not prose | done | §7.4, T3, §8.4 | DeclaredEffective.tsx, DriftBanner.tsx | Fork notice uses context-filter + matrixRef T3; drift warnings match category version or matrixRef, not "Version matrix" substring |
+| F0-03 | F0 | Warning↔capability link without UI heuristics | done | inv 3, §7.6 | resolver or WarningsPanel | Resolver sets capabilityIds on Warning OR capability badge removed; no endsWith/includes matching |
+| F0-04 | F0 | SimulationView F8 display single source | done | F8, H1-29, §2.4 | SimulationView.tsx | No dead branch; substitute identity reads from entry.effective only |
+| F0-05 | F0 | Shared collectAgentWarnings application helper | done | §12.5, §7.6, V1 gate | application/, cli/, routes/agents.ts | CLI and GET /api/warnings call one function; parity test |
+
+## G1-04 — Drift demonstration (follow-up)
+
+Order: G1-04 (after F0).
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| G1-04 | G1 | maxVersion on a confident rule + fixture proves downgrade | done | §8.4, §11.1 | matrix.ts, version-drift or new fixture | At fixture version rule is supported/enforced; above max → scoped unknown; neighbor stays confident |
+
+## D3 — Evidence wave 2
+
+Target: close Claude `entry-owed` priority-2 facts per EVIDENCE-LEDGER; unverified below 45. Gate D2-06 already fail-closed.
+
+Order: D3-01 → D3-02 → D3-03 → D3-04 → D3-05.
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| D3-01 | D3 | Claude env-driven facts — matrix entries | done | §3.11, §11.4 | matrix.ts, environment fixture | E1,E2,E6,E8,B5,B6,N3,N4 (+ overlaps) referenced; unverified drops |
+| D3-02 | D3 | Claude trust facts — matrix entries | done | §3.7, §11.4 | matrix.ts, trust/add-dir fixtures | R2, R6 referenced or honestly refused |
+| D3-03 | D3 | Claude discovery/builtins — matrix entries | done | §3.3, §3.9, §11.4 | matrix.ts, discovery fixtures | T5, B1, B4 referenced or honestly refused |
+| D3-04 | D3 | Claude skills/instructions/remaining | done | §3.6, §3.8, §3.10, §11.4 | matrix.ts, fixtures | K7, K9, I4, N1, P3, M4, M5 closed or refused |
+| D3-05 | D3 | D3 gate — unverified below 45 | done | §11.4, D2-06 | EVIDENCE-LEDGER, coverage-report | Total unverified < 45; ledger matches buildCoverageReport |
+
+## S6/S7/S11 — Settings semantics (planned)
+
+H1 outcome: recorded as unknown. Evaluate or implement prefix/glob/additionalDirectories matching.

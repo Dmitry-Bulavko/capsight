@@ -686,6 +686,42 @@ export function loadEvidenceLedgerGateIndex(
   return parseEvidenceLedgerGateIndex(fs.readFileSync(ledgerPath, "utf8"));
 }
 
+/** Per-platform unverified counts from the ledger summary table (D3-05). */
+export interface EvidenceLedgerMeasuredCounts {
+  claude: number;
+  cursor: number;
+  codex: number;
+  total: number;
+}
+
+/** Parses the `Current (this ledger)` row in `docs/EVIDENCE-LEDGER.md`. */
+export function parseEvidenceLedgerMeasuredCounts(
+  markdown: string,
+): EvidenceLedgerMeasuredCounts {
+  const match = markdown.match(
+    /\|\s*Current \(this ledger\)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*\*\*(\d+)\*\*\s*\|/,
+  );
+  if (!match) {
+    throw new Error(
+      "Could not parse Current (this ledger) row in EVIDENCE-LEDGER.md",
+    );
+  }
+
+  const claude = Number(match[1]);
+  const cursor = Number(match[2]);
+  const codex = Number(match[3]);
+  const total = Number(match[4]);
+
+  return { claude, cursor, codex, total };
+}
+
+/** Reads measured unverified counts from the ledger summary table. */
+export function loadEvidenceLedgerMeasuredCounts(
+  ledgerPath: string = EVIDENCE_LEDGER_PATH,
+): EvidenceLedgerMeasuredCounts {
+  return parseEvidenceLedgerMeasuredCounts(fs.readFileSync(ledgerPath, "utf8"));
+}
+
 /** Maps `platform:factId` to disposition; rejects duplicate keys. */
 export function indexEvidenceLedger(
   entries: readonly EvidenceLedgerEntry[],

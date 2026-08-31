@@ -1,20 +1,22 @@
 # Capsight continuation
 
-**Active phase:** none — V1, D2, P1, G1 complete per ROADMAP.
+**Active phase:** S6/S7/S11 — Settings semantics (planned)  
+**Next task:** handoffs not yet created
 
-## Completed (2026-08-31)
+## Phase order
 
-| Phase | Tasks | Gate |
-|-------|-------|------|
-| V1 — UI Surface | V1-01…07 | Warnings, §7.4 pairs, enforcement, deferrals |
-| D2 — Evidence depth | D2-01…06 | Ledger + gate; 87 facts triaged |
-| P1 — Policy surface | P1-01…04 | Managed simulation in browser |
-| G1 — Version drift guard | G1-01…03 | Scoped downgrade visible |
+```
+F0 ✓ → G1-04 ✓ → D3 ✓ → S6/S7/S11
+```
 
-## Next (post-v0.1 backlog)
+## D3 — done
 
-See ROADMAP §Post-v0.1 backlog: remaining S1–S8/K12 via D2-style ledger, observed layer revisit (S0).
+All five tasks closed. Unverified **87 → 37** (gate < 45). **817 tests**, typecheck green.
+
+## S6/S7/S11
+
+H1 outcome: prefix Bash matching, gitignore globs Read/Edit, additionalDirectories recorded as unknown. Needs handoffs before orchestration continues.
 
 ## Orchestration
 
-Fresh subagent per task; implementer + reviewer loop; orchestrator updates TASKS/ROADMAP only.
+One task `in_progress`; implementer + fresh reviewer per task.

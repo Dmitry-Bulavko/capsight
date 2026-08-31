@@ -1,7 +1,9 @@
 import { Router, type Response } from "express";
+import {
+  collectAgentWarnings,
+} from "../../application/collect-warnings.js";
 import { AgentNotFoundError, resolve } from "../../application/resolve.js";
 import { getAgentsFromResult, getLastScan } from "../../application/scan-store.js";
-import type { Warning } from "../../core/model/index.js";
 import { getQueryString, parseContextFromQuery } from "../context-query.js";
 
 function requireLastScan(res: Response) {
@@ -102,9 +104,7 @@ capabilitiesRouter.get("/:id/explain", async (req, res) => {
   }
 });
 
-export interface AgentWarning extends Warning {
-  agentId: string;
-}
+export type { AgentWarning } from "../../application/collect-warnings.js";
 
 export const warningsRouter = Router();
 
@@ -120,19 +120,10 @@ warningsRouter.get("/", async (req, res) => {
     return;
   }
 
-  const warnings: AgentWarning[] = [];
-  const activeAgents = lastScan.snapshot.agents.filter((agent) => agent.status === "active");
-
-  for (const agent of activeAgents) {
-    const effective = await resolve({
-      snapshot: lastScan.snapshot,
-      agentId: agent.id,
-      context: parsed.context,
-    });
-    for (const warning of effective.warnings) {
-      warnings.push({ ...warning, agentId: agent.id });
-    }
-  }
+  const warnings = await collectAgentWarnings({
+    snapshot: lastScan.snapshot,
+    context: parsed.context,
+  });
 
   res.json({
     warnings,

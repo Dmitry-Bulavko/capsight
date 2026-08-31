@@ -32,6 +32,58 @@ export function cleanupFixtureHome(): void {
 }
 
 /**
+ * Home directory a golden run reads trust and user settings from. Uses
+ * `home/` under the fixture when present; otherwise the isolated empty home.
+ */
+export function resolveFixtureHomeDir(fixtureDir: string, override?: string): string {
+  if (override !== undefined) {
+    return override;
+  }
+  const fixtureHome = path.join(fixtureDir, "home");
+  if (fs.existsSync(fixtureHome)) {
+    return fixtureHome;
+  }
+  return fixtureHomeDir();
+}
+
+/**
+ * Write `~/.claude.json` trust records from an optional `trust-records.json`
+ * beside the fixture. Keys are project-relative folder paths; only `true`
+ * entries are written — absent paths stay honestly untrusted.
+ */
+export function seedFixtureTrustRecords(
+  fixtureDir: string,
+  projectRoot: string,
+  homeDir: string,
+): void {
+  const trustFile = path.join(fixtureDir, "trust-records.json");
+  if (!fs.existsSync(trustFile)) {
+    return;
+  }
+
+  const records = JSON.parse(fs.readFileSync(trustFile, "utf8")) as Record<
+    string,
+    boolean
+  >;
+  const projects: Record<string, { hasTrustDialogAccepted: boolean }> = {};
+  for (const [rel, accepted] of Object.entries(records)) {
+    if (!accepted) {
+      continue;
+    }
+    const abs = path.resolve(projectRoot, rel);
+    projects[abs] = { hasTrustDialogAccepted: true };
+    projects[abs.replace(/\\/g, "/")] = { hasTrustDialogAccepted: true };
+  }
+
+  fs.mkdirSync(homeDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(homeDir, ".claude.json"),
+    JSON.stringify({ projects }, null, 2),
+    "utf8",
+  );
+}
+
+/**
  * Fixture runs must also not read the repository that ships them (§11.2, §13
  * invariant 2) — the same class of leak H1-22 closed for `$HOME`.
  *

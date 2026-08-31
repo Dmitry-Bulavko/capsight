@@ -69,7 +69,7 @@ export function collectAffectedAnswers(
     }
     const versionScoped =
       warning.category === "version" ||
-      (warning.enforcement === "unknown" && warning.message.includes("Version matrix"));
+      (warning.enforcement === "unknown" && Boolean(warning.matrixRef));
     if (!versionScoped) {
       continue;
     }

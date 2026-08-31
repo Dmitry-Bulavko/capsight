@@ -1,3 +1,4 @@
+import path from "node:path";
 import type {
   ResolutionReason,
   SourceInfo,
@@ -7,7 +8,9 @@ import type {
   ClaudeAgent as Agent,
   RedactedMcpServer,
 } from "../model/index.js";
+import { agentTrustFolder } from "../discovery/trust.js";
 import { FACT, type FactId } from "../version/facts.js";
+import { MATRIX, type MatrixId } from "../version/matrix.js";
 
 export type TrustGatedKind = "inline-mcp" | "agent-hooks";
 
@@ -29,6 +32,8 @@ export interface ResolveTrustResult {
   /** Whether this resource is subject to project trust rules (R1/R5). */
   gated: boolean;
   reasons: ResolutionReason[];
+  /** Matrix entry backing the trust verdict for version gating. */
+  matrixRef: MatrixId;
 }
 
 const TRUST_EXEMPT_SCOPES = new Set<SourceInfo["scope"]>([
@@ -37,6 +42,15 @@ const TRUST_EXEMPT_SCOPES = new Set<SourceInfo["scope"]>([
   "managed",
   "plugin",
 ]);
+
+type TrustRule = typeof FACT.R1 | typeof FACT.R5 | typeof FACT.R2 | typeof FACT.R6;
+
+const TRUST_MATRIX_IDS: Record<TrustRule, MatrixId> = {
+  [FACT.R1]: MATRIX["trust.inlineMcp"],
+  [FACT.R5]: MATRIX["trust.frontmatterHooks"],
+  [FACT.R2]: MATRIX["trust.parentFolder"],
+  [FACT.R6]: MATRIX["trust.addDirSeparate"],
+};
 
 function makeReason(
   type: ResolutionReason["type"],
@@ -87,22 +101,87 @@ function hasDeclaredHooks(agent: Agent): boolean {
   return hooks.count > 0 || hooks.events.length > 0;
 }
 
+function trustFolderKey(folderPath: string): string {
+  return path.resolve(folderPath).replace(/\\/g, "/");
+}
+
+function lookupFolderTrust(
+  trust: TrustState,
+  folderPath: string,
+): boolean | "unknown" {
+  const key = trustFolderKey(folderPath);
+  const record = trust.folderRecords?.[key];
+  if (record === "unknown") {
+    return "unknown";
+  }
+  return record === true;
+}
+
+function agentTrustFolderAbsolute(agent: Agent, trust: TrustState): string {
+  const agentPath = agent.source.path ?? ".";
+  const relFolder = agentTrustFolder(agentPath);
+  if (relFolder === ".") {
+    return trust.projectPath;
+  }
+  if (path.isAbsolute(relFolder)) {
+    return relFolder;
+  }
+  return path.resolve(trust.repoRoot ?? trust.projectPath, relFolder);
+}
+
+function resolveTrustRule(
+  agent: Agent,
+  trust: TrustState,
+  kind: TrustGatedKind,
+): { accepted: boolean | "unknown"; rule: TrustRule; matrixRef: MatrixId } {
+  const defaultRule: TrustRule = kind === "inline-mcp" ? FACT.R1 : FACT.R5;
+  const agentFolder = agentTrustFolderAbsolute(agent, trust);
+  const projectKey = trustFolderKey(trust.projectPath);
+
+  if (agent.source.matrixRef === MATRIX["discovery.addDirAgents"]) {
+    const accepted = lookupFolderTrust(trust, agentFolder);
+    return {
+      accepted: accepted === "unknown" ? "unknown" : accepted,
+      rule: FACT.R6,
+      matrixRef: TRUST_MATRIX_IDS[FACT.R6],
+    };
+  }
+
+  if (trustFolderKey(agentFolder) !== projectKey) {
+    const accepted = lookupFolderTrust(trust, agentFolder);
+    return {
+      accepted: accepted === "unknown" ? "unknown" : accepted,
+      rule: FACT.R2,
+      matrixRef: TRUST_MATRIX_IDS[FACT.R2],
+    };
+  }
+
+  return {
+    accepted: trust.accepted,
+    rule: defaultRule,
+    matrixRef: TRUST_MATRIX_IDS[defaultRule],
+  };
+}
+
 function unknownResult(
   message: string,
   source: SourceInfo,
-  matrixRef?: FactId,
+  matrixRef: MatrixId,
+  rule: TrustRule,
 ): ResolveTrustResult {
   return {
     status: "unknown",
     gated: false,
-    reasons: [makeReason("unknown", message, source, matrixRef)],
+    matrixRef,
+    reasons: [makeReason("unknown", message, source, rule)],
   };
 }
 
 function availableReason(
   agent: Agent,
   kind: TrustGatedKind,
-  matrixRef: FactId,
+  rule: FactId,
+  matrixRef: MatrixId,
   message: string,
 ): ResolveTrustResult {
   const fieldPath =
@@ -110,15 +189,30 @@ function availableReason(
   return {
     status: "available",
     gated: false,
+    matrixRef,
     reasons: [
-      makeReason("trust", message, fieldSource(agent, fieldPath), matrixRef),
+      makeReason("trust", message, fieldSource(agent, fieldPath), rule),
     ],
   };
 }
 
+function blockedMessage(kind: TrustGatedKind, rule: TrustRule): string {
+  if (rule === FACT.R6) {
+    return "Inline MCP server blocked until the --add-dir folder trust is accepted (R6).";
+  }
+  if (rule === FACT.R2) {
+    return kind === "inline-mcp"
+      ? "Inline MCP server blocked until the containing folder trust is accepted; parent-folder trust does not count (R2)."
+      : "Agent frontmatter hooks blocked until the containing folder trust is accepted; parent-folder trust does not count (R2).";
+  }
+  return kind === "inline-mcp"
+    ? "Inline MCP server blocked until project trust is accepted (R1)."
+    : "Agent frontmatter hooks blocked until project trust is accepted (R5).";
+}
+
 /**
  * Resolve whether an agent resource is blocked by missing project trust.
- * @see docs/SPEC.md R1, R4, R5, §7.2
+ * @see docs/SPEC.md R1, R4, R5, R2, R6, §7.2
  */
 export function resolveTrustGate(input: ResolveTrustInput): ResolveTrustResult {
   const { agent, trust, kind, mcpServerEntry, mcpServerIndex } = input;
@@ -128,6 +222,8 @@ export function resolveTrustGate(input: ResolveTrustInput): ResolveTrustResult {
       return unknownResult(
         "No MCP server entry provided for inline-mcp trust resolution.",
         agent.source,
+        MATRIX["trust.inlineMcp"],
+        FACT.R1,
       );
     }
 
@@ -136,6 +232,7 @@ export function resolveTrustGate(input: ResolveTrustInput): ResolveTrustResult {
         agent,
         kind,
         FACT.R4,
+        MATRIX["trust.inlineMcp"],
         "Named MCP server reference does not require project trust (R4).",
       );
     }
@@ -145,6 +242,7 @@ export function resolveTrustGate(input: ResolveTrustInput): ResolveTrustResult {
         agent,
         kind,
         FACT.R4,
+        MATRIX["trust.inlineMcp"],
         `Inline MCP from ${agent.source.scope} scope loads without project trust (R4).`,
       );
     }
@@ -155,6 +253,7 @@ export function resolveTrustGate(input: ResolveTrustInput): ResolveTrustResult {
       return {
         status: "available",
         gated: false,
+        matrixRef: MATRIX["trust.frontmatterHooks"],
         reasons: [
           makeReason(
             "declared",
@@ -170,6 +269,7 @@ export function resolveTrustGate(input: ResolveTrustInput): ResolveTrustResult {
         agent,
         kind,
         FACT.R4,
+        MATRIX["trust.frontmatterHooks"],
         `Agent hooks from ${agent.source.scope} scope run without project trust (R4).`,
       );
     }
@@ -180,12 +280,13 @@ export function resolveTrustGate(input: ResolveTrustInput): ResolveTrustResult {
       ? `frontmatter.mcpServers[${mcpServerIndex ?? 0}]`
       : "frontmatter.hooks";
   const source = fieldSource(agent, fieldPath);
-  const matrixRef: FactId = kind === "inline-mcp" ? FACT.R1 : FACT.R5;
+  const { accepted, rule, matrixRef } = resolveTrustRule(agent, trust, kind);
 
-  if (trust.accepted === "unknown") {
+  if (accepted === "unknown") {
     return {
       status: "unknown",
       gated: true,
+      matrixRef,
       reasons: [
         makeReason(
           "unknown",
@@ -195,37 +296,34 @@ export function resolveTrustGate(input: ResolveTrustInput): ResolveTrustResult {
             trust.unknownReason ? ` ${trust.unknownReason}` : ""
           }`,
           source,
-          matrixRef,
+          rule,
         ),
       ],
     };
   }
 
-  if (trust.accepted === true) {
+  if (accepted === true) {
     return {
       status: "available",
       gated: true,
+      matrixRef,
       reasons: [
         makeReason(
           "trust",
           "Project trust accepted; resource loads normally.",
           source,
-          matrixRef,
+          rule,
         ),
       ],
     };
   }
 
-  const blockedMessage =
-    kind === "inline-mcp"
-      ? "Inline MCP server blocked until project trust is accepted (R1)."
-      : "Agent frontmatter hooks blocked until project trust is accepted (R5).";
-
   return {
     status: "blocked_by_trust",
     gated: true,
+    matrixRef,
     reasons: [
-      makeReason("trust", blockedMessage, source, matrixRef),
+      makeReason("trust", blockedMessage(kind, rule), source, rule),
     ],
   };
 }
@@ -238,12 +336,18 @@ export function resolveMcpConfigFileTrust(
   source: SourceInfo,
 ): ResolveTrustResult {
   if (!isMcpConfigFileSource(source)) {
-    return unknownResult("Source is not an MCP configuration file.", source);
+    return unknownResult(
+      "Source is not an MCP configuration file.",
+      source,
+      MATRIX["trust.inlineMcp"],
+      FACT.R1,
+    );
   }
 
   return {
     status: "available",
     gated: false,
+    matrixRef: MATRIX["trust.inlineMcp"],
     reasons: [
       makeReason(
         "trust",

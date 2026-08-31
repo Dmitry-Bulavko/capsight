@@ -485,7 +485,7 @@ function buildTrustCapabilities(
           ],
           reasons: trustResult.reasons,
         },
-        MATRIX["trust.inlineMcp"],
+        trustResult.matrixRef,
         version,
       ),
     );
@@ -502,14 +502,14 @@ function buildTrustCapabilities(
     capabilities.push(
       gateCapability(
         {
-          capabilityId: "agent-hooks",
+          capabilityId: `hooks:${agent.source.path ?? agent.name}`,
           kind: "instruction",
           status: outcome.status,
           enforcement: outcome.enforcement,
           sources: [{ ...agent.source, fieldPath: "frontmatter.hooks" }],
           reasons: trustResult.reasons,
         },
-        MATRIX["trust.frontmatterHooks"],
+        trustResult.matrixRef,
         version,
       ),
     );
@@ -600,7 +600,7 @@ function agentDerivedFields(capability: ResolvedCapability): readonly string[] {
         ? ["mcpServers"]
         : [];
     case "instruction":
-      return capability.capabilityId === "agent-hooks" ? ["hooks"] : [];
+      return capability.capabilityId.startsWith("hooks:") ? ["hooks"] : [];
   }
 }
 

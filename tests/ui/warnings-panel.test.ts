@@ -11,6 +11,7 @@ import {
   warningRelatesToCapability,
   WarningsPanel,
 } from "../../src/ui/components/WarningsPanel.js";
+import { ENFORCEMENT_LABELS } from "../../src/ui/components/WhyPanel.js";
 
 function makeWarning(overrides: Partial<Warning> = {}): Warning {
   return {
@@ -94,8 +95,8 @@ describe("WarningsPanel helpers", () => {
     expect(shouldCollapseByCategory(warnings, 2)).toBe(true);
   });
 
-  it("relates bash guardrail warnings to the Bash capability via agent path overlap", () => {
-    const warning = makeWarning();
+  it("relates warnings to capabilities via resolver-provided relatedCapabilityIds", () => {
+    const warning = makeWarning({ relatedCapabilityIds: ["Bash"] });
     const capability = makeCapability();
     expect(warningRelatesToCapability(warning, capability)).toBe(true);
     expect(warningRelatesToCapability(warning, makeCapability({ capabilityId: "Edit" }))).toBe(
@@ -103,9 +104,16 @@ describe("WarningsPanel helpers", () => {
     );
   });
 
-  it("relates permission and MCP findings via evidence field paths", () => {
+  it("does not relate warnings without relatedCapabilityIds", () => {
+    const warning = makeWarning();
+    const capability = makeCapability();
+    expect(warningRelatesToCapability(warning, capability)).toBe(false);
+  });
+
+  it("links permission and MCP findings only to declared capability ids", () => {
     const bypass = makeWarning({
       message: "Agent declares permissionMode bypassPermissions, which skips permission prompts.",
+      relatedCapabilityIds: ["permission:bypassPermissions"],
       evidence: [
         {
           platform: "claude",
@@ -129,8 +137,15 @@ describe("WarningsPanel helpers", () => {
       reasons: [],
     });
     expect(warningRelatesToCapability(bypass, permissionCapability)).toBe(true);
+    expect(
+      warningRelatesToCapability(
+        bypass,
+        makeCapability({ capabilityId: "permission:default", kind: "permission" }),
+      ),
+    ).toBe(false);
 
     const inlineMcp = makeWarning({
+      relatedCapabilityIds: ["inline-mcp:0"],
       evidence: [
         {
           platform: "claude",
@@ -141,7 +156,7 @@ describe("WarningsPanel helpers", () => {
       ],
     });
     const mcpCapability = makeCapability({
-      capabilityId: "inline-mcp:demo",
+      capabilityId: "inline-mcp:0",
       kind: "mcp_server",
       sources: [
         {
@@ -154,6 +169,32 @@ describe("WarningsPanel helpers", () => {
       reasons: [],
     });
     expect(warningRelatesToCapability(inlineMcp, mcpCapability)).toBe(true);
+  });
+
+  it("does not badge tools when warning only names a disallowedTools entry", () => {
+    const disallowedOnlyWarning = makeWarning({
+      relatedCapabilityIds: ["mcp__github__merge_pr"],
+      evidence: [
+        {
+          platform: "claude",
+          scope: "project",
+          path: ".claude/agents/a.md",
+          fieldPath: "frontmatter.disallowedTools[0]",
+        },
+      ],
+    });
+    expect(
+      warningRelatesToCapability(
+        disallowedOnlyWarning,
+        makeCapability({ capabilityId: "Bash", kind: "tool" }),
+      ),
+    ).toBe(false);
+    expect(
+      warningRelatesToCapability(
+        disallowedOnlyWarning,
+        makeCapability({ capabilityId: "mcp__github__merge_pr", kind: "mcp_tool" }),
+      ),
+    ).toBe(true);
   });
 });
 
@@ -173,6 +214,37 @@ describe("WarningsPanel", () => {
     expect(html).toContain("warning");
     expect(html).toContain(".claude/agents/forked.md");
     expect(html).toContain("warnings-panel");
+  });
+
+  it("renders enforcement badges for gated warnings", () => {
+    const html = renderToString(
+      createElement(WarningsPanel, {
+        warnings: [
+          makeWarning({ enforcement: "enforced", category: "ignored-field", message: "enforced msg" }),
+          makeWarning({ enforcement: "advisory", category: "advisory", message: "advisory msg" }),
+          makeWarning({ enforcement: "unknown", category: "unknown", message: "unknown msg" }),
+        ],
+      }),
+    );
+
+    expect(html).toContain(ENFORCEMENT_LABELS.enforced);
+    expect(html).toContain(ENFORCEMENT_LABELS.advisory);
+    expect(html).toContain(ENFORCEMENT_LABELS.unknown);
+    expect(html).toContain("enforcement-enforced");
+    expect(html).toContain("enforcement-advisory");
+    expect(html).toContain("enforcement-unknown");
+    expect(html).toContain("warnings-item-enforcement-unknown");
+  });
+
+  it("omits enforcement badge for security findings without enforcement", () => {
+    const html = renderToString(
+      createElement(WarningsPanel, {
+        warnings: [makeWarning({ category: "security-finding", message: "security msg" })],
+      }),
+    );
+
+    expect(html).toContain("security msg");
+    expect(html).not.toContain("capability-enforcement-badge");
   });
 
   it("shows the filtered count that matches severity drill-down input", () => {

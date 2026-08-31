@@ -196,6 +196,8 @@ export interface Warning {
   enforcement?: Enforcement;
   /** Present on `ignored-field` warnings from the resolver (§7.4). */
   ignoredField?: IgnoredFieldDetail;
+  /** Capability rows this warning applies to; set by the resolver when the link is known. */
+  relatedCapabilityIds?: string[];
 }
 
 export interface EffectiveConfiguration {
@@ -216,6 +218,17 @@ export interface TrustState {
   projectPath: string;
   /** Why trust could not be determined. Set only when `accepted === "unknown"`. */
   unknownReason?: string;
+  /**
+   * Repository root the scan anchored on. Agent trust folders resolve relative
+   * to this path when agent source paths are repo-relative.
+   */
+  repoRoot?: string;
+  /**
+   * Trust for folders that own project-scoped agents but are not the scan root
+   * (R2 nested folders, R6 `--add-dir` paths). Keys are absolute paths;
+   * a missing key is an honest `false`.
+   */
+  folderRecords?: Readonly<Record<string, boolean | "unknown">>;
 }
 
 export type {

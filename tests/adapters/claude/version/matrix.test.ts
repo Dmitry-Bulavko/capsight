@@ -31,6 +31,7 @@ const M1_MATRIX_IDS = [
   "agent.toolAliases",
   "context.filter1",
   "context.filter2",
+  "context.foregroundBackground",
   "context.fork",
   "agent.depthLimit",
   "agent.depthLimitDefault",
@@ -38,6 +39,7 @@ const M1_MATRIX_IDS = [
   FACT.P2,
   FACT.P4,
   FACT.P5,
+  FACT.P3,
   "agent.collisionSameDir",
   "agent.collisionCrossScope",
   "agent.collisionNested",
@@ -48,11 +50,16 @@ const M1_MATRIX_IDS = [
   "skills.disableModelInvocation",
   "skills.missing",
   "skills.denyBeatsAllowedTools",
+  "skills.allowedToolsUntrusted",
+  "skills.disallowedToolsActive",
   "skills.settingsOverrides",
   "trust.inlineMcp",
   "trust.frontmatterHooks",
+  "trust.parentFolder",
+  "trust.addDirSeparate",
   "instructions.hierarchy",
   "instructions.builtinKind",
+  "instructions.subagentPrompt",
   "discovery.upwardWalkAgents",
   "discovery.recursiveAgentDirs",
   "discovery.pluginScopedId",
@@ -63,6 +70,8 @@ const M1_MATRIX_IDS = [
   "agent.toolsMissingAgent",
   "agent.modelResolution",
   "agent.initialPromptMainSession",
+  "session.mainAgentPrompt",
+  "session.mainInlineMcp",
   "skills.skillToolWithoutPreload",
   "skills.skillToolWhitelist",
   "discovery.addDirAgents",
@@ -81,7 +90,16 @@ const M1_MATRIX_IDS = [
   "settings.ruleScope",
   "settings.additionalDirectories",
   "settings.projectMcpAutoApproval",
+  "discovery.builtinInventory",
+  "discovery.builtinNameOverride",
   "builtin.readOnly",
+  FACT.E1,
+  FACT.E2,
+  "builtin.disableExplorePlan",
+  "builtin.disableAllSdk",
+  "environment.maxConcurrentSubagents",
+  FACT.E8,
+  "environment.settingsEnv",
 ] as const;
 
 /** Facts behind resolver rules that emit `enforcement: "enforced"` (§0.1.3). */
@@ -382,7 +400,7 @@ describe("VERSION_MATRIX", () => {
 
   it("represents the N5 depth-limit history via changedIn", () => {
     const depth = VERSION_MATRIX.find((entry) => entry.id === "agent.depthLimit");
-    expect(depth?.factRefs).toEqual([FACT.N2, FACT.N5]);
+    expect(depth?.factRefs).toEqual([FACT.N1, FACT.N2, FACT.N3, FACT.N5, FACT.E3]);
     expect(depth?.changedIn).toEqual(["2.1.172", "2.1.217", "2.1.219"]);
   });
 

@@ -4,6 +4,7 @@ description: Agent for F2/F3 tools filtering golden fixture
 tools:
   - Read
   - Write
+  - Agent
   - mcp__github
 disallowedTools:
   - Read

@@ -4,6 +4,7 @@ import type {
   SourceInfo,
   Warning,
 } from "../../core/model/index.js";
+import { FACT } from "../../adapters/claude/version/facts.js";
 import { formatSourceLine } from "./WarningsPanel.js";
 
 export interface DeclaredEffectivePair {
@@ -126,11 +127,7 @@ export function extractForkNotice(
 
   for (const capability of effective.capabilities) {
     for (const reason of capability.reasons) {
-      if (
-        reason.type === "context-filter" &&
-        reason.message.includes("Fork inherits") &&
-        reason.matrixRef
-      ) {
+      if (reason.type === "context-filter" && reason.matrixRef === FACT.T3) {
         return {
           message: reason.message,
           matrixRef: reason.matrixRef,

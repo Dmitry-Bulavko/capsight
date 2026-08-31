@@ -232,7 +232,7 @@ describe("DeclaredEffective helpers", () => {
             {
               type: "context-filter",
               message:
-                "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+                "Subagent fork context: agent tool filters do not apply to inherited pool.",
               source: {
                 platform: "claude",
                 scope: "project",
@@ -251,8 +251,70 @@ describe("DeclaredEffective helpers", () => {
     });
 
     expect(extractDeclaredEffectivePairs(effective)).toEqual([]);
-    expect(extractForkNotice(effective)?.matrixRef).toBe("T3");
-    expect(extractForkNotice(effective)?.message).toContain("Fork inherits");
+    expect(extractForkNotice(effective)).toMatchObject({
+      matrixRef: "T3",
+      message: "Subagent fork context: agent tool filters do not apply to inherited pool.",
+    });
+  });
+
+  it("returns no fork notice when no T3 context-filter reason exists", () => {
+    const effective = makeEffective({
+      context: makeContext({ preset: "fork", isFork: true, isBackground: true }),
+      capabilities: [
+        {
+          capabilityId: "Read",
+          kind: "tool",
+          status: "available",
+          enforcement: "unknown",
+          sources: [
+            {
+              platform: "claude",
+              scope: "project",
+              path: ".claude/agents/forked.md",
+            },
+          ],
+          reasons: [
+            {
+              type: "context-filter",
+              message: "Some other context filter without T3 matrix ref.",
+              matrixRef: "T1",
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(extractForkNotice(effective)).toBeNull();
+  });
+
+  it("returns no fork notice for T3 reasons that are not context-filter type", () => {
+    const effective = makeEffective({
+      context: makeContext({ preset: "fork", isFork: true, isBackground: true }),
+      capabilities: [
+        {
+          capabilityId: "Read",
+          kind: "tool",
+          status: "available",
+          enforcement: "unknown",
+          sources: [
+            {
+              platform: "claude",
+              scope: "project",
+              path: ".claude/agents/forked.md",
+            },
+          ],
+          reasons: [
+            {
+              type: "version",
+              message: "Version-scoped reason tagged T3 but wrong type.",
+              matrixRef: "T3",
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(extractForkNotice(effective)).toBeNull();
   });
 
   it("ignores ignored-field warnings without structured ignoredField", () => {
@@ -315,14 +377,13 @@ describe("DeclaredEffective components", () => {
 
   it("renders fork configuration notice with T3 reference", () => {
     const notice = {
-      message:
-        "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
+      message: "Subagent fork context: agent tool filters do not apply to inherited pool.",
       matrixRef: "T3",
     };
 
     const html = renderToString(createElement(ForkConfigurationNoticeView, { notice }));
 
-    expect(html).toContain("Fork inherits");
+    expect(html).toContain(notice.message);
     expect(html).toContain("[T3]");
     expect(html).toContain("fork-configuration-notice");
   });

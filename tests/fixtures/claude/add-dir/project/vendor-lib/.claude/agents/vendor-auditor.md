@@ -5,6 +5,9 @@ tools:
   - Read
 skills:
   - vendor-lint
+mcpServers:
+  - command: node
+    args: ["vendor-inline-mcp.js"]
 ---
 
 You audit the vendored library.

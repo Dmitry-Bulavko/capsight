@@ -31,6 +31,7 @@ function securityWarning(
   evidence: SourceInfo[],
   matrixRef?: FactId,
   severity: Warning["severity"] = "warning",
+  relatedCapabilityIds?: string[],
 ): Warning {
   return {
     category: "security-finding",
@@ -38,6 +39,9 @@ function securityWarning(
     message,
     evidence,
     matrixRef,
+    ...(relatedCapabilityIds && relatedCapabilityIds.length > 0
+      ? { relatedCapabilityIds }
+      : {}),
   };
 }
 
@@ -72,6 +76,9 @@ function findBashGuardrailWarning(
   return securityWarning(
     "Agent has Bash access. Tool-level restrictions are a guardrail, not a complete security boundary.",
     [agent.source],
+    undefined,
+    "warning",
+    ["Bash"],
   );
 }
 
@@ -99,6 +106,8 @@ function findBypassPermissionsWarning(agent: Agent): Warning | undefined {
     "Agent declares permissionMode bypassPermissions, which skips permission prompts.",
     [{ ...agent.source, fieldPath: "frontmatter.permissionMode" }],
     FACT.P5,
+    "warning",
+    ["permission:bypassPermissions"],
   );
 }
 
@@ -124,6 +133,8 @@ function findInlineMcpCommandWarnings(agent: Agent): Warning[] {
         `Inline MCP server runs arbitrary command "${record.commandName}" from agent frontmatter.`,
         [{ ...agent.source, fieldPath: `frontmatter.mcpServers[${index}]` }],
         FACT.R1,
+        "warning",
+        [`inline-mcp:${index}`],
       ),
     );
   }
@@ -194,6 +205,8 @@ async function findSkillAllowedToolsWarnings(
       };
       const denial = findBareToolDenial(layers, allowedToolBase(pattern));
 
+      const toolId = allowedToolBase(pattern);
+
       warnings.push(
         denial
           ? gateWarning(
@@ -205,6 +218,7 @@ async function findSkillAllowedToolsWarnings(
                 [evidence, denial.source],
                 FACT.K8,
                 "info",
+                [toolId],
               ),
               MATRIX["skills.denyBeatsAllowedTools"],
               version,
@@ -213,6 +227,8 @@ async function findSkillAllowedToolsWarnings(
               `Skill pre-approves sensitive tool "${pattern}" via allowed-tools (K6, K7).`,
               [evidence],
               FACT.K6,
+              "warning",
+              [toolId],
             ),
       );
     }
@@ -252,6 +268,8 @@ function findFalseAllowGlobWarnings(
               },
             ],
             FACT.S4,
+            "warning",
+            [`settings-permission:${layer.scope}:allow:${rule.raw}`],
           ),
           MATRIX["settings.allowGlobIneffective"],
           version,

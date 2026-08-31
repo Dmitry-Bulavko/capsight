@@ -840,6 +840,9 @@
               "scope": "project",
               "path": ".claude/agents/forked.md"
             }
+          ],
+          "relatedCapabilityIds": [
+            "Bash"
           ]
         }
       ],

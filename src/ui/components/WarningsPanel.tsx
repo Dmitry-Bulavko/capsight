@@ -4,6 +4,7 @@ import type {
   SourceInfo,
   Warning,
 } from "../../core/model/index.js";
+import { ENFORCEMENT_LABELS } from "./WhyPanel.js";
 
 export interface DisplayWarning extends Warning {
   agentId?: string;
@@ -17,25 +18,6 @@ export function formatSourceLine(source: SourceInfo): string {
     return `${path} — ${source.fieldPath}`;
   }
   return path;
-}
-
-export function normalizePathKey(value: string | undefined): string | undefined {
-  if (!value) {
-    return undefined;
-  }
-  return value.replace(/\\/g, "/");
-}
-
-export function pathsMatch(left: string | undefined, right: string | undefined): boolean {
-  const normalizedLeft = normalizePathKey(left);
-  const normalizedRight = normalizePathKey(right);
-  if (!normalizedLeft || !normalizedRight) {
-    return false;
-  }
-  if (normalizedLeft === normalizedRight) {
-    return true;
-  }
-  return normalizedLeft.endsWith(normalizedRight) || normalizedRight.endsWith(normalizedLeft);
 }
 
 export function parseHealthWarningFilter(filterId: string): Warning["severity"] | null {
@@ -72,90 +54,11 @@ export function shouldCollapseByCategory(
   return warnings.length > threshold;
 }
 
-function agentPathsFromCapability(capability: ResolvedCapability): Set<string> {
-  const paths = new Set<string>();
-  for (const source of capability.sources) {
-    const normalized = normalizePathKey(source.path);
-    if (normalized) {
-      paths.add(normalized);
-    }
-  }
-  for (const reason of capability.reasons) {
-    const normalized = normalizePathKey(reason.source?.path);
-    if (normalized) {
-      paths.add(normalized);
-    }
-  }
-  return paths;
-}
-
-function fieldPathRelatesToCapability(
-  fieldPath: string,
-  capability: ResolvedCapability,
-): boolean {
-  if (fieldPath.includes("mcpServers") && capability.kind === "mcp_server") {
-    return true;
-  }
-  if (fieldPath.includes("permissionMode") && capability.kind === "permission") {
-    return true;
-  }
-  if (fieldPath.includes("permissions.allow") && capability.kind === "permission") {
-    return true;
-  }
-  if (fieldPath.includes("allowed-tools") && capability.kind === "skill") {
-    return true;
-  }
-  if (
-    (fieldPath.includes("tools") || fieldPath.includes("disallowedTools")) &&
-    (capability.kind === "tool" || capability.kind === "mcp_tool")
-  ) {
-    return true;
-  }
-  if (fieldPath.includes("hooks") && capability.capabilityId === "agent-hooks") {
-    return true;
-  }
-  return false;
-}
-
 export function warningRelatesToCapability(
   warning: Warning,
   capability: ResolvedCapability,
 ): boolean {
-  const capabilityPaths = agentPathsFromCapability(capability);
-
-  for (const evidence of warning.evidence) {
-    for (const capabilityPath of capabilityPaths) {
-      if (pathsMatch(evidence.path, capabilityPath)) {
-        if (!evidence.fieldPath) {
-          if (capability.kind === "tool" && capability.capabilityId === "Bash") {
-            return true;
-          }
-          if (capability.kind === "tool" && capability.status === "denied") {
-            return true;
-          }
-          continue;
-        }
-        if (fieldPathRelatesToCapability(evidence.fieldPath, capability)) {
-          return true;
-        }
-        for (const source of capability.sources) {
-          if (source.fieldPath && evidence.fieldPath === source.fieldPath) {
-            return true;
-          }
-        }
-      }
-    }
-
-    if (evidence.fieldPath && fieldPathRelatesToCapability(evidence.fieldPath, capability)) {
-      for (const source of capability.sources) {
-        if (pathsMatch(evidence.path, source.path)) {
-          return true;
-        }
-      }
-    }
-  }
-
-  return false;
+  return warning.relatedCapabilityIds?.includes(capability.capabilityId) ?? false;
 }
 
 export function capabilityWarningCount(
@@ -177,12 +80,29 @@ interface WarningsPanelProps {
 
 function WarningItem({ warning }: { warning: DisplayWarning }) {
   return (
-    <article className={`warnings-item warnings-severity-${warning.severity}`}>
+    <article
+      className={`warnings-item warnings-severity-${warning.severity}${
+        warning.enforcement === "unknown" ? " warnings-item-enforcement-unknown" : ""
+      }`}
+    >
       <header className="warnings-item-header">
         <span className={`warnings-severity-badge severity-${warning.severity}`}>
           {warning.severity}
         </span>
         <span className="warnings-category-badge">{warning.category}</span>
+        {warning.enforcement && (
+          <span
+            className={`capability-enforcement-badge enforcement-${warning.enforcement}`}
+            title={`Enforcement: ${ENFORCEMENT_LABELS[warning.enforcement]}`}
+          >
+            {warning.enforcement === "unknown" && (
+              <span className="capability-enforcement-unknown-mark" aria-hidden="true">
+                ?
+              </span>
+            )}
+            {ENFORCEMENT_LABELS[warning.enforcement]}
+          </span>
+        )}
         {warning.agentId && <span className="warnings-agent-id mono">{warning.agentId}</span>}
       </header>
       <p className="warnings-message">{warning.message}</p>

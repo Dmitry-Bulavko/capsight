@@ -36,6 +36,30 @@
         "isPluginAgent": false
       },
       {
+        "name": "mid-hooked",
+        "description": "Mid-scope agent blocked when only repo-root trust is accepted (R2)",
+        "source": {
+          "platform": "claude",
+          "scope": "nested-project",
+          "path": "svc/.claude/agents/mid-hooked.md"
+        },
+        "status": "active",
+        "configuration": {
+          "tools": [
+            "Read"
+          ],
+          "hooks": {
+            "form": "object",
+            "events": [
+              "PreToolUse"
+            ],
+            "count": 1
+          },
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
+      },
+      {
         "name": "outer",
         "description": "Declared at the repository level, two hops above cwd (A2)",
         "source": {
@@ -853,6 +877,771 @@
                 "scope": "project",
                 "path": "svc/worker/.claude/agents/leaf.md"
               }
+            }
+          ]
+        }
+      ],
+      "warnings": [],
+      "unknownRate": 0
+    },
+    {
+      "agentName": "mid-hooked",
+      "context": {
+        "preset": "foreground-subagent",
+        "isMainSession": false,
+        "isBackground": false,
+        "isFork": false,
+        "isTeammate": false,
+        "depth": 0,
+        "maxDepth": 3
+      },
+      "capabilities": [
+        {
+          "capabilityId": "permission:default",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "No permissionMode declared; using default (manual) mode (P5).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Agent",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Artifact",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "AskUserQuestion",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Bash",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Edit",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EndConversation",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterWorktree",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitWorktree",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Glob",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Grep",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Monitor",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "NotebookEdit",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "PowerShell",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Read",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md",
+              "fieldPath": "frontmatter.tools[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Allowed by tools pattern \"Read\" (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md",
+                "fieldPath": "frontmatter.tools[0]"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ScheduleWakeup",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "SendMessage",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Skill",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Task",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskOutput",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskStop",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TodoWrite",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ToolSearch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WaitForMcpServers",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebFetch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebSearch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Workflow",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Write",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "hooks:svc/.claude/agents/mid-hooked.md",
+          "kind": "instruction",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "nested-project",
+              "path": "svc/.claude/agents/mid-hooked.md",
+              "fieldPath": "frontmatter.hooks"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "trust",
+              "message": "Agent frontmatter hooks blocked until the containing folder trust is accepted; parent-folder trust does not count (R2).",
+              "source": {
+                "platform": "claude",
+                "scope": "nested-project",
+                "path": "svc/.claude/agents/mid-hooked.md",
+                "fieldPath": "frontmatter.hooks"
+              },
+              "matrixRef": "R2"
             }
           ]
         }

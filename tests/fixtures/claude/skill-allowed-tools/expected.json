@@ -916,7 +916,10 @@
             }
           ],
           "matrixRef": "skills.denyBeatsAllowedTools",
-          "enforcement": "enforced"
+          "enforcement": "enforced",
+          "relatedCapabilityIds": [
+            "Write"
+          ]
         },
         {
           "category": "security-finding",
@@ -930,7 +933,10 @@
               "fieldPath": "frontmatter.allowed-tools[0]"
             }
           ],
-          "matrixRef": "K6"
+          "matrixRef": "K6",
+          "relatedCapabilityIds": [
+            "Bash"
+          ]
         }
       ],
       "unknownRate": 0

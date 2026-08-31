@@ -7,7 +7,6 @@ import type {
   ContextPreset,
   ExecutionContext,
   ResolvedCapability,
-  Warning,
 } from "../core/model/index.js";
 import { parsePlatformId, type PlatformId } from "../adapters/platform.js";
 import type { ScanResult } from "../application/scan.js";
@@ -21,6 +20,10 @@ import {
   invalidContextPresetMessage,
   isContextPreset,
 } from "../core/model/context-presets.js";
+import {
+  collectAgentWarnings,
+  type AgentWarning,
+} from "../application/collect-warnings.js";
 import { resolve } from "../application/resolve.js";
 import {
   buildStatusSummary,
@@ -166,9 +169,7 @@ export async function runExplain(
 }
 
 /** Mirrors `AgentWarning` from the `/api/warnings` response. */
-export interface CliAgentWarning extends Warning {
-  agentId: string;
-}
+export type CliAgentWarning = AgentWarning;
 
 /** Mirrors `GET /api/warnings`, plus the §4.3 default caption. */
 export interface WarningsResult {
@@ -185,21 +186,10 @@ export async function runWarnings(
   const { context, contextDefault } = resolveContextOption(options);
   const scanResult = await getOrScan(options.projectPath);
 
-  const warnings: CliAgentWarning[] = [];
-  const activeAgents = scanResult.snapshot.agents.filter(
-    (agent) => agent.status === "active",
-  );
-
-  for (const agent of activeAgents) {
-    const effective = await resolve({
-      snapshot: scanResult.snapshot,
-      agentId: agent.id,
-      context,
-    });
-    for (const warning of effective.warnings) {
-      warnings.push({ ...warning, agentId: agent.id });
-    }
-  }
+  const warnings = await collectAgentWarnings({
+    snapshot: scanResult.snapshot,
+    context,
+  });
 
   return {
     warnings,

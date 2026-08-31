@@ -105,6 +105,7 @@ const MATRIX_ENTRIES = [
     feature: "Agent frontmatter tools whitelist",
     factRefs: [FACT.F2, FACT.F4],
     minVersion: "2.1.0",
+    maxVersion: "2.1.499",
     changedIn: ["2.1.208"],
     status: "supported",
     confidence: "doc",
@@ -113,7 +114,9 @@ const MATRIX_ENTRIES = [
     notes:
       "Empty resolved tools list blocks subagent launch from v2.1.208 (F4). The fixture's agent " +
       "always resolves at least one tool, so the F4 half of this entry's rule is the operative " +
-      "cause of nothing and the entry stays at doc.",
+      "cause of nothing and the entry stays at doc. version-drift pins 2.1.500 — above this " +
+      "entry's maxVersion — so whitelist verdicts downgrade to unknown per §8.4 while " +
+      "permission:default on the same resolution stays enforced.",
   },
   {
     id: "agent.toolAliases",
@@ -155,6 +158,22 @@ const MATRIX_ENTRIES = [
       "list itself is pinned by nothing.",
   },
   {
+    id: "context.foregroundBackground",
+    feature:
+      "Same agent definition resolves different tool pools in foreground and background",
+    factRefs: [FACT.T5],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    fixture: "tools-filters",
+    verifiedFacts: [],
+    notes:
+      "tools-filters resolves foreground and background contexts for the same agent, but the " +
+      "background denial of Agent is pinned by context.filter2 (T2), not T5. T5 is matrix-" +
+      "referenced here for honest coverage; no fixture in the corpus exercises a confident " +
+      "value that moves when foreground/background context alone changes (H1-28).",
+  },
+  {
     id: "context.fork",
     feature: "Fork context skips agent configuration filters",
     factRefs: [FACT.T3],
@@ -172,7 +191,7 @@ const MATRIX_ENTRIES = [
   {
     id: "agent.depthLimit",
     feature: "Agent tool unavailable at subagent depth limit",
-    factRefs: [FACT.N2, FACT.N5],
+    factRefs: [FACT.N1, FACT.N2, FACT.N3, FACT.N5, FACT.E3],
     minVersion: "2.1.0",
     changedIn: ["2.1.172", "2.1.217", "2.1.219"],
     status: "supported",
@@ -182,7 +201,7 @@ const MATRIX_ENTRIES = [
     notes:
       "N5 depth values: 2.1.172-2.1.216 = 5 (not configurable), 2.1.217-2.1.218 = 1, 2.1.219+ = 3. " +
       "The fixture covers N2 (removal at the limit, fork exempt) and the 2.1.219+ default of 3 " +
-      "including the CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH override (N3); the pre-2.1.219 values " +
+      "including the CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH override (N3, N1); the pre-2.1.219 values " +
       "of N5 rest on documentation alone until a runtime probe can observe them. Neither fact " +
       "is verified entire (H1-28): N5 has two unobserved version windows, and N2's fork half " +
       "resolves with enforcement unknown in the fixture, which claims nothing (§11.3). The " +
@@ -198,15 +217,14 @@ const MATRIX_ENTRIES = [
     observedIn: ["2.1.217"],
     status: "changed",
     confidence: "doc",
-    fixture: "version-drift",
-    verifiedFacts: [],
+    pendingFixture: "version-drift",
     notes:
       "N5 records three different defaults below 2.1.219 (5, then 1) and no fixture or probe " +
-      "has observed any of them; the resolver only knows the 2.1.219+ default of 3. The " +
-      "version-drift fixture pins 2.1.217 — above this entry's maxVersion — so the depth-limit " +
-      "verdict is downgraded to unknown per §8.4 rather than guessed. Confidence downgraded to " +
-      "doc in H1-28: every expectation the drift fixture produces for this entry is unknown by " +
-      "design, so it evidences our downgrade and not the platform's defaults.",
+      "has observed any of them; the resolver only knows the 2.1.219+ default of 3. A fixture " +
+      "pinning a version below 2.1.219 would downgrade depth-limit verdicts per §8.4. " +
+      "version-drift now pins agent.tools maxVersion drift at 2.1.500 instead (G1-04). " +
+      "Confidence downgraded to doc in H1-28: every expectation a drift fixture produces for " +
+      "this entry is unknown by design, so it evidences our downgrade and not the platform's defaults.",
   },
   {
     id: FACT.P1,
@@ -261,6 +279,21 @@ const MATRIX_ENTRIES = [
     notes:
       "The fixture pins the frontmatter path for acceptEdits and the default; P5 enumerates six " +
       "modes and dontAsk, auto, plan and bypassPermissions never reach it from frontmatter.",
+  },
+  {
+    id: FACT.P3,
+    feature: "`auto` as default permission mode on Pro, Max and Team plans",
+    factRefs: [FACT.P3],
+    minVersion: "2.1.0",
+    status: "unknown",
+    confidence: "doc",
+    noFixturePossible:
+      "P3 names the subscription-plan default for permission mode. Plan tier is not discovered " +
+      "in an ordinary scan and no fixture carries billing or org-plan context, so the default " +
+      "resolves unknown when unprovable (H1-28).",
+    notes:
+      "Registered rather than omitted so P3 is distinguishable in §11.4 from facts nobody has " +
+      "looked at.",
   },
   {
     id: "agent.collisionSameDir",
@@ -448,6 +481,40 @@ const MATRIX_ENTRIES = [
       "on a widened reading of the word global in K8.",
   },
   {
+    id: "skills.allowedToolsUntrusted",
+    feature:
+      "Project skill allowed-tools pre-approval applies without accepted folder trust",
+    factRefs: [FACT.K7],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    fixture: "skill-allowed-tools",
+    verifiedFacts: [],
+    notes:
+      "skill-allowed-tools scans with trust.accepted false and emits K6/K7 security " +
+      "findings for deployer's allowed-tools patterns — the pre-approval is recorded as a " +
+      "finding, not suppressed by missing trust. K7's `-p`/headless qualifier is not pinned: " +
+      "the fixture resolves foreground-subagent only, so that half rests on documentation " +
+      "alone in §11.4 (H1-28).",
+  },
+  {
+    id: "skills.disallowedToolsActive",
+    feature: "SKILL.md disallowed-tools shrinks the tool pool while a skill is active",
+    factRefs: [FACT.K9],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    noFixturePossible:
+      "K9 acts on the tool pool while a skill is active — a runtime invocation state an " +
+      "ordinary scan does not enter (§2.1). Discovery records skill metadata but does not " +
+      "read `disallowed-tools` from SKILL.md, and §11.2 has no channel for a per-skill " +
+      "active pool delta, so no fixture can make K9 the operative cause of a confident golden " +
+      "value (H1-28).",
+    notes:
+      "Registered rather than omitted so K9 is distinguishable in §11.4 from facts nobody " +
+      "has looked at.",
+  },
+  {
     id: "skills.settingsOverrides",
     feature: "skillOverrides settings key manages skills without editing the skill file",
     factRefs: [FACT.K10],
@@ -502,6 +569,39 @@ const MATRIX_ENTRIES = [
       "cannot run by some other route (§2.4).",
   },
   {
+    id: "trust.parentFolder",
+    feature: "Parent-folder trust does not satisfy containing-folder trust",
+    factRefs: [FACT.R2],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    fixture: "nested-project",
+    verifiedFacts: [],
+    notes:
+      "trust-records.json accepts only the repository root (`.`); `mid-hooked` at svc/ " +
+      "declares frontmatter hooks and stays blocked while repo-root trust is seeded, " +
+      "citing R2 on the hooks capability. Deletion test not yet wired — confidence stays " +
+      "doc until treating parent-folder trust as sufficient flips mid-hooked to available " +
+      "(H1-28). R2's second clause — automatic `-p`/SDK trust for settings-file hooks — is " +
+      "session-mode runtime state with no static scan channel, so it rests on documentation " +
+      "alone in §11.4.",
+  },
+  {
+    id: "trust.addDirSeparate",
+    feature: "--add-dir folder requires its own trust record",
+    factRefs: [FACT.R6],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "fixture",
+    fixture: "add-dir",
+    verifiedFacts: [],
+    notes:
+      "trust-records.json accepts only the scan root; vendor-auditor's inline MCP stays blocked " +
+      "while the project would pass R1. Deletion test: reuse project trust for the added " +
+      "directory and the same capability flips to available. R6 is pinned for the add-dir " +
+      "folder only — not for agents discovered from the project tree itself.",
+  },
+  {
     id: "instructions.hierarchy",
     feature: "Subagent receives the CLAUDE.md hierarchy of the main session",
     factRefs: [FACT.I1],
@@ -527,6 +627,23 @@ const MATRIX_ENTRIES = [
     notes:
       "I2 entire: the fixture resolves the same agent under both built-in kinds and both drop " +
       "instructions to denied/enforced, while the plain subagent context keeps all three sources.",
+  },
+  {
+    id: "instructions.subagentPrompt",
+    feature:
+      "Subagent system prompt comes from agent file body plus environment basics",
+    factRefs: [FACT.I4],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    noFixturePossible:
+      "I4 claims the subagent system prompt is the agent file body plus environment basics, " +
+      "not the full Claude Code main prompt. §11.2 goldens carry instruction sources (I1) and " +
+      "capabilities but no system-prompt field, so no fixture can make I4 the operative cause of " +
+      "a confident golden value (H1-28).",
+    notes:
+      "Registered rather than omitted so I4 is distinguishable in §11.4 from facts nobody has " +
+      "looked at.",
   },
   {
     id: "discovery.upwardWalkAgents",
@@ -661,21 +778,21 @@ const MATRIX_ENTRIES = [
   {
     id: "agent.modelResolution",
     feature: "Subagent model resolution order",
-    factRefs: [FACT.F7],
+    factRefs: [FACT.F7, FACT.E6],
     minVersion: "2.1.0",
     status: "supported",
     confidence: "doc",
     noFixturePossible:
       "F7 names a four-step chain (CLAUDE_CODE_SUBAGENT_MODEL → per-invocation parameter → " +
-      "frontmatter → parent session model). The environment fixture records the env-var key in " +
-      "snapshot.environment.relevant, and managed-simulation pins F8's allowlist block on " +
-      "modelChanges — but §11.2 goldens do not carry a resolved model field per resolution, so " +
-      "no fixture can make any step of the chain the operative cause of a confident golden " +
-      "value (H1-28). Pinning the chain would require inventing a model verdict channel this " +
-      "product does not yet emit.",
+      "frontmatter → parent session model). E6 is the env-var step of that chain. The " +
+      "environment fixture records the env-var key in snapshot.environment.relevant, and " +
+      "managed-simulation pins F8's allowlist block on modelChanges — but §11.2 goldens do " +
+      "not carry a resolved model field per resolution, so no fixture can make any step of the " +
+      "chain the operative cause of a confident golden value (H1-28). Pinning the chain would " +
+      "require inventing a model verdict channel this product does not yet emit.",
     notes:
-      "Registered rather than omitted so F7 is distinguishable in §11.4 from a fact nobody has " +
-      "looked at.",
+      "Registered rather than omitted so F7 and E6 are distinguishable in §11.4 from facts " +
+      "nobody has looked at.",
   },
   {
     id: "agent.initialPromptMainSession",
@@ -692,6 +809,37 @@ const MATRIX_ENTRIES = [
       "session-mode half has no confident verdict to move (H1-28).",
     notes:
       "Discovery stores initialPrompt in AgentConfiguration; resolution does not consume it yet.",
+  },
+  {
+    id: "session.mainAgentPrompt",
+    feature: "`--agent` or settings `agent` replaces the main-session system prompt",
+    factRefs: [FACT.M4],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    noFixturePossible:
+      "M4 is a main-session-only claim: the named agent file body replaces the main prompt " +
+      "entirely. §11.2 resolution goldens exercise subagent contexts exclusively, so the " +
+      "main-session half has no channel to pin (H1-28).",
+    notes:
+      "Registered rather than omitted so M4 is distinguishable in §11.4 from facts nobody has " +
+      "looked at.",
+  },
+  {
+    id: "session.mainInlineMcp",
+    feature: "Inline MCP from the main-session agent file connects at session start",
+    factRefs: [FACT.M5, FACT.R1],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    noFixturePossible:
+      "M5 claims inline MCP declared in the `--agent` file connects at main-session start " +
+      "alongside `.mcp.json`. trust.inline-mcp pins R1's trust gate for project-scoped inline " +
+      "MCP in subagent goldens; the main-session startup timing half has no §11.2 channel " +
+      "(H1-28).",
+    notes:
+      "R1 is referenced because M5's inline servers are the same frontmatter field R1 gates " +
+      "for trust; only the main-session connect-at-start clause is refused here.",
   },
   {
     id: "skills.skillToolWithoutPreload",
@@ -1026,6 +1174,39 @@ const MATRIX_ENTRIES = [
       "the fact is not verified entire here (H1-28).",
   },
   {
+    id: "discovery.builtinInventory",
+    feature: "Built-in agent inventory",
+    factRefs: [FACT.B1],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    noFixturePossible:
+      "B1 names six built-in agents. Discovery emits only file-backed agents from configured " +
+      "directories; synthetic builtins are not attached to discovery.agents, so no §11.2 golden " +
+      "can make the inventory the operative cause of a confident value (H1-28). Env-driven " +
+      "removal (B5, B6) is documented separately and pins only discovery.environment keys.",
+    notes:
+      "Registered rather than omitted so B1 is distinguishable in §11.4 from facts nobody has " +
+      "looked at.",
+  },
+  {
+    id: "discovery.builtinNameOverride",
+    feature: "User agent named Explore overrides built-in Explore",
+    factRefs: [FACT.B4],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    noFixturePossible:
+      "The user-over-builtin override rule requires builtins to appear in discovery alongside " +
+      "user-defined agents so a project agent that reuses a built-in name can shadow the " +
+      "built-in while keeping its frontmatter model. Discovery does not synthesize builtins " +
+      "yet, so no collision record can name a builtin candidate and no model field can be " +
+      "compared against the built-in default (H1-28).",
+    notes:
+      "Registered rather than omitted so B4 is distinguishable in §11.4 from facts nobody has " +
+      "looked at.",
+  },
+  {
     id: "builtin.readOnly",
     feature: "Explore and Plan built-in agents deny Write and Edit",
     factRefs: [FACT.B2],
@@ -1043,6 +1224,105 @@ const MATRIX_ENTRIES = [
       "Explore and Plan carry read-only tools only, is not pinned — the rule names Write and " +
       "Edit and no fixture asserts the rest of the built-in set — so the fact is not verified " +
       "entire.",
+  },
+  {
+    id: FACT.E1,
+    feature: "CLAUDE_CODE_DISABLE_BACKGROUND_TASKS forces foreground subagents",
+    factRefs: [FACT.E1],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    fixture: "environment",
+    verifiedFacts: [],
+    notes:
+      "The environment fixture records the key in discovery.environment.relevant when set in " +
+      "env.json; drop the key from KNOWN_CLAUDE_ENV_EFFECTS and it leaves the golden. E1's " +
+      "resolution half — that foreground-only contexts skip Filter 2 — is not read from the env " +
+      "var in the resolver yet, so no §11.2 capability delta is pinned (H1-28).",
+  },
+  {
+    id: FACT.E2,
+    feature: "CLAUDE_CODE_FORK_SUBAGENT toggles fork mode",
+    factRefs: [FACT.E2],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    fixture: "environment",
+    verifiedFacts: [],
+    notes:
+      "Pins the env key in discovery.environment. The fork fixture exercises T3 fork-context " +
+      "tool inheritance but does not set this variable; E2's non-interactive default and the " +
+      "`0`-disables-everywhere half rest on documentation alone.",
+  },
+  {
+    id: "builtin.disableExplorePlan",
+    feature: "CLAUDE_CODE_DISABLE_EXPLORE_PLAN_AGENTS removes Explore and Plan",
+    factRefs: [FACT.B5, FACT.E4],
+    minVersion: "2.1.198",
+    status: "supported",
+    confidence: "doc",
+    fixture: "environment",
+    verifiedFacts: [],
+    notes:
+      "B5 and E4 state the same env-driven removal; the environment fixture records the key in " +
+      "discovery.environment only. Builtin removal from the agent set is not emitted in §11.2 " +
+      "goldens yet, so no discovery.agents delta is pinned (H1-28).",
+  },
+  {
+    id: "builtin.disableAllSdk",
+    feature: "CLAUDE_AGENT_SDK_DISABLE_BUILTIN_AGENTS removes all built-in agent types",
+    factRefs: [FACT.B6, FACT.E5],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    fixture: "environment",
+    verifiedFacts: [],
+    notes:
+      "B6 and E5 state the same env-driven removal in non-interactive/SDK contexts; the " +
+      "environment fixture pins the key in discovery.environment. The non-interactive " +
+      "qualifier and the builtin inventory delta are not pinned in goldens.",
+  },
+  {
+    id: "environment.maxConcurrentSubagents",
+    feature: "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS sets parallel subagent cap",
+    factRefs: [FACT.N4, FACT.E7],
+    minVersion: "2.1.217",
+    status: "supported",
+    confidence: "doc",
+    fixture: "environment",
+    verifiedFacts: [],
+    notes:
+      "N4 names the default of 20 and E7 the env override; the environment fixture records the " +
+      "key and effect in discovery.environment. No §11.2 channel carries the resolved cap, so " +
+      "the operative cause of nothing moves in resolution goldens (H1-28).",
+  },
+  {
+    id: FACT.E8,
+    feature: "CLAUDE_CODE_DISABLE_AUTO_MEMORY disables frontmatter memory",
+    factRefs: [FACT.E8],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    fixture: "environment",
+    verifiedFacts: [],
+    notes:
+      "Pins the env key in discovery.environment. The resolver does not yet gate frontmatter " +
+      "memory on this variable, so no configuration or capability delta is pinned.",
+  },
+  {
+    id: "environment.settingsEnv",
+    feature: "Settings env block keys injected per session and tool call",
+    factRefs: [FACT.E9],
+    minVersion: "2.1.0",
+    status: "supported",
+    confidence: "doc",
+    fixture: "environment",
+    verifiedFacts: [],
+    notes:
+      "E9 is [ext]: the environment fixture's .claude/settings.json env block surfaces " +
+      "DEPLOY_API_TOKEN and ANTHROPIC_BASE_URL in discovery.environment with origin " +
+      "settings.env and without values (§13 invariant 10). Deletion test: drop " +
+      "readSettingsEnvKeys from buildPlatformEnvironment and both keys leave the golden.",
   },
 ] as const satisfies readonly FeatureCompatibility[];
 

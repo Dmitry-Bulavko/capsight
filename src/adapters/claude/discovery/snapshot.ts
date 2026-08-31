@@ -8,7 +8,7 @@ import { discoverMcpServers } from "./mcp.js";
 import type { WalkProjectScopesResult } from "./project-walk.js";
 import { discoverSettingsLayers } from "./settings.js";
 import { discoverSkills } from "./skills.js";
-import { readTrustState } from "./trust.js";
+import { readTrustState, buildTrustState, agentTrustFolder } from "./trust.js";
 import { computeDescriptionBudget } from "./description-budget.js";
 
 export interface BuildSnapshotInput {
@@ -29,7 +29,7 @@ export async function buildProjectSnapshot(
 ): Promise<ProjectSnapshot> {
   const { projectPath, version, walk, addDirs = [], pluginRoots = [] } = input;
 
-  const [agentResult, skills, instructions, mcpServers, settings, trust] =
+  const [agentResult, skills, instructions, mcpServers, settings] =
     await Promise.all([
       discoverAgents(
         walk.scopes,
@@ -42,8 +42,22 @@ export async function buildProjectSnapshot(
       discoverInstructions(walk.scopes, projectPath),
       discoverMcpServers(walk.scopes, projectPath, walk.repoRoot),
       discoverSettingsLayers(walk.scopes),
-      readTrustState(projectPath),
     ]);
+
+  const folderPaths = new Set<string>();
+  for (const agent of agentResult.agents) {
+    const folder = agentTrustFolder(agent.source.path ?? "");
+    if (folder !== ".") {
+      folderPaths.add(folder);
+    }
+  }
+
+  const trust = await buildTrustState({
+    projectPath,
+    repoRoot: walk.repoRoot,
+    folderPaths: [...folderPaths],
+    addDirs,
+  });
 
   const environment = await buildPlatformEnvironment({ settingsLayers: settings });
   const budget = computeDescriptionBudget(agentResult.agents, version.version);

@@ -171,9 +171,10 @@ describe("SimulationView", () => {
     expect(html).toContain("Write");
     expect(html).toContain("permissionMode");
     expect(html).toContain("blocked-model");
-    expect(html).toContain("unknown");
+    expect(html).toContain("<code>blocked-model</code> → <code>unknown</code>");
     expect(html).toContain("F8");
-    expect(html).toContain("Substitute model identity is");
+    expect(html.replace(/<!-- -->/g, "")).toContain("Substitute model identity is unknown.");
+    expect(html).not.toContain("Substitute model identity is enforced");
   });
 
   it("shows empty delta message when simulation has no impact", () => {

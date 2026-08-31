@@ -4,9 +4,15 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**All planned phases complete** (V1 → D2 → P1 → G1). Next work is post-v0.1 backlog in ROADMAP (S1–S8/K12 remainders, observed layer revisit).
+**S6/S7/S11 — Settings semantics** is next (planned; handoffs pending). D3 evidence wave 2 is complete.
 
-Previous: **G1 — Version drift guard complete** — version applicability on all three platforms, DriftBanner UI, version-drift golden pins scoped downgrade.
+Previous: **D3 complete** — unverified 87→37; all Claude entry-owed priority-2 clusters closed.
+
+## Phase order (post-G1)
+
+```
+F0 (review follow-ups) → G1-04 (drift demo) → D3 (evidence wave 2) → S6/S7/S11 (settings semantics)
+```
 
 Previous: **D1 phase complete** — evidence depth for three platforms.
 
@@ -31,6 +37,9 @@ Previous: **V0-04 done** — custom `CapsightSelect` listbox with in-row status 
 | D2 — Evidence depth | `done` | Every fact either matrix-referenced or refused in writing |
 | P1 — Policy surface | `done` | Managed simulation usable without the terminal |
 | G1 — Version drift guard | `done` | §8.4 divergence detectable, not assumed away |
+| F0 — Review follow-ups | `done` | No UI prose-matching; warning enforcement visible; CLI/API warnings shared |
+| G1-04 — Drift demonstration | `done` | Confident rule downgrades on version exceed, neighbors stay confident |
+| D3 — Evidence wave 2 | `done` | Unverified below 45; Claude entry-owed closed |
 
 ## Surface rule
 
@@ -187,6 +196,14 @@ Its UI task surfaces per-claim evidence in the Why panel — the cited fact's ow
 
 **Gate:** no fact in any of the three registries is silently unreferenced; every remaining gap is a declaration.
 
+## D3 scope note — Evidence wave 2
+
+D2 triaged the 87-fact unreferenced denominator and closed priority-1 matrix entries on all three platforms. D3 closed Claude priority-2 clusters (environment, trust, discovery/builtins, skills/instructions/remaining) via honest matrix entries and fixture extensions.
+
+**D3 outcome.** Total unverified across the three registries dropped from **87 to 37** (below the 45 gate). Claude unverified fell from 47 to 10; Cursor and Codex unchanged at 15 and 12. Every remaining unverified fact has a terminal ledger disposition (D2-06 gate unchanged). D3-05 adds a fail-closed ceiling test so the count cannot rise back above 45 without an explicit gate change.
+
+**Gate:** `buildCoverageReport` total unverified < 45; ledger measured counts match the report per platform.
+
 ## P1 scope note — Policy surface
 
 §7.8 names managed simulation the differentiator and names its user: a platform team rolling policy across dozens of repositories. It is fully implemented, fully read-only, and reachable only by typing `agent-manager simulate --managed ./candidate/`.
@@ -203,7 +220,7 @@ G1 builds the mechanism: matrix entries carry version applicability, a detected 
 
 **Gate:** a version outside the matrix produces a visible, scoped downgrade — never a silent confident answer.
 
-**G1 outcome (honest ceiling).** Version applicability is wired on all three platforms and the DriftBanner reads resolver downgrades. The corpus demonstrates scoped downgrade only on `agent.depthLimitDefault`, which already had `status: "changed"` before G1 — version-drift therefore changes the message on an already-unknown depth rule, not a downgrade from a confident answer. No Cursor or Codex matrix entry declares `maxVersion` yet; drift there is covered by unit tests with a patched matrix only. Follow-up: add `maxVersion` to at least one otherwise-`supported` entry whose golden would stay confident at the fixture version without the bound.
+**G1 outcome (honest ceiling).** Version applicability is wired on all three platforms and the DriftBanner reads resolver downgrades. **G1-04** closed the follow-up: `agent.tools` (`status: "supported"`) carries `maxVersion: "2.1.499"`; version-drift at 2.1.500 downgrades tools-whitelist capabilities to unknown while `permission:default` and depth-limit rules on the same resolution stay enforced. Deletion test confirms Read returns to `available/enforced` when the bound is removed. No Cursor or Codex matrix entry declares `maxVersion` yet; drift there is covered by unit tests with a patched matrix only.
 
 ## H1 outcome
 

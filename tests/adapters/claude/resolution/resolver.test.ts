@@ -380,7 +380,9 @@ describe("resolveEffectiveConfiguration", () => {
     );
 
     const inlineMcp = result.capabilities.find((capability) => capability.capabilityId === "inline-mcp:0");
-    const hooks = result.capabilities.find((capability) => capability.capabilityId === "agent-hooks");
+    const hooks = result.capabilities.find(
+      (capability) => capability.capabilityId === "hooks:.claude/agents/backend.md",
+    );
 
     expect(inlineMcp?.status).toBe("blocked");
     expect(hooks?.status).toBe("blocked");
@@ -414,7 +416,9 @@ describe("resolveEffectiveConfiguration", () => {
     );
 
     const inlineMcp = result.capabilities.find((capability) => capability.capabilityId === "inline-mcp:0");
-    const hooks = result.capabilities.find((capability) => capability.capabilityId === "agent-hooks");
+    const hooks = result.capabilities.find(
+      (capability) => capability.capabilityId === "hooks:.claude/agents/backend.md",
+    );
 
     expect(inlineMcp).toMatchObject({ status: "unknown", enforcement: "unknown" });
     expect(hooks).toMatchObject({ status: "unknown", enforcement: "unknown" });

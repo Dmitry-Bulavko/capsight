@@ -2,5 +2,9 @@
   {
     "agentName": "leaf",
     "preset": "foreground-subagent"
+  },
+  {
+    "agentName": "mid-hooked",
+    "preset": "foreground-subagent"
   }
 ]

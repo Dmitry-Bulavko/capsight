@@ -7,7 +7,7 @@ Facts that reach no `VERSION_MATRIX` entry are `unverified` in `buildCoverageRep
 | | claude | cursor | codex | unverified total |
 |---|--------|--------|-------|------------------|
 | Baseline (`28a510b`, pre-D2) | 47 | 21 | 19 | **87** |
-| Current (this ledger) | 35 | 15 | 12 | **62** |
+| Current (this ledger) | 10 | 15 | 12 | **37** |
 
 Compat-matrix citations (`COMPAT_MATRIX_ENTRIES` in `src/core/compat/`) do not count toward platform coverage; facts cited only there still appear here.
 
@@ -21,44 +21,19 @@ Compat-matrix citations (`COMPAT_MATRIX_ENTRIES` in `src/core/compat/`) do not c
 
 ---
 
-## Claude (35 unreferenced)
+## Claude (10 unreferenced)
 
 | Fact | § | Conf | Disposition | Priority | Reason |
 |------|---|------|-------------|----------|--------|
 | T4 | 3.3 | doc | out-of-scope | — | Agent-teams teammate context preserves extra task/cron tools; teammate spawn not modeled in M1 scan goldens (§9 observed layer) |
-| T5 | 3.3 | doc | entry-owed | 2 | Same agent definition resolves different tool pools in foreground vs background; `tools-filters` partial coverage, fact unreferenced |
 | T6 | 3.3 | doc | noFixturePossible | — | Interactive-session default background when fork mode on (v2.1.232+); session-mode runtime default, not reconstructible from static fixture scan |
-| P3 | 3.4 | doc | entry-owed | 2 | `auto` as default on Pro/Max/Team plans; plan-tier default not pinned — matrix entry owed for honest `unknown` when unprovable |
-| K7 | 3.6 | doc | entry-owed | 2 | Project-skill `allowed-tools` applies even in never-trusted folder; permission interaction in resolver |
-| K9 | 3.6 | doc | entry-owed | 2 | SKILL.md `disallowed-tools` shrinks pool while skill active; resolution rule unreferenced |
-| R2 | 3.7 | doc | entry-owed | 2 | Parent-folder trust does not satisfy project-agent trust; trust resolver applies |
-| R3 | 3.7 | doc | noFixturePossible | — | Debug-log key `projects["<path>"].hasTrustDialogAccepted` in `~/.claude.json`; not observable in ordinary scan output |
-| R6 | 3.7 | doc | entry-owed | 2 | `--add-dir` from outside trusted repo needs separate trust record; trust gate applies |
+| R3 | 3.7 | doc | noFixturePossible | — | Without trust, inline servers skipped and debug log writes `hasTrustDialogAccepted` key; debug-log channel not in static scan |
 | I3 | 3.8 | doc | noFixturePossible | — | Platform does not support per-agent instruction assignment; negative fact — every agent gets same hierarchy, no confident per-agent delta to golden |
-| I4 | 3.8 | doc | entry-owed | 2 | Subagent system prompt from file body + environment basics, not full Claude Code prompt; resolution emits confident structure |
 | I5 | 3.8 | doc | noFixturePossible | — | Git status snapshot at parent-session start; parent runtime state not captured in static fixture scan |
-| B1 | 3.9 | doc | entry-owed | 2 | Built-in agent inventory (`Explore`, `Plan`, etc.); discovery lists builtins confidently |
 | B3 | 3.9 | doc | noFixturePossible | — | Explore model capped at Opus on Claude API; external API/plan constraint, not fixture-observable |
-| B4 | 3.9 | doc | entry-owed | 2 | User agent named `Explore` overrides builtin keeping own `model`; collision/override rule in discovery |
-| B5 | 3.9 | doc | entry-owed | 2 | `CLAUDE_CODE_DISABLE_EXPLORE_PLAN_AGENTS=1` removes Explore/Plan; env-driven, fixture-promotable via `env.json` |
-| B6 | 3.9 | doc | entry-owed | 2 | `CLAUDE_AGENT_SDK_DISABLE_BUILTIN_AGENTS=1` removes all builtins in non-interactive/SDK; env-driven |
-| N1 | 3.10 | doc | entry-owed | 2 | Default subagent spawn depth 3 (v2.1.219+); depth-limit fixture partial, fact unreferenced |
-| N3 | 3.10 | doc | entry-owed | 2 | `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` changes depth limit; env-driven, fixture-promotable |
-| N4 | 3.10 | doc | entry-owed | 2 | Concurrent subagent cap 20 via `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`; env-driven |
-| E1 | 3.11 | doc | entry-owed | 2 | `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` forces foreground → Filter 1 only; env fixture |
-| E2 | 3.11 | doc | entry-owed | 2 | `CLAUDE_CODE_FORK_SUBAGENT` toggles fork mode; `fork` fixture partial, fact unreferenced |
-| E3 | 3.11 | doc | entry-owed | 2 | `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` → Agent availability; overlaps N3, matrix should cite |
-| E4 | 3.11 | doc | entry-owed | 2 | `CLAUDE_CODE_DISABLE_EXPLORE_PLAN_AGENTS=1`; overlaps B5 |
-| E5 | 3.11 | doc | entry-owed | 2 | `CLAUDE_AGENT_SDK_DISABLE_BUILTIN_AGENTS=1`; overlaps B6 |
-| E6 | 3.11 | doc | entry-owed | 2 | `CLAUDE_CODE_SUBAGENT_MODEL` overrides subagent model; env fixture |
-| E7 | 3.11 | doc | entry-owed | 2 | `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`; overlaps N4 |
-| E8 | 3.11 | doc | entry-owed | 2 | `CLAUDE_CODE_DISABLE_AUTO_MEMORY` disables frontmatter `memory`; env fixture |
-| E9 | 3.11 | ext | entry-owed | 2 | Settings `env` block injected per session/tool call; S11 entry partial, E9 itself unreferenced |
 | M1 | 3.12 | doc | noFixturePossible | — | Hot-reload of agent dirs without restart; file-watcher runtime behavior, not static scan |
 | M2 | 3.12 | doc | noFixturePossible | — | `claude plugin validate <dir>` external CLI subcommand; outside ordinary scan scope |
 | M3 | 3.12 | doc | noFixturePossible | — | `/doctor` interactive slash command reports same-name collisions; not produced by scan |
-| M4 | 3.12 | doc | entry-owed | 2 | `--agent <name>` replaces main-session system prompt; main-session context not in subagent goldens |
-| M5 | 3.12 | doc | entry-owed | 2 | Inline MCP from agent file loads at main-session start; overlaps R1/trust fixtures partially |
 | M6 | 3.12 | doc | out-of-scope | — | Agent-teams teammate spawn applies agent `tools`/`model`; teammate runtime feature beyond M1 scan (§9) |
 
 ### Closed in D2-02 (priority-1 Claude)
@@ -79,6 +54,59 @@ Matrix entries added in `src/adapters/claude/version/matrix.ts`; fixtures where 
 | F10 | `agent.initialPromptMainSession` | `noFixturePossible` — main-session-only, resolution goldens are subagent-only |
 | K2 | `skills.skillToolWithoutPreload` | fixture `skill-allowed-tools`, tool-offered half only (doc) |
 | K3 | `skills.skillToolWhitelist` | fixture `basic`, tools branch only (doc) |
+
+### Closed in D3-01 (priority-2 env cluster)
+
+Matrix entries added in `src/adapters/claude/version/matrix.ts`; `environment` fixture extended where promotable under H1-28.
+
+| Fact | Matrix entry | Evidence |
+|------|--------------|----------|
+| B5 | `builtin.disableExplorePlan` | fixture `environment`, discovery.environment only (doc) |
+| B6 | `builtin.disableAllSdk` | fixture `environment`, discovery.environment only (doc) |
+| N3 | `agent.depthLimit` | fixture `depth-limit`, env override partial (doc) |
+| N4 | `environment.maxConcurrentSubagents` | fixture `environment`, discovery.environment only (doc) |
+| E1 | `E1` | fixture `environment`, discovery.environment only (doc) |
+| E2 | `E2` | fixture `environment`, discovery.environment only (doc) |
+| E3 | `agent.depthLimit` | fixture `depth-limit` + `environment`, depth override partial (doc) |
+| E4 | `builtin.disableExplorePlan` | fixture `environment`, discovery.environment only (doc) |
+| E5 | `builtin.disableAllSdk` | fixture `environment`, discovery.environment only (doc) |
+| E6 | `agent.modelResolution` | `noFixturePossible` — no resolved-model channel in §11.2 goldens |
+| E7 | `environment.maxConcurrentSubagents` | fixture `environment`, discovery.environment only (doc) |
+| E8 | `E8` | fixture `environment`, discovery.environment only (doc) |
+| E9 | `environment.settingsEnv` | fixture `environment`, settings.env keys only (doc) |
+
+### Closed in D3-02 (priority-2 trust cluster)
+
+Matrix entries added in `src/adapters/claude/version/matrix.ts`; fixtures extended where promotable under H1-28.
+
+| Fact | Matrix entry | Evidence |
+|------|--------------|----------|
+| R2 | `trust.parentFolder` | fixture `nested-project`, hooks branch partial (doc) |
+| R6 | `trust.addDirSeparate` | fixture `add-dir`, inline MCP partial (doc) |
+
+### Closed in D3-03 (priority-2 discovery/builtins cluster)
+
+Matrix entries added in `src/adapters/claude/version/matrix.ts`; `tools-filters` fixture extended where promotable under H1-28.
+
+| Fact | Matrix entry | Evidence |
+|------|--------------|----------|
+| T5 | `context.foregroundBackground` | matrix-referenced, documentation-only (tools-filters pins T2 via `context.filter2`, not T5) |
+| B1 | `discovery.builtinInventory` | `noFixturePossible` — discovery.agents has no builtin channel yet |
+| B4 | `discovery.builtinNameOverride` | `noFixturePossible` — override needs builtin inventory in discovery |
+
+### Closed in D3-04 (priority-2 skills/instructions/remaining cluster)
+
+Matrix entries added in `src/adapters/claude/version/matrix.ts`; fixtures extended where promotable under H1-28.
+
+| Fact | Matrix entry | Evidence |
+|------|--------------|----------|
+| P3 | `P3` | `noFixturePossible` — plan tier not discovered in ordinary scan |
+| K7 | `skills.allowedToolsUntrusted` | fixture `skill-allowed-tools`, untrusted-folder partial (doc) |
+| K9 | `skills.disallowedToolsActive` | `noFixturePossible` — skill-active runtime state, no §11.2 channel |
+| I4 | `instructions.subagentPrompt` | `noFixturePossible` — no system-prompt channel in §11.2 goldens |
+| N1 | `agent.depthLimit` | fixture `depth-limit`, default depth partial (doc) |
+| M4 | `session.mainAgentPrompt` | `noFixturePossible` — main-session-only, subagent goldens only |
+| M5 | `session.mainInlineMcp` | `noFixturePossible` — main-session startup; R1 pinned in subagent goldens |
 
 ---
 
@@ -156,39 +184,14 @@ Stable parse target for D2-06. Format: `platform:factId:disposition`.
 
 ```
 claude:T4:out-of-scope
-claude:T5:entry-owed
 claude:T6:noFixturePossible
-claude:P3:entry-owed
-claude:K7:entry-owed
-claude:K9:entry-owed
-claude:R2:entry-owed
 claude:R3:noFixturePossible
-claude:R6:entry-owed
 claude:I3:noFixturePossible
-claude:I4:entry-owed
 claude:I5:noFixturePossible
-claude:B1:entry-owed
 claude:B3:noFixturePossible
-claude:B4:entry-owed
-claude:B5:entry-owed
-claude:B6:entry-owed
-claude:N1:entry-owed
-claude:N3:entry-owed
-claude:N4:entry-owed
-claude:E1:entry-owed
-claude:E2:entry-owed
-claude:E3:entry-owed
-claude:E4:entry-owed
-claude:E5:entry-owed
-claude:E6:entry-owed
-claude:E7:entry-owed
-claude:E8:entry-owed
-claude:E9:entry-owed
 claude:M1:noFixturePossible
 claude:M2:noFixturePossible
 claude:M3:noFixturePossible
-claude:M4:entry-owed
-claude:M5:entry-owed
 claude:M6:out-of-scope
 cursor:CV1:noFixturePossible
 cursor:CV3:noFixturePossible
@@ -223,7 +226,7 @@ codex:XT3:entry-owed
 
 | Disposition | Claude | Cursor | Codex | Total |
 |-------------|--------|--------|-------|-------|
-| entry-owed | 25 | 10 | 11 | 46 |
-| noFixturePossible | 11 | 7 | 1 | 19 |
+| entry-owed | 0 | 8 | 11 | 19 |
+| noFixturePossible | 8 | 6 | 1 | 15 |
 | out-of-scope | 2 | 1 | 0 | 3 |
-| **sum** | **35** | **17** | **12** | **64** |
+| **sum** | **10** | **15** | **12** | **37** |

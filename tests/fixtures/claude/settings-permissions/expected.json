@@ -1497,7 +1497,10 @@
               "fieldPath": "frontmatter.permissionMode"
             }
           ],
-          "matrixRef": "P5"
+          "matrixRef": "P5",
+          "relatedCapabilityIds": [
+            "permission:bypassPermissions"
+          ]
         },
         {
           "category": "ignored-field",
@@ -1532,7 +1535,10 @@
             }
           ],
           "matrixRef": "settings.allowGlobIneffective",
-          "enforcement": "enforced"
+          "enforcement": "enforced",
+          "relatedCapabilityIds": [
+            "settings-permission:project:allow:*"
+          ]
         },
         {
           "category": "security-finding",
@@ -1547,7 +1553,10 @@
             }
           ],
           "matrixRef": "settings.allowGlobIneffective",
-          "enforcement": "enforced"
+          "enforcement": "enforced",
+          "relatedCapabilityIds": [
+            "settings-permission:project:allow:mcp__*"
+          ]
         }
       ],
       "unknownRate": 0.08333333333333333
@@ -2873,7 +2882,10 @@
             }
           ],
           "matrixRef": "settings.allowGlobIneffective",
-          "enforcement": "enforced"
+          "enforcement": "enforced",
+          "relatedCapabilityIds": [
+            "settings-permission:project:allow:*"
+          ]
         },
         {
           "category": "security-finding",
@@ -2888,7 +2900,10 @@
             }
           ],
           "matrixRef": "settings.allowGlobIneffective",
-          "enforcement": "enforced"
+          "enforcement": "enforced",
+          "relatedCapabilityIds": [
+            "settings-permission:project:allow:mcp__*"
+          ]
         }
       ],
       "unknownRate": 0.08333333333333333

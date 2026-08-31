@@ -930,7 +930,10 @@
               "fieldPath": "frontmatter.mcpServers[0]"
             }
           ],
-          "matrixRef": "R1"
+          "matrixRef": "R1",
+          "relatedCapabilityIds": [
+            "inline-mcp:0"
+          ]
         }
       ],
       "unknownRate": 0

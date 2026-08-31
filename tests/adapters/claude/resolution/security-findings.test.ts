@@ -165,6 +165,9 @@ describe("resolveSecurityFindings", () => {
     });
 
     expect(warnings.some((warning) => warning.message.includes("guardrail"))).toBe(true);
+    expect(
+      warnings.find((warning) => warning.message.includes("guardrail"))?.relatedCapabilityIds,
+    ).toEqual(["Bash"]);
   });
 
   it("flags bypassPermissions in agent definition", async () => {
@@ -183,6 +186,9 @@ describe("resolveSecurityFindings", () => {
 
     expect(warnings.some((warning) => warning.matrixRef === "P5")).toBe(true);
     expect(warnings.some((warning) => warning.message.includes("bypassPermissions"))).toBe(true);
+    expect(
+      warnings.find((warning) => warning.matrixRef === "P5")?.relatedCapabilityIds,
+    ).toEqual(["permission:bypassPermissions"]);
   });
 
   it("flags inline MCP servers that run arbitrary commands", async () => {
@@ -202,6 +208,9 @@ describe("resolveSecurityFindings", () => {
 
     expect(warnings.some((warning) => warning.message.includes("arbitrary command"))).toBe(true);
     expect(warnings.some((warning) => warning.matrixRef === "R1")).toBe(true);
+    expect(
+      warnings.find((warning) => warning.matrixRef === "R1")?.relatedCapabilityIds,
+    ).toEqual(["inline-mcp:0"]);
   });
 
   // F9: the same declaration is a real finding for a project agent and an

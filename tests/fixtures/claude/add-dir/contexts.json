@@ -5,6 +5,7 @@
   },
   {
     "agentName": "reviewer",
+    "agentSourcePath": ".claude/agents/reviewer.md",
     "preset": "foreground-subagent"
   }
 ]

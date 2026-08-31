@@ -142,19 +142,14 @@ function SimulationDelta({ delta, bundlePath }: SimulationDeltaProps) {
                 <div className="simulation-delta-item-header">
                   <span className="simulation-delta-agent">{entry.agentName}</span>
                   <span className="simulation-delta-model-change">
-                    <code>{entry.declared}</code> →{" "}
-                    <code>
-                      {entry.effectiveEnforcement === "unknown"
-                        ? "unknown"
-                        : entry.effective}
-                    </code>
+                    <code>{entry.declared}</code> → <code>{entry.effective}</code>
                   </span>
                 </div>
                 <p className="simulation-delta-cause">
                   Blocked by allowlist ({entry.matrixRef},{" "}
                   {ENFORCEMENT_LABELS[entry.enforcement]}
                   {entry.enforcementReason ? `: ${entry.enforcementReason}` : ""}). Substitute
-                  model identity is {ENFORCEMENT_LABELS[entry.effectiveEnforcement].toLowerCase()}.
+                  model identity is {entry.effective}.
                 </p>
                 <p className="simulation-delta-source">
                   Declared at <code>{formatSourceLine(entry.source)}</code>

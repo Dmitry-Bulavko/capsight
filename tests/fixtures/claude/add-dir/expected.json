@@ -32,6 +32,14 @@
           "tools": [
             "Read"
           ],
+          "mcpServers": [
+            {
+              "transport": "stdio",
+              "commandName": "node",
+              "envKeys": [],
+              "headerKeys": []
+            }
+          ],
           "skills": [
             "vendor-lint"
           ],
@@ -65,7 +73,7 @@
     "mcpServers": [],
     "settings": [],
     "trust": {
-      "accepted": false,
+      "accepted": true,
       "projectPath": "."
     },
     "environment": {
@@ -868,6 +876,35 @@
           ]
         },
         {
+          "capabilityId": "inline-mcp:0",
+          "kind": "mcp_server",
+          "status": "blocked",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents",
+              "fieldPath": "frontmatter.mcpServers[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "trust",
+              "message": "Inline MCP server blocked until the --add-dir folder trust is accepted (R6).",
+              "source": {
+                "platform": "claude",
+                "scope": "unknown",
+                "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+                "matrixRef": "discovery.addDirAgents",
+                "fieldPath": "frontmatter.mcpServers[0]"
+              },
+              "matrixRef": "R6"
+            }
+          ]
+        },
+        {
           "capabilityId": "instruction:CLAUDE.md",
           "kind": "instruction",
           "status": "available",
@@ -927,7 +964,26 @@
           ]
         }
       ],
-      "warnings": [],
+      "warnings": [
+        {
+          "category": "security-finding",
+          "severity": "warning",
+          "message": "Inline MCP server runs arbitrary command \"node\" from agent frontmatter.",
+          "evidence": [
+            {
+              "platform": "claude",
+              "scope": "unknown",
+              "path": "vendor-lib/.claude/agents/vendor-auditor.md",
+              "matrixRef": "discovery.addDirAgents",
+              "fieldPath": "frontmatter.mcpServers[0]"
+            }
+          ],
+          "matrixRef": "R1",
+          "relatedCapabilityIds": [
+            "inline-mcp:0"
+          ]
+        }
+      ],
       "unknownRate": 0
     },
     {
