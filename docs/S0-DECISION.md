@@ -210,6 +210,15 @@ Until then, §9.5 fallback stands.
 
 ---
 
+## Revisit (S9-01)
+
+**Date:** 2026-08-31  
+**Verdict:** **remain deferred** — §9.5 fallback unchanged.
+
+[S9-DECISION.md](S9-DECISION.md) re-assessed all four criteria against Agent SDK v0.3.252 and current hooks documentation. No structural permission-resolved tool-pool API; live fixture probes still not run (criterion 2 fail). Nearest future path: **invocation-only partial** after fixture validation.
+
+---
+
 ## References
 
 | Artifact | Path |

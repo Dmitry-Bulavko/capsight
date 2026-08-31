@@ -1,29 +1,29 @@
 # Capsight continuation
 
-**Active phase:** §9 deferred — revisit when platform APIs mature  
-**Last completed:** D5 — Evidence depth wave 5 (all tasks done)
+**Active phase:** none — backlog exhausted at honest ceiling  
+**Last completed:** S9 — Observed layer revisit (S9-01 defer reaffirmed)
 
-## D5 outcome
+## S9 outcome (2026-08-31)
 
-- Baseline **41** → **42** fixture-verified (+1: F11 only)
-- Original gate target ≥50 **not met** — revised floor **42** documented in D5-07 gate test
-- 8 of 9 promotion-owed targets closed as **partial-pin** (honest H1-28)
-- D4-06 unchanged: entry-owed **0**, unverified **18**
+- **Verdict:** remain deferred ([S9-DECISION.md](./S9-DECISION.md))
+- SDK v0.3.252 — no structural permission-resolved tool pool
+- Live fixture probes not run (criterion 2 fails)
+- §9.5 fallback unchanged; max confidence **fixture**
+- S9-02…S9-06 cancelled; next revisit when platform APIs or product UX commit
 
-## Phase queue
-
-```
-§9 (observed layer, deferred) — see S0-DECISION.md
-```
-
-## Coverage (post-D5)
+## Evidence ceiling (unchanged)
 
 | metric | value |
 |--------|-------|
 | fixture-verified | **42 / 145 (29%)** |
-| documentation-only | 66 |
-| unverified | 18 (terminal) |
-| entry-owed | 0 |
+| unverified | **18** (terminal without §9) |
+| entry-owed | **0** |
+
+## Possible next work (not scheduled)
+
+1. **S9-02 path** — if invocation-only partial approved + live fixture probes pass
+2. **New evidence wave** — only if new platform facts or golden channels appear
+3. **Product/UI** — surface rule phases beyond V1 scope
 
 ## Orchestration
 

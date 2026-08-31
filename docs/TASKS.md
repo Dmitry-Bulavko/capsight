@@ -401,8 +401,24 @@ Order: D5-01 → D5-02 → D5-03 → D5-04 → D5-05 → D5-06 → D5-07.
 | D5-06 | D5 | Matrix housekeeping + multi-platform opportunistic | done | §8.2, §11.4 | matrix.ts (all platforms) | depthLimitDefault cleared; CW2/XA3 refused; fv +0 |
 | D5-07 | D5 | D5 gate — fixture-verified floor ≥ 50 | done | §11.4, D4-06 | coverage-report.test.ts, EVIDENCE-PROMOTION.md | Gate revised: fv **42** (+1 F11); D4-06 unchanged |
 
+## S9 — Observed runtime layer (§9)
+
+Revisit S0 per `S0-DECISION.md` revisit criteria. **No product code until S9-01 verdict is go (full or partial).**
+
+Order: S9-01 → (conditional) S9-02 … S9-07.
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| S9-01 | S9 | S0 revisit — API maturity assessment | done | §9.1–§9.5 | docs/S9-DECISION.md, S0-DECISION.md | Verdict: **remain deferred** |
+| S9-02 | S9 | ObservedCapability core model | cancelled | §9.3 | — | S9-01 defer |
+| S9-03 | S9 | Dev-only observation probe harness | cancelled | §9.4 | — | S9-01 defer |
+| S9-04 | S9 | resolved != observed detection + warnings | cancelled | §9.1, §7.6 | — | S9-01 defer |
+| S9-05 | S9 | UI — observed status in capabilities / Why | cancelled | §7.5, §9.3 | — | S9-01 defer |
+| S9-06 | S9 | Coverage gate — runtime-observed bucket | cancelled | §11.4 | — | S9-01 defer |
+| S9-07 | S9 | S9 phase gate | done | §9.5, §11.3 | docs/S9-DECISION.md | Phase closed: defer reaffirmed |
+
 ## Deferred backlog
 
 | ID | Phase | Title | Status | Notes |
 |----|-------|-------|--------|-------|
-| §9 | S0 | Observed runtime layer | deferred | Revisit S0-DECISION when APIs mature |
+| §9 | S9 | Observed runtime layer | deferred | [S9-DECISION.md](./S9-DECISION.md) — S9-01 reaffirmed defer (2026-08-31) |

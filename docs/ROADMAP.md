@@ -4,19 +4,17 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**D5 complete.** Fixture-verified **42/145 (29%)** — gate revised from 50 to honest +1 (F11). D4-06 unchanged (entry-owed **0**, unverified **18**).
+**Backlog at honest ceiling.** S9 closed — [S9-DECISION.md](./S9-DECISION.md) reaffirms **remain deferred** (2026-08-31). §9.5 fallback active; fixture-verified **42/145**, unverified **18** terminal.
 
-Next backlog: **§9 — Observed layer** (deferred; see [S0-DECISION.md](./S0-DECISION.md)).
+No active phase scheduled. Next unlock: platform structural pool API, or product commitment to invocation-only observed UX + live fixture probes.
 
 ## Phase order (active backlog)
 
 ```
-D5 (fixture promotion) → §9
+(none — honest ceiling reached; §9 deferred)
 ```
 
-Waves 1–4 closed `entry-owed` and unverified floor. Wave 5 promotes matrix-referenced facts that already have fixtures but lack `verifiedFacts` deletion tests.
-
-Completed chain: `… → D4 → SS-deep → B1 → G1-MP`.
+Completed chain: `… → D5 → S9 (defer reaffirmed)`.
 
 ## Phase status
 
@@ -46,7 +44,7 @@ Completed chain: `… → D4 → SS-deep → B1 → G1-MP`.
 | B1 — Builtin discovery channel | `done` | Six builtins in discovery; B1 fixture-verified; B4 override pinned |
 | G1-MP — Drift on Cursor/Codex | `done` | maxVersion on confident rule per platform |
 | D5 | Evidence depth wave 5 | `done` | fv **42** (+1 F11); gate revised; D4-06 unchanged |
-| §9 — Observed layer | `deferred` | Revisit [S0-DECISION.md](./S0-DECISION.md) when platform APIs mature |
+| §9 — Observed layer | `deferred` | [S9-DECISION.md](./S9-DECISION.md) — S9-01 (2026-08-31) |
 
 ## Surface rule
 
