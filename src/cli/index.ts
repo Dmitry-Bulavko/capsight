@@ -45,6 +45,7 @@ import {
   type ApplyResult,
   type RollbackResult,
 } from "../application/apply.js";
+import { runObserve } from "./commands/observe.js";
 
 export async function runScan(
   projectPath: string,
@@ -261,6 +262,8 @@ export async function runRollback(
   });
 }
 
+export { runObserve, type ObserveResult } from "./commands/observe.js";
+
 const program = new Command();
 
 program
@@ -367,6 +370,20 @@ program
         parentMode: options.parentMode,
         projectPath: options.path,
       });
+      console.log(JSON.stringify(result, null, 2));
+    } catch (error) {
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exitCode = 1;
+    }
+  });
+
+program
+  .command("observe")
+  .description("Run dev-only observation probes on a fixture project (SPEC §9.4)")
+  .requiredOption("--fixture <path>", "Path under tests/fixtures/claude/<name>/project")
+  .action(async (options: { fixture: string }) => {
+    try {
+      const result = await runObserve(options.fixture);
       console.log(JSON.stringify(result, null, 2));
     } catch (error) {
       console.error(error instanceof Error ? error.message : String(error));
