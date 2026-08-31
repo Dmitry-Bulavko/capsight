@@ -2,14 +2,12 @@
 
 Facts that reach no `VERSION_MATRIX` entry are `unverified` in `buildCoverageReport` (SPEC §11.4). This ledger triages every such fact across the three platform registries so none remain silent (D2 gate).
 
-**Measured:** `buildCoverageReport` over `facts.ts` + `VERSION_MATRIX` + declared fixture corpus (baseline commit `28a510b`).
+**Measured:** `buildCoverageReport` over `facts.ts` + `VERSION_MATRIX` + declared fixture corpus.
 
-| Platform | Total facts | Unverified |
-|----------|-------------|------------|
-| claude   | 92          | 35         |
-| cursor   | 27          | 17         |
-| codex    | 26          | 12         |
-| **sum**  | **145**     | **64**     |
+| | claude | cursor | codex | unverified total |
+|---|--------|--------|-------|------------------|
+| Baseline (`28a510b`, pre-D2) | 47 | 21 | 19 | **87** |
+| Current (this ledger) | 35 | 15 | 12 | **62** |
 
 Compat-matrix citations (`COMPAT_MATRIX_ENTRIES` in `src/core/compat/`) do not count toward platform coverage; facts cited only there still appear here.
 
@@ -84,7 +82,7 @@ Matrix entries added in `src/adapters/claude/version/matrix.ts`; fixtures where 
 
 ---
 
-## Cursor (17 unreferenced)
+## Cursor (15 unreferenced)
 
 | Fact | § | Conf | Disposition | Priority | Reason |
 |------|---|------|-------------|----------|--------|

@@ -816,7 +816,13 @@
               "fieldPath": "frontmatter.permissionMode"
             }
           ],
-          "matrixRef": "P1"
+          "matrixRef": "P1",
+          "ignoredField": {
+            "field": "permissionMode",
+            "declared": "acceptEdits",
+            "effective": "bypassPermissions",
+            "factRef": "P1"
+          }
         }
       ],
       "unknownRate": 0
@@ -1597,7 +1603,13 @@
               "fieldPath": "frontmatter.permissionMode"
             }
           ],
-          "matrixRef": "P2"
+          "matrixRef": "P2",
+          "ignoredField": {
+            "field": "permissionMode",
+            "declared": "acceptEdits",
+            "effective": "auto",
+            "factRef": "P2"
+          }
         }
       ],
       "unknownRate": 0

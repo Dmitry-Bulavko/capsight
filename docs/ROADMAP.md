@@ -203,6 +203,8 @@ G1 builds the mechanism: matrix entries carry version applicability, a detected 
 
 **Gate:** a version outside the matrix produces a visible, scoped downgrade — never a silent confident answer.
 
+**G1 outcome (honest ceiling).** Version applicability is wired on all three platforms and the DriftBanner reads resolver downgrades. The corpus demonstrates scoped downgrade only on `agent.depthLimitDefault`, which already had `status: "changed"` before G1 — version-drift therefore changes the message on an already-unknown depth rule, not a downgrade from a confident answer. No Cursor or Codex matrix entry declares `maxVersion` yet; drift there is covered by unit tests with a patched matrix only. Follow-up: add `maxVersion` to at least one otherwise-`supported` entry whose golden would stay confident at the fixture version without the bound.
+
 ## H1 outcome
 
 All twenty-eight H1 tasks are closed. The audit of `aa7f109` found thirteen deviations; implementing them surfaced fifteen more, several of the same blocker class as the originals. Everything below is fixed and covered.

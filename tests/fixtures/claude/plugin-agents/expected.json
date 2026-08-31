@@ -907,7 +907,12 @@
             }
           ],
           "matrixRef": "agent.pluginFieldLimits",
-          "enforcement": "enforced"
+          "enforcement": "enforced",
+          "ignoredField": {
+            "field": "hooks",
+            "declared": "{\"form\":\"object\",\"events\":[\"PreToolUse\"],\"count\":1}",
+            "factRef": "F9"
+          }
         },
         {
           "category": "ignored-field",
@@ -922,7 +927,12 @@
             }
           ],
           "matrixRef": "agent.pluginFieldLimits",
-          "enforcement": "enforced"
+          "enforcement": "enforced",
+          "ignoredField": {
+            "field": "mcpServers",
+            "declared": "[{\"name\":\"audit-server\",\"transport\":\"stdio\",\"commandName\":\"audit-server\",\"envKeys\":[],\"headerKeys\":[]}]",
+            "factRef": "F9"
+          }
         },
         {
           "category": "ignored-field",
@@ -937,7 +947,12 @@
             }
           ],
           "matrixRef": "agent.pluginFieldLimits",
-          "enforcement": "enforced"
+          "enforcement": "enforced",
+          "ignoredField": {
+            "field": "permissionMode",
+            "declared": "bypassPermissions",
+            "factRef": "F9"
+          }
         }
       ],
       "unknownRate": 0

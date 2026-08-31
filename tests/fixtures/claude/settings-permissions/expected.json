@@ -1511,7 +1511,13 @@
               "fieldPath": "frontmatter.permissionMode"
             }
           ],
-          "matrixRef": "P4"
+          "matrixRef": "P4",
+          "ignoredField": {
+            "field": "permissionMode",
+            "declared": "bypassPermissions",
+            "effective": "default",
+            "factRef": "P4"
+          }
         },
         {
           "category": "security-finding",

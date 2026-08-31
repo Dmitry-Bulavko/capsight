@@ -156,6 +156,15 @@ export interface ResolvedCapability {
   reasons: ResolutionReason[];
 }
 
+/** Structured §7.4 ignored-field claim — UI must not parse `message` for these. */
+export interface IgnoredFieldDetail {
+  field: string;
+  declared: string;
+  /** Absent when the field is fully ignored (F9 plugin fields). */
+  effective?: string;
+  factRef?: string;
+}
+
 export interface Warning {
   category:
     | "trust"
@@ -185,6 +194,8 @@ export interface Warning {
    * guarantees, so there is no version-sensitive claim to gate.
    */
   enforcement?: Enforcement;
+  /** Present on `ignored-field` warnings from the resolver (§7.4). */
+  ignoredField?: IgnoredFieldDetail;
 }
 
 export interface EffectiveConfiguration {

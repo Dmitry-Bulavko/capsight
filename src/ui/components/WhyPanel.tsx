@@ -54,7 +54,7 @@ const PRESET_LABELS: Record<ExecutionContext["preset"], string> = {
 };
 
 /** UI tier labels aligned with fact registry confidence (§8.1). */
-export type EvidenceTier = "fixture" | "doc" | "ext" | "spike" | "unknown";
+export type EvidenceTier = "runtime" | "fixture" | "doc" | "ext" | "spike" | "unknown";
 
 type MatrixConfidence = "doc" | "fixture" | "runtime-observed";
 
@@ -69,12 +69,12 @@ const MATRIX_ENTRY_BY_ID = new Map<string, MatrixEntryLike>(
 
 export function matrixConfidenceToTier(confidence: MatrixConfidence): EvidenceTier {
   switch (confidence) {
+    case "runtime-observed":
+      return "runtime";
     case "fixture":
       return "fixture";
     case "doc":
       return "doc";
-    case "runtime-observed":
-      return "spike";
   }
 }
 

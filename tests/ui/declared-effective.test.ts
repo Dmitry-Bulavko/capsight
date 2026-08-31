@@ -75,6 +75,12 @@ function makeWarning(overrides: Partial<Warning> = {}): Warning {
       },
     ],
     matrixRef: "P2",
+    ignoredField: {
+      field: "permissionMode",
+      declared: "acceptEdits",
+      effective: "auto",
+      factRef: "P2",
+    },
     ...overrides,
   };
 }
@@ -132,6 +138,12 @@ describe("DeclaredEffective helpers", () => {
       warnings: [
         makeWarning({
           message: "Plugin agents ignore frontmatter hooks (F9).",
+          matrixRef: "agent.pluginFieldLimits",
+          ignoredField: {
+            field: "hooks",
+            declared: '{"form":"object","events":["PreToolUse"],"count":1}',
+            factRef: "F9",
+          },
           evidence: [
             {
               platform: "claude",
@@ -140,10 +152,15 @@ describe("DeclaredEffective helpers", () => {
               fieldPath: "frontmatter.hooks",
             },
           ],
-          matrixRef: "agent.pluginFieldLimits",
         }),
         makeWarning({
           message: "Plugin agents ignore frontmatter permissionMode (F9).",
+          matrixRef: "agent.pluginFieldLimits",
+          ignoredField: {
+            field: "permissionMode",
+            declared: "bypassPermissions",
+            factRef: "F9",
+          },
           evidence: [
             {
               platform: "claude",
@@ -152,7 +169,6 @@ describe("DeclaredEffective helpers", () => {
               fieldPath: "frontmatter.permissionMode",
             },
           ],
-          matrixRef: "agent.pluginFieldLimits",
         }),
       ],
     });
@@ -236,7 +252,20 @@ describe("DeclaredEffective helpers", () => {
 
     expect(extractDeclaredEffectivePairs(effective)).toEqual([]);
     expect(extractForkNotice(effective)?.matrixRef).toBe("T3");
-    expect(extractForkNotice(effective)?.message).toContain("does not apply in fork context");
+    expect(extractForkNotice(effective)?.message).toContain("Fork inherits");
+  });
+
+  it("ignores ignored-field warnings without structured ignoredField", () => {
+    const effective = makeEffective({
+      warnings: [
+        makeWarning({
+          ignoredField: undefined,
+          message: 'Declared permissionMode "acceptEdits" is not effective in this context.',
+        }),
+      ],
+    });
+
+    expect(extractDeclaredEffectivePairs(effective)).toEqual([]);
   });
 });
 
@@ -287,13 +316,13 @@ describe("DeclaredEffective components", () => {
   it("renders fork configuration notice with T3 reference", () => {
     const notice = {
       message:
-        "Agent configuration (tools, disallowedTools, mcpServers, model, permissionMode) does not apply in fork context.",
+        "Fork inherits parent session tool pool; agent configuration filters are not applied (T3).",
       matrixRef: "T3",
     };
 
     const html = renderToString(createElement(ForkConfigurationNoticeView, { notice }));
 
-    expect(html).toContain("does not apply in fork context");
+    expect(html).toContain("Fork inherits");
     expect(html).toContain("[T3]");
     expect(html).toContain("fork-configuration-notice");
   });

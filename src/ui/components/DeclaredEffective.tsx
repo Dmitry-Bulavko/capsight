@@ -21,23 +21,11 @@ export interface ForkConfigurationNotice {
   matrixRef?: string;
 }
 
-const PERMISSION_MODE_DECLARED_RE =
-  /^Declared permissionMode "([^"]+)" is not effective in this context\./;
-const PLUGIN_FIELD_RE = /^Plugin agents ignore frontmatter (\w+)/;
-
 function formatFactRef(matrixRef: string): string {
   if (matrixRef.startsWith("matrix://")) {
     return matrixRef;
   }
   return `[${matrixRef}]`;
-}
-
-function factRefFromWarning(warning: Warning): string | undefined {
-  const fromMessage = /\(([A-Z]\d+)\)/.exec(warning.message);
-  if (fromMessage) {
-    return fromMessage[1];
-  }
-  return warning.matrixRef;
 }
 
 function formatDeclaredValue(value: unknown): string {
@@ -56,14 +44,6 @@ function formatDeclaredValue(value: unknown): string {
   return String(value);
 }
 
-function fieldFromEvidence(warning: Warning): string | undefined {
-  const fieldPath = warning.evidence[0]?.fieldPath;
-  if (!fieldPath?.startsWith("frontmatter.")) {
-    return undefined;
-  }
-  return fieldPath.slice("frontmatter.".length);
-}
-
 function readAgentField(agent: Agent | null | undefined, field: string): unknown {
   if (!agent) {
     return undefined;
@@ -72,15 +52,11 @@ function readAgentField(agent: Agent | null | undefined, field: string): unknown
 }
 
 function permissionCapability(effective: EffectiveConfiguration) {
-  return effective.capabilities.find((capability) => capability.kind === "permission");
-}
-
-function effectivePermissionMode(effective: EffectiveConfiguration): string {
-  const capability = permissionCapability(effective);
-  if (!capability?.capabilityId.startsWith("permission:")) {
-    return "unknown";
-  }
-  return capability.capabilityId.slice("permission:".length);
+  return effective.capabilities.find(
+    (capability) =>
+      capability.kind === "permission" &&
+      capability.capabilityId.startsWith("permission:"),
+  );
 }
 
 function permissionReason(effective: EffectiveConfiguration): {
@@ -105,6 +81,42 @@ function permissionReason(effective: EffectiveConfiguration): {
   };
 }
 
+function pairFromIgnoredFieldWarning(
+  warning: Warning,
+  effective: EffectiveConfiguration,
+  agent?: Agent | null,
+): DeclaredEffectivePair | null {
+  const detail = warning.ignoredField;
+  if (!detail) {
+    return null;
+  }
+
+  const matrixRef = detail.factRef ?? warning.matrixRef;
+  const declared =
+    detail.declared ||
+    formatDeclaredValue(readAgentField(agent, detail.field));
+
+  let effectiveValue: string;
+  if (detail.effective !== undefined) {
+    effectiveValue = detail.effective;
+  } else {
+    effectiveValue = "—";
+  }
+
+  const { message, matrixRef: reasonRef } =
+    detail.field === "permissionMode" ? permissionReason(effective) : {};
+
+  return {
+    field: detail.field,
+    declared,
+    effective: effectiveValue,
+    source: warning.evidence[0],
+    reason: message ?? warning.message,
+    matrixRef: matrixRef ?? reasonRef,
+    ineffective: true,
+  };
+}
+
 export function extractForkNotice(
   effective: EffectiveConfiguration,
 ): ForkConfigurationNotice | null {
@@ -116,25 +128,18 @@ export function extractForkNotice(
     for (const reason of capability.reasons) {
       if (
         reason.type === "context-filter" &&
-        reason.message.includes("Fork inherits")
+        reason.message.includes("Fork inherits") &&
+        reason.matrixRef
       ) {
         return {
-          message:
-            "Agent configuration (tools, disallowedTools, mcpServers, model, permissionMode) " +
-            "does not apply in fork context. " +
-            reason.message,
+          message: reason.message,
           matrixRef: reason.matrixRef,
         };
       }
     }
   }
 
-  return {
-    message:
-      "Agent configuration (tools, disallowedTools, mcpServers, model, permissionMode) " +
-      "does not apply in fork context.",
-    matrixRef: undefined,
-  };
+  return null;
 }
 
 export function extractDeclaredEffectivePairs(
@@ -145,52 +150,21 @@ export function extractDeclaredEffectivePairs(
     return [];
   }
 
-  const ignoredWarnings = effective.warnings.filter(
-    (warning) => warning.category === "ignored-field",
-  );
-  const pluginWarnings = ignoredWarnings.filter((warning) => PLUGIN_FIELD_RE.test(warning.message));
-  const hasPluginPermissionMode = pluginWarnings.some(
-    (warning) => fieldFromEvidence(warning) === "permissionMode",
-  );
-
   const pairs: DeclaredEffectivePair[] = [];
+  const seenFields = new Set<string>();
 
-  for (const warning of pluginWarnings) {
-    const match = PLUGIN_FIELD_RE.exec(warning.message);
-    const field = match?.[1] ?? fieldFromEvidence(warning);
-    if (!field) {
+  for (const warning of effective.warnings) {
+    if (warning.category !== "ignored-field" || !warning.ignoredField) {
       continue;
     }
 
-    pairs.push({
-      field,
-      declared: formatDeclaredValue(readAgentField(agent, field)),
-      effective: "—",
-      source: warning.evidence[0],
-      reason: warning.message,
-      matrixRef: factRefFromWarning(warning),
-      ineffective: true,
-    });
-  }
+    const pair = pairFromIgnoredFieldWarning(warning, effective, agent);
+    if (!pair || seenFields.has(pair.field)) {
+      continue;
+    }
 
-  const permissionWarning = ignoredWarnings.find(
-    (warning) =>
-      PERMISSION_MODE_DECLARED_RE.test(warning.message) && !hasPluginPermissionMode,
-  );
-
-  if (permissionWarning) {
-    const match = PERMISSION_MODE_DECLARED_RE.exec(permissionWarning.message);
-    const { message, matrixRef } = permissionReason(effective);
-
-    pairs.push({
-      field: "permissionMode",
-      declared: match?.[1] ?? "unknown",
-      effective: effectivePermissionMode(effective),
-      source: permissionWarning.evidence[0],
-      reason: message ?? permissionWarning.message,
-      matrixRef: matrixRef ?? permissionWarning.matrixRef,
-      ineffective: true,
-    });
+    seenFields.add(pair.field);
+    pairs.push(pair);
   }
 
   return pairs;

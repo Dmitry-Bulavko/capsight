@@ -78,7 +78,7 @@ describe("resolveEvidenceTier", () => {
   it("maps matrix confidence values to UI tiers", () => {
     expect(matrixConfidenceToTier("fixture")).toBe("fixture");
     expect(matrixConfidenceToTier("doc")).toBe("doc");
-    expect(matrixConfidenceToTier("runtime-observed")).toBe("spike");
+    expect(matrixConfidenceToTier("runtime-observed")).toBe("runtime");
   });
 });
 

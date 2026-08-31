@@ -527,16 +527,29 @@ function buildIgnoredFieldWarnings(
   const warnings: Warning[] = [];
 
   if (permissionResult.ineffective && permissionResult.declared !== undefined) {
+    const factRef = permissionResult.reasons[0]?.matrixRef;
     warnings.push({
       category: "ignored-field",
       severity: "warning",
       message: `Declared permissionMode "${permissionResult.declared}" is not effective in this context.`,
       evidence: [{ ...agent.source, fieldPath: "frontmatter.permissionMode" }],
-      matrixRef: permissionResult.reasons[0]?.matrixRef,
+      matrixRef: factRef,
+      ignoredField: {
+        field: "permissionMode",
+        declared: permissionResult.declared,
+        effective: permissionResult.effective,
+        factRef,
+      },
     });
   }
 
   for (const limitation of pluginLimitations) {
+    const declared =
+      typeof limitation.declared === "string"
+        ? limitation.declared
+        : limitation.declared === undefined || limitation.declared === null
+          ? "unknown"
+          : JSON.stringify(limitation.declared);
     warnings.push(
       gateWarning(
         {
@@ -548,6 +561,11 @@ function buildIgnoredFieldWarnings(
           evidence: [
             { ...agent.source, fieldPath: `frontmatter.${limitation.field}` },
           ],
+          ignoredField: {
+            field: limitation.field,
+            declared,
+            factRef: FACT.F9,
+          },
         },
         MATRIX["agent.pluginFieldLimits"],
         version,

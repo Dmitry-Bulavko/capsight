@@ -2833,6 +2833,12 @@ code {
   border: 1px solid rgba(129, 201, 149, 0.45);
 }
 
+.why-evidence-tier-runtime {
+  color: #8ab4f8;
+  background: rgba(138, 180, 248, 0.14);
+  border: 1px solid rgba(138, 180, 248, 0.5);
+}
+
 .why-evidence-tier-doc {
   color: #bdc1c6;
   background: rgba(189, 193, 198, 0.08);
