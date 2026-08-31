@@ -72,6 +72,13 @@ declare module "@anthropic-ai/claude-agent-sdk" {
     account: unknown;
   }
 
+  export interface SDKSystemInitMessage {
+    type: "system";
+    subtype: "init";
+    tools?: string[];
+    [key: string]: unknown;
+  }
+
   export interface Query extends AsyncIterable<unknown> {
     initializationResult(): Promise<SDKControlInitializeResponse>;
     mcpServerStatus(): Promise<McpServerStatus[]>;

@@ -4,17 +4,17 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**Backlog at honest ceiling.** S9 closed — [S9-DECISION.md](./S9-DECISION.md) reaffirms **remain deferred** (2026-08-31). §9.5 fallback active; fixture-verified **42/145**, unverified **18** terminal.
+**S9P — Observed partial (invocation-only)** active. Next: **S9P-01** live probe harness.
 
-No active phase scheduled. Next unlock: platform structural pool API, or product commitment to invocation-only observed UX + live fixture probes.
+Previous: S9-01 defer reaffirmed; D5 at **42 fv**, unverified **18** terminal.
 
 ## Phase order (active backlog)
 
 ```
-(none — honest ceiling reached; §9 deferred)
+S9P (invocation-only observed) — S9P-01 in progress
 ```
 
-Completed chain: `… → D5 → S9 (defer reaffirmed)`.
+Completed chain: `… → D5 → S9 (defer) → S9P`.
 
 ## Phase status
 
@@ -44,7 +44,7 @@ Completed chain: `… → D5 → S9 (defer reaffirmed)`.
 | B1 — Builtin discovery channel | `done` | Six builtins in discovery; B1 fixture-verified; B4 override pinned |
 | G1-MP — Drift on Cursor/Codex | `done` | maxVersion on confident rule per platform |
 | D5 | Evidence depth wave 5 | `done` | fv **42** (+1 F11); gate revised; D4-06 unchanged |
-| §9 — Observed layer | `deferred` | [S9-DECISION.md](./S9-DECISION.md) — S9-01 (2026-08-31) |
+| §9 — Observed layer | `partial` (S9P) | Invocation-only path; structural S9-04 deferred |
 
 ## Surface rule
 

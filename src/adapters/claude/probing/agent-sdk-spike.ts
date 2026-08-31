@@ -1,5 +1,5 @@
 /**
- * S0-01 — Agent SDK tool pool introspection spike (DEV ONLY).
+ * S0-01 / S9P-01 — Agent SDK tool pool introspection spike (DEV ONLY).
  *
  * NOT wired to Capsight scan. NOT auto-run. Manual invocation only.
  *
@@ -17,36 +17,32 @@
  *   npx tsx src/adapters/claude/probing/agent-sdk-spike.ts \
  *     --fixture tests/fixtures/claude/<name>/project
  *
- * @see docs/tasks/S0-01-findings.md
+ * @see docs/S9P-PROBE-FINDINGS.md
  * @see src/adapters/claude/probing/README.md
  */
 
-import { parseArgs } from "node:util";
+/// <reference path="./agent-sdk-types.shim.d.ts" />
 
-/** Aggregated probe output for findings doc cross-check. */
-export interface AgentSdkProbeResult {
-  fixtureCwd: string;
-  attemptedApis: string[];
-  mcpServerStatus: {
-    servers: Array<{
-      name: string;
-      status: string;
-      toolNames: string[];
-    }>;
-  } | null;
-  contextUsage: {
-    mcpToolNames: string[];
-    deferredBuiltinToolNames: string[];
-    systemToolNames: string[];
-  } | null;
-  initialization: {
-    agentNames: string[];
-    hasToolsField: false;
-  } | null;
-  notes: string[];
-}
+import { parseArgs } from "node:util";
+import type {
+  AgentInfo,
+  ContextUsageToolEntry,
+  McpServerStatus,
+  McpServerToolInfo,
+} from "@anthropic-ai/claude-agent-sdk";
+import {
+  extractInitToolsFromStreamMessage,
+  type AgentSdkProbeResult,
+} from "./agent-sdk-probe-schema.js";
+
+export type { AgentSdkProbeResult, AgentSdkProbeRecording } from "./agent-sdk-probe-schema.js";
+export {
+  extractInitToolsFromStreamMessage,
+  validateAgentSdkProbeRecording,
+} from "./agent-sdk-probe-schema.js";
 
 const DEFAULT_PROBE_TIMEOUT_MS = 120_000;
+const MAX_STREAM_MESSAGES_FOR_INIT = 20;
 
 function parseFixtureCwd(argv: string[]): string | undefined {
   const { values } = parseArgs({
@@ -58,6 +54,33 @@ function parseFixtureCwd(argv: string[]): string | undefined {
   });
   const fixture = values.fixture;
   return typeof fixture === "string" ? fixture : undefined;
+}
+
+async function collectInitStreamToolNames(
+  q: AsyncIterable<unknown> & { close(): void },
+  signal: AbortSignal,
+): Promise<string[] | null> {
+  const iter = q[Symbol.asyncIterator]();
+
+  for (let i = 0; i < MAX_STREAM_MESSAGES_FOR_INIT; i++) {
+    if (signal.aborted) break;
+
+    const next = await Promise.race([
+      iter.next(),
+      new Promise<IteratorResult<unknown>>((_, reject) => {
+        const onAbort = () => reject(new Error("probe timeout"));
+        if (signal.aborted) onAbort();
+        else signal.addEventListener("abort", onAbort, { once: true });
+      }),
+    ]);
+
+    if (next.done) break;
+
+    const toolNames = extractInitToolsFromStreamMessage(next.value);
+    if (toolNames) return toolNames;
+  }
+
+  return null;
 }
 
 /**
@@ -76,10 +99,12 @@ export async function probeAgentSdkToolPool(
       "getContextUsage",
       "initializationResult",
       "supportedAgents",
+      "streamInitTools",
     ],
     mcpServerStatus: null,
     contextUsage: null,
     initialization: null,
+    initStreamTools: null,
     notes: [],
   };
 
@@ -99,34 +124,32 @@ export async function probeAgentSdkToolPool(
       permissionMode: "plan",
     });
 
+    const streamToolNamesPromise = collectInitStreamToolNames(q, abort.signal);
+
     // --- API 1: mcpServerStatus() — MCP tool names per server ---
-    // Docs: returns tools[] with name, description, annotations per server.
     const mcpStatuses = await q.mcpServerStatus();
     result.mcpServerStatus = {
-      servers: mcpStatuses.map((s) => ({
+      servers: mcpStatuses.map((s: McpServerStatus) => ({
         name: s.name,
         status: s.status,
-        toolNames: (s.tools ?? []).map((t) => t.name),
+        toolNames: (s.tools ?? []).map((t: McpServerToolInfo) => t.name),
       })),
     };
 
     // --- API 2: getContextUsage() — context breakdown incl. tool names ---
-    // Docs: mcpTools, deferredBuiltinTools, systemTools arrays.
-    // Caveat: docs note deferredBuiltinTools/systemTools may be absent.
     const usage = await q.getContextUsage();
     result.contextUsage = {
       mcpToolNames: usage.mcpTools.map((t) => t.name),
       deferredBuiltinToolNames: (usage.deferredBuiltinTools ?? []).map(
-        (t) => t.name,
+        (t: ContextUsageToolEntry & { isLoaded: boolean }) => t.name,
       ),
-      systemToolNames: (usage.systemTools ?? []).map((t) => t.name),
+      systemToolNames: (usage.systemTools ?? []).map((t: ContextUsageToolEntry) => t.name),
     };
 
     // --- API 3: initializationResult() — session bootstrap payload ---
-    // Docs: commands, agents, models — NO tools field in response type.
     const init = await q.initializationResult();
     result.initialization = {
-      agentNames: init.agents.map((a) => a.name),
+      agentNames: init.agents.map((a: AgentInfo) => a.name),
       hasToolsField: false,
     };
 
@@ -136,16 +159,15 @@ export async function probeAgentSdkToolPool(
       `supportedAgents returned ${agents.length} agent definition(s); not a tool list.`,
     );
 
-    // Drain at least one message so session is live (abort if hung).
-    const iter = q[Symbol.asyncIterator]();
-    await Promise.race([
-      iter.next(),
-      new Promise((_, reject) => {
-        abort.signal.addEventListener("abort", () =>
-          reject(new Error("probe timeout")),
-        );
-      }),
-    ]);
+    // --- API 5: stream init tools[] from SDKSystemMessage when present ---
+    const streamToolNames = await streamToolNamesPromise;
+    if (streamToolNames) {
+      result.initStreamTools = { toolNames: streamToolNames };
+    } else {
+      result.notes.push(
+        "No init stream tools[] observed in first stream messages (may be absent or arrive later).",
+      );
+    }
 
     q.close();
     return result;
@@ -168,7 +190,7 @@ async function main(): Promise<void> {
   }
 
   console.log(
-    "[S0-01] Starting Agent SDK probe (fixture only). Results are observations, not config facts.",
+    "[S9P-01] Starting Agent SDK probe (fixture only). Results are observations, not config facts.",
   );
   const result = await probeAgentSdkToolPool(fixtureCwd);
   console.log(JSON.stringify(result, null, 2));
@@ -181,7 +203,7 @@ const isDirectRun =
 
 if (isDirectRun) {
   main().catch((err: unknown) => {
-    console.error("[S0-01] Probe failed:", err);
+    console.error("[S9P-01] Probe failed:", err);
     process.exitCode = 1;
   });
 }

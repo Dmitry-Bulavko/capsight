@@ -417,8 +417,25 @@ Order: S9-01 → (conditional) S9-02 … S9-07.
 | S9-06 | S9 | Coverage gate — runtime-observed bucket | cancelled | §11.4 | — | S9-01 defer |
 | S9-07 | S9 | S9 phase gate | done | §9.5, §11.3 | docs/S9-DECISION.md | Phase closed: defer reaffirmed |
 
+## S9P — Observed partial (invocation-only)
+
+Unlock §9 partial path per [S9-DECISION.md](./S9-DECISION.md): live probe infrastructure + invocation-only UX + dev-only observe. **No structural `resolved != observed` (S9-04 stays cancelled).**
+
+Order: S9P-01 → S9P-02 → S9P-03 → S9P-04 → S9P-05 → S9P-06 → S9P-07.
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| S9P-01 | S9P | Live probe harness + recorded payloads | done | §9.2, §9.4 | probing/, tests/fixtures/probes/ | Doc-derived payload + 6 schema tests |
+| S9P-02 | S9P | Invocation-only UX contract | in_progress | §9.3 | docs/S9P-UX-CONTRACT.md | Partial go documented |
+| S9P-03 | S9P | ObservedCapability core model | todo | §9.3 | src/core/observed/ | §9.3 invariants in tests |
+| S9P-04 | S9P | Dev-only observe CLI | todo | §9.4, §12.5 | src/cli/ | Fixture-only command |
+| S9P-05 | S9P | Invocation-side observation collector | todo | §9.3 | probing/invocation-collector.ts | Hook events → ObservedCapability |
+| S9P-06 | S9P | UI — one-sided observed status | todo | §9.3, §7.5 | src/ui/ | Disclaimer + badge visible |
+| S9P-07 | S9P | S9P phase gate | todo | §9.5, §11.4 | coverage-report.test.ts | D4-06 unchanged |
+
 ## Deferred backlog
 
 | ID | Phase | Title | Status | Notes |
 |----|-------|-------|--------|-------|
-| §9 | S9 | Observed runtime layer | deferred | [S9-DECISION.md](./S9-DECISION.md) — S9-01 reaffirmed defer (2026-08-31) |
+| §9 full | S9 | Structural observed layer (S9-04) | deferred | Requires structural pool API |
+| §9 | S9 | Observed runtime layer | partial | S9P in progress — invocation-only path |

@@ -1,0 +1,58 @@
+{
+  "meta": {
+    "fixtureId": "claude/basic",
+    "fixturePath": "tests/fixtures/claude/basic/project",
+    "recordedAt": "2026-08-31",
+    "provenance": "doc-derived-synthetic",
+    "sdkVersion": "0.3.252",
+    "claudeCodeVersion": "unknown",
+    "notes": "No ANTHROPIC_API_KEY at record time. Shape and representative values derived from Agent SDK TypeScript reference (2026-08-31) and S9-DECISION init tools[] semantics. MCP github server left pending with empty tools[] per MCP SDK guide (tools absent while pending). Not a live observation."
+  },
+  "result": {
+    "fixtureCwd": "tests/fixtures/claude/basic/project",
+    "attemptedApis": [
+      "mcpServerStatus",
+      "getContextUsage",
+      "initializationResult",
+      "supportedAgents",
+      "streamInitTools"
+    ],
+    "mcpServerStatus": {
+      "servers": [
+        {
+          "name": "github",
+          "status": "pending",
+          "toolNames": []
+        }
+      ]
+    },
+    "contextUsage": {
+      "mcpToolNames": [],
+      "deferredBuiltinToolNames": [],
+      "systemToolNames": []
+    },
+    "initialization": {
+      "agentNames": ["backend"],
+      "hasToolsField": false
+    },
+    "initStreamTools": {
+      "toolNames": [
+        "Read",
+        "Write",
+        "Edit",
+        "Grep",
+        "Glob",
+        "Bash",
+        "Task",
+        "WebFetch",
+        "WebSearch"
+      ]
+    },
+    "notes": [
+      "supportedAgents returned multiple agent definition(s); not a tool list.",
+      "initStreamTools: doc-derived placeholder — wire names at session init, not documented as permission-resolved effective pool.",
+      "getContextUsage optional deferredBuiltinTools/systemTools absent per SDK docs.",
+      "mcpServerStatus github pending — MCP tools may be absent until connected."
+    ]
+  }
+}
