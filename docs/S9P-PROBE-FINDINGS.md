@@ -72,4 +72,20 @@ Resolver context: `background-subagent` for agent `backend` (see `tests/fixtures
 
 1. **Live re-record** on developer machine with API key — replace doc-derived placeholder with `"provenance": "live"`.
 2. **Cross-version** — repeat on supported Claude Code versions per criterion 2 (not done in S9P-01).
-3. **Hook probes** — SubagentStart / PreToolUse remain separate harness work (S9P scope OUT).
+3. **Hook probes** — invocation collector implemented in S9P-05; live re-record still pending (see below).
+
+---
+
+## Hook event payloads (S9P-05)
+
+**Recorded payload:** `tests/fixtures/probes/hooks/claude-basic.json`  
+**Collector:** `src/adapters/claude/probing/invocation-collector.ts`  
+**Provenance:** doc-derived-synthetic (Claude Code hooks reference, 2026-08-31)
+
+| Hook event | Maps to | Notes |
+|------------|---------|-------|
+| `PreToolUse` | `available` + `tool-invoked` | `tool_name` is primary capability key |
+| `PermissionDenied` | `denied` + `permission-denied` | Auto-mode only; requires explicit `reason` |
+| Silence / absence | *(no record)* | Never promotes to `denied` (§9.3) |
+
+Probe log lines may wrap the stdin JSON as `{ capturedAt, raw }` per `hooks-pretooluse.md`. The collector unwraps `raw` and uses `capturedAt` as the observation timestamp.
