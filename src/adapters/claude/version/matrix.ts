@@ -564,12 +564,12 @@ const MATRIX_ENTRIES = [
     notes:
       "The fixture's `hooked` agent is project-scoped and declares frontmatter hooks while the " +
       "project trust record is not accepted, so its hooks capability resolves blocked and " +
-      "enforced on the R5 reason. Deletion test (D1-06): with the rule removed that blocked " +
-      "capability leaves the golden altogether. Only R5's first clause is pinned — the " +
-      "exemption for user-level agents and --agents needs a home directory or a CLI flag no " +
-      "project fixture carries — so the fact is not verified entire. `blocked` records which " +
-      "resource the platform holds behind the trust dialog; it is not a claim that hooks " +
-      "cannot run by some other route (§2.4).",
+      "enforced on the R5 reason. Deletion test (D5-03): unfounding the matrix downgrades the " +
+      "same capability to unknown. Only R5's first clause is pinned — the exemption for " +
+      "user-level agents and --agents needs a home directory or a CLI flag no project fixture " +
+      "carries — so the fact is not verified entire. `blocked` records which resource the " +
+      "platform holds behind the trust dialog; it is not a claim that hooks cannot run by some " +
+      "other route (§2.4).",
   },
   {
     id: "trust.parentFolder",
@@ -577,17 +577,16 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.R2],
     minVersion: "2.1.0",
     status: "supported",
-    confidence: "doc",
+    confidence: "fixture",
     fixture: "nested-project",
     verifiedFacts: [],
     notes:
       "trust-records.json accepts only the repository root (`.`); `mid-hooked` at svc/ " +
       "declares frontmatter hooks and stays blocked while repo-root trust is seeded, " +
-      "citing R2 on the hooks capability. Deletion test not yet wired — confidence stays " +
-      "doc until treating parent-folder trust as sufficient flips mid-hooked to available " +
-      "(H1-28). R2's second clause — automatic `-p`/SDK trust for settings-file hooks — is " +
-      "session-mode runtime state with no static scan channel, so it rests on documentation " +
-      "alone in §11.4.",
+      "citing R2 on the hooks capability. Deletion test (D5-03): treating parent-folder trust " +
+      "as sufficient flips mid-hooked to available. R2's first clause is pinned; the automatic " +
+      "`-p`/SDK trust for settings-file hooks half is session-mode runtime state with no static " +
+      "scan channel, so it rests on documentation alone in §11.4 (H1-28).",
   },
   {
     id: "trust.addDirSeparate",
@@ -600,9 +599,10 @@ const MATRIX_ENTRIES = [
     verifiedFacts: [],
     notes:
       "trust-records.json accepts only the scan root; vendor-auditor's inline MCP stays blocked " +
-      "while the project would pass R1. Deletion test: reuse project trust for the added " +
-      "directory and the same capability flips to available. R6 is pinned for the add-dir " +
-      "folder only — not for agents discovered from the project tree itself.",
+      "while the project would pass R1. Deletion test (D5-03): reusing project trust for the " +
+      "added directory flips the same capability to available. R6 is pinned for the add-dir " +
+      "folder only — not for agents discovered from the project tree itself — so the fact is not " +
+      "verified entire (H1-28).",
   },
   {
     id: "instructions.hierarchy",

@@ -395,8 +395,8 @@ Order: D5-01 → D5-02 → D5-03 → D5-04 → D5-05 → D5-06 → D5-07.
 |----|-------|-------|--------|-----------|-------|------------|
 | D5-01 | D5 | Promotion triage — doc-only → promotion-owed or refusal | done | §8.1, §11.4, H1-28 | docs/EVIDENCE-PROMOTION.md | Every Claude doc-only fact classified; clusters assigned |
 | D5-02 | D5 | Claude context/tools promotion | done | T1–T3, T5, F11, §11.1 | matrix.ts, tools-filters, background, fork | F11 promoted; T1/T2 partial-pin; T3/T5 refused |
-| D5-03 | D5 | Claude permissions/trust promotion | in_progress | P1, P5, R1, R2, R5, R6 | matrix.ts, permission-inheritance, trust fixtures | Same criterion |
-| D5-04 | D5 | Claude skills/instructions/builtins promotion | todo | K1, K7, K11, I1, B2, B4 | matrix.ts, skills/instructions/builtin fixtures | Same criterion |
+| D5-03 | D5 | Claude permissions/trust promotion | done | P1, P5, R1, R2, R5, R6 | matrix.ts, trust fixtures | R2/R5/R6 deletion tests; partial pins only (fv +0) |
+| D5-04 | D5 | Claude skills/instructions/builtins promotion | in_progress | K1, K7, K11, I1, B2, B4 | matrix.ts, skills/instructions/builtin fixtures | Same criterion |
 | D5-05 | D5 | Claude environment promotion | todo | E1–E9, B5, B6, N3, N4 | matrix.ts, environment, depth-limit | Same criterion; extend golden if needed |
 | D5-06 | D5 | Matrix housekeeping + multi-platform opportunistic | todo | §8.2, §11.4 | matrix.ts (all platforms) | pendingFixture cleared; XA3/CW2 promoted or refused |
 | D5-07 | D5 | D5 gate — fixture-verified floor ≥ 50 | todo | §11.4, D4-06 | coverage-report.test.ts, EVIDENCE-PROMOTION.md | fv ≥ 50; unverified ≤ 18; entry-owed = 0 |

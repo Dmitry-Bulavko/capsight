@@ -14,10 +14,12 @@ import {
 } from "../../../fixtures/coverage-report.js";
 import { normalizeGoldenOutput } from "../../../fixtures/golden-normalize.js";
 import {
-  fixtureHomeDir,
+  resolveFixtureHomeDir,
   restoreProcessEnv,
+  seedFixtureTrustRecords,
   selectFixtureAgent,
 } from "../../../fixtures/fixture-runtime.js";
+import type { ResolveTrustResult } from "../../../../src/adapters/claude/resolution/trust.js";
 import {
   FACT,
   FACTS,
@@ -186,8 +188,10 @@ async function runClaudeFixture(fixtureName: string) {
   for (const [key, value] of Object.entries(env)) {
     vi.stubEnv(key, value);
   }
-  vi.stubEnv("HOME", fixtureHomeDir());
-  vi.stubEnv("USERPROFILE", fixtureHomeDir());
+  const home = resolveFixtureHomeDir(fixtureDir);
+  seedFixtureTrustRecords(fixtureDir, projectRoot, home);
+  vi.stubEnv("HOME", home);
+  vi.stubEnv("USERPROFILE", home);
 
   mockDetectClaudeVersion.mockResolvedValue({
     platform: "claude",
@@ -247,9 +251,81 @@ function toolStatus(
   preset: ContextPreset,
   capabilityId: string,
 ) {
+  return capabilityStatus(output, agentName, preset, capabilityId);
+}
+
+function capabilityStatus(
+  output: Awaited<ReturnType<typeof runClaudeFixture>>,
+  agentName: string,
+  preset: ContextPreset,
+  capabilityId: string,
+) {
   return resolutionFor(output, agentName, preset)?.capabilities.find(
     (capability) => capability.capabilityId === capabilityId,
   );
+}
+
+/** Simulate removing R2/R6 from the resolver — the platform trust rule they gate. */
+async function withTrustRuleDeleted(
+  rule: typeof FACT.R2 | typeof FACT.R6,
+  body: () => Promise<void>,
+): Promise<void> {
+  const trustModule = await import("../../../../src/adapters/claude/resolution/trust.js");
+  const original = trustModule.resolveTrustGate;
+  const spy = vi.spyOn(trustModule, "resolveTrustGate").mockImplementation((input) => {
+    const result = original(input);
+    if (
+      result.status !== "blocked_by_trust" ||
+      !result.reasons.some((reason) => reason.matrixRef === rule)
+    ) {
+      return result;
+    }
+
+    const fieldPath =
+      input.kind === "inline-mcp"
+        ? `frontmatter.mcpServers[${input.mcpServerIndex ?? 0}]`
+        : "frontmatter.hooks";
+    const source = { ...input.agent.source, fieldPath };
+
+    if (rule === FACT.R6 && input.trust.accepted === true) {
+      return trustAcceptedResult(result, source, rule);
+    }
+
+    if (rule === FACT.R2 && input.trust.repoRoot && input.trust.folderRecords) {
+      const repoKey = path.resolve(input.trust.repoRoot).replace(/\\/g, "/");
+      if (input.trust.folderRecords[repoKey] === true) {
+        return trustAcceptedResult(result, source, rule);
+      }
+    }
+
+    return result;
+  });
+
+  try {
+    await body();
+  } finally {
+    spy.mockRestore();
+  }
+}
+
+function trustAcceptedResult(
+  baseline: ResolveTrustResult,
+  source: ResolveTrustResult["reasons"][0]["source"],
+  rule: typeof FACT.R2 | typeof FACT.R6,
+): ResolveTrustResult {
+  return {
+    status: "available",
+    gated: true,
+    matrixRef: baseline.matrixRef,
+    reasons: [
+      {
+        type: "trust",
+        message: "Project trust accepted; resource loads normally.",
+        source,
+        matrixRef: rule,
+      },
+    ],
+  };
 }
 
 async function withMatrixPatch(
@@ -571,6 +647,33 @@ describe("VERSION_MATRIX", () => {
     expect(entry?.verifiedFacts).toEqual([]);
   });
 
+  it("promotes D5-03 permissions/trust facts with fixture evidence (H1-28)", () => {
+    expect(VERSION_MATRIX.find((entry) => entry.id === FACT.P1)).toMatchObject({
+      confidence: "doc",
+      verifiedFacts: [],
+    });
+    expect(VERSION_MATRIX.find((entry) => entry.id === FACT.P5)).toMatchObject({
+      confidence: "doc",
+      verifiedFacts: [],
+    });
+    expect(VERSION_MATRIX.find((entry) => entry.id === "trust.inlineMcp")).toMatchObject({
+      confidence: "doc",
+      verifiedFacts: [],
+    });
+    expect(VERSION_MATRIX.find((entry) => entry.id === "trust.frontmatterHooks")).toMatchObject({
+      confidence: "fixture",
+      verifiedFacts: [],
+    });
+    expect(VERSION_MATRIX.find((entry) => entry.id === "trust.parentFolder")).toMatchObject({
+      confidence: "fixture",
+      verifiedFacts: [],
+    });
+    expect(VERSION_MATRIX.find((entry) => entry.id === "trust.addDirSeparate")).toMatchObject({
+      confidence: "fixture",
+      verifiedFacts: [],
+    });
+  });
+
   it("documents SS-05 refusal for S7 glob matching semantics", () => {
     const entry = VERSION_MATRIX.find((item) => item.id === "settings.pathRules");
     expect(entry?.notes).toMatch(/SS-05 evaluated/);
@@ -883,6 +986,97 @@ describe("gateDiscovery", () => {
     expect(factConfidence(FACT.K12)).toBe("ext");
     expect(entry?.confidence).toBe("fixture");
     expect(entry?.fixture).toBe("add-dir");
+  });
+});
+
+describe("claude fixture deletion tests (H1-28, D5-03)", () => {
+  const envSnapshot = { ...process.env };
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    restoreProcessEnv(envSnapshot);
+    mockDetectClaudeVersion.mockReset();
+    vi.restoreAllMocks();
+  });
+
+  it("trust.parentFolder: deleting R2 flips mid-hooked hooks from blocked to available", async () => {
+    const baseline = await runClaudeFixture("nested-project");
+    expect(
+      capabilityStatus(
+        baseline,
+        "mid-hooked",
+        "foreground-subagent",
+        "hooks:svc/.claude/agents/mid-hooked.md",
+      ),
+    ).toMatchObject({
+      status: "blocked",
+      enforcement: "enforced",
+    });
+
+    await withTrustRuleDeleted(FACT.R2, async () => {
+      const withoutRule = await runClaudeFixture("nested-project");
+      expect(
+        capabilityStatus(
+          withoutRule,
+          "mid-hooked",
+          "foreground-subagent",
+          "hooks:svc/.claude/agents/mid-hooked.md",
+        ),
+      ).toMatchObject({
+        status: "available",
+        enforcement: "enforced",
+      });
+    });
+  });
+
+  it("trust.frontmatterHooks: unfounding the matrix downgrades hooked agent hooks", async () => {
+    const baseline = await runClaudeFixture("trust-inline-mcp");
+    expect(
+      capabilityStatus(
+        baseline,
+        "hooked",
+        "foreground-subagent",
+        "hooks:.claude/agents/hooked.md",
+      ),
+    ).toMatchObject({
+      status: "blocked",
+      enforcement: "enforced",
+    });
+
+    await withMatrixPatch(MATRIX["trust.frontmatterHooks"], { status: "unknown" }, async () => {
+      const withoutRule = await runClaudeFixture("trust-inline-mcp");
+      expect(
+        capabilityStatus(
+          withoutRule,
+          "hooked",
+          "foreground-subagent",
+          "hooks:.claude/agents/hooked.md",
+        ),
+      ).toMatchObject({
+        status: "unknown",
+        enforcement: "unknown",
+      });
+    });
+  });
+
+  it("trust.addDirSeparate: deleting R6 flips vendor-auditor inline MCP to available", async () => {
+    const baseline = await runClaudeFixture("add-dir");
+    expect(
+      capabilityStatus(baseline, "vendor-auditor", "foreground-subagent", "inline-mcp:0"),
+    ).toMatchObject({
+      status: "blocked",
+      enforcement: "enforced",
+    });
+
+    await withTrustRuleDeleted(FACT.R6, async () => {
+      const withoutRule = await runClaudeFixture("add-dir");
+      expect(
+        capabilityStatus(withoutRule, "vendor-auditor", "foreground-subagent", "inline-mcp:0"),
+      ).toMatchObject({
+        status: "available",
+        enforcement: "enforced",
+      });
+    });
   });
 });
 
