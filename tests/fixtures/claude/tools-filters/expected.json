@@ -103,6 +103,24 @@
           "unknownFields": {}
         },
         "isPluginAgent": false
+      },
+      {
+        "name": "t1-probe",
+        "description": "Foreground subagent for T1 filter golden fixture",
+        "source": {
+          "platform": "claude",
+          "scope": "project",
+          "path": ".claude/agents/t1-probe.md"
+        },
+        "status": "active",
+        "configuration": {
+          "tools": [
+            "Read",
+            "AskUserQuestion"
+          ],
+          "unknownFields": {}
+        },
+        "isPluginAgent": false
       }
     ],
     "skills": [],
@@ -632,8 +650,8 @@
         {
           "capabilityId": "Task",
           "kind": "tool",
-          "status": "unknown",
-          "enforcement": "unknown",
+          "status": "available",
+          "enforcement": "enforced",
           "sources": [
             {
               "platform": "claude",
@@ -652,11 +670,6 @@
                 "path": ".claude/agents/filtered.md",
                 "fieldPath": "frontmatter.tools[2]"
               }
-            },
-            {
-              "type": "version",
-              "message": "Version matrix reports \"agent.toolAliases\" as unsupported on Claude Code 2.1.0 (requires >= 2.1.63); the feature resolves as unknown (SPEC §8.2).",
-              "matrixRef": "agent.toolAliases"
             }
           ]
         },
@@ -957,7 +970,7 @@
         }
       ],
       "warnings": [],
-      "unknownRate": 0.030303030303030304
+      "unknownRate": 0
     },
     {
       "agentName": "filtered",
@@ -1492,11 +1505,6 @@
               }
             },
             {
-              "type": "version",
-              "message": "Version matrix reports \"agent.toolAliases\" as unsupported on Claude Code 2.1.0 (requires >= 2.1.63); the feature resolves as unknown (SPEC §8.2).",
-              "matrixRef": "agent.toolAliases"
-            },
-            {
               "type": "context-filter",
               "message": "Tool removed by background subagent filter 2 (T2)."
             }
@@ -1768,6 +1776,775 @@
                 "scope": "project",
                 "path": ".claude/agents/filtered.md",
                 "fieldPath": "frontmatter.tools[3]"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "instruction:CLAUDE.md",
+          "kind": "instruction",
+          "status": "available",
+          "enforcement": "advisory",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": "CLAUDE.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Instruction source loaded into session context (I1).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": "CLAUDE.md"
+              },
+              "matrixRef": "I1"
+            }
+          ]
+        }
+      ],
+      "warnings": [],
+      "unknownRate": 0
+    },
+    {
+      "agentName": "t1-probe",
+      "context": {
+        "preset": "foreground-subagent",
+        "isMainSession": false,
+        "isBackground": false,
+        "isFork": false,
+        "isTeammate": false,
+        "depth": 0,
+        "maxDepth": 3
+      },
+      "capabilities": [
+        {
+          "capabilityId": "permission:default",
+          "kind": "permission",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "inherited",
+              "message": "No permissionMode declared; using default (manual) mode (P5).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Agent",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Artifact",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "AskUserQuestion",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md",
+              "fieldPath": "frontmatter.tools[1]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Allowed by tools pattern \"AskUserQuestion\" (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md",
+                "fieldPath": "frontmatter.tools[1]"
+              }
+            },
+            {
+              "type": "context-filter",
+              "message": "Tool removed by subagent filter 1 (T1)."
+            }
+          ]
+        },
+        {
+          "capabilityId": "Bash",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Edit",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EndConversation",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "EnterWorktree",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitPlanMode",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ExitWorktree",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Glob",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Grep",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Monitor",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "NotebookEdit",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "PowerShell",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Read",
+          "kind": "tool",
+          "status": "available",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md",
+              "fieldPath": "frontmatter.tools[0]"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "declared",
+              "message": "Allowed by tools pattern \"Read\" (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md",
+                "fieldPath": "frontmatter.tools[0]"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ScheduleWakeup",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "SendMessage",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Skill",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Task",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskOutput",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TaskStop",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "TodoWrite",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "ToolSearch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WaitForMcpServers",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebFetch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "WebSearch",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Workflow",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
+              }
+            }
+          ]
+        },
+        {
+          "capabilityId": "Write",
+          "kind": "tool",
+          "status": "denied",
+          "enforcement": "enforced",
+          "sources": [
+            {
+              "platform": "claude",
+              "scope": "project",
+              "path": ".claude/agents/t1-probe.md"
+            }
+          ],
+          "reasons": [
+            {
+              "type": "denied",
+              "message": "Not included in tools whitelist (F2).",
+              "source": {
+                "platform": "claude",
+                "scope": "project",
+                "path": ".claude/agents/t1-probe.md"
               }
             }
           ]

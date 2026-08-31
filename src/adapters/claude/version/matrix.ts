@@ -124,12 +124,12 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.F11],
     minVersion: "2.1.63",
     status: "supported",
-    confidence: "doc",
+    confidence: "fixture",
     fixture: "tools-filters",
-    verifiedFacts: [],
+    verifiedFacts: [FACT.F11],
     notes:
-      "No fixture agent names Task or Agent in tools or disallowedTools, so nothing exercises " +
-      "the alias; the entry rests on documentation.",
+      "tools-filters lists Agent in frontmatter.tools; the Task sibling capability is " +
+      "alias-dependent (F11). Unfounding the entry downgrades Task to unknown on 2.1.233.",
   },
   {
     id: "context.filter1",
@@ -137,12 +137,14 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.T1],
     minVersion: "2.1.0",
     status: "supported",
-    confidence: "doc",
+    confidence: "fixture",
     fixture: "tools-filters",
     verifiedFacts: [],
     notes:
-      "The fixture pins the removals for a plain foreground subagent; T1 also carries the " +
-      "ExitPlanMode exception for permissionMode: plan, which no context in the corpus has.",
+      "t1-probe whitelists AskUserQuestion; foreground filter 1 removes it with a confident " +
+      "context-filter reason. ExitPlanMode plan-mode exemption (T1) is unpinned — no plan context " +
+      "in the corpus — so T1 is not verified entire and rests on documentation alone in §11.4 " +
+      "(H1-28).",
   },
   {
     id: "context.filter2",
@@ -150,12 +152,14 @@ const MATRIX_ENTRIES = [
     factRefs: [FACT.T2],
     minVersion: "2.1.0",
     status: "supported",
-    confidence: "doc",
+    confidence: "fixture",
     fixture: "background",
     verifiedFacts: [],
     notes:
-      "The background agent whitelists two of the nineteen built-ins T2 keeps, so the surviving " +
-      "list itself is pinned by nothing.",
+      "background/worker whitelists Agent; filter 2 removes it in background-subagent context. " +
+      "Unfounding the entry flips Agent from denied to available. T2 enumerates the full surviving " +
+      "built-in set; the fixture pins only the Agent removal edge, so the fact is not verified " +
+      "entire and rests on documentation alone in §11.4 (H1-28).",
   },
   {
     id: "context.foregroundBackground",
@@ -169,9 +173,9 @@ const MATRIX_ENTRIES = [
     verifiedFacts: [],
     notes:
       "tools-filters resolves foreground and background contexts for the same agent, but the " +
-      "background denial of Agent is pinned by context.filter2 (T2), not T5. T5 is matrix-" +
-      "referenced here for honest coverage; no fixture in the corpus exercises a confident " +
-      "value that moves when foreground/background context alone changes (H1-28).",
+      "background denial of Agent is pinned by context.filter2 (T2), not T5 (promotion-refused, " +
+      "D5-02). No fixture exercises a confident value that moves when foreground/background " +
+      "context alone changes (H1-28).",
   },
   {
     id: "context.fork",
@@ -184,9 +188,8 @@ const MATRIX_ENTRIES = [
     verifiedFacts: [],
     notes:
       "Every tool the fork fixture resolves carries enforcement unknown — the parent pool is " +
-      "not known statically — so the fixture states the rule without confidently claiming an " +
-      "outcome. T3 also claims the parent's system prompt, model and history, which the model " +
-      "does not carry at all.",
+      "not known statically — so filter-skip is partial-pin only (D5-02). T3 also claims the " +
+      "parent's system prompt, model and history, which the model does not carry at all.",
   },
   {
     id: "agent.depthLimit",

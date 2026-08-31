@@ -6,5 +6,9 @@
   {
     "agentName": "filtered",
     "preset": "background-subagent"
+  },
+  {
+    "agentName": "t1-probe",
+    "preset": "foreground-subagent"
   }
 ]

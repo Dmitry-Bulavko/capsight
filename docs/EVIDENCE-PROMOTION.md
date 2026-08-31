@@ -29,12 +29,12 @@ Compat-matrix citations do not count toward platform coverage.
 |--------|-------|
 | Baseline fixture-verified | **41** |
 | D5-07 target | **≥ 50** (+9) |
-| promotion-owed (all platforms) | **11** (Claude only) |
-| Realistic high-confidence promotions | **~9** (T1, T2, K1, K3, R2, R5, R6, B2, B4) |
-| Borderline promotion-owed | **2** (F11 needs alias fixture; K7 `-p` half unpinned) |
-| partial-pin + promotion-refused | **55** (no §11.4 tier movement without new channels) |
+| promotion-owed (all platforms) | **9** (Claude only) |
+| Realistic high-confidence promotions | **~7** (K1, K3, R2, R5, R6, B2, B4) |
+| Borderline promotion-owed | **1** (F11 alias fixture; K7 `-p` half unpinned) |
+| partial-pin + promotion-refused | **57** (no §11.4 tier movement without new channels) |
 
-**Verdict:** Gate **feasible but tight**. Nine high-confidence Claude promotions reach exactly 50; two borderline rows may add buffer or stay doc-only. Cursor/Codex doc-only rows are terminal refusals (5 + 8) — no fv contribution expected. D5-05 environment cluster is mostly `promotion-refused` (discovery.environment keys only); do not count E1–E8 toward the +9 unless golden channels are added in handoff scope.
+**Verdict:** Gate **feasible but tight**. Seven high-confidence Claude promotions plus F11 reach exactly 50; borderline rows may add buffer or stay doc-only. T1 and T2 are partial-pin only — entry-level fixture confidence without entire-fact promotion. Cursor/Codex doc-only rows are terminal refusals (5 + 8) — no fv contribution expected. D5-05 environment cluster is mostly `promotion-refused` (discovery.environment keys only); do not count E1–E8 toward the +9 unless golden channels are added in handoff scope.
 
 ---
 
@@ -44,8 +44,8 @@ Compat-matrix citations do not count toward platform coverage.
 
 | Fact | Matrix entry | Fixture | Disposition | Deletion probe (expected delta) |
 |------|--------------|---------|-------------|----------------------------------|
-| T1 | `context.filter1` | tools-filters | promotion-owed | Unfound filter1 → foreground subagent tool pool loses Filter-1 removals (confident capability set change) |
-| T2 | `context.filter2` | background | promotion-owed | Unfound filter2 → background agent surviving built-ins list changes |
+| T1 | `context.filter1` | tools-filters | partial-pin | Unfound filter1 → AskUserQuestion removal pinned; ExitPlanMode plan-mode exemption unpinned |
+| T2 | `context.filter2` | background | partial-pin | Unfound filter2 → Agent denial pinned; full surviving built-in set unpinned |
 | T3 | `context.fork` | fork | partial-pin | Unfound T3 → fork context still resolves all tools `enforcement: unknown`; no confident delta today |
 | T5 | `context.foregroundBackground` | tools-filters | promotion-refused | Background Agent denial pinned by T2/filter2, not T5; no isolated fg/bg pool delta |
 | F11 | `agent.toolAliases` | tools-filters | promotion-owed | Extend fixture: agent lists `Task`/`Agent` alias → unfound alias rule changes resolved tool name |
@@ -121,8 +121,8 @@ Compat-matrix citations do not count toward platform coverage.
 
 | Disposition | Count | D5 task |
 |-------------|-------|---------|
-| promotion-owed | 11 | D5-02 (3), D5-03 (3), D5-04 (5) |
-| partial-pin | 19 | — |
+| promotion-owed | 9 | D5-02 (1), D5-03 (3), D5-04 (5) |
+| partial-pin | 21 | — |
 | promotion-refused | 22 | — |
 | **sum** | **52** | |
 
@@ -178,16 +178,16 @@ All terminal refusals — opportunistic promotion in D5-06 only if a new golden 
 
 | Platform | doc-only | promotion-owed | partial-pin | promotion-refused |
 |----------|----------|----------------|-------------|-------------------|
-| claude | 52 | 11 | 19 | 22 |
+| claude | 52 | 9 | 21 | 22 |
 | cursor | 5 | 0 | 0 | 5 |
 | codex | 9 | 0 | 1 | 8 |
-| **total** | **66** | **11** | **20** | **35** |
+| **total** | **66** | **9** | **22** | **35** |
 
 ### promotion-owed by task
 
 | Task | Facts |
 |------|-------|
-| D5-02 | T1, T2, F11 (+ T3 partial-pin, T5 refused) |
+| D5-02 | F11 (+ T1, T2, T3 partial-pin; T5 refused) |
 | D5-03 | R2, R5, R6 (+ P1, P5, R1, R4 partial-pin) |
 | D5-04 | K1, K3, K7, B2, B4 (+ K2, K6, I1 partial-pin) |
 | D5-05 | — (E1–E8, B5, B6, N3, N4 refused or partial-pin) |

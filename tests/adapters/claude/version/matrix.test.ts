@@ -1,7 +1,23 @@
 import fs from "node:fs";
+import fsPromises from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type { PlatformVersion } from "../../../../src/core/model/index.js";
+import { buildExecutionContext } from "../../../../src/adapters/claude/resolution/context.js";
+import type { ContextPreset } from "../../../../src/core/model/index.js";
+import type { PermissionMode } from "../../../../src/adapters/claude/model/index.js";
+import {
+  resolveFixtureAddDirs,
+  resolveFixturePluginRoots,
+  resolveFixtureScanPath,
+} from "../../../fixtures/coverage-report.js";
+import { normalizeGoldenOutput } from "../../../fixtures/golden-normalize.js";
+import {
+  fixtureHomeDir,
+  restoreProcessEnv,
+  selectFixtureAgent,
+} from "../../../fixtures/fixture-runtime.js";
 import {
   FACT,
   FACTS,
@@ -135,6 +151,124 @@ const FIXTURES_ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../../../fixtures/claude",
 );
+
+const { mockDetectClaudeVersion } = vi.hoisted(() => ({
+  mockDetectClaudeVersion: vi.fn<() => Promise<PlatformVersion>>(),
+}));
+
+vi.mock("../../../../src/adapters/claude/version/index.js", () => ({
+  detectClaudeVersion: mockDetectClaudeVersion,
+  defaultCommandRunner: { run: vi.fn() },
+}));
+
+interface FixtureContextSpec {
+  agentName: string;
+  agentSourcePath?: string;
+  preset: ContextPreset;
+  depth?: number;
+  maxDepth?: number;
+  parentPermissionMode?: PermissionMode;
+}
+
+async function runClaudeFixture(fixtureName: string) {
+  const fixtureDir = path.join(FIXTURES_ROOT, fixtureName);
+  const projectRoot = path.join(fixtureDir, "project");
+  const env = JSON.parse(
+    await fsPromises.readFile(path.join(fixtureDir, "env.json"), "utf8"),
+  ) as Record<string, string>;
+  const version = (
+    await fsPromises.readFile(path.join(fixtureDir, "version.txt"), "utf8")
+  ).trim();
+  const contexts = JSON.parse(
+    await fsPromises.readFile(path.join(fixtureDir, "contexts.json"), "utf8"),
+  ) as FixtureContextSpec[];
+
+  for (const [key, value] of Object.entries(env)) {
+    vi.stubEnv(key, value);
+  }
+  vi.stubEnv("HOME", fixtureHomeDir());
+  vi.stubEnv("USERPROFILE", fixtureHomeDir());
+
+  mockDetectClaudeVersion.mockResolvedValue({
+    platform: "claude",
+    version,
+    raw: version,
+    detectedAt: "1970-01-01T00:00:00.000Z",
+  });
+
+  const { scan } = await import("../../../../src/application/scan.js");
+  const { resolve } = await import("../../../../src/application/resolve.js");
+
+  const scanResult = await scan({
+    projectPath: resolveFixtureScanPath(fixtureDir),
+    ...(resolveFixtureAddDirs(fixtureDir).length > 0
+      ? { addDirs: resolveFixtureAddDirs(fixtureDir) }
+      : {}),
+    ...(resolveFixturePluginRoots(fixtureDir).length > 0
+      ? { pluginRoots: resolveFixturePluginRoots(fixtureDir) }
+      : {}),
+  });
+
+  const resolutions = [];
+  for (const contextSpec of contexts) {
+    const agent = selectFixtureAgent(scanResult.snapshot.agents, contextSpec, projectRoot);
+    const context = buildExecutionContext(contextSpec.preset, {
+      ...(contextSpec.depth !== undefined ? { depth: contextSpec.depth } : {}),
+      ...(contextSpec.maxDepth !== undefined ? { maxDepth: contextSpec.maxDepth } : {}),
+      ...(contextSpec.parentPermissionMode !== undefined
+        ? { parentPermissionMode: contextSpec.parentPermissionMode }
+        : {}),
+    });
+    const resolution = await resolve({
+      snapshot: scanResult.snapshot,
+      agentId: agent.id,
+      context,
+    });
+    resolutions.push({ agentName: contextSpec.agentName, resolution });
+  }
+
+  return normalizeGoldenOutput(scanResult.snapshot, resolutions, projectRoot);
+}
+
+function resolutionFor(
+  output: Awaited<ReturnType<typeof runClaudeFixture>>,
+  agentName: string,
+  preset: ContextPreset,
+) {
+  return output.resolutions.find(
+    (entry) =>
+      entry.agentName === agentName && entry.context.preset === preset,
+  );
+}
+
+function toolStatus(
+  output: Awaited<ReturnType<typeof runClaudeFixture>>,
+  agentName: string,
+  preset: ContextPreset,
+  capabilityId: string,
+) {
+  return resolutionFor(output, agentName, preset)?.capabilities.find(
+    (capability) => capability.capabilityId === capabilityId,
+  );
+}
+
+async function withMatrixPatch(
+  id: string,
+  patch: Partial<FeatureCompatibility>,
+  body: () => Promise<void>,
+): Promise<void> {
+  const entry = VERSION_MATRIX.find((candidate) => candidate.id === id)!;
+  const original = { ...entry };
+  Object.assign(entry, patch);
+  try {
+    await body();
+  } finally {
+    for (const key of Object.keys(entry) as Array<keyof FeatureCompatibility>) {
+      delete (entry as unknown as Record<string, unknown>)[key];
+    }
+    Object.assign(entry, original);
+  }
+}
 
 const SRC_ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -408,6 +542,25 @@ describe("VERSION_MATRIX", () => {
     const disallowed = VERSION_MATRIX.find((entry) => entry.id === "agent.disallowedTools");
     expect(disallowed?.factRefs).toEqual([FACT.F2, FACT.F3]);
     expect(disallowed?.fixture).toBe("tools-filters");
+  });
+
+  it("promotes D5-02 context/tools facts with fixture evidence (H1-28)", () => {
+    expect(VERSION_MATRIX.find((entry) => entry.id === "context.filter1")).toMatchObject({
+      confidence: "fixture",
+      verifiedFacts: [],
+    });
+    expect(VERSION_MATRIX.find((entry) => entry.id === "context.filter2")).toMatchObject({
+      confidence: "fixture",
+      verifiedFacts: [],
+    });
+    expect(VERSION_MATRIX.find((entry) => entry.id === "agent.toolAliases")).toMatchObject({
+      confidence: "fixture",
+      verifiedFacts: [FACT.F11],
+    });
+    expect(VERSION_MATRIX.find((entry) => entry.id === "context.fork")?.verifiedFacts).toEqual([]);
+    expect(VERSION_MATRIX.find((entry) => entry.id === "context.foregroundBackground")?.verifiedFacts).toEqual(
+      [],
+    );
   });
 
   it("documents SS-04 refusal for S6 prefix matching semantics", () => {
@@ -730,5 +883,68 @@ describe("gateDiscovery", () => {
     expect(factConfidence(FACT.K12)).toBe("ext");
     expect(entry?.confidence).toBe("fixture");
     expect(entry?.fixture).toBe("add-dir");
+  });
+});
+
+describe("claude fixture deletion tests (H1-28, D5-02)", () => {
+  const envSnapshot = { ...process.env };
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    restoreProcessEnv(envSnapshot);
+    mockDetectClaudeVersion.mockReset();
+  });
+
+  it("context.filter1: unfounding the matrix downgrades AskUserQuestion on t1-probe", async () => {
+    const baseline = await runClaudeFixture("tools-filters");
+    expect(toolStatus(baseline, "t1-probe", "foreground-subagent", "AskUserQuestion")).toMatchObject({
+      status: "denied",
+      enforcement: "enforced",
+    });
+
+    await withMatrixPatch(MATRIX["context.filter1"], { status: "unknown" }, async () => {
+        const withoutRule = await runClaudeFixture("tools-filters");
+        expect(
+          toolStatus(withoutRule, "t1-probe", "foreground-subagent", "AskUserQuestion"),
+        ).toMatchObject({
+          status: "unknown",
+          enforcement: "unknown",
+        });
+      },
+    );
+  });
+
+  it("context.filter2: unfounding the matrix downgrades Agent on background worker", async () => {
+    const baseline = await runClaudeFixture("background");
+    expect(toolStatus(baseline, "worker", "background-subagent", "Agent")).toMatchObject({
+      status: "denied",
+      enforcement: "enforced",
+    });
+
+    await withMatrixPatch(MATRIX["context.filter2"], { status: "unknown" }, async () => {
+        const withoutRule = await runClaudeFixture("background");
+        expect(toolStatus(withoutRule, "worker", "background-subagent", "Agent")).toMatchObject({
+          status: "unknown",
+          enforcement: "unknown",
+        });
+      },
+    );
+  });
+
+  it("agent.toolAliases: unfounding the matrix downgrades Task on filtered foreground", async () => {
+    const baseline = await runClaudeFixture("tools-filters");
+    expect(toolStatus(baseline, "filtered", "foreground-subagent", "Task")).toMatchObject({
+      status: "available",
+      enforcement: "enforced",
+    });
+
+    await withMatrixPatch(MATRIX["agent.toolAliases"], { status: "unknown" }, async () => {
+        const withoutRule = await runClaudeFixture("tools-filters");
+        expect(toolStatus(withoutRule, "filtered", "foreground-subagent", "Task")).toMatchObject({
+          status: "unknown",
+          enforcement: "unknown",
+        });
+      },
+    );
   });
 });
