@@ -353,11 +353,30 @@ Order: D4-01 → D4-02 → D4-03 → D4-04 → D4-05 → D4-06.
 | D4-05 | D4 | Codex settings/architecture — matrix entries | done | CODEX-FACTS, §11.4 | codex/matrix.ts, fixtures | XA3,XSet1 referenced or refused |
 | D4-06 | D4 | D4 gate — zero entry-owed, unverified ≤ 18 | done | §11.4, D2-06 | EVIDENCE-LEDGER, coverage-report | entry-owed=0; ledger matches report |
 
+## SS-deep — Settings argument depth
+
+SS-01…03 pinned S6/S7/S11 *shape*. SS-deep evaluates whether prefix/glob *matching* is documentable without §2.3 permission engine.
+
+Order: SS-04 → SS-05.
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| SS-04 | SS-deep | S6 — command prefix matching depth | in_progress | §3.5 S6, §2.3 | settings-permissions.ts, matrix.ts, fixture | Prefix matching pinned or refused in writing; D4-06 gate unchanged |
+| SS-05 | SS-deep | S7 — path glob matching depth | todo | §3.5 S7, §2.3 | settings-permissions.ts, matrix.ts, fixture | Glob matching pinned or refused; D4-06 gate unchanged |
+
+## B1 — Builtin discovery channel
+
+Unblocks B1/B4 matrix promotion: discovery currently emits file-backed agents only.
+
+Order: B1-01.
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| B1-01 | B1 | Synthetic builtin inventory in discovery | todo | §3.9 B1, B4, §11.1 | discovery/agents.ts, matrix.ts, fixtures | Six builtins listed; B4 override pin or honest refusal |
+
 ## Deferred backlog
 
 | ID | Phase | Title | Status | Notes |
 |----|-------|-------|--------|-------|
-| G1-MP | G1 | Cursor/Codex maxVersion drift demo | deferred | After D4; mirror G1-04 on non-Claude matrix |
-| SS-deep | SS | S6 prefix / S7 glob matching depth | deferred | Only if documentable without §2.3 permission engine |
-| B1 | discovery | Builtin inventory discovery channel | deferred | Unblocks B1/B4 noFixturePossible |
+| G1-MP | G1 | Cursor/Codex maxVersion drift demo | deferred | After B1; mirror G1-04 on non-Claude matrix |
 | §9 | S0 | Observed runtime layer | deferred | Revisit S0-DECISION when APIs mature |

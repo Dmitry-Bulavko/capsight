@@ -1,21 +1,28 @@
 # Capsight continuation
 
-**Active phase:** none — D4 complete  
-**Next:** deferred backlog (G1-MP, SS-deep, B1, §9) or user direction
+**Active phase:** SS-deep — Settings argument depth (Evidence wave 4)  
+**Next task:** SS-04 (S6 command prefix matching depth)
 
-## D4 outcome
+## D4 outcome (complete)
 
 | Metric | Before | After |
 |--------|--------|-------|
 | entry-owed | 19 | **0** |
 | unverified total | 37 | **18** |
 
-**843 tests** (gate suite green); occasional apply-suite timeouts under parallel load (pre-existing flake).
+## Phase queue (evidence first)
 
-## Deferred backlog
+```
+SS-deep (SS-04 → SS-05) → B1 (B1-01) → G1-MP → §9
+```
 
-G1-MP → SS-deep → B1 → §9
+## Handoffs ready
+
+| Phase | Handoffs |
+|-------|----------|
+| SS-deep | `docs/tasks/SS-04-*.md`, `SS-05-*.md` |
+| B1 | `docs/tasks/B1-01-*.md` |
 
 ## Orchestration
 
-One task `in_progress`; implementer + fresh reviewer per task.
+One task `in_progress`; implementer + fresh reviewer per task. D4-06 gate must not regress.

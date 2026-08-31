@@ -4,16 +4,16 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**D4 complete** — zero `entry-owed`; unverified **18** (terminal refusals only). Next deferred: G1-MP, SS-deep, B1, §9.
+**SS-deep — Settings argument depth** is the active phase (Evidence depth wave 4). SS-01…03 pinned S6/S7/S11 *shape*; SS-04/05 evaluate whether prefix/glob *matching* is documentable without §2.3 permission engine.
 
-Previous: **SS complete** — S6/S7 shape pinned; S11 relative paths honest unknown.
+Previous: **D4 complete** — zero `entry-owed`; unverified **18** (terminal refusals only).
 
 ## Phase order (active backlog)
 
-Evidence depth first — it is the largest honesty gap after D3 closed Claude.
+Evidence depth first — unverified is at the honest floor (18 terminal); the gap is **fixture-verified depth** and facts blocked by missing discovery channels.
 
 ```
-deferred: G1-MP, SS-deep, B1, §9
+SS-deep → B1 → G1-MP → §9
 ```
 
 Completed chain: `F0 → G1-04 → D3 → SS → D4`.
@@ -42,9 +42,9 @@ Completed chain: `F0 → G1-04 → D3 → SS → D4`.
 | D3 — Evidence wave 2 | `done` | Unverified below 45; Claude entry-owed closed |
 | SS — Settings semantics | `done` | S6/S7 shape pinned; S11 relative paths honest unknown |
 | D4 — Evidence depth (multi-platform) | `done` | Zero `entry-owed`; unverified ≤ 18 |
+| SS-deep — Settings argument depth | `todo` | S6 prefix / S7 glob matching only if documentable |
+| B1 — Builtin discovery channel | `todo` | Synthetic builtin inventory unblocks B1/B4 fixtures |
 | G1-MP — Drift on Cursor/Codex | `deferred` | maxVersion on confident rule per platform |
-| SS-deep — Settings argument depth | `deferred` | S6 prefix / S7 glob matching only if documentable |
-| B1 — Builtin discovery channel | `deferred` | B1/B4 noFixturePossible until discovery synthesizes builtins |
 | §9 — Observed layer | `deferred` | Revisit [S0-DECISION.md](./S0-DECISION.md) when platform APIs mature |
 
 ## Surface rule
@@ -77,6 +77,23 @@ D2 triaged 87 unreferenced facts; D3 closed Claude priority-2 clusters (35→10 
 **Gate:** `entry-owed` count = 0 platform-wide; total unverified ≤ 18; ledger measured counts match `buildCoverageReport` per platform.
 
 **Honest ceiling:** Facts that cannot be fixture-promoted (home-path layers, spike-only probes, unknown registry confidence) stay unreferenced with terminal disposition — that is success, not failure.
+
+## D5 scope note — Evidence depth wave 4 (fixture + channels)
+
+D4 closed every `entry-owed` row and held unverified at **18** terminal refusals. The remaining honesty gap is not unreferenced facts — it is **shallow fixture pins** and **discovery channels that block promotion**:
+
+| Gap | Examples | Phase |
+|-----|----------|-------|
+| Settings semantics depth | S6 prefix matching, S7 path glob matching beyond `/` vs `//` anchoring | SS-deep |
+| Missing discovery channel | B1 six builtins, B4 Explore override — discovery emits file-backed agents only | B1 |
+| Multi-platform drift demo | No Cursor/Codex `maxVersion` on a confident rule | G1-MP (deferred) |
+| Runtime observation | §9 observed layer | §9 (deferred) |
+
+**SS-deep honest ceiling:** If prefix or glob matching requires stating "this invocation would be approved", refuse in writing — same bar as D1-03 and §2.3.
+
+**B1 gate:** Synthetic builtin records appear in discovery output; B1/B4 matrix entries either gain fixture evidence or record why still unpromotable.
+
+**Gate (wave 4):** No regression on D4-06 (`entry-owed=0`, unverified ≤ 18); each SS-deep/B1 task ends with matrix + fixture or written refusal.
 
 ## Coverage baseline (measured 2026-08-30, `28a510b`) — historical
 
