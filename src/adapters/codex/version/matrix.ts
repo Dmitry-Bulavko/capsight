@@ -74,18 +74,71 @@ const MATRIX_ENTRIES = [
       "entry unfounded instruction capabilities return unknown in the golden.",
   },
   {
-    id: "instruction.ancestors",
-    feature: "Ancestor AGENTS.md included in instruction walk",
-    factRefs: [FACT.XR4, FACT.XI2],
+    id: "instruction.fallback",
+    feature: "Fallback instruction filenames from user config",
+    factRefs: [FACT.XI3],
+    status: "supported",
+    confidence: "fixture",
+    fixture: "instruction-fallback",
+    verifiedFacts: [FACT.XI3],
+    notes:
+      "XI3 entire: instruction-fallback sets project_doc_fallback_filenames in user " +
+      "config and carries CLAUDE.md without AGENTS.md; discovery records the fallback " +
+      "instruction. Deletion test (D4-04): unfounding the entry skips fallback filenames " +
+      "and instructions becomes empty in the golden.",
+  },
+  {
+    id: "instruction.sizeCap",
+    feature: "Combined instruction size cap",
+    factRefs: [FACT.XI4],
     status: "supported",
     confidence: "doc",
-    fixture: "nested-instructions",
+    noFixturePossible:
+      "XI4 requires runtime merge/truncate against project_doc_max_bytes; discovery " +
+      "records per-file sizeBytes only with no §11.2 channel for cap enforcement or " +
+      "warning, so no fixture can make this entry the operative cause of a confident " +
+      "golden value (H1-28).",
+    notes: "Default cap 32 KiB per Codex docs; not modeled in v1 scan",
+  },
+  {
+    id: "agent.instructionBased",
+    feature: "Instruction-based primary agent (no agents[] markdown files)",
+    factRefs: [FACT.XA1],
+    status: "supported",
+    confidence: "fixture",
+    fixture: "basic",
+    verifiedFacts: [FACT.XA1],
+    notes:
+      "XA1 entire: basic declares AGENTS.md and the golden records one synthetic main " +
+      "agent sourced from that file. Deletion test (D4-04): unfounding the entry marks the " +
+      "synthetic main agent status unknown in the golden.",
+  },
+  {
+    id: "agent.noSeparateAgentsArray",
+    feature: "No separate agents[] config array in v1 scan",
+    factRefs: [FACT.XA3],
+    status: "supported",
+    confidence: "doc",
+    fixture: "basic",
     verifiedFacts: [],
     notes:
-      "nested-instructions scans from project/sub with AGENTS.md at repo root and in sub; both " +
-      "appear in discovery, consistent with XR4/XI2 documentation. The walk is not matrix-gated " +
-      "yet, so unfounding this entry would not change the golden — no fixture-verified claim " +
-      "(H1-28). XR4 and XI2 rest on documentation alone in §11.4.",
+      "basic records one synthetic main agent from AGENTS.md with no separate Codex agents[] " +
+      "config array or file-based agent definitions. v1 does not model markdown agent files; " +
+      "unfounding would not change the golden because no alternate discovery path exists yet " +
+      "(H1-28).",
+  },
+  {
+    id: "settings.knownKeysOnly",
+    feature: "Parse TOML for known keys; unknown keys as types only",
+    factRefs: [FACT.XSet1],
+    status: "supported",
+    confidence: "fixture",
+    fixture: "basic",
+    verifiedFacts: [FACT.XSet1],
+    notes:
+      "XSet1 entire: basic carries experimental_feature_enabled in project .codex/config.toml " +
+      "and the golden records unknownFields with type boolean only. Deletion test (D4-05): " +
+      "unfounding the entry strips unknownFields from settings layers in the golden.",
   },
   {
     id: "trust.project",
@@ -100,6 +153,34 @@ const MATRIX_ENTRIES = [
       "and MCP are absent from discovery and the golden records an enforced warning that project " +
       "layers are not loaded — per §2.4 wording. XT2 storage format remains unknown " +
       "in production. Deletion test (D1-08): unfounding the entry downgrades the warning enforcement.",
+  },
+  {
+    id: "trust.unreadable",
+    feature: "Unreadable trust resolves unknown, not blocked",
+    factRefs: [FACT.XT3],
+    status: "supported",
+    confidence: "fixture",
+    fixture: "basic",
+    verifiedFacts: [FACT.XT3],
+    notes:
+      "XT3 entire: basic leaves trust unreadable (accepted unknown) while project .codex/ layers " +
+      "remain in discovery — not treated as untrusted/blocked. The golden records an info " +
+      "warning gated on this entry. Deletion test (D4-04): unfounding the entry removes the " +
+      "unknown-trust warning from the golden.",
+  },
+  {
+    id: "instruction.ancestors",
+    feature: "Ancestor AGENTS.md included in instruction walk",
+    factRefs: [FACT.XR4, FACT.XI2],
+    status: "supported",
+    confidence: "doc",
+    fixture: "nested-instructions",
+    verifiedFacts: [],
+    notes:
+      "nested-instructions scans from project/sub with AGENTS.md at repo root and in sub; both " +
+      "appear in discovery, consistent with XR4/XI2 documentation. The walk is not matrix-gated " +
+      "yet, so unfounding this entry would not change the golden — no fixture-verified claim " +
+      "(H1-28). XR4 and XI2 rest on documentation alone in §11.4.",
   },
   {
     id: "discovery.skills",
@@ -190,6 +271,66 @@ const MATRIX_ENTRIES = [
       "and an unknown claims nothing (§11.3), so no fixture can make this entry the operative " +
       "cause of a confident golden value (H1-28).",
     notes: "Probe requires explicit confirmation",
+  },
+  {
+    id: "version.detect",
+    feature: "Codex CLI version from codex --version",
+    factRefs: [FACT.XV1],
+    status: "supported",
+    confidence: "doc",
+    noFixturePossible:
+      "XV1 is exercised by the version probe path, but golden fixtures mock " +
+      "detectCodexVersion from version.txt so no corpus fixture makes CLI stdout " +
+      "the operative cause of a confident golden value (H1-28).",
+    notes: "Semver parsed from codex --version stdout",
+  },
+  {
+    id: "version.degraded",
+    feature: "Degraded scan when codex --version fails",
+    factRefs: [FACT.XV2],
+    status: "supported",
+    confidence: "doc",
+    noFixturePossible:
+      "XV2 is exercised by the version probe path, but golden fixtures mock " +
+      "detectCodexVersion from version.txt so no corpus fixture makes CLI failure " +
+      "the operative cause of a confident golden value (H1-28).",
+    notes: "Degraded mode continues read-only discovery when CLI missing",
+  },
+  {
+    id: "version.scanBoundary",
+    feature: "Only codex --version as external process in ordinary scan",
+    factRefs: [FACT.XV3],
+    status: "supported",
+    confidence: "doc",
+    noFixturePossible:
+      "XV3 is a Capsight scan boundary invariant; no §11.2 golden records which " +
+      "external processes run as the operative cause of a confident value (H1-28).",
+    notes: "Product policy: ordinary scan must not execute third-party code (SPEC §0.1)",
+  },
+  {
+    id: "discovery.repoRoot",
+    feature: "Project root anchored on directory containing .git",
+    factRefs: [FACT.XR1],
+    status: "supported",
+    confidence: "doc",
+    fixture: "nested-instructions",
+    verifiedFacts: [],
+    notes:
+      "nested-instructions scans from project/sub; isolation hook places .git at fixture " +
+      "root and ancestor AGENTS.md appears in the golden, consistent with XR1. Walk is not " +
+      "matrix-gated yet, so unfounding this entry would not change the golden — no " +
+      "fixture-verified claim (H1-28).",
+  },
+  {
+    id: "discovery.rootMarkers",
+    feature: "Custom project root via project_root_markers config",
+    factRefs: [FACT.XR2],
+    status: "supported",
+    confidence: "doc",
+    noFixturePossible:
+      "walkProjectScopes resolves repo root via .git only; project_root_markers from " +
+      "config is not read, so no golden pins a custom-marker root delta (H1-28).",
+    notes: "Codex supports project_root_markers per docs; Capsight v1 uses .git only",
   },
 ] as const satisfies readonly FeatureCompatibility[];
 

@@ -3,6 +3,7 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import type { Scope } from "../../../core/model/index.js";
 import { parseToml, getTomlStringArray } from "../parsing/toml.js";
+import { gateCapability, MATRIX } from "../version/matrix.js";
 import { codexHomeDir, readConfigFile, userConfigPath } from "./paths.js";
 import type { ProjectScopeLevel, WalkProjectScopesResult } from "./project-walk.js";
 import { scopesRootToCwd } from "./project-walk.js";
@@ -24,7 +25,8 @@ function instructionId(filePath: string): string {
   return createHash("sha256").update(`instruction:${filePath}`).digest("hex").slice(0, 16);
 }
 
-async function loadFallbackFilenames(): Promise<string[]> {
+/** @see docs/CODEX-FACTS.md XI3 */
+export async function loadFallbackFilenames(): Promise<string[]> {
   const raw = await readConfigFile(userConfigPath());
   if (!raw) {
     return [];
@@ -76,11 +78,13 @@ async function discoverGlobalInstructions(
 /** @see docs/CODEX-FACTS.md XI1–XI5 */
 export async function discoverInstructions(
   walk: WalkProjectScopesResult,
+  version: string,
 ): Promise<DiscoveredInstruction[]> {
   const instructions: DiscoveredInstruction[] = [];
   const seen = new Set<string>();
   const resolvedProject = path.resolve(walk.projectPath);
-  const fallbackNames = await loadFallbackFilenames();
+  const fallbackGate = gateCapability(MATRIX["instruction.fallback"], version);
+  const fallbackNames = fallbackGate.unfounded ? [] : await loadFallbackFilenames();
 
   await discoverGlobalInstructions(instructions, seen);
 

@@ -1,24 +1,20 @@
 # Capsight continuation
 
-**Active phase:** D4 — Evidence depth (multi-platform)  
-**Next task:** D4-01 (Cursor discovery/walk matrix entries)
+**Active phase:** none — D4 complete  
+**Next:** deferred backlog (G1-MP, SS-deep, B1, §9) or user direction
 
-## Phase order
+## D4 outcome
 
-```
-D4 (evidence wave 3) → deferred: G1-MP, SS-deep, B1, §9
-```
+| Metric | Before | After |
+|--------|--------|-------|
+| entry-owed | 19 | **0** |
+| unverified total | 37 | **18** |
 
-Completed: `F0 → G1-04 → D3 → SS`
+**843 tests** (gate suite green); occasional apply-suite timeouts under parallel load (pre-existing flake).
 
-## D4 target
+## Deferred backlog
 
-| Metric | Now | Gate |
-|--------|-----|------|
-| entry-owed | 19 (Cursor 8 + Codex 11) | 0 |
-| unverified total | 37 | ≤ 18 |
-
-Handoffs: `docs/tasks/D4-*.md`
+G1-MP → SS-deep → B1 → §9
 
 ## Orchestration
 

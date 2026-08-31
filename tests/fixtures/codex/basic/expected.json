@@ -72,7 +72,10 @@
       {
         "scope": "project",
         "path": ".codex/config.toml",
-        "priority": 50
+        "priority": 50,
+        "unknownFields": {
+          "experimental_feature_enabled": "boolean"
+        }
       }
     ],
     "trust": {
@@ -207,7 +210,7 @@
               "scope": "unknown"
             }
           ],
-          "matrixRef": "trust.project",
+          "matrixRef": "trust.unreadable",
           "enforcement": "unknown"
         }
       ],

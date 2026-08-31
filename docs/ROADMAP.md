@@ -4,7 +4,7 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**D4 — Evidence depth (multi-platform)** is the active phase. Close the remaining **19 `entry-owed`** facts on Cursor and Codex so unverified drops from **37 → 18** (terminal refusals only).
+**D4 complete** — zero `entry-owed`; unverified **18** (terminal refusals only). Next deferred: G1-MP, SS-deep, B1, §9.
 
 Previous: **SS complete** — S6/S7 shape pinned; S11 relative paths honest unknown.
 
@@ -13,10 +13,10 @@ Previous: **SS complete** — S6/S7 shape pinned; S11 relative paths honest unkn
 Evidence depth first — it is the largest honesty gap after D3 closed Claude.
 
 ```
-D4 (evidence wave 3 — Cursor/Codex) → deferred: G1-MP, SS-deep, B1, §9
+deferred: G1-MP, SS-deep, B1, §9
 ```
 
-Completed chain: `F0 → G1-04 → D3 → SS`.
+Completed chain: `F0 → G1-04 → D3 → SS → D4`.
 
 ## Phase status
 
@@ -41,7 +41,7 @@ Completed chain: `F0 → G1-04 → D3 → SS`.
 | G1-04 — Drift demonstration | `done` | Confident rule downgrades on version exceed, neighbors stay confident |
 | D3 — Evidence wave 2 | `done` | Unverified below 45; Claude entry-owed closed |
 | SS — Settings semantics | `done` | S6/S7 shape pinned; S11 relative paths honest unknown |
-| D4 — Evidence depth (multi-platform) | `todo` | Zero `entry-owed`; unverified ≤ 18 |
+| D4 — Evidence depth (multi-platform) | `done` | Zero `entry-owed`; unverified ≤ 18 |
 | G1-MP — Drift on Cursor/Codex | `deferred` | maxVersion on confident rule per platform |
 | SS-deep — Settings argument depth | `deferred` | S6 prefix / S7 glob matching only if documentable |
 | B1 — Builtin discovery channel | `deferred` | B1/B4 noFixturePossible until discovery synthesizes builtins |
@@ -55,24 +55,26 @@ The rule exists because the first six phases broke it. M1, M2 and M3 are marked 
 
 Practically, for each phase below: at least one task is a UI task, it is not scheduled last, and the phase gate names what becomes visible.
 
-## Coverage baseline (measured post-D3/SS, `0bf3002`)
+## Coverage baseline (measured post-D4, `buildCoverageReport`)
 
 Recomputed from `buildCoverageReport` + [EVIDENCE-LEDGER.md](./EVIDENCE-LEDGER.md):
 
 | platform | facts | unverified | entry-owed | fixture-verified (approx.) |
 |---|---|---|---|---|
 | claude | 92 | 10 | 0 | 11+ |
-| cursor | 27 | 15 | **8** | 7 |
-| codex | 26 | 12 | **11** | 9 |
-| **total** | **145** | **37** | **19** | — |
+| cursor | 27 | 7 | 0 | 7+ |
+| codex | 26 | 1 | 0 | 9+ |
+| **total** | **145** | **18** | **0** | — |
 
-**D4 is the active gap:** Claude `entry-owed` is closed (D3); Cursor and Codex still carry **19 facts** that reach no matrix entry. Closing them drops unverified to **18** (terminal `noFixturePossible` / `out-of-scope` only). D2-06 and D3-05 gates stay fail-closed — the count must not rise.
+All remaining unverified facts carry terminal ledger disposition (`noFixturePossible` or `out-of-scope`). D2-06, D3-05, and D4-06 gates are fail-closed — counts must not rise without an explicit gate change.
 
 ## D4 scope note — Evidence wave 3 (multi-platform)
 
-D2 triaged 87 unreferenced facts; D3 closed Claude priority-2 clusters (35→10 unreferenced). **Cursor and Codex were intentionally deferred** — their adapters have thinner matrix corpora and most unreferenced rows are still `entry-owed`, not terminal refusals.
+D2 triaged 87 unreferenced facts; D3 closed Claude priority-2 clusters (35→10 unreferenced). D4 closed the deferred Cursor and Codex `entry-owed` rows via matrix entries or terminal refusals.
 
-**D4 goal:** Every remaining `entry-owed` fact on Cursor and Codex gets a matrix entry (and fixture when H1-28 allows) or moves to honest `noFixturePossible` with a written reason. **Gate:** `entry-owed` count = 0 platform-wide; total unverified ≤ 18.
+**D4 outcome.** Total unverified across the three registries dropped from **37 to 18**. Claude held at 10; Cursor fell 15→7; Codex fell 12→1. All 19 `entry-owed` facts on Cursor and Codex are closed. Every remaining unverified fact has a terminal ledger disposition (D2-06 gate unchanged). D4-06 adds a fail-closed ceiling test so `entry-owed` cannot reappear and unverified cannot rise above 18 without an explicit gate change.
+
+**Gate:** `entry-owed` count = 0 platform-wide; total unverified ≤ 18; ledger measured counts match `buildCoverageReport` per platform.
 
 **Honest ceiling:** Facts that cannot be fixture-promoted (home-path layers, spike-only probes, unknown registry confidence) stay unreferenced with terminal disposition — that is success, not failure.
 

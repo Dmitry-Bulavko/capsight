@@ -68,16 +68,22 @@ export async function resolveEffectiveConfiguration(
   const version = snapshot.version.version;
   const instructionGate = gateCapability(MATRIX["instruction.chain"], version);
   const trustGate = gateCapability(MATRIX["trust.project"], version);
+  const trustUnreadableGate = gateCapability(MATRIX["trust.unreadable"], version);
 
-  if (snapshot.trust.accepted === "unknown") {
-    warnings.push({
-      category: "trust",
-      severity: "info",
-      message: snapshot.trust.unknownReason ?? "Codex project trust state is unknown.",
-      evidence: [{ platform: CODEX_PLATFORM, scope: "unknown" }],
-      matrixRef: MATRIX["trust.project"],
-      enforcement: "unknown",
-    });
+  if (snapshot.trust.accepted === "unknown" && !trustUnreadableGate.unfounded) {
+    warnings.push(
+      gateWarning(
+        {
+          category: "trust",
+          severity: "info",
+          message: snapshot.trust.unknownReason ?? "Codex project trust state is unknown.",
+          evidence: [{ platform: CODEX_PLATFORM, scope: "unknown" }],
+          enforcement: "unknown",
+        },
+        MATRIX["trust.unreadable"],
+        version,
+      ),
+    );
   } else if (snapshot.trust.accepted === false) {
     warnings.push(
       gateWarning(

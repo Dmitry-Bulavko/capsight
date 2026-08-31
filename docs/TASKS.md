@@ -346,10 +346,10 @@ Order: D4-01 → D4-02 → D4-03 → D4-04 → D4-05 → D4-06.
 
 | ID | Phase | Title | Status | Spec refs | Files | Acceptance |
 |----|-------|-------|--------|-----------|-------|------------|
-| D4-01 | D4 | Cursor discovery/walk — matrix entries | in_progress | CURSOR-FACTS, §11.4 | cursor/matrix.ts, fixtures | CW1,CW2,CW3,CA1,CS1 referenced or refused |
-| D4-02 | D4 | Cursor rules/settings — matrix entries | todo | CURSOR-FACTS, §11.4 | cursor/matrix.ts, fixtures | CR2,CR3,CSet3 referenced or refused |
-| D4-03 | D4 | Codex version/walk — matrix entries | todo | CODEX-FACTS, §11.4 | codex/matrix.ts, fixtures | XV1,XV2,XV3,XR1,XR2 referenced or refused |
-| D4-04 | D4 | Codex instructions/trust — matrix entries | todo | CODEX-FACTS, §11.4 | codex/matrix.ts, fixtures | XI3,XI4,XA1,XT3 referenced or refused |
+| D4-01 | D4 | Cursor discovery/walk — matrix entries | done | CURSOR-FACTS, §11.4 | cursor/matrix.ts, fixtures | CW1,CW2,CW3,CA1,CS1 referenced or refused |
+| D4-02 | D4 | Cursor rules/settings — matrix entries | done | CURSOR-FACTS, §11.4 | cursor/matrix.ts, fixtures | CR2,CR3,CSet3 referenced or refused |
+| D4-03 | D4 | Codex version/walk — matrix entries | done | CODEX-FACTS, §11.4 | codex/matrix.ts, fixtures | XV1,XV2,XV3,XR1,XR2 referenced or refused |
+| D4-04 | D4 | Codex instructions/trust — matrix entries | in_progress | CODEX-FACTS, §11.4 | codex/matrix.ts, fixtures | XI3,XI4,XA1,XT3 referenced or refused |
 | D4-05 | D4 | Codex settings/architecture — matrix entries | todo | CODEX-FACTS, §11.4 | codex/matrix.ts, fixtures | XA3,XSet1 referenced or refused |
 | D4-06 | D4 | D4 gate — zero entry-owed, unverified ≤ 18 | todo | §11.4, D2-06 | EVIDENCE-LEDGER, coverage-report | entry-owed=0; ledger matches report |
 

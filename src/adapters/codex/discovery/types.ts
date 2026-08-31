@@ -1,4 +1,4 @@
-import type { Enforcement, Scope, SourceInfo } from "../../../core/model/index.js";
+import type { Enforcement, Scope, SourceInfo, UnknownFieldType } from "../../../core/model/index.js";
 
 export interface DiscoveredSkill {
   id: string;
@@ -35,6 +35,7 @@ export interface SettingsLayer {
   scope: Scope;
   path: string;
   priority: number;
+  unknownFields?: Record<string, UnknownFieldType>;
 }
 
 export interface ParsedConfigLayer {

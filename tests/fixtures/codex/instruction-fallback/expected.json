@@ -7,7 +7,7 @@
         "source": {
           "platform": "codex",
           "scope": "project",
-          "path": "sub/AGENTS.md"
+          "path": "CLAUDE.md"
         },
         "status": "active",
         "configuration": {
@@ -19,16 +19,10 @@
     "skills": [],
     "instructions": [
       {
-        "type": "AGENTS.md",
-        "path": "AGENTS.md",
-        "scope": "nested-project",
-        "sizeBytes": 74
-      },
-      {
-        "type": "AGENTS.md",
-        "path": "sub/AGENTS.md",
+        "type": "fallback",
+        "path": "CLAUDE.md",
         "scope": "project",
-        "sizeBytes": 41
+        "sizeBytes": 93
       }
     ],
     "mcpServers": [],
@@ -55,32 +49,7 @@
       },
       "capabilities": [
         {
-          "capabilityId": "instruction:AGENTS.md",
-          "kind": "instruction",
-          "status": "available",
-          "enforcement": "enforced",
-          "sources": [
-            {
-              "platform": "codex",
-              "scope": "nested-project",
-              "path": "AGENTS.md"
-            }
-          ],
-          "reasons": [
-            {
-              "type": "declared",
-              "message": "Instruction \"AGENTS.md\" is in the effective chain (XI5).",
-              "source": {
-                "platform": "codex",
-                "scope": "nested-project",
-                "path": "AGENTS.md"
-              },
-              "matrixRef": "instruction.chain"
-            }
-          ]
-        },
-        {
-          "capabilityId": "instruction:sub/AGENTS.md",
+          "capabilityId": "instruction:CLAUDE.md",
           "kind": "instruction",
           "status": "available",
           "enforcement": "enforced",
@@ -88,17 +57,17 @@
             {
               "platform": "codex",
               "scope": "project",
-              "path": "sub/AGENTS.md"
+              "path": "CLAUDE.md"
             }
           ],
           "reasons": [
             {
               "type": "declared",
-              "message": "Instruction \"AGENTS.md\" is in the effective chain (XI5).",
+              "message": "Instruction \"fallback\" is in the effective chain (XI5).",
               "source": {
                 "platform": "codex",
                 "scope": "project",
-                "path": "sub/AGENTS.md"
+                "path": "CLAUDE.md"
               },
               "matrixRef": "instruction.chain"
             }

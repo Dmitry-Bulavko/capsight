@@ -7,7 +7,7 @@ Facts that reach no `VERSION_MATRIX` entry are `unverified` in `buildCoverageRep
 | | claude | cursor | codex | unverified total |
 |---|--------|--------|-------|------------------|
 | Baseline (`28a510b`, pre-D2) | 47 | 21 | 19 | **87** |
-| Current (this ledger) | 10 | 15 | 12 | **37** |
+| Current (this ledger) | 10 | 7 | 1 | **18** |
 
 Compat-matrix citations (`COMPAT_MATRIX_ENTRIES` in `src/core/compat/`) do not count toward platform coverage; facts cited only there still appear here.
 
@@ -110,24 +110,16 @@ Matrix entries added in `src/adapters/claude/version/matrix.ts`; fixtures extend
 
 ---
 
-## Cursor (15 unreferenced)
+## Cursor (7 unreferenced)
 
 | Fact | § | Conf | Disposition | Priority | Reason |
 |------|---|------|-------------|----------|--------|
 | CV1 | 1 | spike | noFixturePossible | — | `cursor --version` semver format; version probe is infrastructure, not a resolver golden claim (spike-cited only) |
 | CV3 | 1 | ext | noFixturePossible | — | IDE-only installs may lack CLI; machine/environment property, not fixture-observable |
-| CW1 | 3 | doc | entry-owed | 1 | Repo root = directory containing `.git`; discovery walk depends on it |
-| CW2 | 3 | ext | entry-owed | 1 | Upward walk collecting `.cursor/` metadata; discovery implements |
-| CW3 | 3 | doc | entry-owed | 1 | Nested `AGENTS.md` applies in subtree; only compat-matrix cited today |
-| CA1 | 4 | doc | entry-owed | 1 | Agent files under `.cursor/agents/**/*.md`; discovery path, compat-only citation |
-| CS1 | 5 | doc | entry-owed | 1 | Skills at `.cursor/skills/<name>/SKILL.md`; discovery path |
 | CS2 | 5 | unknown | noFixturePossible | — | Skill invocation flags unknown; registry confidence `unknown` — no confident claim possible |
-| CR2 | 6 | doc | entry-owed | 1 | `alwaysApply`/`globs` control application mode; resolution rule |
-| CR3 | 6 | ext | entry-owed | 2 | Map rules to `instructions[]` type `rule`; discovery mapping |
 | CM2 | 7 | spike | noFixturePossible | — | User MCP at `~/.cursor/mcp.json`; home-path layer outside project fixture corpus |
 | CSet1 | 8 | spike | noFixturePossible | — | Settings in app user-data directory; OS-specific path, spike only |
 | CSet2 | 8 | unknown | noFixturePossible | — | Project-level settings path unknown; registry confidence `unknown` |
-| CSet3 | 8 | ext | entry-owed | 2 | Discover readable JSON where paths stable; partial discovery behavior |
 | CT2 | 9 | doc | out-of-scope | — | Product read-only invariant (no writes to scanned `.cursor/**`); SPEC §0.1 policy, not a Cursor resolver claim |
 
 ### Closed in D2-03 (priority-1 Cursor)
@@ -143,24 +135,67 @@ Matrix entries added in `src/adapters/cursor/version/matrix.ts`; fixtures where 
 | CM3 | `mcp.envRedact` | fixture `basic`, verified entire |
 | CM4 | `mcp.probe` | `noFixturePossible` — resolver marks MCP unknown without probe |
 
+### Closed in D4-01 (priority-1 discovery/walk)
+
+Matrix entries added in `src/adapters/cursor/version/matrix.ts`; fixtures where promotable under H1-28.
+
+| Fact | Matrix entry | Evidence |
+|------|--------------|----------|
+| CW1 | `discovery.projectBoundary` | `noFixturePossible` — discovery anchors on scanned projectPath, not `.git` markers |
+| CW2 | `discovery.scopedMetadata` | fixture `basic`, single-scope walk partial (doc) |
+| CW3 | `discovery.nestedAgentsMd` | `noFixturePossible` — nested subdirectory AGENTS.md not in discovery goldens |
+| CA1 | `discovery.agents` | fixture `basic`, verified entire |
+| CS1 | `discovery.skills` | fixture `basic`, verified entire |
+
+### Closed in D4-02 (priority-1 rules/settings)
+
+Matrix entries added in `src/adapters/cursor/version/matrix.ts`; fixtures where promotable under H1-28.
+
+| Fact | Matrix entry | Evidence |
+|------|--------------|----------|
+| CR2 | `rules.applicationMode` | `noFixturePossible` — resolver marks instruction application unknown |
+| CR3 | `discovery.instructionTypes` | fixture `basic`, verified entire |
+| CSet3 | `settings.userJson` | `noFixturePossible` — user settings outside project-scoped golden boundary |
+
 ---
 
-## Codex (12 unreferenced)
+## Codex (1 unreferenced)
 
 | Fact | § | Conf | Disposition | Priority | Reason |
 |------|---|------|-------------|----------|--------|
-| XV1 | 1 | doc | entry-owed | 1 | `codex --version` prints CLI version; version layer in scan |
-| XV2 | 1 | spike | entry-owed | 1 | Degraded mode when CLI missing; adapter behavior |
-| XV3 | 1 | doc | entry-owed | 1 | Only `codex --version` allowed in ordinary scan; scan boundary rule |
-| XR1 | 2 | doc | entry-owed | 1 | Repo root = directory containing `.git`; walk anchor |
-| XR2 | 2 | doc | entry-owed | 1 | Custom root via `project_root_markers`; config-driven root |
-| XI3 | 4 | doc | entry-owed | 1 | Fallback instruction filenames from config; discovery rule |
-| XI4 | 4 | doc | entry-owed | 1 | Combined instruction size cap; discovery may warn/truncate |
 | XS2 | 6 | unknown | noFixturePossible | — | User skills path unknown; registry confidence `unknown` |
-| XA1 | 7 | doc | entry-owed | 1 | Instruction-based primary agent config; Codex has no separate agents[] |
-| XA3 | 7 | ext | entry-owed | 2 | No separate `agents[]` unless file-based; architectural fact for resolver |
-| XSet1 | 5 | ext | entry-owed | 2 | Parse known TOML keys; unknown keys as types; settings parse |
-| XT3 | 10 | doc | entry-owed | 1 | Unreadable trust → `unknown` not `blocked`; trust resolver behavior (XT1/2 matrix partial) |
+
+### Closed in D4-05 (priority-1 settings/architecture)
+
+Matrix entries added in `src/adapters/codex/version/matrix.ts`; fixtures where promotable under H1-28.
+
+| Fact | Matrix entry | Evidence |
+|------|--------------|----------|
+| XA3 | `agent.noSeparateAgentsArray` | fixture `basic`, documentation-only (doc) |
+| XSet1 | `settings.knownKeysOnly` | fixture `basic`, verified entire |
+
+### Closed in D4-04 (priority-1 instructions/trust)
+
+Matrix entries added in `src/adapters/codex/version/matrix.ts`; fixtures where promotable under H1-28.
+
+| Fact | Matrix entry | Evidence |
+|------|--------------|----------|
+| XI3 | `instruction.fallback` | fixture `instruction-fallback`, verified entire |
+| XI4 | `instruction.sizeCap` | `noFixturePossible` — no cap enforcement channel in §11.2 goldens |
+| XA1 | `agent.instructionBased` | fixture `basic`, verified entire |
+| XT3 | `trust.unreadable` | fixture `basic`, verified entire |
+
+### Closed in D4-03 (priority-1 version/walk)
+
+Matrix entries added in `src/adapters/codex/version/matrix.ts`; fixtures where promotable under H1-28.
+
+| Fact | Matrix entry | Evidence |
+|------|--------------|----------|
+| XV1 | `version.detect` | `noFixturePossible` — golden fixtures mock version from `version.txt` |
+| XV2 | `version.degraded` | `noFixturePossible` — golden fixtures mock version from `version.txt` |
+| XV3 | `version.scanBoundary` | `noFixturePossible` — scan boundary invariant not observable in §11.2 goldens |
+| XR1 | `discovery.repoRoot` | fixture `nested-instructions`, walk partial (doc) |
+| XR2 | `discovery.rootMarkers` | `noFixturePossible` — adapter uses `.git` only, not `project_root_markers` |
 
 ### Closed in D2-04 (priority-1 Codex)
 
@@ -195,38 +230,19 @@ claude:M3:noFixturePossible
 claude:M6:out-of-scope
 cursor:CV1:noFixturePossible
 cursor:CV3:noFixturePossible
-cursor:CW1:entry-owed
-cursor:CW2:entry-owed
-cursor:CW3:entry-owed
-cursor:CA1:entry-owed
-cursor:CS1:entry-owed
 cursor:CS2:noFixturePossible
-cursor:CR2:entry-owed
-cursor:CR3:entry-owed
 cursor:CM2:noFixturePossible
 cursor:CSet1:noFixturePossible
 cursor:CSet2:noFixturePossible
-cursor:CSet3:entry-owed
 cursor:CT2:out-of-scope
-codex:XV1:entry-owed
-codex:XV2:entry-owed
-codex:XV3:entry-owed
-codex:XR1:entry-owed
-codex:XR2:entry-owed
-codex:XI3:entry-owed
-codex:XI4:entry-owed
 codex:XS2:noFixturePossible
-codex:XA1:entry-owed
-codex:XA3:entry-owed
-codex:XSet1:entry-owed
-codex:XT3:entry-owed
 ```
 
 **Counts by disposition**
 
 | Disposition | Claude | Cursor | Codex | Total |
 |-------------|--------|--------|-------|-------|
-| entry-owed | 0 | 8 | 11 | 19 |
+| entry-owed | 0 | 0 | 0 | 0 |
 | noFixturePossible | 8 | 6 | 1 | 15 |
 | out-of-scope | 2 | 1 | 0 | 3 |
-| **sum** | **10** | **15** | **12** | **37** |
+| **sum** | **10** | **7** | **1** | **18** |

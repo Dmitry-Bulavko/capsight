@@ -26,12 +26,18 @@ import type { Warning } from "../../../../src/core/model/index.js";
 import { buildExecutionContext } from "../../../../src/adapters/codex/resolution/context.js";
 import { normalizeGoldenOutput } from "../../../fixtures/golden-normalize.js";
 import { resolveFixtureScanPath } from "../../../fixtures/coverage-report.js";
-import { selectFixtureAgent, fixtureHomeDir } from "../../../fixtures/fixture-runtime.js";
+import { selectFixtureAgent, resolveFixtureHomeDir } from "../../../fixtures/fixture-runtime.js";
 
 const CODEX_MATRIX_IDS = [
   "instruction.chain",
-  "instruction.ancestors",
+  "instruction.fallback",
+  "instruction.sizeCap",
+  "agent.instructionBased",
+  "agent.noSeparateAgentsArray",
+  "settings.knownKeysOnly",
   "trust.project",
+  "trust.unreadable",
+  "instruction.ancestors",
   "discovery.skills",
   "discovery.skillFrontmatter",
   "discovery.mcpProject",
@@ -39,6 +45,11 @@ const CODEX_MATRIX_IDS = [
   "mcp.envRedact",
   "discovery.settings",
   "mcp.probe",
+  "version.detect",
+  "version.degraded",
+  "version.scanBoundary",
+  "discovery.repoRoot",
+  "discovery.rootMarkers",
 ] as const;
 
 const FIXTURES_ROOT = path.resolve(
@@ -76,7 +87,7 @@ async function runCodexFixture(
   for (const [key, value] of Object.entries(env)) {
     vi.stubEnv(key, value);
   }
-  const home = fixtureHomeDir();
+  const home = resolveFixtureHomeDir(fixtureDir);
   vi.stubEnv("HOME", home);
   vi.stubEnv("USERPROFILE", home);
   vi.stubEnv("CODEX_HOME", path.join(home, ".codex"));
@@ -97,14 +108,16 @@ async function runCodexFixture(
   });
   const resolutions = [];
 
-  for (const contextSpec of contexts) {
-    const agent = selectFixtureAgent(scanResult.snapshot.agents, contextSpec, projectRoot);
-    const resolution = await resolve({
-      snapshot: scanResult.snapshot,
-      agentId: agent.id,
-      context: buildExecutionContext(contextSpec.preset as "main-session"),
-    });
-    resolutions.push({ agentName: contextSpec.agentName, resolution });
+  if (scanResult.snapshot.agents.length > 0) {
+    for (const contextSpec of contexts) {
+      const agent = selectFixtureAgent(scanResult.snapshot.agents, contextSpec, projectRoot);
+      const resolution = await resolve({
+        snapshot: scanResult.snapshot,
+        agentId: agent.id,
+        context: buildExecutionContext(contextSpec.preset as "main-session"),
+      });
+      resolutions.push({ agentName: contextSpec.agentName, resolution });
+    }
   }
 
   return normalizeGoldenOutput(scanResult.snapshot, resolutions, projectRoot);
@@ -318,6 +331,64 @@ describe("codex fixture deletion tests (H1-28)", () => {
         (warning) => warning.matrixRef === MATRIX["trust.project"],
       );
       expect(after?.enforcement).toBe("unknown");
+    });
+  });
+
+  it("instruction.fallback: unfounding the matrix skips fallback instructions", async () => {
+    const baseline = await runCodexFixture("instruction-fallback");
+    expect(baseline.discovery.instructions).toHaveLength(1);
+    expect(baseline.discovery.instructions[0]).toMatchObject({ type: "fallback" });
+
+    await withMatrixPatch(MATRIX["instruction.fallback"], { status: "unknown" }, async () => {
+      const withoutRule = await runCodexFixture("instruction-fallback");
+      expect(withoutRule.discovery.instructions).toEqual([]);
+      expect(withoutRule.discovery.agents).toEqual([]);
+    });
+  });
+
+  it("agent.instructionBased: unfounding the matrix marks synthetic main agent unknown", async () => {
+    const baseline = await runCodexFixture("basic");
+    expect(baseline.discovery.agents[0]).toMatchObject({ status: "active" });
+
+    await withMatrixPatch(MATRIX["agent.instructionBased"], { status: "unknown" }, async () => {
+      const withoutRule = await runCodexFixture("basic");
+      expect(withoutRule.discovery.agents[0]).toMatchObject({ status: "unknown" });
+    });
+  });
+
+  it("trust.unreadable: unfounding the matrix removes the unknown-trust warning", async () => {
+    const baseline = await runCodexFixture("basic");
+    expect(
+      baseline.resolutions[0]!.warnings.some(
+        (warning) => warning.matrixRef === MATRIX["trust.unreadable"],
+      ),
+    ).toBe(true);
+
+    await withMatrixPatch(MATRIX["trust.unreadable"], { status: "unknown" }, async () => {
+      const withoutRule = await runCodexFixture("basic");
+      expect(
+        withoutRule.resolutions[0]!.warnings.some(
+          (warning) => warning.matrixRef === MATRIX["trust.unreadable"],
+        ),
+      ).toBe(false);
+    });
+  });
+
+  it("settings.knownKeysOnly: unfounding the matrix strips settings unknownFields", async () => {
+    const baseline = await runCodexFixture("basic");
+    const settingsLayer = baseline.discovery.settings[0] as {
+      unknownFields?: Record<string, string>;
+    };
+    expect(settingsLayer?.unknownFields).toEqual({
+      experimental_feature_enabled: "boolean",
+    });
+
+    await withMatrixPatch(MATRIX["settings.knownKeysOnly"], { status: "unknown" }, async () => {
+      const withoutRule = await runCodexFixture("basic");
+      const strippedLayer = withoutRule.discovery.settings[0] as {
+        unknownFields?: Record<string, string>;
+      };
+      expect(strippedLayer?.unknownFields).toBeUndefined();
     });
   });
 });

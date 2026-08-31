@@ -204,6 +204,104 @@ const MATRIX_ENTRIES = [
       "the operative cause of a confident golden value (H1-28).",
     notes: "Degraded mode continues read-only discovery when CLI missing",
   },
+  {
+    id: "discovery.agents",
+    feature: "Subagent markdown files discovered from .cursor/agents/**/*.md",
+    factRefs: [FACT.CA1],
+    status: "supported",
+    confidence: "fixture",
+    fixture: "basic",
+    verifiedFacts: [FACT.CA1],
+    notes:
+      "CA1 entire: basic declares example.md under .cursor/agents/ and the golden records " +
+      "the agent with that path. Deletion test (D4-01): skip agents-directory discovery and " +
+      "agents becomes empty.",
+  },
+  {
+    id: "discovery.skills",
+    feature: "Skills discovered from .cursor/skills/<name>/SKILL.md",
+    factRefs: [FACT.CS1],
+    status: "supported",
+    confidence: "fixture",
+    fixture: "basic",
+    verifiedFacts: [FACT.CS1],
+    notes:
+      "CS1 entire: basic declares example under .cursor/skills/example/SKILL.md and the " +
+      "golden records the skill with that path. Deletion test (D4-01): skip skills-directory " +
+      "discovery and the example skill leaves the golden.",
+  },
+  {
+    id: "discovery.projectBoundary",
+    feature: "Scanned projectPath is the discovery workspace boundary",
+    factRefs: [FACT.CW1],
+    status: "supported",
+    confidence: "doc",
+    noFixturePossible:
+      "CW1 registry text cites repo root as the directory containing .git, but Capsight " +
+      "anchors Cursor discovery on the scanned projectPath (CW5) without consulting .git " +
+      "markers; no golden pins a .git-dependent boundary delta (H1-28).",
+  },
+  {
+    id: "discovery.scopedMetadata",
+    feature: "Collect .cursor/ metadata only at the scanned workspace path",
+    factRefs: [FACT.CW2],
+    status: "supported",
+    confidence: "doc",
+    fixture: "basic",
+    verifiedFacts: [],
+    notes:
+      "CW2: basic isolation test plants ancestor .cursor/rules and the golden is unchanged, " +
+      "consistent with single-scope collection. Walk is not matrix-gated yet, so unfounding " +
+      "this entry would not change the golden — no fixture-verified claim (H1-28).",
+  },
+  {
+    id: "discovery.nestedAgentsMd",
+    feature: "Collect AGENTS.md only at each discovery scope root",
+    factRefs: [FACT.CW3],
+    status: "supported",
+    confidence: "doc",
+    noFixturePossible:
+      "discoverInstructions reads AGENTS.md only at each scope root, not recursively in " +
+      "subdirectories; no §11.2 golden records a nested AGENTS.md path as the operative cause " +
+      "of a confident value (H1-28).",
+  },
+  {
+    id: "rules.applicationMode",
+    feature: "Rule alwaysApply, globs, and description control application mode",
+    factRefs: [FACT.CR2],
+    status: "unknown",
+    confidence: "doc",
+    noFixturePossible:
+      "CR2 records runtime application semantics (always included, file-scoped, intelligent apply); " +
+      "the resolver marks every instruction capability unknown and an unknown claims nothing " +
+      "(§11.3), so no fixture can make this entry the operative cause of a confident golden value (H1-28).",
+    notes: "Frontmatter fields parsed under discovery.ruleFrontmatter (CR1); application mode not resolved in v1",
+  },
+  {
+    id: "discovery.instructionTypes",
+    feature: "Rules and AGENTS.md map to typed instructions[] entries",
+    factRefs: [FACT.CR3],
+    status: "supported",
+    confidence: "fixture",
+    fixture: "basic",
+    verifiedFacts: [FACT.CR3],
+    notes:
+      "CR3 entire: basic declares a .mdc rule as type rule and AGENTS.md as type AGENTS.md; " +
+      "the golden records both instruction types in discovery.instructions. " +
+      "Deletion test (D4-02): skip instruction discovery and both entries leave the golden.",
+  },
+  {
+    id: "settings.userJson",
+    feature: "Discover readable user JSON settings when install path is stable",
+    factRefs: [FACT.CSet3],
+    status: "supported",
+    confidence: "doc",
+    noFixturePossible:
+      "CSet3 discovers user settings at an OS-specific path outside projectPath; §11.2 goldens " +
+      "record only project-scoped discovery layers, so no fixture can make this entry the " +
+      "operative cause of a confident golden value (H1-28).",
+    notes: "User settings path varies by OS (CSet1); project-level settings path unknown (CSet2)",
+  },
 ] as const satisfies readonly FeatureCompatibility[];
 
 const CURSOR_PLATFORM = "cursor";

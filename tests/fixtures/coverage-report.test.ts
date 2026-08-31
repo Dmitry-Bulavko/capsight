@@ -7,11 +7,13 @@ import {
 import { VERSION_MATRIX as CLAUDE_MATRIX } from "../../src/adapters/claude/version/matrix.js";
 import {
   factConfidence as codexFactConfidence,
+  FACT as CODEX_FACT,
   FACTS as CODEX_FACTS,
 } from "../../src/adapters/codex/version/facts.js";
 import { VERSION_MATRIX as CODEX_MATRIX } from "../../src/adapters/codex/version/matrix.js";
 import {
   factConfidence as cursorFactConfidence,
+  FACT as CURSOR_FACT,
   FACTS as CURSOR_FACTS,
 } from "../../src/adapters/cursor/version/facts.js";
 import { VERSION_MATRIX as CURSOR_MATRIX } from "../../src/adapters/cursor/version/matrix.js";
@@ -331,6 +333,265 @@ describe("D3-04 remaining-facts cluster tier movement", () => {
   });
 });
 
+describe("D4-01 discovery/walk-cluster tier movement", () => {
+  const DISCOVERY_WALK_CLUSTER = [
+    CURSOR_FACT.CW1,
+    CURSOR_FACT.CW2,
+    CURSOR_FACT.CW3,
+    CURSOR_FACT.CA1,
+    CURSOR_FACT.CS1,
+  ] as const;
+
+  const fixtures = new Set(["basic"]);
+
+  it("moves discovery/walk-cluster facts off unverified with honest tiers", () => {
+    expect(DISCOVERY_WALK_CLUSTER).toHaveLength(5);
+
+    expect(
+      classifyFactCoverage(
+        CURSOR_FACT.CA1,
+        fixtures,
+        CURSOR_MATRIX,
+        cursorFactConfidence,
+      ),
+    ).toBe("fixture-verified");
+
+    expect(
+      classifyFactCoverage(
+        CURSOR_FACT.CS1,
+        fixtures,
+        CURSOR_MATRIX,
+        cursorFactConfidence,
+      ),
+    ).toBe("fixture-verified");
+
+    expect(
+      classifyFactCoverage(
+        CURSOR_FACT.CW1,
+        fixtures,
+        CURSOR_MATRIX,
+        cursorFactConfidence,
+      ),
+    ).toBe("documentation-only");
+
+    expect(
+      classifyFactCoverage(
+        CURSOR_FACT.CW2,
+        fixtures,
+        CURSOR_MATRIX,
+        cursorFactConfidence,
+      ),
+    ).toBe("externally-cited");
+
+    expect(
+      classifyFactCoverage(
+        CURSOR_FACT.CW3,
+        fixtures,
+        CURSOR_MATRIX,
+        cursorFactConfidence,
+      ),
+    ).toBe("documentation-only");
+  });
+});
+
+describe("D4-02 rules/settings-cluster tier movement", () => {
+  const RULES_SETTINGS_CLUSTER = [
+    CURSOR_FACT.CR2,
+    CURSOR_FACT.CR3,
+    CURSOR_FACT.CSet3,
+  ] as const;
+
+  const fixtures = new Set(["basic"]);
+
+  it("moves rules/settings-cluster facts off unverified with honest tiers", () => {
+    expect(RULES_SETTINGS_CLUSTER).toHaveLength(3);
+
+    expect(
+      classifyFactCoverage(
+        CURSOR_FACT.CR2,
+        fixtures,
+        CURSOR_MATRIX,
+        cursorFactConfidence,
+      ),
+    ).toBe("documentation-only");
+
+    expect(
+      classifyFactCoverage(
+        CURSOR_FACT.CR3,
+        fixtures,
+        CURSOR_MATRIX,
+        cursorFactConfidence,
+      ),
+    ).toBe("fixture-verified");
+
+    expect(
+      classifyFactCoverage(
+        CURSOR_FACT.CSet3,
+        fixtures,
+        CURSOR_MATRIX,
+        cursorFactConfidence,
+      ),
+    ).toBe("externally-cited");
+  });
+});
+
+describe("D4-03 version/walk-cluster tier movement", () => {
+  const VERSION_WALK_CLUSTER = [
+    CODEX_FACT.XV1,
+    CODEX_FACT.XV2,
+    CODEX_FACT.XV3,
+    CODEX_FACT.XR1,
+    CODEX_FACT.XR2,
+  ] as const;
+
+  const fixtures = new Set([
+    "basic",
+    "nested-instructions",
+    "agents-precedence",
+    "trust-untrusted",
+  ]);
+
+  it("moves version/walk-cluster facts off unverified with honest tiers", () => {
+    expect(VERSION_WALK_CLUSTER).toHaveLength(5);
+
+    expect(
+      classifyFactCoverage(
+        CODEX_FACT.XV1,
+        fixtures,
+        CODEX_MATRIX,
+        codexFactConfidence,
+      ),
+    ).toBe("documentation-only");
+
+    expect(
+      classifyFactCoverage(
+        CODEX_FACT.XV2,
+        fixtures,
+        CODEX_MATRIX,
+        codexFactConfidence,
+      ),
+    ).toBe("spike-cited");
+
+    expect(
+      classifyFactCoverage(
+        CODEX_FACT.XV3,
+        fixtures,
+        CODEX_MATRIX,
+        codexFactConfidence,
+      ),
+    ).toBe("documentation-only");
+
+    expect(
+      classifyFactCoverage(
+        CODEX_FACT.XR1,
+        fixtures,
+        CODEX_MATRIX,
+        codexFactConfidence,
+      ),
+    ).toBe("documentation-only");
+
+    expect(
+      classifyFactCoverage(
+        CODEX_FACT.XR2,
+        fixtures,
+        CODEX_MATRIX,
+        codexFactConfidence,
+      ),
+    ).toBe("documentation-only");
+  });
+});
+
+describe("D4-04 instructions/trust-cluster tier movement", () => {
+  const INSTRUCTIONS_TRUST_CLUSTER = [
+    CODEX_FACT.XI3,
+    CODEX_FACT.XI4,
+    CODEX_FACT.XA1,
+    CODEX_FACT.XT3,
+  ] as const;
+
+  const fixtures = new Set([
+    "basic",
+    "nested-instructions",
+    "agents-precedence",
+    "trust-untrusted",
+    "instruction-fallback",
+  ]);
+
+  it("moves instructions/trust-cluster facts off unverified with honest tiers", () => {
+    expect(INSTRUCTIONS_TRUST_CLUSTER).toHaveLength(4);
+
+    expect(
+      classifyFactCoverage(
+        CODEX_FACT.XI3,
+        fixtures,
+        CODEX_MATRIX,
+        codexFactConfidence,
+      ),
+    ).toBe("fixture-verified");
+
+    expect(
+      classifyFactCoverage(
+        CODEX_FACT.XI4,
+        fixtures,
+        CODEX_MATRIX,
+        codexFactConfidence,
+      ),
+    ).toBe("documentation-only");
+
+    expect(
+      classifyFactCoverage(
+        CODEX_FACT.XA1,
+        fixtures,
+        CODEX_MATRIX,
+        codexFactConfidence,
+      ),
+    ).toBe("fixture-verified");
+
+    expect(
+      classifyFactCoverage(
+        CODEX_FACT.XT3,
+        fixtures,
+        CODEX_MATRIX,
+        codexFactConfidence,
+      ),
+    ).toBe("fixture-verified");
+  });
+});
+
+describe("D4-05 settings/architecture-cluster tier movement", () => {
+  const SETTINGS_ARCHITECTURE_CLUSTER = [CODEX_FACT.XA3, CODEX_FACT.XSet1] as const;
+
+  const fixtures = new Set([
+    "basic",
+    "nested-instructions",
+    "agents-precedence",
+    "trust-untrusted",
+    "instruction-fallback",
+  ]);
+
+  it("moves settings/architecture-cluster facts off unverified with honest tiers", () => {
+    expect(SETTINGS_ARCHITECTURE_CLUSTER).toHaveLength(2);
+
+    expect(
+      classifyFactCoverage(
+        CODEX_FACT.XA3,
+        fixtures,
+        CODEX_MATRIX,
+        codexFactConfidence,
+      ),
+    ).toBe("externally-cited");
+
+    expect(
+      classifyFactCoverage(
+        CODEX_FACT.XSet1,
+        fixtures,
+        CODEX_MATRIX,
+        codexFactConfidence,
+      ),
+    ).toBe("fixture-verified");
+  });
+});
+
 const D3_UNVERIFIED_CEILING = 45;
 
 function definePlatformCoverage<Id extends string>(coverage: {
@@ -379,9 +640,9 @@ describe("D3-05 unverified gate", () => {
     expect(
       parseEvidenceLedgerMeasuredCounts(`
 | | claude | cursor | codex | unverified total |
-| Current (this ledger) | 10 | 15 | 12 | **37** |
+| Current (this ledger) | 10 | 7 | 1 | **18** |
 `),
-    ).toEqual({ claude: 10, cursor: 15, codex: 12, total: 37 });
+    ).toEqual({ claude: 10, cursor: 7, codex: 1, total: 18 });
   });
 
   it("keeps total unverified below 45 (D3 gate)", () => {
@@ -455,5 +716,95 @@ describe("D3-05 unverified gate", () => {
 
     expect(measuredTotal).toBe(ledger.total);
     expect(measuredTotal).toBeLessThan(D3_UNVERIFIED_CEILING);
+  });
+});
+
+const D4_UNVERIFIED_CEILING = 18;
+
+describe("D4-06 entry-owed gate", () => {
+  it("keeps entry-owed count at zero across all platforms", () => {
+    const entryOwed = loadEvidenceLedgerGateIndex().filter(
+      (entry) => entry.disposition === "entry-owed",
+    );
+    expect(entryOwed).toEqual([]);
+  });
+
+  it("keeps total unverified at or below 18 (D4 gate)", () => {
+    let totalUnverified = 0;
+
+    for (const coverage of PLATFORM_COVERAGE) {
+      const fixtures = discoverFixtureNames(
+        coverage.fixturesRoot,
+        coverage.fixtureNames,
+      );
+      const report = buildCoverageReport(
+        coverage.facts,
+        coverage.matrix,
+        fixtures,
+        coverage.getFactConfidence,
+      );
+      totalUnverified += report.unverified;
+    }
+
+    expect(totalUnverified).toBeLessThanOrEqual(D4_UNVERIFIED_CEILING);
+  });
+
+  it("matches docs/EVIDENCE-LEDGER.md measured counts to buildCoverageReport", () => {
+    const ledger = loadEvidenceLedgerMeasuredCounts();
+    const gateIndex = loadEvidenceLedgerGateIndex();
+    const ledgerIndex = indexEvidenceLedger(gateIndex);
+    const gateCountByPlatform = new Map<PlatformId, number>();
+
+    for (const entry of gateIndex) {
+      gateCountByPlatform.set(
+        entry.platform,
+        (gateCountByPlatform.get(entry.platform) ?? 0) + 1,
+      );
+    }
+
+    const entryOwedTotal = gateIndex.filter(
+      (entry) => entry.disposition === "entry-owed",
+    ).length;
+
+    let measuredTotal = 0;
+
+    for (const coverage of PLATFORM_COVERAGE) {
+      const fixtures = discoverFixtureNames(
+        coverage.fixturesRoot,
+        coverage.fixtureNames,
+      );
+      const report = buildCoverageReport(
+        coverage.facts,
+        coverage.matrix,
+        fixtures,
+        coverage.getFactConfidence,
+      );
+
+      measuredTotal += report.unverified;
+
+      expect(
+        report.unverified,
+        coverage.platform + ": buildCoverageReport vs ledger summary",
+      ).toBe(ledger[coverage.platform]);
+
+      expect(
+        report.unverified,
+        coverage.platform + ": buildCoverageReport vs Gate index row count",
+      ).toBe(gateCountByPlatform.get(coverage.platform));
+
+      expect(
+        findUnledgeredUnverifiedFacts(coverage, ledgerIndex),
+        coverage.platform + ": unverified facts missing ledger disposition",
+      ).toEqual([]);
+
+      expect(
+        findStaleLedgerEntries(coverage, ledgerIndex),
+        coverage.platform + ": stale Gate index rows",
+      ).toEqual([]);
+    }
+
+    expect(measuredTotal).toBe(ledger.total);
+    expect(measuredTotal).toBeLessThanOrEqual(D4_UNVERIFIED_CEILING);
+    expect(entryOwedTotal).toBe(0);
   });
 });

@@ -40,6 +40,14 @@ const CURSOR_MATRIX_IDS = [
   "discovery.ruleFrontmatter",
   "mcp.probe",
   "version.degraded",
+  "discovery.agents",
+  "discovery.skills",
+  "discovery.projectBoundary",
+  "discovery.scopedMetadata",
+  "discovery.nestedAgentsMd",
+  "rules.applicationMode",
+  "discovery.instructionTypes",
+  "settings.userJson",
 ] as const;
 
 const FIXTURES_ROOT = path.resolve(
@@ -393,6 +401,71 @@ describe("cursor fixture deletion tests (H1-28)", () => {
         (skill) => (skill as { kind?: string }).kind === "command",
       ).length,
     ).toBe(0);
+  });
+
+  it("discovery.agents: skipping agents discovery empties agents", async () => {
+    const fixtureDir = path.join(FIXTURES_ROOT, "basic");
+    const projectRoot = path.join(fixtureDir, "project");
+    const version = (await fsPromises.readFile(path.join(fixtureDir, "version.txt"), "utf8")).trim();
+
+    mockDetectCursorVersion.mockResolvedValue({
+      platform: "cursor",
+      version,
+      raw: version,
+      detectedAt: "1970-01-01T00:00:00.000Z",
+    });
+
+    const { scan } = await import("../../../../src/application/scan.js");
+    const baseline = await scan({ projectPath: projectRoot, platform: "cursor" });
+    expect(baseline.snapshot.agents).toHaveLength(1);
+
+    const agents = await import("../../../../src/adapters/cursor/discovery/agents.js");
+    vi.spyOn(agents, "discoverAgents").mockResolvedValue({ agents: [], invalidCount: 0 });
+    const withoutRule = await scan({ projectPath: projectRoot, platform: "cursor" });
+    expect(withoutRule.snapshot.agents).toHaveLength(0);
+  });
+
+  it("discovery.skills: skipping skills-directory discovery drops skill entries", async () => {
+    const baseline = await runCursorFixture("basic");
+    expect(
+      baseline.discovery.skills.filter(
+        (skill) => (skill as { kind?: string }).kind === "skill",
+      ).length,
+    ).toBe(1);
+
+    const skills = await import("../../../../src/adapters/cursor/discovery/skills.js");
+    const discoverSkills = skills.discoverSkills;
+    vi.spyOn(skills, "discoverSkills").mockImplementation(async (scopes, projectPath) => {
+      const discovered = await discoverSkills(scopes, projectPath);
+      return discovered.filter((skill) => skill.kind !== "skill");
+    });
+    const withoutRule = await runCursorFixture("basic");
+    expect(
+      withoutRule.discovery.skills.filter(
+        (skill) => (skill as { kind?: string }).kind === "skill",
+      ).length,
+    ).toBe(0);
+  });
+
+  it("discovery.instructionTypes: skipping instruction discovery drops typed instructions", async () => {
+    const baseline = await runCursorFixture("basic");
+    expect(
+      baseline.discovery.instructions.some(
+        (instruction) => (instruction as { type?: string }).type === "rule",
+      ),
+    ).toBe(true);
+    expect(
+      baseline.discovery.instructions.some(
+        (instruction) => (instruction as { type?: string }).type === "AGENTS.md",
+      ),
+    ).toBe(true);
+
+    const instructions = await import(
+      "../../../../src/adapters/cursor/discovery/instructions.js"
+    );
+    vi.spyOn(instructions, "discoverInstructions").mockResolvedValue([]);
+    const withoutRule = await runCursorFixture("basic");
+    expect(withoutRule.discovery.instructions).toHaveLength(0);
   });
 
   it("discovery.ruleFrontmatter: omitting frontmatter parsing drops rule metadata", async () => {

@@ -27,11 +27,13 @@ export async function buildProjectSnapshot(
 
   const trust = await readTrustState(projectPath);
 
+  const versionString = version.version;
+
   const [instructions, mcpServers, settings, agentResult, skills] = await Promise.all([
-    discoverInstructions(walk),
+    discoverInstructions(walk, versionString),
     discoverMcpServers(walk, trust),
-    discoverSettingsLayers(walk, trust),
-    discoverAgents(walk.scopes, projectPath),
+    discoverSettingsLayers(walk, trust, versionString),
+    discoverAgents(walk.scopes, projectPath, versionString),
     discoverSkills(walk.scopes, projectPath),
   ]);
 

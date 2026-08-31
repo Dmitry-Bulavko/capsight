@@ -25,6 +25,7 @@ import {
   materializeUnisolatedFixture,
   restoreProcessEnv,
   selectFixtureAgent,
+  resolveFixtureHomeDir,
 } from "./fixture-runtime.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -71,7 +72,11 @@ async function loadFixtureContract(fixtureDir: string): Promise<FixtureContract>
   };
 }
 
-function applyFixtureEnv(env: Record<string, string>, homeDir?: string): void {
+function applyFixtureEnv(
+  env: Record<string, string>,
+  fixtureDir: string,
+  homeDirOverride?: string,
+): void {
   for (const key of Object.keys(process.env)) {
     if (key.startsWith("CODEX_")) {
       delete process.env[key];
@@ -80,7 +85,7 @@ function applyFixtureEnv(env: Record<string, string>, homeDir?: string): void {
   for (const [key, value] of Object.entries(env)) {
     vi.stubEnv(key, value);
   }
-  const home = homeDir ?? fixtureHomeDir();
+  const home = resolveFixtureHomeDir(fixtureDir, homeDirOverride);
   vi.stubEnv("HOME", home);
   vi.stubEnv("USERPROFILE", home);
   vi.stubEnv("CODEX_HOME", path.join(home, ".codex"));
@@ -107,7 +112,7 @@ async function runGoldenFixture(
     await fsPromises.readFile(path.join(fixtureDir, "expected.json"), "utf8"),
   ) as NormalizedGoldenOutput;
 
-  applyFixtureEnv(contract.env);
+  applyFixtureEnv(contract.env, fixtureDir);
   mockDetectCodexVersion.mockResolvedValue({
     platform: "codex",
     version: contract.version,
@@ -177,6 +182,7 @@ describe("codex golden fixtures", () => {
     "agents-precedence",
     "nested-instructions",
     "trust-untrusted",
+    "instruction-fallback",
   ] as const) {
     it(`matches expected discovery and resolution for codex/${fixtureName}`, async () => {
       const { actual, expected } = await runGoldenFixture(fixtureName);
