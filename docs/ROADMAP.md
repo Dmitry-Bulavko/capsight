@@ -4,19 +4,19 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**Evidence wave 4 complete** — SS-deep + B1 closed. Deferred: G1-MP, §9.
+**G1-MP — Drift on Cursor/Codex** is active. Evidence layer at honest ceiling; multi-platform version drift is the next correctness gap.
 
-Previous: **B1 complete** — synthetic builtin inventory; B1 fixture-verified; B4 override collision pinned.
+Previous: **Evidence wave 4 complete** — SS-deep + B1; unverified **18** terminal; **41/145 fixture-verified (28%)**.
 
 ## Phase order (active backlog)
 
-Evidence depth first — unverified is at the honest floor (18 terminal); the gap is **fixture-verified depth** and facts blocked by missing discovery channels.
-
 ```
-SS-deep → B1 → G1-MP → §9
+G1-MP → §9
 ```
 
-Completed chain: `F0 → G1-04 → D3 → SS → D4`.
+Evidence waves 1–4 closed structural debt (`entry-owed=0`, unverified floor). Remaining doc-only tiers are mostly honest partial pins under H1-28.
+
+Completed chain: `F0 → G1-04 → D3 → SS → D4 → SS-deep → B1`.
 
 ## Phase status
 
@@ -44,7 +44,7 @@ Completed chain: `F0 → G1-04 → D3 → SS → D4`.
 | D4 — Evidence depth (multi-platform) | `done` | Zero `entry-owed`; unverified ≤ 18 |
 | SS-deep — Settings argument depth | `done` | S6/S7 matching refused; shape pins from SS unchanged |
 | B1 — Builtin discovery channel | `done` | Six builtins in discovery; B1 fixture-verified; B4 override pinned |
-| G1-MP — Drift on Cursor/Codex | `deferred` | maxVersion on confident rule per platform |
+| G1-MP — Drift on Cursor/Codex | `todo` | maxVersion on confident rule per platform |
 | §9 — Observed layer | `deferred` | Revisit [S0-DECISION.md](./S0-DECISION.md) when platform APIs mature |
 
 ## Surface rule
@@ -55,18 +55,22 @@ The rule exists because the first six phases broke it. M1, M2 and M3 are marked 
 
 Practically, for each phase below: at least one task is a UI task, it is not scheduled last, and the phase gate names what becomes visible.
 
-## Coverage baseline (measured post-D4, `buildCoverageReport`)
+## Coverage baseline (measured post-B1, `buildCoverageReport`)
 
 Recomputed from `buildCoverageReport` + [EVIDENCE-LEDGER.md](./EVIDENCE-LEDGER.md):
 
-| platform | facts | unverified | entry-owed | fixture-verified (approx.) |
-|---|---|---|---|---|
-| claude | 92 | 10 | 0 | 11+ |
-| cursor | 27 | 7 | 0 | 7+ |
-| codex | 26 | 1 | 0 | 9+ |
-| **total** | **145** | **18** | **0** | — |
+| platform | facts | unverified | entry-owed | fixture-verified | documentation-only | externally-cited |
+|---|---|---|---|---|---|---|
+| claude | 92 | 10 | 0 | 18 | 52 | 12 |
+| cursor | 27 | 7 | 0 | 10 | 5 | 2 |
+| codex | 26 | 1 | 0 | 13 | 9 | 1 |
+| **total** | **145** | **18** | **0** | **41 (28%)** | **66** | **15** |
 
 All remaining unverified facts carry terminal ledger disposition (`noFixturePossible` or `out-of-scope`). D2-06, D3-05, and D4-06 gates are fail-closed — counts must not rise without an explicit gate change.
+
+**Evidence honest ceiling:** 18 unverified cannot shrink without §9 runtime layer or new platform facts. Fixture-verified ratio grows only where H1-28 deletion tests exist — not by lowering the bar.
+
+## Coverage baseline (measured post-D4, `buildCoverageReport`) — historical
 
 ## D4 scope note — Evidence wave 3 (multi-platform)
 

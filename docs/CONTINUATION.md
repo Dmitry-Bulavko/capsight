@@ -1,20 +1,27 @@
 # Capsight continuation
 
-**Active phase:** none — Evidence wave 4 complete (SS-deep + B1)  
-**Next:** deferred backlog (G1-MP, §9)
+**Active phase:** G1-MP — Drift on Cursor/Codex  
+**Next task:** G1-MP-01 (Cursor maxVersion drift demo)
 
-## Wave 4 outcome
+## Evidence layer (stable)
 
-| Phase | Result |
-|-------|--------|
-| SS-deep | S6/S7 matching refused (§2.3); shape pins unchanged |
-| B1 | Six synthetic builtins; B1 fixture-verified; B4 override collision pinned |
+| Metric | Value | Status |
+|--------|-------|--------|
+| unverified | 18 / 145 | Honest floor (terminal dispositions) |
+| entry-owed | 0 | Closed (D4) |
+| fixture-verified | 41 / 145 (28%) | Growing slowly under H1-28 |
 
-**853 tests**; D4-06 gate held (unverified ≤ 18, entry-owed = 0).
+No new evidence wave planned — structural debt closed.
 
-## Deferred backlog
+## Phase queue
 
-G1-MP → §9
+```
+G1-MP (G1-MP-01 → G1-MP-02) → §9
+```
+
+## Handoffs ready
+
+`docs/tasks/G1-MP-01-*.md`, `G1-MP-02-*.md`
 
 ## Orchestration
 

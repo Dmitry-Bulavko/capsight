@@ -374,9 +374,19 @@ Order: B1-01.
 |----|-------|-------|--------|-----------|-------|------------|
 | B1-01 | B1 | Synthetic builtin inventory in discovery | done | §3.9 B1, B4, §11.1 | discovery/agents.ts, matrix.ts, fixtures | Six builtins listed; B4 override pin; B1 fixture-verified |
 
+## G1-MP — Drift on Cursor/Codex
+
+Mirror G1-04: `maxVersion` on one confident fixture-backed rule per platform; golden pins scoped downgrade above max.
+
+Order: G1-MP-01 → G1-MP-02.
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| G1-MP-01 | G1-MP | Cursor maxVersion drift demo | in_progress | §8.4, §11.1 | cursor/matrix.ts, fixtures | Above max → scoped unknown; neighbor stays confident |
+| G1-MP-02 | G1-MP | Codex maxVersion drift demo | todo | §8.4, §11.1 | codex/matrix.ts, fixtures | Same criterion as G1-MP-01 |
+
 ## Deferred backlog
 
 | ID | Phase | Title | Status | Notes |
 |----|-------|-------|--------|-------|
-| G1-MP | G1 | Cursor/Codex maxVersion drift demo | deferred | After B1; mirror G1-04 on non-Claude matrix |
 | §9 | S0 | Observed runtime layer | deferred | Revisit S0-DECISION when APIs mature |
