@@ -372,7 +372,7 @@ Order: B1-01.
 
 | ID | Phase | Title | Status | Spec refs | Files | Acceptance |
 |----|-------|-------|--------|-----------|-------|------------|
-| B1-01 | B1 | Synthetic builtin inventory in discovery | in_progress | §3.9 B1, B4, §11.1 | discovery/agents.ts, matrix.ts, fixtures | Six builtins listed; B4 override pin or honest refusal |
+| B1-01 | B1 | Synthetic builtin inventory in discovery | done | §3.9 B1, B4, §11.1 | discovery/agents.ts, matrix.ts, fixtures | Six builtins listed; B4 override pin; B1 fixture-verified |
 
 ## Deferred backlog
 

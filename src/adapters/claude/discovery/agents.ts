@@ -349,7 +349,10 @@ function mergeBuiltinAgents(
   fileAgents: Agent[],
   version: string,
 ): Agent[] {
-  const builtins = synthesizeBuiltinAgents();
+  const inventoryGate = gateDiscovery(MATRIX["discovery.builtinInventory"], version);
+  const builtins = synthesizeBuiltinAgents().map((builtin) =>
+    inventoryGate.unfounded ? { ...builtin, status: "unknown" as const } : builtin,
+  );
   const activeByName = new Map<string, Agent>();
   for (const agent of fileAgents) {
     if (agent.status === "active") {
@@ -363,17 +366,32 @@ function mergeBuiltinAgents(
   for (const builtin of builtins) {
     const override = activeByName.get(builtin.name);
     if (override) {
-      merged.push({
-        ...builtin,
-        status: "shadowed",
-        collision: {
-          candidates: [builtin.source, override.source],
-          effective: override.source,
-          rule: FACT.B4,
-          matrixRef: overrideGate.matrixRef,
-          enforcement: overrideGate.enforcement,
-        },
-      });
+      if (overrideGate.winnerUnfounded) {
+        // The matrix does not found B4 on this version, so no candidate is named
+        // effective — the builtin stays winner-free (§8.2, §8.4).
+        merged.push({
+          ...builtin,
+          status: "ambiguous",
+          collision: {
+            candidates: [builtin.source, override.source],
+            rule: FACT.B4,
+            matrixRef: overrideGate.matrixRef,
+            enforcement: overrideGate.enforcement,
+          },
+        });
+      } else {
+        merged.push({
+          ...builtin,
+          status: "shadowed",
+          collision: {
+            candidates: [builtin.source, override.source],
+            effective: override.source,
+            rule: FACT.B4,
+            matrixRef: overrideGate.matrixRef,
+            enforcement: overrideGate.enforcement,
+          },
+        });
+      }
     } else {
       merged.push(builtin);
     }

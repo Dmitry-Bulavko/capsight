@@ -36,16 +36,16 @@ Add a discovery channel that emits Claude's six built-in agents (B1) so B4 user-
 
 ## Acceptance
 
-- [ ] Discovery lists B1 builtins as synthetic agents (count and names match fact registry)
-- [ ] B1 matrix entry updated: fixture evidence or refined `noFixturePossible` reason
-- [ ] B4 matrix entry updated: fixture pins override OR honest refusal with channel present
-- [ ] H1-28 deletion test where promotable
-- [ ] D4-06 gate unchanged unless ledger explicitly updated
-- [ ] `npm run test` and `npm run typecheck` pass
+- [x] Discovery lists B1 builtins as synthetic agents (count and names match fact registry)
+- [x] B1 matrix entry updated: fixture evidence
+- [x] B4 matrix entry updated: fixture pins override collision; model clause doc-only (F7)
+- [x] H1-28 deletion test where promotable
+- [x] D4-06 gate unchanged
+- [x] `npm run test` and `npm run typecheck` pass
 
 ## Done checklist
 
-- [ ] `npm run test` passes
-- [ ] `npm run typecheck` passes
-- [ ] No writes to scanned project's `.claude/**`
-- [ ] TASKS.md updated by orchestrator (not implementer)
+- [x] `npm run test` passes
+- [x] `npm run typecheck` passes
+- [x] No writes to scanned project's `.claude/**`
+- [x] TASKS.md updated by orchestrator (not implementer)

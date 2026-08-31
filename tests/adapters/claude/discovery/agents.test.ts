@@ -476,6 +476,44 @@ model: sonnet
     expect(builtin?.collision?.effective?.scope).toBe("project");
   });
 
+  it("leaves a colliding builtin ambiguous when B4 winner is unfounded (§8.3)", async () => {
+    const project = await makeTempProject({
+      ".claude/agents/Explore.md": `---
+name: Explore
+description: Custom Explore
+model: sonnet
+---
+`,
+    });
+    const agentsPath = path.join(project, ".claude", "agents");
+    const { agents } = await discoverAgents(
+      [scopeLevel(project, agentsPath)],
+      project,
+      [],
+      "unknown",
+    );
+
+    const custom = agents.find(
+      (a) => a.name === "Explore" && a.source.scope === "project",
+    );
+    const builtin = agents.find(
+      (a) => a.name === "Explore" && a.source.scope === "builtin",
+    );
+
+    expect(custom?.status).toBe("active");
+    expect(builtin?.status).toBe("ambiguous");
+    expect(builtin?.collision?.rule).toBe("B4");
+    expect(builtin?.collision?.effective).toBeUndefined();
+  });
+
+  it("downgrades builtins to unknown when inventory is unfounded (§8.3)", async () => {
+    const project = await makeTempProject({});
+    const { agents } = await discoverAgents([scopeLevel(project)], project, [], "unknown");
+    const builtins = agents.filter((a) => a.source.scope === "builtin");
+    expect(builtins).toHaveLength(6);
+    expect(builtins.every((a) => a.status === "unknown")).toBe(true);
+  });
+
 });
 
 describe("discoverAgents secret redaction (§0.1.8, §13 invariant 10)", () => {

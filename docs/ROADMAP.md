@@ -4,9 +4,9 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**B1 — Builtin discovery channel** is the active phase. SS-deep closed: S6/S7 *matching* depth refused in writing (§2.3); SS-01…03 shape pins unchanged.
+**Evidence wave 4 complete** — SS-deep + B1 closed. Deferred: G1-MP, §9.
 
-Previous: **SS-deep complete** — prefix/glob matching honestly unknown beyond shape.
+Previous: **B1 complete** — synthetic builtin inventory; B1 fixture-verified; B4 override collision pinned.
 
 ## Phase order (active backlog)
 
@@ -43,7 +43,7 @@ Completed chain: `F0 → G1-04 → D3 → SS → D4`.
 | SS — Settings semantics | `done` | S6/S7 shape pinned; S11 relative paths honest unknown |
 | D4 — Evidence depth (multi-platform) | `done` | Zero `entry-owed`; unverified ≤ 18 |
 | SS-deep — Settings argument depth | `done` | S6/S7 matching refused; shape pins from SS unchanged |
-| B1 — Builtin discovery channel | `todo` | Synthetic builtin inventory unblocks B1/B4 fixtures |
+| B1 — Builtin discovery channel | `done` | Six builtins in discovery; B1 fixture-verified; B4 override pinned |
 | G1-MP — Drift on Cursor/Codex | `deferred` | maxVersion on confident rule per platform |
 | §9 — Observed layer | `deferred` | Revisit [S0-DECISION.md](./S0-DECISION.md) when platform APIs mature |
 

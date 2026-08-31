@@ -1,21 +1,20 @@
 # Capsight continuation
 
-**Active phase:** B1 — Builtin discovery channel  
-**Next task:** B1-01 (synthetic builtin inventory in discovery)
+**Active phase:** none — Evidence wave 4 complete (SS-deep + B1)  
+**Next:** deferred backlog (G1-MP, §9)
 
-## SS-deep outcome (complete)
+## Wave 4 outcome
 
-SS-04/05 refused S6/S7 *matching* depth in writing (§2.3). SS-01…03 shape pins unchanged. D4-06 gate held.
+| Phase | Result |
+|-------|--------|
+| SS-deep | S6/S7 matching refused (§2.3); shape pins unchanged |
+| B1 | Six synthetic builtins; B1 fixture-verified; B4 override collision pinned |
 
-## Phase queue
+**853 tests**; D4-06 gate held (unverified ≤ 18, entry-owed = 0).
 
-```
-B1 (B1-01) → G1-MP → §9
-```
+## Deferred backlog
 
-## Handoffs ready
-
-`docs/tasks/B1-01-builtin-discovery-channel.md`
+G1-MP → §9
 
 ## Orchestration
 

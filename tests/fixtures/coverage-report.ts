@@ -158,8 +158,9 @@ export function resolveFixtureManagedBundle(
 export const CLAUDE_FIXTURE_NAMES = [
   "add-dir",
   "background",
-  "builtin-agents",
   "basic",
+  "builtin-agents",
+
   "collision-nested",
   "collision-same-dir",
   "depth-limit",
