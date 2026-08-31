@@ -478,6 +478,81 @@ async function withMatrixPatch(
   }
 }
 
+function resolutionAtDepth(
+  output: Awaited<ReturnType<typeof runClaudeFixture>>,
+  agentName: string,
+  preset: ContextPreset,
+  depth: number,
+  maxDepth?: number,
+) {
+  return output.resolutions.find(
+    (entry) =>
+      entry.agentName === agentName &&
+      entry.context.preset === preset &&
+      entry.context.depth === depth &&
+      (maxDepth === undefined || entry.context.maxDepth === maxDepth),
+  );
+}
+
+function environmentKeys(output: Awaited<ReturnType<typeof runClaudeFixture>>): string[] {
+  return (
+    output.discovery.environment as { relevant: Array<{ key: string }> }
+  ).relevant.map((entry) => entry.key);
+}
+
+/** Simulate dropping settings.env keys from discovery (E9 deletion probe). */
+async function withSettingsEnvDiscoveryRemoved(
+  body: () => Promise<void>,
+): Promise<void> {
+  const envModule = await import("../../../../src/adapters/claude/environment/index.js");
+  const original = envModule.buildPlatformEnvironment;
+  const spy = vi.spyOn(envModule, "buildPlatformEnvironment").mockImplementation(async (input) => {
+    const result = await original(input);
+    return {
+      relevant: result.relevant.filter((entry) => entry.origin !== "settings.env"),
+    };
+  });
+
+  try {
+    await body();
+  } finally {
+    spy.mockRestore();
+  }
+}
+
+/** Simulate removing one process-env key from discovery (E1–E8 deletion probe). */
+async function withProcessEnvKeyRemovedFromDiscovery(
+  key: string,
+  body: () => Promise<void>,
+): Promise<void> {
+  const envModule = await import("../../../../src/adapters/claude/environment/index.js");
+  const original = envModule.buildPlatformEnvironment;
+  const spy = vi.spyOn(envModule, "buildPlatformEnvironment").mockImplementation(async (input) => {
+    const result = await original(input);
+    return {
+      relevant: result.relevant.filter((entry) => entry.key !== key),
+    };
+  });
+
+  try {
+    await body();
+  } finally {
+    spy.mockRestore();
+  }
+}
+
+/** Simulate unsetting CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH (E3/N3 deletion probe). */
+async function withDefaultMaxDepthRestored(body: () => Promise<void>): Promise<void> {
+  const depthModule = await import("../../../../src/adapters/claude/environment/depth.js");
+  const spy = vi.spyOn(depthModule, "getDefaultMaxDepth").mockReturnValue(3);
+
+  try {
+    await body();
+  } finally {
+    spy.mockRestore();
+  }
+}
+
 const SRC_ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../../../../src",
@@ -841,6 +916,57 @@ describe("VERSION_MATRIX", () => {
       confidence: "fixture",
       verifiedFacts: [],
     });
+  });
+
+  it("records D5-05 environment facts with honest partial-pin and promotion-refused (H1-28)", () => {
+    expect(VERSION_MATRIX.find((entry) => entry.id === FACT.E1)).toMatchObject({
+      confidence: "doc",
+      fixture: "environment",
+      verifiedFacts: [],
+    });
+    expect(VERSION_MATRIX.find((entry) => entry.id === FACT.E2)?.notes).toMatch(/partial-pin.*D5-05/);
+    expect(VERSION_MATRIX.find((entry) => entry.id === "agent.depthLimit")).toMatchObject({
+      confidence: "fixture",
+      fixture: "depth-limit",
+      verifiedFacts: [],
+    });
+    expect(VERSION_MATRIX.find((entry) => entry.id === "agent.depthLimit")?.notes).toMatch(
+      /partial-pin \(D5-05\)/,
+    );
+    expect(VERSION_MATRIX.find((entry) => entry.id === "builtin.disableExplorePlan")).toMatchObject({
+      confidence: "doc",
+      fixture: "environment",
+      verifiedFacts: [],
+    });
+    expect(
+      VERSION_MATRIX.find((entry) => entry.id === "builtin.disableExplorePlan")?.notes,
+    ).toMatch(/promotion-refused.*D5-05/);
+    expect(VERSION_MATRIX.find((entry) => entry.id === "builtin.disableAllSdk")).toMatchObject({
+      confidence: "doc",
+      fixture: "environment",
+      verifiedFacts: [],
+    });
+    expect(
+      VERSION_MATRIX.find((entry) => entry.id === "environment.maxConcurrentSubagents"),
+    ).toMatchObject({
+      confidence: "doc",
+      fixture: "environment",
+      verifiedFacts: [],
+    });
+    expect(VERSION_MATRIX.find((entry) => entry.id === FACT.E8)?.notes).toMatch(
+      /promotion-refused.*D5-05/,
+    );
+    expect(VERSION_MATRIX.find((entry) => entry.id === "environment.settingsEnv")).toMatchObject({
+      confidence: "doc",
+      fixture: "environment",
+      verifiedFacts: [],
+    });
+    expect(VERSION_MATRIX.find((entry) => entry.id === "agent.modelResolution")).toMatchObject({
+      confidence: "doc",
+    });
+    expect(
+      VERSION_MATRIX.find((entry) => entry.id === "agent.modelResolution")?.noFixturePossible,
+    ).toBeTruthy();
   });
 
   it("documents SS-05 refusal for S7 glob matching semantics", () => {
@@ -1414,5 +1540,81 @@ describe("claude fixture deletion tests (H1-28, D5-04)", () => {
         expect(ambiguous?.collision?.effective).toBeUndefined();
       },
     );
+  });
+});
+
+describe("claude fixture deletion tests (H1-28, D5-05)", () => {
+  const envSnapshot = { ...process.env };
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    restoreProcessEnv(envSnapshot);
+    mockDetectClaudeVersion.mockReset();
+    vi.restoreAllMocks();
+  });
+
+  it("environment.settingsEnv: dropping settings.env discovery removes E9 keys from golden", async () => {
+    const baseline = await runClaudeFixture("environment");
+    expect(environmentKeys(baseline)).toEqual(
+      expect.arrayContaining(["DEPLOY_API_TOKEN", "ANTHROPIC_BASE_URL"]),
+    );
+
+    await withSettingsEnvDiscoveryRemoved(async () => {
+      const withoutSettingsEnv = await runClaudeFixture("environment");
+      expect(environmentKeys(withoutSettingsEnv)).not.toContain("DEPLOY_API_TOKEN");
+      expect(environmentKeys(withoutSettingsEnv)).not.toContain("ANTHROPIC_BASE_URL");
+    });
+  });
+
+  it("E1: removing the env discovery key leaves resolution goldens unchanged (promotion-refused)", async () => {
+    const baseline = await runClaudeFixture("environment");
+    const baselineCapabilities = resolutionFor(
+      baseline,
+      "observer",
+      "foreground-subagent",
+    )?.capabilities;
+
+    await withProcessEnvKeyRemovedFromDiscovery(
+      "CLAUDE_CODE_DISABLE_BACKGROUND_TASKS",
+      async () => {
+        const withoutKey = await runClaudeFixture("environment");
+        expect(environmentKeys(withoutKey)).not.toContain(
+          "CLAUDE_CODE_DISABLE_BACKGROUND_TASKS",
+        );
+        expect(
+          resolutionFor(withoutKey, "observer", "foreground-subagent")?.capabilities,
+        ).toEqual(baselineCapabilities);
+      },
+    );
+  });
+
+  it("agent.depthLimit: removing the env override flips Agent at depth 1 (E3/N3 partial-pin)", async () => {
+    const baseline = await runClaudeFixture("depth-limit");
+    expect(
+      resolutionAtDepth(baseline, "spawner", "foreground-subagent", 1, 1)?.capabilities.find(
+        (capability) => capability.capabilityId === "Agent",
+      ),
+    ).toMatchObject({
+      status: "denied",
+      enforcement: "enforced",
+    });
+
+    await withDefaultMaxDepthRestored(async () => {
+      const withoutOverride = await runClaudeFixture("depth-limit");
+      expect(
+        resolutionAtDepth(withoutOverride, "spawner", "foreground-subagent", 1, 3)
+          ?.capabilities.find((capability) => capability.capabilityId === "Agent"),
+      ).toMatchObject({
+        status: "available",
+        enforcement: "enforced",
+      });
+    });
+  });
+
+  it("builtin.disableExplorePlan: env key in discovery does not remove Explore from agents (promotion-refused)", async () => {
+    const baseline = await runClaudeFixture("environment");
+    expect(environmentKeys(baseline)).toContain("CLAUDE_CODE_DISABLE_EXPLORE_PLAN_AGENTS");
+    expect(discoveryAgent(baseline, "Explore")?.status).toBe("active");
+    expect(discoveryAgent(baseline, "Plan")?.status).toBe("active");
   });
 });

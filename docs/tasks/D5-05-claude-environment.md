@@ -30,14 +30,14 @@ E1, E2, E3, E4, E5, E6, E7, E8, E9, B5, B6, N3, N4 — currently doc-only via `d
 
 ## Acceptance
 
-- [ ] Each promotion-owed env fact promoted with deletion test OR refused with specific channel gap
-- [ ] No invented env/runtime semantics
-- [ ] D4-06 unchanged
-- [ ] `npm run test` and `npm run typecheck` pass
+- [x] Each promotion-owed env fact promoted with deletion test OR refused with specific channel gap
+- [x] No invented env/runtime semantics
+- [x] D4-06 unchanged
+- [x] `npm run test` and `npm run typecheck` pass
 
 ## Done checklist
 
-- [ ] `npm run test` passes
-- [ ] `npm run typecheck` passes
-- [ ] No writes to scanned project's `.claude/**`
+- [x] `npm run test` passes
+- [x] `npm run typecheck` passes
+- [x] No writes to scanned project's `.claude/**`
 - [ ] TASKS.md updated by orchestrator (not implementer)

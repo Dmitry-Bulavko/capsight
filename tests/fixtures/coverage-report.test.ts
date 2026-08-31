@@ -269,6 +269,43 @@ describe("D3-01 env-cluster tier movement", () => {
   });
 });
 
+describe("D5-05 environment-cluster promotion gate", () => {
+  const ENV_PROMOTION_CLUSTER = [
+    FACT.E1,
+    FACT.E2,
+    FACT.E3,
+    FACT.E4,
+    FACT.E5,
+    FACT.E6,
+    FACT.E7,
+    FACT.E8,
+    FACT.E9,
+    FACT.B5,
+    FACT.B6,
+    FACT.N3,
+    FACT.N4,
+  ] as const;
+
+  const fixtures = new Set(["environment", "depth-limit"]);
+
+  it("keeps env-cluster facts at honest tiers with zero fv delta after D5-05", () => {
+    expect(ENV_PROMOTION_CLUSTER).toHaveLength(13);
+
+    expect(
+      classifyFactCoverage(FACT.E9, fixtures, CLAUDE_MATRIX, claudeFactConfidence),
+    ).toBe("externally-cited");
+
+    for (const id of ENV_PROMOTION_CLUSTER) {
+      if (id === FACT.E9) {
+        continue;
+      }
+      expect(
+        classifyFactCoverage(id, fixtures, CLAUDE_MATRIX, claudeFactConfidence),
+      ).toBe("documentation-only");
+    }
+  });
+});
+
 describe("D3-02 trust-cluster tier movement", () => {
   const TRUST_CLUSTER = [FACT.R2, FACT.R6] as const;
 

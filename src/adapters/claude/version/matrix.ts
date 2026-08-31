@@ -204,12 +204,13 @@ const MATRIX_ENTRIES = [
     notes:
       "N5 depth values: 2.1.172-2.1.216 = 5 (not configurable), 2.1.217-2.1.218 = 1, 2.1.219+ = 3. " +
       "The fixture covers N2 (removal at the limit, fork exempt) and the 2.1.219+ default of 3 " +
-      "including the CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH override (N3, N1); the pre-2.1.219 values " +
-      "of N5 rest on documentation alone until a runtime probe can observe them. Neither fact " +
-      "is verified entire (H1-28): N5 has two unobserved version windows, and N2's fork half " +
-      "resolves with enforcement unknown in the fixture, which claims nothing (§11.3). The " +
-      "removal at the limit is confidently pinned, which is what this entry's own confidence " +
-      "rests on.",
+      "including the CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH override (N3, N1, E3); the pre-2.1.219 " +
+      "values of N5 rest on documentation alone until a runtime probe can observe them. Neither " +
+      "fact is verified entire (H1-28): N5 has two unobserved version windows, N2's fork half " +
+      "resolves with enforcement unknown in the fixture, which claims nothing (§11.3), and E3/N3 " +
+      "pin only the env override edge — partial-pin (D5-05). Deletion test: drop the env override " +
+      "and Agent at depth 1 flips from denied to available. The removal at the limit is " +
+      "confidently pinned, which is what this entry's own confidence rests on.",
   },
   {
     id: "agent.depthLimitDefault",
@@ -1251,7 +1252,8 @@ const MATRIX_ENTRIES = [
       "The environment fixture records the key in discovery.environment.relevant when set in " +
       "env.json; drop the key from KNOWN_CLAUDE_ENV_EFFECTS and it leaves the golden. E1's " +
       "resolution half — that foreground-only contexts skip Filter 2 — is not read from the env " +
-      "var in the resolver yet, so no §11.2 capability delta is pinned (H1-28).",
+      "var in the resolver yet, so no §11.2 capability delta is pinned (H1-28). promotion-refused " +
+      "at fact level (D5-05): discovery.environment key only.",
   },
   {
     id: FACT.E2,
@@ -1265,7 +1267,7 @@ const MATRIX_ENTRIES = [
     notes:
       "Pins the env key in discovery.environment. The fork fixture exercises T3 fork-context " +
       "tool inheritance but does not set this variable; E2's non-interactive default and the " +
-      "`0`-disables-everywhere half rest on documentation alone.",
+      "`0`-disables-everywhere half rest on documentation alone (partial-pin, D5-05).",
   },
   {
     id: "builtin.disableExplorePlan",
@@ -1279,7 +1281,8 @@ const MATRIX_ENTRIES = [
     notes:
       "B5 and E4 state the same env-driven removal; the environment fixture records the key in " +
       "discovery.environment only. Builtin removal from the agent set is not emitted in §11.2 " +
-      "goldens yet, so no discovery.agents delta is pinned (H1-28).",
+      "goldens yet, so no discovery.agents delta is pinned (H1-28). promotion-refused at fact " +
+      "level (D5-05): Explore and Plan stay active in the golden despite the env var.",
   },
   {
     id: "builtin.disableAllSdk",
@@ -1293,7 +1296,8 @@ const MATRIX_ENTRIES = [
     notes:
       "B6 and E5 state the same env-driven removal in non-interactive/SDK contexts; the " +
       "environment fixture pins the key in discovery.environment. The non-interactive " +
-      "qualifier and the builtin inventory delta are not pinned in goldens.",
+      "qualifier and the builtin inventory delta are not pinned in goldens (promotion-refused " +
+      "at fact level, D5-05).",
   },
   {
     id: "environment.maxConcurrentSubagents",
@@ -1307,7 +1311,8 @@ const MATRIX_ENTRIES = [
     notes:
       "N4 names the default of 20 and E7 the env override; the environment fixture records the " +
       "key and effect in discovery.environment. No §11.2 channel carries the resolved cap, so " +
-      "the operative cause of nothing moves in resolution goldens (H1-28).",
+      "the operative cause of nothing moves in resolution goldens (H1-28). promotion-refused at " +
+      "fact level (D5-05).",
   },
   {
     id: FACT.E8,
@@ -1320,7 +1325,8 @@ const MATRIX_ENTRIES = [
     verifiedFacts: [],
     notes:
       "Pins the env key in discovery.environment. The resolver does not yet gate frontmatter " +
-      "memory on this variable, so no configuration or capability delta is pinned.",
+      "memory on this variable, so no configuration or capability delta is pinned " +
+      "(promotion-refused at fact level, D5-05).",
   },
   {
     id: "environment.settingsEnv",
@@ -1334,8 +1340,9 @@ const MATRIX_ENTRIES = [
     notes:
       "E9 is [ext]: the environment fixture's .claude/settings.json env block surfaces " +
       "DEPLOY_API_TOKEN and ANTHROPIC_BASE_URL in discovery.environment with origin " +
-      "settings.env and without values (§13 invariant 10). Deletion test: drop " +
-      "readSettingsEnvKeys from buildPlatformEnvironment and both keys leave the golden.",
+      "settings.env and without values (§13 invariant 10). Deletion test (D5-05): drop " +
+      "settings.env discovery and both keys leave the golden. E9 rests on external citation " +
+      "in §11.4, not fixture-verified entire.",
   },
 ] as const satisfies readonly FeatureCompatibility[];
 

@@ -190,7 +190,7 @@ All terminal refusals — opportunistic promotion in D5-06 only if a new golden 
 | D5-02 | F11 (+ T1, T2, T3 partial-pin; T5 refused) |
 | D5-03 | R2, R5, R6 (+ P1, P5, R1, R4 partial-pin) |
 | D5-04 | — (K1, K3, K7, B2, B4 partial-pin; K2, K6, I1 partial-pin) |
-| D5-05 | — (E1–E8, B5, B6, N3, N4 refused or partial-pin) |
+| D5-05 | — (E1–E8, B5, B6, N3, N4 refused or partial-pin; E9 ext; **fv delta 0**) |
 | D5-06 | Claude housekeeping (N5 pendingFixture, A1/F1/F3… partial-pin); Cursor/Codex refusals above |
 
 ### Surprises flagged

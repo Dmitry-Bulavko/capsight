@@ -4,7 +4,7 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**D5 — Evidence depth wave 5** is active. Next: **D5-05** environment cluster (mostly refusals expected). D5-04 done — K1/K3/K7 partial-pin, five deletion tests, fv +0.
+**D5 — Evidence depth wave 5** is active. Next: **D5-06** matrix housekeeping + multi-platform. D5-05 done — env cluster closed, fv +0.
 
 Previous: **G1-MP complete** — three-platform drift demos. Baseline **42/145 fixture-verified (29%)** after D5-02 F11; unverified **18** terminal.
 
