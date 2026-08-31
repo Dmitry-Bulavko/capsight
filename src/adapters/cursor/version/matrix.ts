@@ -255,7 +255,7 @@ const MATRIX_ENTRIES = [
     notes:
       "CW2: basic isolation test plants ancestor .cursor/rules and the golden is unchanged, " +
       "consistent with single-scope collection. Walk is not matrix-gated yet, so unfounding " +
-      "this entry would not change the golden — no fixture-verified claim (H1-28).",
+      "this entry would not change the golden — promotion refused (D5-06, H1-28).",
   },
   {
     id: "discovery.nestedAgentsMd",

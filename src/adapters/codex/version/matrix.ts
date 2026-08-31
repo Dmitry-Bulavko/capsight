@@ -124,8 +124,8 @@ const MATRIX_ENTRIES = [
     notes:
       "basic records one synthetic main agent from AGENTS.md with no separate Codex agents[] " +
       "config array or file-based agent definitions. v1 does not model markdown agent files; " +
-      "unfounding would not change the golden because no alternate discovery path exists yet " +
-      "(H1-28).",
+      "unfounding would not change the golden because no alternate discovery path exists yet — " +
+      "promotion refused (D5-06, H1-28).",
   },
   {
     id: "settings.knownKeysOnly",

@@ -221,14 +221,16 @@ const MATRIX_ENTRIES = [
     observedIn: ["2.1.217"],
     status: "changed",
     confidence: "doc",
-    pendingFixture: "version-drift",
-    notes:
+    noFixturePossible:
       "N5 records three different defaults below 2.1.219 (5, then 1) and no fixture or probe " +
       "has observed any of them; the resolver only knows the 2.1.219+ default of 3. A fixture " +
-      "pinning a version below 2.1.219 would downgrade depth-limit verdicts per §8.4. " +
+      "pinning a version below 2.1.219 would downgrade depth-limit verdicts per §8.4, but " +
       "version-drift now pins agent.tools maxVersion drift at 2.1.500 instead (G1-04). " +
-      "Confidence downgraded to doc in H1-28: every expectation a drift fixture produces for " +
-      "this entry is unknown by design, so it evidences our downgrade and not the platform's defaults.",
+      "No fixture can make pre-2.1.219 N5 defaults the operative cause of a confident golden " +
+      "value (H1-28).",
+    notes:
+      "Confidence downgraded to doc in H1-28: this entry documents historical defaults the " +
+      "resolver does not model below 2.1.219. D5-06 cleared stale pendingFixture: version-drift.",
   },
   {
     id: FACT.P1,

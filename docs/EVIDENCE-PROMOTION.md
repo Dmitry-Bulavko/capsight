@@ -112,7 +112,7 @@ Compat-matrix citations do not count toward platform coverage.
 | F10 | `agent.initialPromptMainSession` | — | promotion-refused | Main-session only (`noFixturePossible`) |
 | N1 | `agent.depthLimit` | depth-limit | partial-pin | Default depth partial |
 | N2 | `agent.depthLimit` | depth-limit | partial-pin | Removal at limit pinned; fork-exempt half enforcement unknown |
-| N5 | `agent.depthLimit`, `agent.depthLimitDefault` | depth-limit | partial-pin | Pre-2.1.219 N5 windows unobserved; depthLimitDefault stale `pendingFixture: version-drift` (G1-04 housekeeping) |
+| N5 | `agent.depthLimit`, `agent.depthLimitDefault` | depth-limit | partial-pin | Pre-2.1.219 N5 windows unobserved; depthLimitDefault `noFixturePossible` (D5-06 cleared stale pendingFixture) |
 | S9 | `settings.denySubagents` | — | promotion-refused | Argument-scoped; §2.3 matching (`noFixturePossible`) |
 | M4 | `session.mainAgentPrompt` | — | promotion-refused | Main-session only (`noFixturePossible`) |
 | M5 | `session.mainInlineMcp` | — | promotion-refused | Main-session startup; R1 subagent half separate (`noFixturePossible`) |
@@ -140,7 +140,7 @@ All terminal refusals — opportunistic promotion in D5-06 only if a new golden 
 | CR2 | `rules.applicationMode` | — | promotion-refused | D5-06 | Application mode resolves unknown (`noFixturePossible`) |
 | CM4 | `mcp.probe` | — | promotion-refused | D5-06 | Runtime probe required (`noFixturePossible`) |
 
-**Note:** CW2 is `externally-cited`, not documentation-only — walk not matrix-gated; D5-06 documents but no promotion expected.
+**Note:** CW2 is `externally-cited`, not documentation-only — walk not matrix-gated; D5-06 promotion refused (deletion probe: unfounding does not change golden).
 
 | Disposition | Count |
 |-------------|-------|
@@ -164,7 +164,7 @@ All terminal refusals — opportunistic promotion in D5-06 only if a new golden 
 | XM3 | `mcp.probe` | — | promotion-refused | D5-06 | Runtime probe required (`noFixturePossible`) |
 | XI4 | `instruction.sizeCap` | — | promotion-refused | D5-06 | No cap enforcement channel in §11.2 goldens (`noFixturePossible`) |
 
-**Note:** XA3 is `externally-cited`, not documentation-only — fact registry `[ext]`; basic fixture backs the matrix entry but doc-only triage does not apply. D5-06 documents but no promotion expected.
+**Note:** XA3 is `externally-cited`, not documentation-only — fact registry `[ext]`; basic fixture backs the matrix entry but doc-only triage does not apply. D5-06 promotion refused (deletion probe: unfounding does not change golden).
 
 | Disposition | Count |
 |-------------|-------|
@@ -191,7 +191,18 @@ All terminal refusals — opportunistic promotion in D5-06 only if a new golden 
 | D5-03 | R2, R5, R6 (+ P1, P5, R1, R4 partial-pin) |
 | D5-04 | — (K1, K3, K7, B2, B4 partial-pin; K2, K6, I1 partial-pin) |
 | D5-05 | — (E1–E8, B5, B6, N3, N4 refused or partial-pin; E9 ext; **fv delta 0**) |
-| D5-06 | Claude housekeeping (N5 pendingFixture, A1/F1/F3… partial-pin); Cursor/Codex refusals above |
+| D5-06 | Claude housekeeping (N5 pendingFixture cleared); Cursor/Codex refusals above — **fv delta 0** |
+
+### D5-06 outcome
+
+| Change | Result |
+|--------|--------|
+| `agent.depthLimitDefault` | `pendingFixture: version-drift` → `noFixturePossible` (G1-04 drift demo on `agent.tools`) |
+| CW2 (`discovery.scopedMetadata`) | Promotion refused — walk not matrix-gated; unfounding does not change golden |
+| XA3 (`agent.noSeparateAgentsArray`) | Promotion refused — no alternate discovery path; unfounding does not change golden |
+| Cursor doc-only (CV2, CW1, CW3, CR2, CM4) | Already terminal refusals from D5-01 triage |
+| Codex doc-only (XV1, XV3, XR1, XR2, XR4, XI2, XI5, XM3, XI4) | Already terminal refusals; XI5 partial-pin only |
+| **fixture-verified delta** | **0** (41 unchanged) |
 
 ### Surprises flagged
 
@@ -199,5 +210,5 @@ All terminal refusals — opportunistic promotion in D5-06 only if a new golden 
 2. **D5-05 likely zero fv gain** — environment entries pin `discovery.environment` keys only; twelve rows are promotion-refused unless golden channels are added (handoff risk note confirmed).
 3. **K7 partial-pin (D5-04 closed)** — trust=false path and K6/K7 findings pinned at entry level; `-p`/headless qualifier keeps fact doc-only in §11.4.
 4. **F11 needs fixture extension** — not a matrix-only promotion; deletion probe requires new agent frontmatter.
-5. **N5 / `agent.depthLimitDefault`** — stale `pendingFixture: version-drift` (drift demo moved to `agent.tools` in G1-04); D5-06 housekeeping, not promotion.
+5. **N5 / `agent.depthLimitDefault`** — D5-06 cleared stale `pendingFixture: version-drift` → `noFixturePossible` (drift demo moved to `agent.tools` in G1-04); housekeeping, not promotion.
 6. **K11 is externally-cited, not doc-only** — registry `[ext]`; `discovery.commandNamePrecedence` entry is fixture-backed at entry level but K11 sits in the externally-cited bucket (12 Claude ext facts). D5-04 handoff lists K11; promotion path is entry `verifiedFacts`, not doc-only triage.
