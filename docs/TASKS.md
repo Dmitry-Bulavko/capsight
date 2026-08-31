@@ -429,9 +429,9 @@ Order: S9P-01 → S9P-02 → S9P-03 → S9P-04 → S9P-05 → S9P-06 → S9P-07.
 | S9P-02 | S9P | Invocation-only UX contract | done | §9.3 | docs/S9P-UX-CONTRACT.md | Partial go in S9-DECISION |
 | S9P-03 | S9P | ObservedCapability core model | done | §9.3 | src/core/observed/ | 10 tests; absence→denied rejected |
 | S9P-04 | S9P | Dev-only observe CLI | done | §9.4, §12.5 | src/cli/commands/observe.ts | Fixture-only; not on scan |
-| S9P-05 | S9P | Invocation-side observation collector | in_progress | §9.3 | invocation-collector.ts | Hook events → ObservedCapability |
-| S9P-06 | S9P | UI — one-sided observed status | todo | §9.3, §7.5 | src/ui/ | Disclaimer + badge visible |
-| S9P-07 | S9P | S9P phase gate | todo | §9.5, §11.4 | coverage-report.test.ts | D4-06 unchanged |
+| S9P-05 | S9P | Invocation-side observation collector | done | §9.3 | invocation-collector.ts | 13 tests; hook fixture |
+| S9P-06 | S9P | UI — one-sided observed status | done | §9.3, §7.5 | src/ui/ObservedStatus.tsx | Contract labels + disclaimer |
+| S9P-07 | S9P | S9P phase gate | done | §9.5, §11.4 | coverage-report.test.ts | D4-06 unchanged; observe off scan |
 
 ## Deferred backlog
 

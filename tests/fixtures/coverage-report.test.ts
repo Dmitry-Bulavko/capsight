@@ -993,3 +993,117 @@ describe("D5-07 fixture-verified gate", () => {
     expect(measuredTotal).toBe(D5_FIXTURE_VERIFIED_FLOOR);
   });
 });
+
+const REPO_ROOT = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../..",
+);
+
+const S9P_DECISION_PATH = path.join(REPO_ROOT, "docs/S9-DECISION.md");
+
+/** S9P deliverables that must be cross-linked when the phase completes. */
+const S9P_DELIVERABLE_REFS: ReadonlyArray<{
+  task: string;
+  artifact: string;
+  decisionMarker: string;
+}> = [
+  {
+    task: "S9P-01",
+    artifact: "S9P-PROBE-FINDINGS.md",
+    decisionMarker: "S9P-PROBE-FINDINGS",
+  },
+  {
+    task: "S9P-02",
+    artifact: "S9P-UX-CONTRACT.md",
+    decisionMarker: "S9P-UX-CONTRACT",
+  },
+  {
+    task: "S9P-03",
+    artifact: "src/core/observed/",
+    decisionMarker: "ObservedCapability",
+  },
+  {
+    task: "S9P-04",
+    artifact: "src/cli/commands/observe.ts",
+    decisionMarker: "observe CLI",
+  },
+  {
+    task: "S9P-05",
+    artifact: "invocation-collector.ts",
+    decisionMarker: "invocation-collector",
+  },
+  {
+    task: "S9P-06",
+    artifact: "ObservedStatus.tsx",
+    decisionMarker: "ObservedStatus",
+  },
+];
+
+const SCAN_PATH_SOURCES = [
+  "src/application/scan.ts",
+  "src/application/scan-store.ts",
+  "src/adapters/claude/adapter.ts",
+] as const;
+
+describe("S9P-07 phase gate", () => {
+  it("keeps observe CLI and probe harness off the ordinary scan path", async () => {
+    for (const relativePath of SCAN_PATH_SOURCES) {
+      const source = await fs.promises.readFile(
+        path.join(REPO_ROOT, relativePath),
+        "utf8",
+      );
+      expect(source, relativePath).not.toMatch(/runObserve|observe\.ts/);
+      expect(source, relativePath).not.toMatch(
+        /probeAgentSdkToolPool|agent-sdk-spike/,
+      );
+      expect(source, relativePath).not.toMatch(
+        /invocation-collector|observed-demo/,
+      );
+    }
+
+    const cliSource = await fs.promises.readFile(
+      path.join(REPO_ROOT, "src/cli/index.ts"),
+      "utf8",
+    );
+    expect(cliSource).toMatch(/\.command\("observe"\)/);
+    expect(cliSource).toMatch(/runObserve/);
+    expect(cliSource).not.toMatch(/runScan[\s\S]*probeAgentSdkToolPool/);
+  });
+
+  it("does not regress D4-06 (entry-owed = 0, unverified ≤ 18)", () => {
+    const entryOwed = loadEvidenceLedgerGateIndex().filter(
+      (entry) => entry.disposition === "entry-owed",
+    );
+    expect(entryOwed).toEqual([]);
+
+    let totalUnverified = 0;
+    for (const coverage of PLATFORM_COVERAGE) {
+      const fixtures = discoverFixtureNames(
+        coverage.fixturesRoot,
+        coverage.fixtureNames,
+      );
+      const report = buildCoverageReport(
+        coverage.facts,
+        coverage.matrix,
+        fixtures,
+        coverage.getFactConfidence,
+      );
+      totalUnverified += report.unverified;
+    }
+
+    expect(totalUnverified).toBeLessThanOrEqual(D4_UNVERIFIED_CEILING);
+  });
+
+  it("documents S9P deliverables in docs/S9-DECISION.md", () => {
+    const decision = fs.readFileSync(S9P_DECISION_PATH, "utf8");
+
+    expect(decision).toMatch(/S9P phase complete|S9P-07/);
+
+    for (const ref of S9P_DELIVERABLE_REFS) {
+      expect(decision, ref.task + " artifact").toContain(ref.artifact);
+      expect(decision, ref.task + " marker").toMatch(
+        new RegExp(ref.decisionMarker, "i"),
+      );
+    }
+  });
+});

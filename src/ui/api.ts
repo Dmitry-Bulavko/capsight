@@ -17,6 +17,7 @@ import type {
 } from "../application/plan.js";
 import type { ManagedSimulationResult } from "../application/simulate.js";
 import type { ScanStatusSummary } from "../application/scan-store.js";
+import type { ObservedSessionPayload } from "../application/observed-demo.js";
 import type {
   EcosystemApiPayload,
   EcosystemResourceDetail,
@@ -107,6 +108,19 @@ export interface CapabilityExplain {
   agentId: string;
   context: ExecutionContext;
   capability: ResolvedCapability;
+}
+
+export type { ObservedSessionPayload };
+
+export async function fetchObservedSession(): Promise<ObservedSessionPayload | null> {
+  try {
+    return await request<ObservedSessionPayload>("/api/observed");
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 export async function fetchExplain(

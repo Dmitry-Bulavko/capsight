@@ -20,6 +20,8 @@ import type {
   SourceInfo,
 } from "../../core/model/index.js";
 import type { CapabilityExplain } from "../api.js";
+import type { ObservedCapability } from "../../core/observed/index.js";
+import { ObservedWhySection } from "./ObservedStatus.js";
 
 const STATUS_LABELS: Record<ResolvedCapability["status"], string> = {
   available: "Available",
@@ -184,9 +186,18 @@ interface WhyPanelProps {
   loading?: boolean;
   error?: string | null;
   onClose: () => void;
+  observedById?: ReadonlyMap<string, ObservedCapability> | null;
+  observedSessionActive?: boolean;
 }
 
-export function WhyPanel({ explain, loading = false, error = null, onClose }: WhyPanelProps) {
+export function WhyPanel({
+  explain,
+  loading = false,
+  error = null,
+  onClose,
+  observedById = null,
+  observedSessionActive = false,
+}: WhyPanelProps) {
   const capability = explain?.capability;
   const factRefs = capability ? factRefsFromReasons(capability.reasons) : [];
   const deniedBy = capability ? deniedByEntries(capability) : [];
@@ -238,6 +249,12 @@ export function WhyPanel({ explain, loading = false, error = null, onClose }: Wh
               </dd>
             </div>
           </dl>
+
+          <ObservedWhySection
+            capabilityId={capability.capabilityId}
+            observedById={observedById}
+            sessionActive={observedSessionActive}
+          />
 
           <section className="why-section">
             <h3>Source of capability</h3>

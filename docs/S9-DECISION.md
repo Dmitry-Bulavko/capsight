@@ -229,6 +229,49 @@ S9P partial path proceeds; full §9 reopen still requires structural pool or a f
 
 ---
 
+## S9P phase complete (S9P-07)
+
+**Date:** 2026-08-31  
+**Task:** [S9P-07-phase-gate.md](tasks/S9P-07-phase-gate.md)  
+**Verdict:** **S9P partial path complete** — invocation-only observed layer shipped without regressing D4-06.
+
+### Phase gate results
+
+| Gate | Result | Evidence |
+|------|--------|----------|
+| Observe CLI not on scan path | **Pass** | `scan.ts`, `scan-store.ts`, `adapter.ts` do not import observe/probe modules; `capsight observe` is a separate CLI command |
+| D4-06 unchanged | **Pass** | `entry-owed=0`, unverified **18** (10 claude / 7 cursor / 1 codex) |
+| §9.4 safety preserved | **Pass** | Fixture-only observe CLI; no scan-path auto-probe |
+| S9P deliverables documented | **Pass** | Cross-linked below |
+
+### S9P deliverables
+
+| Task | Deliverable | Path |
+|------|-------------|------|
+| S9P-01 | Live probe harness + recorded payloads | [S9P-PROBE-FINDINGS.md](S9P-PROBE-FINDINGS.md), `tests/fixtures/probes/`, `src/adapters/claude/probing/` |
+| S9P-02 | Invocation-only UX contract | [S9P-UX-CONTRACT.md](S9P-UX-CONTRACT.md) |
+| S9P-03 | ObservedCapability core model | `src/core/observed/` — `ObservedCapability`, normalization, §9.3 invariants |
+| S9P-04 | Dev-only observe CLI | `src/cli/commands/observe.ts` — fixture-only `capsight observe --fixture` |
+| S9P-05 | Invocation-side collector | `src/adapters/claude/probing/invocation-collector.ts` — PreToolUse / PermissionDenied → `ObservedCapability` |
+| S9P-06 | One-sided observed UI | `src/ui/components/ObservedStatus.tsx`, `src/application/observed-demo.ts`, `/api/observed` demo route |
+| S9P-07 | Phase gate | `tests/fixtures/coverage-report.test.ts` — fail-closed S9P-07 gate |
+
+### What remains blocked
+
+- Full S9 sequence (S9-02–S9-07) — **remain deferred**
+- S9-04 structural `resolved != observed` gate — **cancelled** on invocation-only path
+- Scan-path auto-observation — **not authorized**
+- Coverage `runtime-observed` bucket inflation from observations — **not authorized** (§9.5 partial path)
+
+### Implications
+
+- §9.5 partial fallback active: max matrix confidence stays **`fixture`**; observations are dev/demo only.
+- Correctness gate §11.3: **fixture-only** blocking arm unchanged.
+- D4-06 honest ceiling (18 unverified) holds; S9P did not promote facts or reopen `entry-owed`.
+- Probing and observation artifacts remain dev-only; ordinary scan is read-only with no third-party processes except `claude --version`.
+
+---
+
 ## References
 
 | Artifact | Path |

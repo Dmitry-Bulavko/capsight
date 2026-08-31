@@ -4,17 +4,17 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**S9P — Observed partial (invocation-only)** active. Next: **S9P-01** live probe harness.
+**S9P complete.** Invocation-only observed layer shipped (dev-only observe CLI, hook collector, UI badges). D4-06 unchanged — entry-owed **0**, unverified **18**, fv **42**.
 
-Previous: S9-01 defer reaffirmed; D5 at **42 fv**, unverified **18** terminal.
+Structural §9 (S9-04) remains deferred. No active phase scheduled.
 
 ## Phase order (active backlog)
 
 ```
-S9P (invocation-only observed) — S9P-01 in progress
+(none — S9P complete; structural §9 deferred)
 ```
 
-Completed chain: `… → D5 → S9 (defer) → S9P`.
+Completed chain: `… → D5 → S9 → S9P`.
 
 ## Phase status
 
@@ -44,7 +44,8 @@ Completed chain: `… → D5 → S9 (defer) → S9P`.
 | B1 — Builtin discovery channel | `done` | Six builtins in discovery; B1 fixture-verified; B4 override pinned |
 | G1-MP — Drift on Cursor/Codex | `done` | maxVersion on confident rule per platform |
 | D5 | Evidence depth wave 5 | `done` | fv **42** (+1 F11); gate revised; D4-06 unchanged |
-| §9 — Observed layer | `partial` (S9P) | Invocation-only path; structural S9-04 deferred |
+| S9P | Observed partial (invocation-only) | `done` | Dev-only observe + UI; D4-06 unchanged |
+| §9 — Observed layer | `partial` | S9P done — invocation-only; S9-04 structural deferred |
 
 ## Surface rule
 

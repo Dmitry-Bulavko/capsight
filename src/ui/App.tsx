@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PlatformId } from "../adapters/platform.js";
 import type { Agent, ContextPreset, EffectiveConfiguration } from "../core/model/index.js";
 import type { ScanStatusSummary } from "../application/scan-store.js";
@@ -8,12 +8,14 @@ import {
   fetchAgents,
   fetchEffectiveConfig,
   fetchExplain,
+  fetchObservedSession,
   fetchProject,
   fetchProjectConfig,
   fetchWarnings,
   formatVersion,
   scanProject,
   type AgentWarning,
+  type ObservedSessionPayload,
 } from "./api.js";
 import { AgentList } from "./components/AgentList.js";
 import { AgentSelector } from "./components/AgentSelector.js";
@@ -40,6 +42,7 @@ import { DriftBanner } from "./components/DriftBanner.js";
 import { DashboardNav, type DashboardTab } from "./components/DashboardNav.js";
 import { SimulationView } from "./components/SimulationView.js";
 import type { ManagedSimulationResult } from "./api.js";
+import { indexObservedCapabilities } from "../application/observed-demo.js";
 import {
   clearAgentPending,
   countPendingChanges,
@@ -97,6 +100,15 @@ export function App() {
   );
   const [restoreEcosystemResourceId, setRestoreEcosystemResourceId] = useState<string | null>(null);
   const [simulationResult, setSimulationResult] = useState<ManagedSimulationResult | null>(null);
+  const [observedSession, setObservedSession] = useState<ObservedSessionPayload | null>(null);
+  const observedById = useMemo(
+    () =>
+      observedSession
+        ? indexObservedCapabilities(observedSession.capabilities)
+        : null,
+    [observedSession],
+  );
+  const observedSessionActive = observedSession !== null;
 
   const loadDiscovery = useCallback(async () => {
     const project = await fetchProject();
@@ -434,6 +446,10 @@ export function App() {
         }
 
         await loadDiscovery();
+        const observed = await fetchObservedSession();
+        if (!cancelled) {
+          setObservedSession(observed);
+        }
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 404) {
@@ -590,6 +606,9 @@ export function App() {
                   selectedCapabilityId={selectedCapabilityId}
                   onSelectCapability={handleSelectCapability}
                   warnings={effectiveConfig?.warnings ?? []}
+                  observedById={observedById}
+                  observedSessionActive={observedSessionActive}
+                  observedDisclaimer={observedSession?.disclaimer}
                 />
                 {selectedCapabilityId && (
                   <WhyPanel
@@ -597,6 +616,8 @@ export function App() {
                     loading={explainLoading}
                     error={explainError}
                     onClose={handleCloseWhy}
+                    observedById={observedById}
+                    observedSessionActive={observedSessionActive}
                   />
                 )}
               </div>
@@ -681,6 +702,8 @@ export function App() {
                     loading={explainLoading}
                     error={explainError}
                     onClose={handleCloseWhy}
+                    observedById={observedById}
+                    observedSessionActive={observedSessionActive}
                   />
                 )}
               </div>

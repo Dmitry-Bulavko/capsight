@@ -3,6 +3,12 @@ import type { EffectiveConfiguration, ResolvedCapability, Warning } from "../../
 import { CapsightSelect, type CapsightSelectOption } from "./CapsightSelect.js";
 import { ENFORCEMENT_LABELS } from "./WhyPanel.js";
 import { capabilityWarningCount } from "./WarningsPanel.js";
+import type { ObservedCapability } from "../../core/observed/index.js";
+import {
+  ObservedDisclaimer,
+  ObservedStatusBadge,
+  resolveObservedStatus,
+} from "./ObservedStatus.js";
 
 export const KIND_FILTER_ALL = "all" as const;
 
@@ -59,6 +65,9 @@ interface EffectiveCapabilitiesProps {
   warnings?: readonly Warning[];
   kindFilter?: KindFilterValue;
   onKindFilterChange?: (value: KindFilterValue) => void;
+  observedById?: ReadonlyMap<string, ObservedCapability> | null;
+  observedSessionActive?: boolean;
+  observedDisclaimer?: string;
 }
 
 export function EffectiveCapabilities({
@@ -70,6 +79,9 @@ export function EffectiveCapabilities({
   warnings = [],
   kindFilter: kindFilterProp,
   onKindFilterChange,
+  observedById = null,
+  observedSessionActive = false,
+  observedDisclaimer,
 }: EffectiveCapabilitiesProps) {
   const [internalKindFilter, setInternalKindFilter] = useState<KindFilterValue>(KIND_FILTER_ALL);
   const kindFilter = kindFilterProp ?? internalKindFilter;
@@ -95,6 +107,9 @@ export function EffectiveCapabilities({
           </div>
         )}
       </div>
+      {observedSessionActive && (
+        <ObservedDisclaimer disclaimer={observedDisclaimer} />
+      )}
       {loading && <p className="empty-state">Loading capabilities…</p>}
       {!loading && error && <p className="error-message">{error}</p>}
       {!loading && !error && effective && (
@@ -107,6 +122,11 @@ export function EffectiveCapabilities({
             <ul className="capability-items capability-items-grid">
               {visibleCapabilities.map((capability) => {
                 const relatedWarnings = capabilityWarningCount(capability, warnings);
+                const observedStatus = resolveObservedStatus(
+                  capability.capabilityId,
+                  observedById,
+                  observedSessionActive,
+                );
                 return (
                   <li key={capability.capabilityId}>
                     <button
@@ -153,6 +173,9 @@ export function EffectiveCapabilities({
                         <span className={`capability-status-badge status-${capability.status}`}>
                           {capability.status}
                         </span>
+                        {observedStatus && (
+                          <ObservedStatusBadge status={observedStatus} compact />
+                        )}
                       </span>
                     </button>
                   </li>

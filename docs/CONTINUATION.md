@@ -1,30 +1,27 @@
 # Capsight continuation
 
-**Active phase:** S9P — Observed partial (invocation-only)  
-**Next task:** S9P-01 (in progress)
+**Active phase:** none — S9P complete  
+**Last completed:** S9P — Observed partial (invocation-only)
 
-## Phase queue
+## S9P outcome
 
-```
-S9P-01 → S9P-02 → S9P-03 → S9P-04 → S9P-05 → S9P-06 → S9P-07
-```
+- Dev-only probe harness (S9P-01) + UX contract (S9P-02)
+- `ObservedCapability` core model (S9P-03)
+- `capsight observe --fixture` CLI (S9P-04)
+- Hook invocation collector (S9P-05)
+- UI with one-sided disclaimer (S9P-06)
+- Phase gate (S9P-07) — D4-06 unchanged
 
-## Goal
+Structural `resolved != observed` (S9-04) remains **cancelled**.
 
-Unlock §9 partial path: live probe infrastructure + invocation-only UX contract + dev-only observe CLI/UI. Structural `resolved != observed` (S9-04) stays cancelled.
+## Evidence ceiling
 
-## Handoffs
-
-| Task | Handoff |
-|------|---------|
-| S9P-01 | `docs/tasks/S9P-01-live-probe-harness.md` |
-| S9P-02 | `docs/tasks/S9P-02-invocation-only-contract.md` |
-| S9P-03 | `docs/tasks/S9P-03-observed-capability-model.md` |
-| S9P-04 | `docs/tasks/S9P-04-observe-cli.md` |
-| S9P-05 | `docs/tasks/S9P-05-invocation-collector.md` |
-| S9P-06 | `docs/tasks/S9P-06-observed-ui.md` |
-| S9P-07 | `docs/tasks/S9P-07-phase-gate.md` |
+| metric | value |
+|--------|-------|
+| fixture-verified | **42 / 145** |
+| unverified | **18** (terminal without structural §9) |
+| entry-owed | **0** |
 
 ## Orchestration
 
-Autonomous loop: implementer → reviewer → tests → mark done → next task.
+Autonomous loop complete for S9P wave.

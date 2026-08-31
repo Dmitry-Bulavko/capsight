@@ -13,6 +13,7 @@ import { simulateRouter } from "./routes/simulate.js";
 import { planRouter } from "./routes/plan.js";
 import { applyRouter, historyRouter, rollbackRouter } from "./routes/apply.js";
 import { ecosystemRouter } from "./routes/ecosystem.js";
+import { observedRouter } from "./routes/observed.js";
 import {
   buildAllowedApiOrigins,
   createApiMutationGuard,
@@ -43,6 +44,7 @@ export function createApp(): express.Express {
   app.use("/api/rollback", rollbackRouter);
   app.use("/api/history", historyRouter);
   app.use("/api/ecosystem", ecosystemRouter);
+  app.use("/api/observed", observedRouter);
 
   if (process.env.NODE_ENV === "production") {
     const uiDir = path.resolve(__dirname, "../ui");
