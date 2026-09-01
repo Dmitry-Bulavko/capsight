@@ -79,13 +79,7 @@ export function backupDirForOperation(projectPath: string, operationId: string):
   return path.join(agentManagerBackupsDir(projectPath), operationId);
 }
 
-/** Locale-independent string order (code unit comparison). */
-function compareStrings(left: string, right: string): number {
-  if (left === right) {
-    return 0;
-  }
-  return left < right ? -1 : 1;
-}
+import { compareStrings } from "../../../core/sort/compare-strings.js";
 
 export async function createBackup(input: CreateBackupInput): Promise<CreateBackupResult> {
   const operationId = input.operationId ?? randomUUID();

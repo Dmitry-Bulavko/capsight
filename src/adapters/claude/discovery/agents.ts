@@ -1,6 +1,5 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { createHash } from "node:crypto";
 import os from "node:os";
 import type {
   Scope,
@@ -8,92 +7,21 @@ import type {
 } from "../../../core/model/index.js";
 import type {
   ClaudeAgent as Agent,
-  ClaudeAgentConfiguration as AgentConfiguration,
 } from "../model/index.js";
 import {
   getStringField,
   parseFrontmatter,
 } from "../parsing/frontmatter.js";
+import { buildAgentConfiguration } from "../parsing/agent-configuration.js";
+import { collectMarkdownFiles } from "../io/collect-markdown.js";
+import { isDirectory } from "../../shared/fs.js";
 import type { ProjectScopeLevel } from "./project-walk.js";
 import { pluginScopedId, resolvePluginInstallations } from "./plugins.js";
 import type { RawAgentFile, AgentDiscoveryResult } from "./types.js";
 import { FACT } from "../version/facts.js";
 import { gateCollision, gateDiscovery, MATRIX } from "../version/matrix.js";
 import { synthesizeBuiltinAgents } from "./builtins.js";
-import {
-  redactMcpServers,
-  redactUnknownFields,
-  summarizeHooks,
-} from "./redact.js";
-
-const SCOPE_PRIORITY: Record<Scope, number> = {
-  managed: 50,
-  cli: 40,
-  project: 30,
-  "nested-project": 30,
-  local: 25,
-  user: 20,
-  plugin: 10,
-  builtin: 5,
-  unknown: 0,
-};
-
-const KNOWN_FRONTMATTER_KEYS = new Set([
-  "name",
-  "description",
-  "tools",
-  "disallowedTools",
-  "model",
-  "permissionMode",
-  "maxTurns",
-  "skills",
-  "hooks",
-  "mcpServers",
-  "memory",
-  "background",
-  "effort",
-  "isolation",
-  "color",
-  "initialPrompt",
-]);
-
-async function isDirectory(dirPath: string): Promise<boolean> {
-  try {
-    const stat = await fs.stat(dirPath);
-    return stat.isDirectory();
-  } catch {
-    return false;
-  }
-}
-
-async function collectMarkdownFiles(rootDir: string): Promise<string[]> {
-  const results: string[] = [];
-
-  async function walk(dir: string): Promise<void> {
-    let entries;
-    try {
-      entries = await fs.readdir(dir, { withFileTypes: true });
-    } catch {
-      return;
-    }
-
-    for (const entry of entries) {
-      const fullPath = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        await walk(fullPath);
-      } else if (entry.isFile() && entry.name.endsWith(".md")) {
-        results.push(fullPath);
-      }
-    }
-  }
-
-  await walk(rootDir);
-  return results.sort();
-}
-
-function agentId(filePath: string): string {
-  return createHash("sha256").update(filePath).digest("hex").slice(0, 16);
-}
+import { agentIdFromPath, SCOPE_PRIORITY } from "./ids.js";
 
 function sourceInfo(
   scope: Scope,
@@ -107,30 +35,6 @@ function sourceInfo(
 
 function fileSource(file: RawAgentFile): SourceInfo {
   return sourceInfo(file.scope, file.filePath, file.matrixRef);
-}
-
-function buildConfiguration(data: Record<string, unknown>): AgentConfiguration {
-  const unknownFields = redactUnknownFields(data, KNOWN_FRONTMATTER_KEYS);
-
-  return {
-    tools: Array.isArray(data.tools) ? data.tools.map(String) : undefined,
-    disallowedTools: Array.isArray(data.disallowedTools)
-      ? data.disallowedTools.map(String)
-      : undefined,
-    mcpServers: redactMcpServers(data.mcpServers),
-    model: getStringField(data, "model"),
-    permissionMode: getStringField(data, "permissionMode") as AgentConfiguration["permissionMode"],
-    maxTurns: typeof data.maxTurns === "number" ? data.maxTurns : undefined,
-    skills: Array.isArray(data.skills) ? data.skills.map(String) : undefined,
-    hooks: summarizeHooks(data.hooks),
-    memory: getStringField(data, "memory") as AgentConfiguration["memory"],
-    background: typeof data.background === "boolean" ? data.background : undefined,
-    effort: getStringField(data, "effort"),
-    isolation: getStringField(data, "isolation") as AgentConfiguration["isolation"],
-    initialPrompt: getStringField(data, "initialPrompt"),
-    color: getStringField(data, "color"),
-    unknownFields,
-  };
 }
 
 type ParsedAgent =
@@ -186,12 +90,12 @@ async function parseAgentFile(file: RawAgentFile): Promise<ParsedAgent> {
   }
 
   const agent: Agent = {
-    id: agentId(file.filePath),
+    id: agentIdFromPath(file.filePath),
     name: effectiveName,
     description: effectiveDescription ?? "",
     source: fileSource(file),
     status: "active",
-    configuration: buildConfiguration(data),
+    configuration: buildAgentConfiguration(data),
     isPluginAgent: file.isPluginAgent,
     ...(file.isPluginAgent && file.pluginName !== undefined
       ? {
@@ -215,7 +119,7 @@ function resolveCollisions(parsed: ParsedAgent[], version: string): Agent[] {
   for (const item of parsed) {
     if (item.kind === "invalid") {
       invalidAgents.push({
-        id: agentId(item.file.filePath),
+        id: agentIdFromPath(item.file.filePath),
         name: path.basename(item.file.filePath, ".md"),
         description: "",
         source: fileSource(item.file),

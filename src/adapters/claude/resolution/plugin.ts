@@ -3,6 +3,7 @@ import type {
   ResolutionReason,
   SourceInfo,
 } from "../../../core/model/index.js";
+import { makeReason } from "../../../core/resolver/reasons.js";
 import type { ClaudeAgent as Agent } from "../model/index.js";
 import { FACT, type FactId } from "../version/facts.js";
 import { MATRIX, resolveEnforcement } from "../version/matrix.js";
@@ -24,17 +25,6 @@ export interface ResolvePluginFieldResult {
   reasons: ResolutionReason[];
   /** Matrix verdict on F9 for the detected version (§6, §8.2). */
   enforcement: Enforcement;
-}
-
-function makeReason(
-  type: ResolutionReason["type"],
-  message: string,
-  source: SourceInfo,
-  matrixRef?: FactId,
-): ResolutionReason {
-  return matrixRef
-    ? { type, message, source, matrixRef }
-    : { type, message, source };
 }
 
 function fieldSource(agent: Agent, field: PluginIneffectiveField): SourceInfo {

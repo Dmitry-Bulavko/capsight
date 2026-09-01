@@ -3,6 +3,7 @@ import type {
   ResolutionReason,
   SourceInfo,
 } from "../../../core/model/index.js";
+import { makeReason } from "../../../core/resolver/reasons.js";
 import { AGENT_TOOL_NAMES, isMcpTool } from "./tool-tables.js";
 import { MATRIX, gateCapability } from "../version/matrix.js";
 
@@ -55,14 +56,6 @@ function patternSource(
   index: number,
 ): SourceInfo {
   return { ...agentSource, fieldPath: fieldPath(field, index) };
-}
-
-function makeReason(
-  type: ResolutionReason["type"],
-  message: string,
-  source?: SourceInfo,
-): ResolutionReason {
-  return source ? { type, message, source } : { type, message };
 }
 
 /**

@@ -4,6 +4,7 @@ import type {
   SourceInfo,
   TrustState,
 } from "../../../core/model/index.js";
+import { makeReason } from "../../../core/resolver/reasons.js";
 import type {
   ClaudeAgent as Agent,
   RedactedMcpServer,
@@ -51,19 +52,6 @@ const TRUST_MATRIX_IDS: Record<TrustRule, MatrixId> = {
   [FACT.R2]: MATRIX["trust.parentFolder"],
   [FACT.R6]: MATRIX["trust.addDirSeparate"],
 };
-
-function makeReason(
-  type: ResolutionReason["type"],
-  message: string,
-  source?: SourceInfo,
-  matrixRef?: FactId,
-): ResolutionReason {
-  return matrixRef
-    ? { type, message, source, matrixRef }
-    : source
-      ? { type, message, source }
-      : { type, message };
-}
 
 function fieldSource(agent: Agent, fieldPath: string): SourceInfo {
   return { ...agent.source, fieldPath };

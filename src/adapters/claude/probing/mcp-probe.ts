@@ -6,6 +6,7 @@ import type { PlatformVersion } from "../../../core/model/index.js";
 import type { LocalStateWarning } from "../../../core/warnings/local-state.js";
 import { computeMcpConfigHash, computeMcpServerId } from "../discovery/mcp.js";
 import type { DiscoveredMcpServer } from "../discovery/types.js";
+import { readJsonObject } from "../../shared/fs.js";
 
 const DEFAULT_PROBE_TIMEOUT_MS = 30_000;
 /** Grace period between SIGTERM and SIGKILL for a child that ignores termination (§9.4). */
@@ -91,23 +92,11 @@ interface ResolvedMcpConfig {
   transport: DiscoveredMcpServer["transport"];
 }
 
-async function readJsonFile(filePath: string): Promise<Record<string, unknown> | null> {
-  try {
-    const raw = await fs.readFile(filePath, "utf8");
-    const parsed = JSON.parse(raw) as unknown;
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : null;
-  } catch {
-    return null;
-  }
-}
-
 async function resolveMcpServerConfig(
   configPath: string,
   serverId: string,
 ): Promise<ResolvedMcpConfig | null> {
-  const json = await readJsonFile(configPath);
+  const json = await readJsonObject(configPath);
   if (!json) {
     return null;
   }

@@ -5,6 +5,7 @@ import type {
   ResolvedCapability,
   SourceInfo,
 } from "../../../core/model/index.js";
+import { makeReason } from "../../../core/resolver/reasons.js";
 import type {
   ClaudeAgent as Agent,
   ClaudeProjectSnapshot as ProjectSnapshot,
@@ -13,19 +14,6 @@ import { FACT, type FactId } from "../version/facts.js";
 import { MATRIX, gateCapability } from "../version/matrix.js";
 import type { DiscoveredSkill } from "../discovery/types.js";
 import { parseFrontmatter } from "../parsing/frontmatter.js";
-
-function makeReason(
-  type: ResolutionReason["type"],
-  message: string,
-  source?: SourceInfo,
-  matrixRef?: FactId,
-): ResolutionReason {
-  return matrixRef
-    ? { type, message, source, matrixRef }
-    : source
-      ? { type, message, source }
-      : { type, message };
-}
 
 function fieldSource(agent: Agent, index: number): SourceInfo {
   return { ...agent.source, fieldPath: `frontmatter.skills[${index}]` };

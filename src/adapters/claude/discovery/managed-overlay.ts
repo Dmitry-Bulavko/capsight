@@ -1,19 +1,21 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { createHash } from "node:crypto";
 import type {
   Scope,
   SourceInfo,
 } from "../../../core/model/index.js";
 import type {
   ClaudeAgent as Agent,
-  ClaudeAgentConfiguration as AgentConfiguration,
   ClaudeProjectSnapshot as ProjectSnapshot,
 } from "../model/index.js";
 import {
   getStringField,
   parseFrontmatter,
 } from "../parsing/frontmatter.js";
+import { buildAgentConfiguration } from "../parsing/agent-configuration.js";
+import { collectMarkdownFiles } from "../io/collect-markdown.js";
+import { isDirectory } from "../../shared/fs.js";
+import { compareStrings } from "../../../core/sort/compare-strings.js";
 import type { SettingsLayer } from "./types.js";
 import {
   parseEnableAllProjectMcpServers,
@@ -21,50 +23,7 @@ import {
 } from "./settings.js";
 import { FACT } from "../version/facts.js";
 import { gateCollision } from "../version/matrix.js";
-import {
-  redactMcpServers,
-  redactUnknownFields,
-  summarizeHooks,
-} from "./redact.js";
-
-const SCOPE_PRIORITY: Record<Scope, number> = {
-  managed: 50,
-  cli: 40,
-  project: 30,
-  "nested-project": 30,
-  local: 25,
-  user: 20,
-  plugin: 10,
-  builtin: 5,
-  unknown: 0,
-};
-
-/** Locale-independent string order (code unit comparison). */
-function compareStrings(left: string, right: string): number {
-  if (left === right) {
-    return 0;
-  }
-  return left < right ? -1 : 1;
-}
-
-const KNOWN_FRONTMATTER_KEYS = new Set([
-  "name",
-  "description",
-  "tools",
-  "disallowedTools",
-  "model",
-  "permissionMode",
-  "maxTurns",
-  "skills",
-  "hooks",
-  "mcpServers",
-  "memory",
-  "background",
-  "effort",
-  "isolation",
-  "color",
-  "initialPrompt",
-]);
+import { agentIdFromPath, SCOPE_PRIORITY } from "./ids.js";
 
 export class ManagedBundleError extends Error {
   constructor(message: string) {
@@ -80,70 +39,8 @@ export interface ManagedBundle {
   agents: Agent[];
 }
 
-function agentId(filePath: string): string {
-  return createHash("sha256").update(filePath).digest("hex").slice(0, 16);
-}
-
 function sourceInfo(scope: Scope, filePath: string): SourceInfo {
   return { platform: "claude", scope, path: filePath };
-}
-
-function buildConfiguration(data: Record<string, unknown>): AgentConfiguration {
-  const unknownFields = redactUnknownFields(data, KNOWN_FRONTMATTER_KEYS);
-
-  return {
-    tools: Array.isArray(data.tools) ? data.tools.map(String) : undefined,
-    disallowedTools: Array.isArray(data.disallowedTools)
-      ? data.disallowedTools.map(String)
-      : undefined,
-    mcpServers: redactMcpServers(data.mcpServers),
-    model: getStringField(data, "model"),
-    permissionMode: getStringField(data, "permissionMode") as AgentConfiguration["permissionMode"],
-    maxTurns: typeof data.maxTurns === "number" ? data.maxTurns : undefined,
-    skills: Array.isArray(data.skills) ? data.skills.map(String) : undefined,
-    hooks: summarizeHooks(data.hooks),
-    memory: getStringField(data, "memory") as AgentConfiguration["memory"],
-    background: typeof data.background === "boolean" ? data.background : undefined,
-    effort: getStringField(data, "effort"),
-    isolation: getStringField(data, "isolation") as AgentConfiguration["isolation"],
-    initialPrompt: getStringField(data, "initialPrompt"),
-    color: getStringField(data, "color"),
-    unknownFields,
-  };
-}
-
-async function isDirectory(dirPath: string): Promise<boolean> {
-  try {
-    const stat = await fs.stat(dirPath);
-    return stat.isDirectory();
-  } catch {
-    return false;
-  }
-}
-
-async function collectMarkdownFiles(rootDir: string): Promise<string[]> {
-  const results: string[] = [];
-
-  async function walk(dir: string): Promise<void> {
-    let entries;
-    try {
-      entries = await fs.readdir(dir, { withFileTypes: true });
-    } catch {
-      return;
-    }
-
-    for (const entry of entries) {
-      const fullPath = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        await walk(fullPath);
-      } else if (entry.isFile() && entry.name.endsWith(".md")) {
-        results.push(fullPath);
-      }
-    }
-  }
-
-  await walk(rootDir);
-  return results.sort();
 }
 
 async function parseManagedAgentFile(filePath: string): Promise<Agent | null> {
@@ -157,7 +54,7 @@ async function parseManagedAgentFile(filePath: string): Promise<Agent | null> {
   const parsed = parseFrontmatter(content);
   if (!parsed.ok) {
     return {
-      id: agentId(filePath),
+      id: agentIdFromPath(filePath),
       name: path.basename(filePath, ".md"),
       description: "",
       source: sourceInfo("managed", filePath),
@@ -173,7 +70,7 @@ async function parseManagedAgentFile(filePath: string): Promise<Agent | null> {
 
   if (!name) {
     return {
-      id: agentId(filePath),
+      id: agentIdFromPath(filePath),
       name: path.basename(filePath, ".md"),
       description: "",
       source: sourceInfo("managed", filePath),
@@ -186,7 +83,7 @@ async function parseManagedAgentFile(filePath: string): Promise<Agent | null> {
 
   if (name.startsWith("-") || name.includes(":")) {
     return {
-      id: agentId(filePath),
+      id: agentIdFromPath(filePath),
       name,
       description: description ?? "",
       source: sourceInfo("managed", filePath),
@@ -199,7 +96,7 @@ async function parseManagedAgentFile(filePath: string): Promise<Agent | null> {
 
   if (!description) {
     return {
-      id: agentId(filePath),
+      id: agentIdFromPath(filePath),
       name,
       description: "",
       source: sourceInfo("managed", filePath),
@@ -211,12 +108,12 @@ async function parseManagedAgentFile(filePath: string): Promise<Agent | null> {
   }
 
   return {
-    id: agentId(filePath),
+    id: agentIdFromPath(filePath),
     name,
     description,
     source: sourceInfo("managed", filePath),
     status: "active",
-    configuration: buildConfiguration(parsed.data),
+    configuration: buildAgentConfiguration(parsed.data),
     isPluginAgent: false,
   };
 }

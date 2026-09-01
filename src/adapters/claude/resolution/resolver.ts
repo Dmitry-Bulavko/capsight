@@ -1,4 +1,7 @@
 import path from "node:path";
+import { compareStrings } from "../../../core/sort/compare-strings.js";
+import { makeReason } from "../../../core/resolver/reasons.js";
+import { AgentNotFoundError } from "../../shared/errors.js";
 import type {
   EffectiveConfiguration,
   ExecutionContext,
@@ -54,12 +57,7 @@ import { resolveSecurityFindings } from "./security-findings.js";
 import { buildSkillPreloadCapabilities } from "./skills.js";
 import { resolveAgentTools } from "./tools.js";
 
-export class AgentNotFoundError extends Error {
-  constructor(agentId: string) {
-    super(`Agent not found: ${agentId}`);
-    this.name = "AgentNotFoundError";
-  }
-}
+export { AgentNotFoundError };
 
 const PARENT_SESSION_SOURCE: SourceInfo = {
   platform: "claude",
@@ -74,19 +72,6 @@ const BUILTIN_PARENT_POOL = [
     ...AGENT_TOOL_NAMES,
   ]),
 ];
-
-function makeReason(
-  type: ResolutionReason["type"],
-  message: string,
-  source?: SourceInfo,
-  matrixRef?: FactId,
-): ResolutionReason {
-  return matrixRef
-    ? { type, message, source, matrixRef }
-    : source
-      ? { type, message, source }
-      : { type, message };
-}
 
 function capabilityKind(toolName: string): ResolvedCapability["kind"] {
   return isMcpTool(toolName) ? "mcp_tool" : "tool";
@@ -880,19 +865,6 @@ function computeUnknownRate(capabilities: ResolvedCapability[]): number {
   ).length;
 
   return unknownCount / capabilities.length;
-}
-
-/**
- * Locale-independent string order. `localeCompare` without an explicit locale
- * follows the host's collation, so it can order the same two ids differently on
- * two machines. Capability order is part of the output contract, so it is
- * compared by code unit instead.
- */
-function compareStrings(left: string, right: string): number {
-  if (left === right) {
-    return 0;
-  }
-  return left < right ? -1 : 1;
 }
 
 /**

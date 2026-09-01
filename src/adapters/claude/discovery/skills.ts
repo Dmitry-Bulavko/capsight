@@ -3,27 +3,14 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import os from "node:os";
 import type { Scope, SourceInfo } from "../../../core/model/index.js";
+import { isDirectory, pathExists } from "../../shared/fs.js";
 import { getStringField, parseFrontmatter } from "../parsing/frontmatter.js";
 import type { ProjectScopeLevel } from "./project-walk.js";
 import type { DiscoveredSkill } from "./types.js";
 import { gateDiscovery, MATRIX } from "../version/matrix.js";
 
-async function isDirectory(dirPath: string): Promise<boolean> {
-  try {
-    const stat = await fs.stat(dirPath);
-    return stat.isDirectory();
-  } catch {
-    return false;
-  }
-}
-
 async function fileExists(filePath: string): Promise<boolean> {
-  try {
-    await fs.access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
+  return pathExists(filePath);
 }
 
 function skillId(filePath: string): string {

@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { isDirectory } from "../../shared/fs.js";
 
 /**
  * Plugin agent sources (A1, A6, A8).
@@ -33,14 +34,6 @@ export interface PluginInstallation {
 
 /** Manifest a plugin ships to name itself, read when present, never required. */
 const PLUGIN_MANIFEST_PATH = [".claude-plugin", "plugin.json"];
-
-async function isDirectory(dirPath: string): Promise<boolean> {
-  try {
-    return (await fs.stat(dirPath)).isDirectory();
-  } catch {
-    return false;
-  }
-}
 
 async function readManifestName(root: string): Promise<string | undefined> {
   try {

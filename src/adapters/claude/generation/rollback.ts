@@ -25,13 +25,7 @@ export interface RestoreBackupResult {
   manifest: BackupManifest;
 }
 
-/** Locale-independent string order (code unit comparison). */
-function compareStrings(left: string, right: string): number {
-  if (left === right) {
-    return 0;
-  }
-  return left < right ? -1 : 1;
-}
+import { compareStrings } from "../../../core/sort/compare-strings.js";
 
 async function backupExists(projectPath: string, operationId: string): Promise<boolean> {
   try {

@@ -3,6 +3,7 @@ import type {
   ResolutionReason,
   SourceInfo,
 } from "../../../core/model/index.js";
+import { makeReason } from "../../../core/resolver/reasons.js";
 import type {
   ClaudeAgent as Agent,
   PermissionMode,
@@ -30,19 +31,6 @@ export interface ResolvePermissionModeResult {
 
 function permissionModeSource(agentSource: SourceInfo): SourceInfo {
   return { ...agentSource, fieldPath: "frontmatter.permissionMode" };
-}
-
-function makeReason(
-  type: ResolutionReason["type"],
-  message: string,
-  source?: SourceInfo,
-  matrixRef?: FactId,
-): ResolutionReason {
-  return matrixRef
-    ? { type, message, source, matrixRef }
-    : source
-      ? { type, message, source }
-      : { type, message };
 }
 
 /**
