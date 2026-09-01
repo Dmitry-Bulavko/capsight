@@ -51,6 +51,7 @@ import {
   seedFixtureTrustRecords,
   selectFixtureAgent,
 } from "./fixture-runtime.js";
+import { withMatrixPatch } from "../helpers/matrix-patch.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES_ROOT = path.join(__dirname, "claude");
@@ -216,24 +217,6 @@ async function runGoldenFixture(
     simulation,
   );
   return { actual, expected };
-}
-
-async function withMatrixPatch(
-  id: string,
-  patch: Partial<FeatureCompatibility>,
-  body: () => Promise<void>,
-): Promise<void> {
-  const entry = VERSION_MATRIX.find((candidate) => candidate.id === id)!;
-  const original = { ...entry };
-  Object.assign(entry, patch);
-  try {
-    await body();
-  } finally {
-    for (const key of Object.keys(entry) as Array<keyof FeatureCompatibility>) {
-      delete (entry as unknown as Record<string, unknown>)[key];
-    }
-    Object.assign(entry, original);
-  }
 }
 
 /**
@@ -653,7 +636,7 @@ describe("golden fixtures", () => {
     expect(toolsVersionReason?.message).toContain("unsupported");
     expect(toolsVersionReason?.message).toContain("requires <= 2.1.499");
 
-    await withMatrixPatch("agent.tools", { maxVersion: undefined }, async () => {
+    await withMatrixPatch(VERSION_MATRIX, "agent.tools", { maxVersion: undefined }, async () => {
       const withoutBound = await runGoldenFixture("version-drift");
       const readWithoutBound = withoutBound.actual.resolutions
         .find((entry) => entry.context.depth === 0)!

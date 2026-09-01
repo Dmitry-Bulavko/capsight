@@ -3,72 +3,13 @@ import { buildEcosystemInventory } from "../../src/application/ecosystem.js";
 import { buildEcosystemHealth } from "../../src/application/ecosystem-health.js";
 import { healthFilterResourceIds } from "../../src/application/ecosystem-health-filter.js";
 import { buildStatusSummary } from "../../src/application/scan-status-summary.js";
-import type { ScanResult } from "../../src/application/scan.js";
 import { RESOURCE_CLASS } from "../../src/core/compat/resource-class.js";
-import type { Agent, ProjectSnapshot, Warning } from "../../src/core/model/index.js";
+import type { Warning } from "../../src/core/model/index.js";
 import {
   buildCompatVerdicts,
   buildEcosystemApiPayload,
 } from "../../src/server/routes/ecosystem.js";
-
-function makeAgent(overrides: Partial<Agent> = {}): Agent {
-  return {
-    id: "backend",
-    name: "backend",
-    description: "Backend agent",
-    source: {
-      platform: "claude",
-      scope: "project",
-      path: "/repo/.claude/agents/backend.md",
-    },
-    status: "active",
-    configuration: { unknownFields: {} },
-    isPluginAgent: false,
-    ...overrides,
-  };
-}
-
-function makeSnapshot(overrides: Partial<ProjectSnapshot> = {}): ProjectSnapshot {
-  return {
-    id: "snapshot-1",
-    projectPath: "/repo",
-    version: {
-      platform: "claude",
-      version: "1.0.0",
-      raw: "1.0.0",
-      detectedAt: "2026-01-01T00:00:00.000Z",
-    },
-    environment: { relevant: [] },
-    trust: { accepted: true, projectPath: "/repo" },
-    agents: [],
-    skills: [],
-    instructions: [],
-    mcpServers: [],
-    settings: [],
-    warnings: [],
-    scannedAt: "2026-01-01T00:00:00.000Z",
-    ...overrides,
-  };
-}
-
-function makeScanResult(
-  platform: ScanResult["platform"],
-  snapshotOverrides: Partial<ProjectSnapshot> = {},
-): ScanResult {
-  return {
-    platform,
-    status: "complete",
-    snapshot: makeSnapshot({
-      ...snapshotOverrides,
-      version: {
-        platform,
-        version: "1.0.0",
-        raw: "1.0.0",
-        detectedAt: "2026-01-01T00:00:00.000Z",
-      },
-    }),
-  };
-}
+import { makeAgent, makePlatformScanResult } from "../helpers/ecosystem-fixtures.js";
 
 function makeWarning(overrides: Partial<Warning> = {}): Warning {
   return {
@@ -82,7 +23,7 @@ function makeWarning(overrides: Partial<Warning> = {}): Warning {
 
 describe("buildEcosystemHealth()", () => {
   it("matches buildStatusSummary agent counts per platform", () => {
-    const claudeScan = makeScanResult("claude", {
+    const claudeScan = makePlatformScanResult("claude", {
       agents: [
         makeAgent({ id: "active", status: "active" }),
         makeAgent({
@@ -126,7 +67,7 @@ describe("buildEcosystemHealth()", () => {
   });
 
   it("counts local overrides and unresolved collisions separately", () => {
-    const claudeScan = makeScanResult("claude", {
+    const claudeScan = makePlatformScanResult("claude", {
       agents: [
         makeAgent({
           id: "local-agent",
@@ -180,7 +121,7 @@ describe("buildEcosystemHealth()", () => {
   });
 
   it("counts resources with unknown compat explicitly", () => {
-    const claudeScan = makeScanResult("claude", {
+    const claudeScan = makePlatformScanResult("claude", {
       agents: [makeAgent()],
       version: {
         platform: "claude",
@@ -207,7 +148,7 @@ describe("buildEcosystemHealth()", () => {
   });
 
   it("groups snapshot warnings by severity and maps them to resources", () => {
-    const claudeScan = makeScanResult("claude", {
+    const claudeScan = makePlatformScanResult("claude", {
       agents: [makeAgent()],
       warnings: [
         makeWarning({
@@ -244,7 +185,7 @@ describe("buildEcosystemHealth()", () => {
   });
 
   it("exposes filter ids that resolve to exact resource sets", () => {
-    const claudeScan = makeScanResult("claude", {
+    const claudeScan = makePlatformScanResult("claude", {
       skills: [
         {
           id: "lint",
@@ -272,7 +213,7 @@ describe("buildEcosystemHealth()", () => {
   });
 
   it("does not include score, grade, or rating fields", () => {
-    const claudeScan = makeScanResult("claude", { agents: [makeAgent()] });
+    const claudeScan = makePlatformScanResult("claude", { agents: [makeAgent()] });
     const inventory = buildEcosystemInventory({
       projectPath: "/repo",
       detection: [{ platform: "claude", status: "detected", evidence: [] }],
@@ -308,14 +249,14 @@ describe("buildEcosystemHealth()", () => {
           path: "/repo/.mcp.json",
           name: "github",
         },
-        { claude: makeScanResult("claude"), codex: makeScanResult("codex") },
+        { claude: makePlatformScanResult("claude"), codex: makePlatformScanResult("codex") },
       ),
     };
 
     const inventory = buildEcosystemInventory({
       projectPath: "/repo",
       detection: [{ platform: "claude", status: "detected", evidence: [] }],
-      scans: { claude: makeScanResult("claude") },
+      scans: { claude: makePlatformScanResult("claude") },
     });
     inventory.resources.mcp_server.push({
       id: resource.id,
@@ -329,7 +270,7 @@ describe("buildEcosystemHealth()", () => {
 
     const health = buildEcosystemHealth({
       inventory,
-      scans: { claude: makeScanResult("claude"), codex: makeScanResult("codex") },
+      scans: { claude: makePlatformScanResult("claude"), codex: makePlatformScanResult("codex") },
       resources: {
         agent: [],
         skill: [],

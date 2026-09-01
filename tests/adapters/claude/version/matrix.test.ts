@@ -13,6 +13,7 @@ import {
   resolveFixtureScanPath,
 } from "../../../fixtures/coverage-report.js";
 import { normalizeGoldenOutput } from "../../../fixtures/golden-normalize.js";
+import { withMatrixPatch } from "../../../helpers/matrix-patch.js";
 import {
   resolveFixtureHomeDir,
   restoreProcessEnv,
@@ -458,24 +459,6 @@ function trustAcceptedResult(
       },
     ],
   };
-}
-
-async function withMatrixPatch(
-  id: string,
-  patch: Partial<FeatureCompatibility>,
-  body: () => Promise<void>,
-): Promise<void> {
-  const entry = VERSION_MATRIX.find((candidate) => candidate.id === id)!;
-  const original = { ...entry };
-  Object.assign(entry, patch);
-  try {
-    await body();
-  } finally {
-    for (const key of Object.keys(entry) as Array<keyof FeatureCompatibility>) {
-      delete (entry as unknown as Record<string, unknown>)[key];
-    }
-    Object.assign(entry, original);
-  }
 }
 
 function resolutionAtDepth(
@@ -1338,7 +1321,7 @@ describe("claude fixture deletion tests (H1-28, D5-03)", () => {
       enforcement: "enforced",
     });
 
-    await withMatrixPatch(MATRIX["trust.frontmatterHooks"], { status: "unknown" }, async () => {
+    await withMatrixPatch(VERSION_MATRIX,MATRIX["trust.frontmatterHooks"], { status: "unknown" }, async () => {
       const withoutRule = await runClaudeFixture("trust-inline-mcp");
       expect(
         capabilityStatus(
@@ -1391,7 +1374,7 @@ describe("claude fixture deletion tests (H1-28, D5-02)", () => {
       enforcement: "enforced",
     });
 
-    await withMatrixPatch(MATRIX["context.filter1"], { status: "unknown" }, async () => {
+    await withMatrixPatch(VERSION_MATRIX,MATRIX["context.filter1"], { status: "unknown" }, async () => {
         const withoutRule = await runClaudeFixture("tools-filters");
         expect(
           toolStatus(withoutRule, "t1-probe", "foreground-subagent", "AskUserQuestion"),
@@ -1410,7 +1393,7 @@ describe("claude fixture deletion tests (H1-28, D5-02)", () => {
       enforcement: "enforced",
     });
 
-    await withMatrixPatch(MATRIX["context.filter2"], { status: "unknown" }, async () => {
+    await withMatrixPatch(VERSION_MATRIX,MATRIX["context.filter2"], { status: "unknown" }, async () => {
         const withoutRule = await runClaudeFixture("background");
         expect(toolStatus(withoutRule, "worker", "background-subagent", "Agent")).toMatchObject({
           status: "unknown",
@@ -1427,7 +1410,7 @@ describe("claude fixture deletion tests (H1-28, D5-02)", () => {
       enforcement: "enforced",
     });
 
-    await withMatrixPatch(MATRIX["agent.toolAliases"], { status: "unknown" }, async () => {
+    await withMatrixPatch(VERSION_MATRIX,MATRIX["agent.toolAliases"], { status: "unknown" }, async () => {
         const withoutRule = await runClaudeFixture("tools-filters");
         expect(toolStatus(withoutRule, "filtered", "foreground-subagent", "Task")).toMatchObject({
           status: "unknown",
@@ -1529,7 +1512,7 @@ describe("claude fixture deletion tests (H1-28, D5-04)", () => {
       },
     });
 
-    await withMatrixPatch(
+    await withMatrixPatch(VERSION_MATRIX,
       MATRIX["discovery.builtinNameOverride"],
       { status: "unknown" },
       async () => {

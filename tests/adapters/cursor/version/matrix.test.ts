@@ -3,6 +3,7 @@ import fsPromises from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { withMatrixPatch, withMatrixPatchSync } from "../../../helpers/matrix-patch.js";
 import type { PlatformVersion } from "../../../../src/core/model/index.js";
 import {
   FACT,
@@ -209,7 +210,7 @@ describe("cursor resolveEnforcement", () => {
   });
 
   it("downgrades only rules outside their declared version range", () => {
-    withMatrixPatchSync(
+    withMatrixPatchSync(VERSION_MATRIX,
       MATRIX["rules.fileExtension"],
       { minVersion: "99.0.0", maxVersion: undefined },
       () => {
@@ -230,7 +231,7 @@ describe("cursor lookupFeature", () => {
   const DETECTED = "3.16.17";
 
   it("marks entries unsupported below minVersion", () => {
-    withMatrixPatchSync(
+    withMatrixPatchSync(VERSION_MATRIX,
       MATRIX["rules.fileExtension"],
       { minVersion: "99.0.0", maxVersion: undefined },
       () => {
@@ -241,7 +242,7 @@ describe("cursor lookupFeature", () => {
   });
 
   it("marks entries unsupported above maxVersion", () => {
-    withMatrixPatchSync(MATRIX["rules.fileExtension"], { maxVersion: "3.0.0" }, () => {
+    withMatrixPatchSync(VERSION_MATRIX,MATRIX["rules.fileExtension"], { maxVersion: "3.0.0" }, () => {
       expect(lookupFeature(MATRIX["rules.fileExtension"], DETECTED)?.status).toBe("unsupported");
       expect(lookupFeature(MATRIX["rules.fileExtension"], "3.0.0")?.status).toBe("supported");
     });
@@ -281,7 +282,7 @@ describe("cursor gateWarning", () => {
   });
 
   it("downgrades when the detected version is outside the entry range", () => {
-    withMatrixPatchSync(
+    withMatrixPatchSync(VERSION_MATRIX,
       MATRIX["rules.fileExtension"],
       { minVersion: "99.0.0", maxVersion: undefined },
       () => {
@@ -331,7 +332,7 @@ describe("cursor fixture deletion tests (H1-28)", () => {
     expect(scopedRule?.description).toBe("Scoped TypeScript rule");
     expect(scopedRule?.globs).toEqual(["**/*.ts"]);
 
-    await withMatrixPatch(MATRIX["rules.fileExtension"], { maxVersion: undefined }, async () => {
+    await withMatrixPatch(VERSION_MATRIX,MATRIX["rules.fileExtension"], { maxVersion: undefined }, async () => {
       const withoutBound = await runCursorFixture("version-drift");
       const after = withoutBound.resolutions[0]!.warnings.find(
         (warning) => warning.matrixRef === MATRIX["rules.fileExtension"],
@@ -364,7 +365,7 @@ describe("cursor fixture deletion tests (H1-28)", () => {
       ).length,
     ).toBe(2);
 
-    await withMatrixPatch(MATRIX["collision.sameDir"], { status: "unknown" }, async () => {
+    await withMatrixPatch(VERSION_MATRIX,MATRIX["collision.sameDir"], { status: "unknown" }, async () => {
       const withoutRule = await runCursorFixture("collision-same-dir");
       expect(
         withoutRule.discovery.agents.filter(
@@ -382,7 +383,7 @@ describe("cursor fixture deletion tests (H1-28)", () => {
       ).length,
     ).toBe(2);
 
-    await withMatrixPatch(MATRIX["agent.invalid"], { status: "unknown" }, async () => {
+    await withMatrixPatch(VERSION_MATRIX,MATRIX["agent.invalid"], { status: "unknown" }, async () => {
       const withoutRule = await runCursorFixture("invalid-agents");
       expect(
         withoutRule.discovery.agents.filter(
@@ -545,39 +546,3 @@ describe("cursor fixture deletion tests (H1-28)", () => {
     }
   });
 });
-
-async function withMatrixPatch(
-  id: MatrixId,
-  patch: Partial<FeatureCompatibility>,
-  body: () => Promise<void>,
-): Promise<void> {
-  const entry = VERSION_MATRIX.find((candidate) => candidate.id === id)!;
-  const original = { ...entry };
-  Object.assign(entry, patch);
-  try {
-    await body();
-  } finally {
-    for (const key of Object.keys(entry) as Array<keyof FeatureCompatibility>) {
-      delete (entry as unknown as Record<string, unknown>)[key];
-    }
-    Object.assign(entry, original);
-  }
-}
-
-function withMatrixPatchSync(
-  id: MatrixId,
-  patch: Partial<FeatureCompatibility>,
-  body: () => void,
-): void {
-  const entry = VERSION_MATRIX.find((candidate) => candidate.id === id)!;
-  const original = { ...entry };
-  Object.assign(entry, patch);
-  try {
-    body();
-  } finally {
-    for (const key of Object.keys(entry) as Array<keyof FeatureCompatibility>) {
-      delete (entry as unknown as Record<string, unknown>)[key];
-    }
-    Object.assign(entry, original);
-  }
-}

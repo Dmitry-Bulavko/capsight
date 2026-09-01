@@ -3,6 +3,7 @@ import fsPromises from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
+import { withMatrixPatch } from "../helpers/matrix-patch.js";
 import type {
   EffectiveConfiguration,
   PlatformVersion,
@@ -138,24 +139,6 @@ async function runGoldenFixture(
   return { actual, expected };
 }
 
-async function withMatrixPatch(
-  id: string,
-  patch: Partial<FeatureCompatibility>,
-  body: () => Promise<void>,
-): Promise<void> {
-  const entry = VERSION_MATRIX.find((candidate) => candidate.id === id)!;
-  const original = { ...entry };
-  Object.assign(entry, patch);
-  try {
-    await body();
-  } finally {
-    for (const key of Object.keys(entry) as Array<keyof FeatureCompatibility>) {
-      delete (entry as unknown as Record<string, unknown>)[key];
-    }
-    Object.assign(entry, original);
-  }
-}
-
 describe("cursor golden fixtures", () => {
   const envSnapshot = { ...process.env };
 
@@ -202,7 +185,7 @@ describe("cursor golden fixtures", () => {
     expect(scopedRule?.description).toBe("Scoped TypeScript rule");
     expect(scopedRule?.globs).toEqual(["**/*.ts"]);
 
-    await withMatrixPatch("rules.fileExtension", { maxVersion: undefined }, async () => {
+    await withMatrixPatch(VERSION_MATRIX, "rules.fileExtension", { maxVersion: undefined }, async () => {
       const withoutBound = await runGoldenFixture("version-drift");
       const warningWithoutBound = withoutBound.actual.resolutions[0]!.warnings.find(
         (warning) => warning.matrixRef === "rules.fileExtension",

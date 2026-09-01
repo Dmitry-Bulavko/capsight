@@ -3,6 +3,7 @@ import fsPromises from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
+import { withMatrixPatch } from "../helpers/matrix-patch.js";
 import type {
   EffectiveConfiguration,
   PlatformVersion,
@@ -160,24 +161,6 @@ async function runGoldenFixture(
   };
 }
 
-async function withMatrixPatch(
-  id: string,
-  patch: Partial<FeatureCompatibility>,
-  body: () => Promise<void>,
-): Promise<void> {
-  const entry = VERSION_MATRIX.find((candidate) => candidate.id === id)!;
-  const original = { ...entry };
-  Object.assign(entry, patch);
-  try {
-    await body();
-  } finally {
-    for (const key of Object.keys(entry) as Array<keyof FeatureCompatibility>) {
-      delete (entry as unknown as Record<string, unknown>)[key];
-    }
-    Object.assign(entry, original);
-  }
-}
-
 describe("codex golden fixtures", () => {
   const envSnapshot = { ...process.env };
 
@@ -227,7 +210,7 @@ describe("codex golden fixtures", () => {
       enforcement: "enforced",
     });
 
-    await withMatrixPatch("settings.knownKeysOnly", { maxVersion: undefined }, async () => {
+    await withMatrixPatch(VERSION_MATRIX, "settings.knownKeysOnly", { maxVersion: undefined }, async () => {
       const withoutBound = await runGoldenFixture("version-drift");
       const restoredLayer = withoutBound.actual.discovery.settings[0] as {
         unknownFields?: Record<string, string>;

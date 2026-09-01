@@ -1,67 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildEcosystemInventory } from "../../src/application/ecosystem.js";
-import type { ScanResult } from "../../src/application/scan.js";
 import { RESOURCE_CLASS } from "../../src/core/compat/resource-class.js";
-import type { Agent, ProjectSnapshot } from "../../src/core/model/index.js";
-
-function makeAgent(overrides: Partial<Agent> = {}): Agent {
-  return {
-    id: "backend",
-    name: "backend",
-    description: "Backend agent",
-    source: {
-      platform: "claude",
-      scope: "project",
-      path: "/repo/.claude/agents/backend.md",
-    },
-    status: "active",
-    configuration: { unknownFields: {} },
-    isPluginAgent: false,
-    ...overrides,
-  };
-}
-
-function makeSnapshot(overrides: Partial<ProjectSnapshot> = {}): ProjectSnapshot {
-  return {
-    id: "snapshot-1",
-    projectPath: "/repo",
-    version: {
-      platform: "claude",
-      version: "1.0.0",
-      raw: "1.0.0",
-      detectedAt: "2026-01-01T00:00:00.000Z",
-    },
-    environment: { relevant: [] },
-    trust: { accepted: true, projectPath: "/repo" },
-    agents: [],
-    skills: [],
-    instructions: [],
-    mcpServers: [],
-    settings: [],
-    warnings: [],
-    scannedAt: "2026-01-01T00:00:00.000Z",
-    ...overrides,
-  };
-}
-
-function makeScanResult(
-  platform: ScanResult["platform"],
-  snapshotOverrides: Partial<ProjectSnapshot> = {},
-): ScanResult {
-  return {
-    platform,
-    status: "complete",
-    snapshot: makeSnapshot({
-      ...snapshotOverrides,
-      version: {
-        platform,
-        version: "1.0.0",
-        raw: "1.0.0",
-        detectedAt: "2026-01-01T00:00:00.000Z",
-      },
-    }),
-  };
-}
+import { makeAgent, makePlatformScanResult } from "../helpers/ecosystem-fixtures.js";
 
 describe("buildEcosystemInventory()", () => {
   it("merges resources from multiple platform snapshots", () => {
@@ -73,7 +13,7 @@ describe("buildEcosystemInventory()", () => {
         { platform: "claude", status: "not-detected", evidence: [] },
       ],
       scans: {
-        cursor: makeScanResult("cursor", {
+        cursor: makePlatformScanResult("cursor", {
           instructions: [
             {
               id: "agents-md",
@@ -84,7 +24,7 @@ describe("buildEcosystemInventory()", () => {
             },
           ],
         }),
-        codex: makeScanResult("codex", {
+        codex: makePlatformScanResult("codex", {
           agents: [
             makeAgent({
               id: "primary",
@@ -129,7 +69,7 @@ describe("buildEcosystemInventory()", () => {
         { platform: "claude", status: "not-detected", evidence: [] },
       ],
       scans: {
-        cursor: makeScanResult("cursor", {
+        cursor: makePlatformScanResult("cursor", {
           instructions: [
             {
               id: "agents-md",
@@ -140,7 +80,7 @@ describe("buildEcosystemInventory()", () => {
             },
           ],
         }),
-        claude: makeScanResult("claude", {
+        claude: makePlatformScanResult("claude", {
           agents: [
             makeAgent({
               id: "fallback",
@@ -165,7 +105,7 @@ describe("buildEcosystemInventory()", () => {
       projectPath: "/repo",
       detection: [{ platform: "claude", status: "detected", evidence: [] }],
       scans: {
-        claude: makeScanResult("claude", {
+        claude: makePlatformScanResult("claude", {
           agents: [
             makeAgent({
               id: "local-backend",
@@ -234,7 +174,7 @@ describe("buildEcosystemInventory()", () => {
       projectPath: "/repo",
       detection: [{ platform: "claude", status: "detected", evidence: [] }],
       scans: {
-        claude: makeScanResult("claude", {
+        claude: makePlatformScanResult("claude", {
           agents: [projectAgent, localAgent],
         }),
       },
@@ -287,7 +227,7 @@ describe("buildEcosystemInventory()", () => {
       projectPath: "/repo",
       detection: [{ platform: "claude", status: "detected", evidence: [] }],
       scans: {
-        claude: makeScanResult("claude", {
+        claude: makePlatformScanResult("claude", {
           agents: [first, second],
         }),
       },
@@ -303,7 +243,7 @@ describe("buildEcosystemInventory()", () => {
       projectPath: "/repo",
       detection: [{ platform: "cursor", status: "detected", evidence: [] }],
       scans: {
-        cursor: makeScanResult("cursor", {
+        cursor: makePlatformScanResult("cursor", {
           skills: [
             {
               id: "lint",

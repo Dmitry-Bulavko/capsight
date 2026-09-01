@@ -3,6 +3,7 @@ import fsPromises from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { withMatrixPatch, withMatrixPatchSync } from "../../../helpers/matrix-patch.js";
 import type { PlatformVersion } from "../../../../src/core/model/index.js";
 import {
   FACT,
@@ -233,7 +234,7 @@ describe("codex resolveEnforcement", () => {
   });
 
   it("downgrades only rules outside their declared version range", () => {
-    withMatrixPatchSync(MATRIX["instruction.chain"], { minVersion: "99.0.0" }, () => {
+    withMatrixPatchSync(VERSION_MATRIX,MATRIX["instruction.chain"], { minVersion: "99.0.0" }, () => {
       expect(
         resolveEnforcement({ matrixId: MATRIX["instruction.chain"], version: DETECTED })
           .enforcement,
@@ -245,7 +246,7 @@ describe("codex resolveEnforcement", () => {
   });
 
   it("downgrades settings.knownKeysOnly above maxVersion while neighbors stay enforced", () => {
-    withMatrixPatchSync(MATRIX["settings.knownKeysOnly"], { maxVersion: "0.130.0" }, () => {
+    withMatrixPatchSync(VERSION_MATRIX,MATRIX["settings.knownKeysOnly"], { maxVersion: "0.130.0" }, () => {
       expect(
         resolveEnforcement({
           matrixId: MATRIX["settings.knownKeysOnly"],
@@ -266,14 +267,14 @@ describe("codex lookupFeature", () => {
   const DETECTED = "0.130.0";
 
   it("marks entries unsupported below minVersion", () => {
-    withMatrixPatchSync(MATRIX["instruction.chain"], { minVersion: "99.0.0" }, () => {
+    withMatrixPatchSync(VERSION_MATRIX,MATRIX["instruction.chain"], { minVersion: "99.0.0" }, () => {
       expect(lookupFeature(MATRIX["instruction.chain"], DETECTED)?.status).toBe("unsupported");
       expect(lookupFeature(MATRIX["instruction.chain"], "99.0.0")?.status).toBe("supported");
     });
   });
 
   it("marks entries unsupported above maxVersion", () => {
-    withMatrixPatchSync(MATRIX["settings.knownKeysOnly"], { maxVersion: "0.130.0" }, () => {
+    withMatrixPatchSync(VERSION_MATRIX,MATRIX["settings.knownKeysOnly"], { maxVersion: "0.130.0" }, () => {
       expect(lookupFeature(MATRIX["settings.knownKeysOnly"], "0.131.0")?.status).toBe(
         "unsupported",
       );
@@ -337,7 +338,7 @@ describe("codex fixture deletion tests (H1-28)", () => {
     const baseline = await runCodexFixture("agents-precedence");
     expect(baseline.resolutions[0]!.capabilities[0]?.status).toBe("available");
 
-    await withMatrixPatch(MATRIX["instruction.chain"], { status: "unknown" }, async () => {
+    await withMatrixPatch(VERSION_MATRIX,MATRIX["instruction.chain"], { status: "unknown" }, async () => {
       const withoutRule = await runCodexFixture("agents-precedence");
       expect(withoutRule.resolutions[0]!.capabilities[0]?.status).toBe("unknown");
     });
@@ -351,7 +352,7 @@ describe("codex fixture deletion tests (H1-28)", () => {
     expect(trustWarning?.enforcement).toBe("enforced");
     expect(trustWarning?.message).toContain("project .codex/ layers are not loaded");
 
-    await withMatrixPatch(MATRIX["trust.project"], { status: "unknown" }, async () => {
+    await withMatrixPatch(VERSION_MATRIX,MATRIX["trust.project"], { status: "unknown" }, async () => {
       const withoutRule = await runCodexFixture("trust-untrusted");
       const after = withoutRule.resolutions[0]!.warnings.find(
         (warning) => warning.matrixRef === MATRIX["trust.project"],
@@ -365,7 +366,7 @@ describe("codex fixture deletion tests (H1-28)", () => {
     expect(baseline.discovery.instructions).toHaveLength(1);
     expect(baseline.discovery.instructions[0]).toMatchObject({ type: "fallback" });
 
-    await withMatrixPatch(MATRIX["instruction.fallback"], { status: "unknown" }, async () => {
+    await withMatrixPatch(VERSION_MATRIX,MATRIX["instruction.fallback"], { status: "unknown" }, async () => {
       const withoutRule = await runCodexFixture("instruction-fallback");
       expect(withoutRule.discovery.instructions).toEqual([]);
       expect(withoutRule.discovery.agents).toEqual([]);
@@ -376,7 +377,7 @@ describe("codex fixture deletion tests (H1-28)", () => {
     const baseline = await runCodexFixture("basic");
     expect(baseline.discovery.agents[0]).toMatchObject({ status: "active" });
 
-    await withMatrixPatch(MATRIX["agent.instructionBased"], { status: "unknown" }, async () => {
+    await withMatrixPatch(VERSION_MATRIX,MATRIX["agent.instructionBased"], { status: "unknown" }, async () => {
       const withoutRule = await runCodexFixture("basic");
       expect(withoutRule.discovery.agents[0]).toMatchObject({ status: "unknown" });
     });
@@ -390,7 +391,7 @@ describe("codex fixture deletion tests (H1-28)", () => {
       ),
     ).toBe(true);
 
-    await withMatrixPatch(MATRIX["trust.unreadable"], { status: "unknown" }, async () => {
+    await withMatrixPatch(VERSION_MATRIX,MATRIX["trust.unreadable"], { status: "unknown" }, async () => {
       const withoutRule = await runCodexFixture("basic");
       expect(
         withoutRule.resolutions[0]!.warnings.some(
@@ -409,7 +410,7 @@ describe("codex fixture deletion tests (H1-28)", () => {
       experimental_feature_enabled: "boolean",
     });
 
-    await withMatrixPatch(MATRIX["settings.knownKeysOnly"], { status: "unknown" }, async () => {
+    await withMatrixPatch(VERSION_MATRIX,MATRIX["settings.knownKeysOnly"], { status: "unknown" }, async () => {
       const withoutRule = await runCodexFixture("basic");
       const strippedLayer = withoutRule.discovery.settings[0] as {
         unknownFields?: Record<string, string>;
@@ -431,7 +432,7 @@ describe("codex fixture deletion tests (H1-28)", () => {
       enforcement: "enforced",
     });
 
-    await withMatrixPatch(MATRIX["settings.knownKeysOnly"], { maxVersion: undefined }, async () => {
+    await withMatrixPatch(VERSION_MATRIX,MATRIX["settings.knownKeysOnly"], { maxVersion: undefined }, async () => {
       const withoutBound = await runCodexFixture("version-drift");
       const restoredLayer = withoutBound.discovery.settings[0] as {
         unknownFields?: Record<string, string>;
@@ -442,39 +443,3 @@ describe("codex fixture deletion tests (H1-28)", () => {
     });
   });
 });
-
-async function withMatrixPatch(
-  id: MatrixId,
-  patch: Partial<FeatureCompatibility>,
-  body: () => Promise<void>,
-): Promise<void> {
-  const entry = VERSION_MATRIX.find((candidate) => candidate.id === id)!;
-  const original = { ...entry };
-  Object.assign(entry, patch);
-  try {
-    await body();
-  } finally {
-    for (const key of Object.keys(entry) as Array<keyof FeatureCompatibility>) {
-      delete (entry as unknown as Record<string, unknown>)[key];
-    }
-    Object.assign(entry, original);
-  }
-}
-
-function withMatrixPatchSync(
-  id: MatrixId,
-  patch: Partial<FeatureCompatibility>,
-  body: () => void,
-): void {
-  const entry = VERSION_MATRIX.find((candidate) => candidate.id === id)!;
-  const original = { ...entry };
-  Object.assign(entry, patch);
-  try {
-    body();
-  } finally {
-    for (const key of Object.keys(entry) as Array<keyof FeatureCompatibility>) {
-      delete (entry as unknown as Record<string, unknown>)[key];
-    }
-    Object.assign(entry, original);
-  }
-}
