@@ -1,24 +1,18 @@
 import { useMemo, useState } from "react";
 import type {
   ResolvedCapability,
-  SourceInfo,
   Warning,
 } from "../../core/model/index.js";
+import { formatSourceLine } from "../format/source-line.js";
 import { ENFORCEMENT_LABELS } from "./WhyPanel.js";
+
+export { formatSourceLine };
 
 export interface DisplayWarning extends Warning {
   agentId?: string;
 }
 
 export type WarningScope = "agent" | "all";
-
-export function formatSourceLine(source: SourceInfo): string {
-  const path = source.path ?? source.scope;
-  if (source.fieldPath) {
-    return `${path} — ${source.fieldPath}`;
-  }
-  return path;
-}
 
 export function parseHealthWarningFilter(filterId: string): Warning["severity"] | null {
   const match = /^warnings:(info|warning|critical)$/.exec(filterId);

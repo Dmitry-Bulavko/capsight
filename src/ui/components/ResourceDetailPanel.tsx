@@ -4,7 +4,8 @@ import { RESOURCE_CLASS } from "../../core/compat/resource-class.js";
 import type { InspectionGraph } from "../../core/graph/build-graph.js";
 import type { OverlapRelation, InventoryResourceKind } from "../../core/model/ecosystem.js";
 import { isMarkdownContentKind } from "../../core/model/ecosystem.js";
-import type { Agent, SourceInfo } from "../../core/model/index.js";
+import type { Agent } from "../../core/model/index.js";
+import { formatSourceLine } from "../format/source-line.js";
 import type {
   EcosystemResourceDetail,
   InventoryResourceWithCompat,
@@ -245,14 +246,6 @@ function CloseIcon() {
       />
     </svg>
   );
-}
-
-function formatSourceLine(source: SourceInfo): string {
-  const path = source.path ?? source.scope;
-  if (source.fieldPath) {
-    return `${path} — ${source.fieldPath}`;
-  }
-  return path;
 }
 
 function formatFrontmatterValue(value: unknown): string {

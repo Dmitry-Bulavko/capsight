@@ -9,14 +9,13 @@ import {
   SnapshotChangedError,
 } from "../../application/apply.js";
 import { UnsupportedPlatformError } from "../../application/platform-guard.js";
-import { getLastScan } from "../../application/scan-store.js";
+import { requireLastScan } from "../helpers/require-scan.js";
 
 export const applyRouter = Router();
 
 applyRouter.post("/", async (req, res) => {
-  const lastScan = getLastScan();
+  const lastScan = requireLastScan(res);
   if (!lastScan) {
-    res.status(404).json({ error: "No scan available" });
     return;
   }
 
@@ -74,9 +73,8 @@ applyRouter.post("/", async (req, res) => {
 export const rollbackRouter = Router();
 
 rollbackRouter.post("/:operationId", async (req, res) => {
-  const lastScan = getLastScan();
+  const lastScan = requireLastScan(res);
   if (!lastScan) {
-    res.status(404).json({ error: "No scan available" });
     return;
   }
 
@@ -111,9 +109,8 @@ rollbackRouter.post("/:operationId", async (req, res) => {
 export const historyRouter = Router();
 
 historyRouter.get("/", async (_req, res) => {
-  const lastScan = getLastScan();
+  const lastScan = requireLastScan(res);
   if (!lastScan) {
-    res.status(404).json({ error: "No scan available" });
     return;
   }
 

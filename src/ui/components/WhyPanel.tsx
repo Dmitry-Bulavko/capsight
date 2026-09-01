@@ -1,14 +1,11 @@
-import { VERSION_MATRIX as CLAUDE_MATRIX } from "../../adapters/claude/version/matrix.js";
 import {
   factConfidence as claudeFactConfidence,
   isFactId as isClaudeFactId,
 } from "../../adapters/claude/version/facts.js";
-import { VERSION_MATRIX as CODEX_MATRIX } from "../../adapters/codex/version/matrix.js";
 import {
   factConfidence as codexFactConfidence,
   isFactId as isCodexFactId,
 } from "../../adapters/codex/version/facts.js";
-import { VERSION_MATRIX as CURSOR_MATRIX } from "../../adapters/cursor/version/matrix.js";
 import {
   factConfidence as cursorFactConfidence,
   isFactId as isCursorFactId,
@@ -19,6 +16,11 @@ import type {
   ResolutionReason,
   SourceInfo,
 } from "../../core/model/index.js";
+import { formatSourceLine } from "../format/source-line.js";
+import {
+  MATRIX_ENTRY_BY_ID,
+  type MatrixConfidence,
+} from "../matrix-index.js";
 import type { CapabilityExplain } from "../api.js";
 import type { ObservedCapability } from "../../core/observed/index.js";
 import { ObservedWhySection } from "./ObservedStatus.js";
@@ -57,17 +59,6 @@ const PRESET_LABELS: Record<ExecutionContext["preset"], string> = {
 
 /** UI tier labels aligned with fact registry confidence (§8.1). */
 export type EvidenceTier = "runtime" | "fixture" | "doc" | "ext" | "spike" | "unknown";
-
-type MatrixConfidence = "doc" | "fixture" | "runtime-observed";
-
-interface MatrixEntryLike {
-  id: string;
-  confidence: MatrixConfidence;
-}
-
-const MATRIX_ENTRY_BY_ID = new Map<string, MatrixEntryLike>(
-  [...CLAUDE_MATRIX, ...CURSOR_MATRIX, ...CODEX_MATRIX].map((entry) => [entry.id, entry]),
-);
 
 export function matrixConfidenceToTier(confidence: MatrixConfidence): EvidenceTier {
   switch (confidence) {
@@ -109,14 +100,6 @@ function formatContext(context: ExecutionContext): string {
     return `${label} (depth ${context.depth})`;
   }
   return label;
-}
-
-function formatSourceLine(source: SourceInfo): string {
-  const path = source.path ?? source.scope;
-  if (source.fieldPath) {
-    return `${path} — ${source.fieldPath}`;
-  }
-  return path;
 }
 
 function factRefsFromReasons(reasons: readonly ResolutionReason[]): string[] {

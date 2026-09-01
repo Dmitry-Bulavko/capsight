@@ -1,5 +1,6 @@
 import type { PlatformId } from "../../adapters/platform.js";
 import type { Agent, ContextPreset, EffectiveConfiguration } from "../../core/model/index.js";
+import { agentPath } from "../format/agent-source.js";
 import type { ObservedCapability } from "../../core/observed/index.js";
 import type { EditorPendingState } from "../state/editor-store.js";
 import { fetchExplain } from "../api.js";
@@ -50,10 +51,6 @@ interface AgentsWorkspaceProps {
   editorPendingCount: number;
   onToggleTool: (toolName: string) => void;
   onClearPending: () => void;
-}
-
-function agentPath(agent: Agent): string {
-  return agent.source.path ?? "—";
 }
 
 function AgentOverview({ agent }: { agent: Agent }) {

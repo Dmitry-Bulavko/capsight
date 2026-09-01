@@ -1,16 +1,7 @@
 import { useMemo, useState } from "react";
 import type { PlatformId } from "../../adapters/platform.js";
-import { VERSION_MATRIX as CLAUDE_MATRIX } from "../../adapters/claude/version/matrix.js";
-import { VERSION_MATRIX as CODEX_MATRIX } from "../../adapters/codex/version/matrix.js";
-import { VERSION_MATRIX as CURSOR_MATRIX } from "../../adapters/cursor/version/matrix.js";
 import type { EffectiveConfiguration } from "../../core/model/index.js";
-
-const MATRIX_FEATURE_BY_ID = new Map<string, string>(
-  [...CLAUDE_MATRIX, ...CURSOR_MATRIX, ...CODEX_MATRIX].map((entry) => [
-    entry.id,
-    entry.feature,
-  ]),
-);
+import { MATRIX_FEATURE_BY_ID } from "../matrix-index.js";
 
 const PLATFORM_LABELS: Record<PlatformId, string> = {
   claude: "Claude Code",

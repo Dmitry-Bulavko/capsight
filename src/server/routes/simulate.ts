@@ -4,14 +4,13 @@ import {
   simulateManagedOverlay,
 } from "../../application/simulate.js";
 import { UnsupportedPlatformError } from "../../application/platform-guard.js";
-import { getLastScan } from "../../application/scan-store.js";
+import { requireLastScan } from "../helpers/require-scan.js";
 
 export const simulateRouter = Router();
 
 simulateRouter.post("/managed", async (req, res) => {
-  const lastScan = getLastScan();
+  const lastScan = requireLastScan(res);
   if (!lastScan) {
-    res.status(404).json({ error: "No scan available" });
     return;
   }
 

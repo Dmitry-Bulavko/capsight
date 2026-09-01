@@ -1,4 +1,5 @@
 import type { Agent, AgentConfiguration, Scope, UnknownFieldType } from "../../core/model/index.js";
+import { agentPath } from "../format/agent-source.js";
 import { STATUS_LABELS } from "./AgentSelector.js";
 
 interface AgentListProps {
@@ -45,10 +46,6 @@ interface HooksSummaryLike {
   form: "object" | "array" | "scalar";
   events: string[];
   count: number;
-}
-
-function agentPath(agent: Agent): string {
-  return agent.source.path ?? "—";
 }
 
 /** Project-scoped agents first; builtins last; name within each group. */

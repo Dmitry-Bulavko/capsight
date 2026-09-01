@@ -3,17 +3,9 @@ import {
   collectAgentWarnings,
 } from "../../application/collect-warnings.js";
 import { AgentNotFoundError, resolve } from "../../application/resolve.js";
-import { getAgentsFromResult, getLastScan } from "../../application/scan-store.js";
+import { getAgentsFromResult } from "../../application/scan-store.js";
 import { getQueryString, parseContextFromQuery } from "../context-query.js";
-
-function requireLastScan(res: Response) {
-  const lastScan = getLastScan();
-  if (!lastScan) {
-    res.status(404).json({ error: "No scan available" });
-    return null;
-  }
-  return lastScan;
-}
+import { requireLastScan } from "../helpers/require-scan.js";
 
 export const agentsRouter = Router();
 

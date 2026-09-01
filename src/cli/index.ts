@@ -8,6 +8,7 @@ import type {
   ExecutionContext,
   ResolvedCapability,
 } from "../core/model/index.js";
+import { parsePendingJson, PendingValidationError } from "../application/validate-pending.js";
 import { parsePlatformId, type PlatformId } from "../adapters/platform.js";
 import type { ScanResult } from "../application/scan.js";
 import { PERMISSION_MODES, type PermissionMode } from "../adapters/claude/model/index.js";
@@ -426,15 +427,9 @@ program
   .action(async (options: { editSnapshotId: string; pending: string; path?: string }) => {
     let pending: PlanPendingState;
     try {
-      pending = JSON.parse(options.pending) as PlanPendingState;
-    } catch {
-      console.error("Invalid --pending JSON");
-      process.exitCode = 1;
-      return;
-    }
-
-    if (typeof pending.byAgent !== "object" || pending.byAgent === null) {
-      console.error("Pending JSON must include a byAgent object");
+      pending = parsePendingJson(options.pending);
+    } catch (error) {
+      console.error(error instanceof PendingValidationError ? error.message : "Invalid --pending JSON");
       process.exitCode = 1;
       return;
     }
@@ -468,15 +463,9 @@ program
     }) => {
       let pending: PlanPendingState;
       try {
-        pending = JSON.parse(options.pending) as PlanPendingState;
-      } catch {
-        console.error("Invalid --pending JSON");
-        process.exitCode = 1;
-        return;
-      }
-
-      if (typeof pending.byAgent !== "object" || pending.byAgent === null) {
-        console.error("Pending JSON must include a byAgent object");
+        pending = parsePendingJson(options.pending);
+      } catch (error) {
+        console.error(error instanceof PendingValidationError ? error.message : "Invalid --pending JSON");
         process.exitCode = 1;
         return;
       }

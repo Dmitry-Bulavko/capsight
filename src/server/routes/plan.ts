@@ -1,14 +1,13 @@
 import { Router } from "express";
 import { plan } from "../../application/plan.js";
 import { UnsupportedPlatformError } from "../../application/platform-guard.js";
-import { getLastScan } from "../../application/scan-store.js";
+import { requireLastScan } from "../helpers/require-scan.js";
 
 export const planRouter = Router();
 
 planRouter.post("/", async (req, res) => {
-  const lastScan = getLastScan();
+  const lastScan = requireLastScan(res);
   if (!lastScan) {
-    res.status(404).json({ error: "No scan available" });
     return;
   }
 

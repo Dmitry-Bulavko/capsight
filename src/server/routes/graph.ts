@@ -1,19 +1,11 @@
 import { Router, type Response } from "express";
 import { resolve } from "../../application/resolve.js";
 import { UnsupportedPlatformError, assertClaudePlatform } from "../../application/platform-guard.js";
-import { getLastScan } from "../../application/scan-store.js";
+import type { Agent } from "../../core/model/index.js";
 import { buildInspectionGraph, filterGraphToAgent } from "../../core/graph/build-graph.js";
 import { CLAUDE_TOOL_TABLES } from "../../adapters/claude/resolution/tool-tables.js";
 import { getQueryString, parseContextFromQuery } from "../context-query.js";
-
-function requireLastScan(res: Response) {
-  const lastScan = getLastScan();
-  if (!lastScan) {
-    res.status(404).json({ error: "No scan available" });
-    return null;
-  }
-  return lastScan;
-}
+import { requireLastScan } from "../helpers/require-scan.js";
 
 export const graphRouter = Router();
 
@@ -40,11 +32,11 @@ graphRouter.get("/", async (req, res) => {
   }
 
   const requestedAgentId = getQueryString(req.query.agent);
-  const activeAgents = lastScan.snapshot.agents.filter((agent) => agent.status === "active");
+  const activeAgents = lastScan.snapshot.agents.filter((agent: Agent) => agent.status === "active");
   const effectiveByAgent = new Map<string, Awaited<ReturnType<typeof resolve>>>();
 
   if (requestedAgentId) {
-    const selectedAgent = lastScan.snapshot.agents.find((agent) => agent.id === requestedAgentId);
+    const selectedAgent = lastScan.snapshot.agents.find((agent: Agent) => agent.id === requestedAgentId);
     if (!selectedAgent) {
       res.status(400).json({ error: `Invalid agent: ${requestedAgentId}` });
       return;
