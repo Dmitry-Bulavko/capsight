@@ -3,34 +3,35 @@
  * @see docs/CODEX-FACTS.md
  */
 
-import path from "node:path";
 import type {
   EffectiveConfiguration,
   ExecutionContext,
   ProjectSnapshot,
 } from "../../core/model/index.js";
-import type { AdapterScanOptions, PlatformAdapter } from "../platform.js";
+import type { AdapterScanOptions } from "../platform.js";
+import { createPlatformAdapter } from "../shared/create-adapter.js";
 import {
   buildProjectSnapshot,
   walkProjectScopes,
+  type WalkProjectScopesResult,
 } from "./discovery/index.js";
+import type { CodexProjectSnapshot } from "./model/index.js";
 import { resolveEffectiveConfiguration } from "./resolution/resolver.js";
 import { detectCodexVersion } from "./version/index.js";
 
 export const ADAPTER_ID = "codex" as const;
 
-export async function scanProject(options: AdapterScanOptions): Promise<ProjectSnapshot> {
-  const projectPath = path.resolve(options.projectPath);
-  const [version, walk] = await Promise.all([
-    detectCodexVersion(),
-    walkProjectScopes(projectPath),
-  ]);
+export const codexAdapter = createPlatformAdapter<CodexProjectSnapshot, WalkProjectScopesResult>({
+  id: ADAPTER_ID,
+  detectVersion: detectCodexVersion,
+  walkProjectScopes,
+  buildProjectSnapshot,
+  resolveEffectiveConfiguration,
+});
 
-  return buildProjectSnapshot({
-    projectPath,
-    version,
-    walk,
-  });
+export async function scanProject(options: AdapterScanOptions): Promise<ProjectSnapshot> {
+  const result = await codexAdapter.scan(options);
+  return result.snapshot;
 }
 
 export async function resolveProject(
@@ -38,14 +39,5 @@ export async function resolveProject(
   agentId: string,
   context: ExecutionContext,
 ): Promise<EffectiveConfiguration> {
-  return resolveEffectiveConfiguration(snapshot, agentId, context);
+  return codexAdapter.resolve(snapshot, agentId, context);
 }
-
-export const codexAdapter: PlatformAdapter = {
-  id: ADAPTER_ID,
-  scan: async (options) => ({
-    snapshot: await scanProject(options),
-    status: "complete",
-  }),
-  resolve: resolveProject,
-};

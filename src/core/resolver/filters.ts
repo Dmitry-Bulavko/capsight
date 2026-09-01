@@ -1,4 +1,5 @@
 import type { ExecutionContext, ResolutionReason } from "../model/index.js";
+import { makeReason } from "./reasons.js";
 import type { PlatformToolTables } from "./tool-tables.js";
 
 export interface ContextFilterRemoval {
@@ -13,13 +14,6 @@ export interface ContextFilterResult {
   removals: ContextFilterRemoval[];
   /** Set when isFork — filters skipped; resolver uses parent pool (T3). */
   forkSkip?: ResolutionReason;
-}
-
-function makeReason(
-  type: ResolutionReason["type"],
-  message: string,
-): ResolutionReason {
-  return { type, message };
 }
 
 function isPlanMode(context: ExecutionContext, planKind: string): boolean {

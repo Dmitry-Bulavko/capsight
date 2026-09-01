@@ -1,49 +1,16 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { createHash } from "node:crypto";
 import os from "node:os";
 import type { Scope, SourceInfo } from "../../../core/model/index.js";
+import { readJsonObject } from "../../shared/fs.js";
+import { computeMcpConfigHash, computeMcpServerId } from "../../shared/mcp-hash.js";
 import { inferMcpTransport } from "../../shared/infer-mcp-transport.js";
 import { CURSOR_PLATFORM } from "../model/index.js";
 import { extractEnvKeys } from "./redact.js";
 import type { ProjectScopeLevel } from "./project-walk.js";
 import type { DiscoveredMcpServer } from "./types.js";
 
-async function readJsonFile(filePath: string): Promise<Record<string, unknown> | null> {
-  try {
-    const raw = await fs.readFile(filePath, "utf8");
-    const parsed = JSON.parse(raw) as unknown;
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : null;
-  } catch {
-    return null;
-  }
-}
-
-export function computeMcpServerId(configPath: string, name: string): string {
-  return createHash("sha256").update(`${configPath}:${name}`).digest("hex").slice(0, 16);
-}
-
-function sortedKeys(value: unknown): string[] | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  return Object.keys(value).sort();
-}
-
-/** Key-names-only config hash — env values never stored (CM3). */
-export function computeMcpConfigHash(config: Record<string, unknown>): string {
-  const hashInput = {
-    command: config.command,
-    args: config.args,
-    url: config.url,
-    type: config.type,
-    envKeys: sortedKeys(config.env),
-    headerKeys: sortedKeys(config.headers),
-  };
-  return createHash("sha256").update(JSON.stringify(hashInput)).digest("hex").slice(0, 16);
-}
+export { computeMcpConfigHash, computeMcpServerId } from "../../shared/mcp-hash.js";
 
 function source(scope: Scope, configPath: string): SourceInfo {
   return { platform: CURSOR_PLATFORM, scope, path: configPath };
@@ -65,7 +32,7 @@ export async function discoverMcpServers(
     }
     seen.add(key);
 
-    const json = await readJsonFile(configPath);
+    const json = await readJsonObject(configPath);
     if (!json) {
       return;
     }

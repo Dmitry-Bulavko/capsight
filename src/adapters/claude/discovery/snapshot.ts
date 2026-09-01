@@ -1,5 +1,5 @@
-import { createHash } from "node:crypto";
 import type { PlatformVersion } from "../../../core/model/index.js";
+import { computeSnapshotId } from "../../shared/snapshot-id.js";
 import type { ClaudeProjectSnapshot as ProjectSnapshot } from "../model/index.js";
 import { buildPlatformEnvironment } from "../environment/index.js";
 import { discoverAgents } from "./agents.js";
@@ -18,10 +18,6 @@ export interface BuildSnapshotInput {
   addDirs?: string[];
   /** Configured plugin roots; see `discovery/plugins.ts` for why they are input. */
   pluginRoots?: string[];
-}
-
-function computeSnapshotId(payload: string): string {
-  return createHash("sha256").update(payload).digest("hex");
 }
 
 export async function buildProjectSnapshot(

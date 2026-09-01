@@ -1,65 +1,13 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { createHash } from "node:crypto";
+import { readJsonObject } from "../../shared/fs.js";
+import { inferMcpTransport } from "../../shared/infer-mcp-transport.js";
+import { computeMcpConfigHash, computeMcpServerId } from "../../shared/mcp-hash.js";
 import type { Scope, SourceInfo } from "../../../core/model/index.js";
 import type { ProjectScopeLevel } from "./project-walk.js";
 import type { DiscoveredMcpServer } from "./types.js";
 
-async function readJsonFile(filePath: string): Promise<Record<string, unknown> | null> {
-  try {
-    const raw = await fs.readFile(filePath, "utf8");
-    const parsed = JSON.parse(raw) as unknown;
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : null;
-  } catch {
-    return null;
-  }
-}
-
-export function computeMcpServerId(configPath: string, name: string): string {
-  return createHash("sha256").update(`${configPath}:${name}`).digest("hex").slice(0, 16);
-}
-
-function sortedKeys(value: unknown): string[] | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  return Object.keys(value).sort();
-}
-
-/**
- * Key-names-only config hash used for probe cache invalidation (§7.9).
- * Env and header *values* are never hashed or stored (invariant 10).
- */
-export function computeMcpConfigHash(config: Record<string, unknown>): string {
-  const hashInput = {
-    command: config.command,
-    args: config.args,
-    url: config.url,
-    type: config.type,
-    envKeys: sortedKeys(config.env),
-    headerKeys: sortedKeys(config.headers),
-  };
-  return createHash("sha256").update(JSON.stringify(hashInput)).digest("hex").slice(0, 16);
-}
-
-function inferTransport(config: Record<string, unknown>): DiscoveredMcpServer["transport"] {
-  if (typeof config.command === "string") {
-    return "stdio";
-  }
-  if (typeof config.url === "string") {
-    const url = config.url.toLowerCase();
-    if (url.includes("sse")) {
-      return "sse";
-    }
-    if (url.startsWith("ws")) {
-      return "ws";
-    }
-    return "http";
-  }
-  return "unknown";
-}
+export { computeMcpConfigHash, computeMcpServerId } from "../../shared/mcp-hash.js";
 
 function source(scope: Scope, configPath: string): SourceInfo {
   return { platform: "claude", scope, path: configPath };
@@ -81,7 +29,7 @@ export async function discoverMcpServers(
     }
     seen.add(key);
 
-    const json = await readJsonFile(configPath);
+    const json = await readJsonObject(configPath);
     if (!json) {
       return;
     }
@@ -101,7 +49,7 @@ export async function discoverMcpServers(
         name,
         source: source(scope, configPath),
         configPath,
-        transport: inferTransport(serverConfig),
+        transport: inferMcpTransport(serverConfig),
         definitionKind: "config-file",
         status: "configured",
         configHash: computeMcpConfigHash(serverConfig),

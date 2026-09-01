@@ -1,11 +1,13 @@
 import type {
   EffectiveConfiguration,
   ExecutionContext,
-  ResolutionReason,
   ResolvedCapability,
   SourceInfo,
   Warning,
 } from "../../../core/model/index.js";
+import { computeUnknownRate } from "../../../core/resolver/metrics.js";
+import { makeReason } from "../../../core/resolver/reasons.js";
+import { AgentNotFoundError } from "../../shared/errors.js";
 import type {
   CodexAgent as Agent,
   CodexProjectSnapshot as ProjectSnapshot,
@@ -19,37 +21,11 @@ import type {
   DiscoveredSkill,
 } from "../discovery/types.js";
 
-export class AgentNotFoundError extends Error {
-  constructor(agentId: string) {
-    super(`Agent not found: ${agentId}`);
-    this.name = "AgentNotFoundError";
-  }
-}
-
-function makeReason(
-  type: ResolutionReason["type"],
-  message: string,
-  source?: SourceInfo,
-  matrixRef?: string,
-): ResolutionReason {
-  return matrixRef
-    ? { type, message, source, matrixRef }
-    : source
-      ? { type, message, source }
-      : { type, message };
-}
+export { AgentNotFoundError };
 
 function instructionCapabilityId(instruction: DiscoveredInstruction): string {
   const base = instruction.path.split(/[/\\]/).pop() ?? instruction.path;
   return `instruction:${instruction.type}:${base}`;
-}
-
-function computeUnknownRate(capabilities: ResolvedCapability[]): number {
-  if (capabilities.length === 0) {
-    return 0;
-  }
-  const unknownCount = capabilities.filter((cap) => cap.status === "unknown").length;
-  return unknownCount / capabilities.length;
 }
 
 /** @see docs/CODEX-FACTS.md §11 */

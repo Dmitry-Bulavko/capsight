@@ -1,7 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { createHash } from "node:crypto";
 import type { Scope, SourceInfo, TrustState } from "../../../core/model/index.js";
+import { pathExists } from "../../shared/fs.js";
+import { computeMcpConfigHash, computeMcpServerId } from "../../shared/mcp-hash.js";
 import { inferMcpTransport } from "../../shared/infer-mcp-transport.js";
 import { CODEX_PLATFORM } from "../model/index.js";
 import { parseToml, getTomlTable } from "../parsing/toml.js";
@@ -16,39 +17,10 @@ import { scopesRootToCwd } from "./project-walk.js";
 import { shouldSkipProjectCodexLayers } from "./trust.js";
 import type { DiscoveredMcpServer } from "./types.js";
 
-export function computeMcpServerId(configPath: string, name: string): string {
-  return createHash("sha256").update(`${configPath}:${name}`).digest("hex").slice(0, 16);
-}
-
-function sortedKeys(value: unknown): string[] | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  return Object.keys(value).sort();
-}
-
-/** Key-names-only config hash — env values never stored (XSet4). */
-export function computeMcpConfigHash(config: Record<string, unknown>): string {
-  const hashInput = {
-    command: config.command,
-    args: config.args,
-    url: config.url,
-    envKeys: sortedKeys(config.env),
-  };
-  return createHash("sha256").update(JSON.stringify(hashInput)).digest("hex").slice(0, 16);
-}
+export { computeMcpConfigHash, computeMcpServerId } from "../../shared/mcp-hash.js";
 
 function source(scope: Scope, configPath: string): SourceInfo {
   return { platform: CODEX_PLATFORM, scope, path: configPath };
-}
-
-async function fileExists(filePath: string): Promise<boolean> {
-  try {
-    await fs.access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 function extractMcpServersFromParsed(
@@ -117,12 +89,12 @@ export async function discoverMcpServers(
   const skipProjectCodex = shouldSkipProjectCodexLayers(trust);
 
   const systemPath = systemConfigPath();
-  if (systemPath && (await fileExists(systemPath))) {
+  if (systemPath && (await pathExists(systemPath))) {
     await addFromConfigPath(systemPath, "managed", servers, seenNames);
   }
 
   const userPath = userConfigPath();
-  if (await fileExists(userPath)) {
+  if (await pathExists(userPath)) {
     await addFromConfigPath(userPath, "user", servers, seenNames);
   }
 

@@ -1,4 +1,5 @@
 import type { PlatformEnvironment } from "../../../core/model/index.js";
+import { buildEmptyPlatformEnvironment } from "../../shared/empty-environment.js";
 import type { SettingsLayer } from "../discovery/types.js";
 
 export interface BuildPlatformEnvironmentInput {
@@ -10,5 +11,5 @@ export interface BuildPlatformEnvironmentInput {
 export async function buildPlatformEnvironment(
   _input: BuildPlatformEnvironmentInput,
 ): Promise<PlatformEnvironment> {
-  return { relevant: [] };
+  return buildEmptyPlatformEnvironment();
 }

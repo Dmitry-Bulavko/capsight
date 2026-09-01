@@ -1,11 +1,15 @@
 import type {
   EffectiveConfiguration,
   ExecutionContext,
-  ResolutionReason,
   ResolvedCapability,
   SourceInfo,
   Warning,
 } from "../../../core/model/index.js";
+import { computeUnknownRate } from "../../../core/resolver/metrics.js";
+import { makeReason } from "../../../core/resolver/reasons.js";
+import { AgentNotFoundError } from "../../shared/errors.js";
+
+export { AgentNotFoundError };
 import type {
   CursorAgent as Agent,
   CursorProjectSnapshot as ProjectSnapshot,
@@ -15,37 +19,9 @@ import { FACT } from "../version/facts.js";
 import { gateCapability, gateCollision, gateDiscovery, MATRIX } from "../version/matrix.js";
 import type { DiscoveredInstruction, DiscoveredMcpServer, DiscoveredSkill } from "../discovery/types.js";
 
-export class AgentNotFoundError extends Error {
-  constructor(agentId: string) {
-    super(`Agent not found: ${agentId}`);
-    this.name = "AgentNotFoundError";
-  }
-}
-
-function makeReason(
-  type: ResolutionReason["type"],
-  message: string,
-  source?: SourceInfo,
-  matrixRef?: string,
-): ResolutionReason {
-  return matrixRef
-    ? { type, message, source, matrixRef }
-    : source
-      ? { type, message, source }
-      : { type, message };
-}
-
 function instructionCapabilityId(instruction: DiscoveredInstruction): string {
   const base = instruction.path.split(/[/\\]/).pop() ?? instruction.path;
   return `instruction:${instruction.type}:${base}`;
-}
-
-function computeUnknownRate(capabilities: ResolvedCapability[]): number {
-  if (capabilities.length === 0) {
-    return 0;
-  }
-  const unknownCount = capabilities.filter((cap) => cap.status === "unknown").length;
-  return unknownCount / capabilities.length;
 }
 
 /** @see docs/CURSOR-FACTS.md §10 */
