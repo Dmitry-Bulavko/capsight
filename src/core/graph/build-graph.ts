@@ -288,6 +288,54 @@ export function buildInspectionGraph(input: BuildGraphInput): InspectionGraph {
   };
 }
 
+/**
+ * Keep nodes and edges reachable from the selected agent.
+ * Spawn targets (`agent-agent` edges) appear as leaf agent nodes without their subtrees.
+ * @see docs/SPEC.md §7.10
+ */
+export function filterGraphToAgent(graph: InspectionGraph, agentId: string): InspectionGraph {
+  const rootId = agentNodeId(agentId);
+  const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
+  if (!nodeById.has(rootId)) {
+    return { ...graph, nodes: [], edges: [] };
+  }
+
+  const outgoing = new Map<string, GraphEdge[]>();
+  for (const edge of graph.edges) {
+    const edges = outgoing.get(edge.source) ?? [];
+    edges.push(edge);
+    outgoing.set(edge.source, edges);
+  }
+
+  const includedNodeIds = new Set<string>([rootId]);
+  const includedEdgeIds = new Set<string>();
+  const queue = [rootId];
+
+  while (queue.length > 0) {
+    const sourceId = queue.shift()!;
+    for (const edge of outgoing.get(sourceId) ?? []) {
+      includedEdgeIds.add(edge.id);
+
+      const targetId = edge.target;
+      if (edge.kind === "agent-agent" && targetId !== rootId) {
+        includedNodeIds.add(targetId);
+        continue;
+      }
+
+      if (!includedNodeIds.has(targetId)) {
+        includedNodeIds.add(targetId);
+        queue.push(targetId);
+      }
+    }
+  }
+
+  return {
+    context: graph.context,
+    nodes: graph.nodes.filter((node) => includedNodeIds.has(node.id)),
+    edges: graph.edges.filter((edge) => includedEdgeIds.has(edge.id)),
+  };
+}
+
 export const graphNodeIds = {
   agent: agentNodeId,
   tool: toolNodeId,

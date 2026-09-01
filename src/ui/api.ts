@@ -134,8 +134,14 @@ export async function fetchExplain(
   );
 }
 
-export async function fetchGraph(context: ContextPreset): Promise<InspectionGraph> {
+export async function fetchGraph(
+  context: ContextPreset,
+  agentId?: string,
+): Promise<InspectionGraph> {
   const params = new URLSearchParams({ context });
+  if (agentId) {
+    params.set("agent", agentId);
+  }
   return request<InspectionGraph>(`/api/graph?${params.toString()}`);
 }
 

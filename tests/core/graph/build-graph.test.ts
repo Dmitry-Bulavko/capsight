@@ -8,6 +8,7 @@ import type {
 import type { ClaudeProjectSnapshot as ProjectSnapshot } from "../../../src/adapters/claude/model/index.js";
 import {
   buildInspectionGraph,
+  filterGraphToAgent,
   graphNodeIds,
 } from "../../../src/core/graph/build-graph.js";
 import { buildExecutionContext } from "../../../src/adapters/claude/resolution/context.js";
@@ -227,5 +228,76 @@ describe("buildInspectionGraph", () => {
     expect(foregroundGraph.context.preset).toBe("foreground-subagent");
     expect(forkGraph.context.preset).toBe("fork");
     expect(foregroundGraph.edges).not.toEqual(forkGraph.edges);
+  });
+});
+
+describe("filterGraphToAgent", () => {
+  function buildMultiAgentGraph() {
+    const effectiveByAgent = new Map<string, EffectiveConfiguration>([
+      [
+        "backend",
+        makeEffective("backend", [
+          makeCapability({ capabilityId: "Read", kind: "tool" }),
+          makeCapability({ capabilityId: "Agent", kind: "tool" }),
+          makeCapability({ capabilityId: "commit-helper", kind: "skill" }),
+        ]),
+      ],
+      [
+        "worker",
+        makeEffective("worker", [
+          makeCapability({ capabilityId: "Read", kind: "tool" }),
+          makeCapability({ capabilityId: "Write", kind: "tool" }),
+        ]),
+      ],
+    ]);
+
+    return buildInspectionGraph({
+      snapshot: makeSnapshot(),
+      context: mainContext,
+      effectiveByAgent,
+      toolTables: CLAUDE_TOOL_TABLES,
+    });
+  }
+
+  it("keeps nodes and edges reachable from the selected agent", () => {
+    const graph = buildMultiAgentGraph();
+    const filtered = filterGraphToAgent(graph, "backend");
+
+    expect(filtered.nodes.map((node) => node.id)).toEqual(
+      expect.arrayContaining([
+        graphNodeIds.agent("backend"),
+        graphNodeIds.tool("Read"),
+        graphNodeIds.tool("Agent"),
+        graphNodeIds.skill("commit-helper"),
+        graphNodeIds.agent("worker"),
+      ]),
+    );
+    expect(filtered.nodes.some((node) => node.id === graphNodeIds.tool("Write"))).toBe(false);
+    expect(filtered.edges.some((edge) => edge.kind === "agent-agent")).toBe(true);
+  });
+
+  it("treats spawn target agents as leaves without their subtrees", () => {
+    const graph = buildMultiAgentGraph();
+    const filtered = filterGraphToAgent(graph, "backend");
+
+    expect(filtered.nodes.some((node) => node.id === graphNodeIds.agent("worker"))).toBe(true);
+    expect(filtered.nodes.some((node) => node.id === graphNodeIds.tool("Write"))).toBe(false);
+    expect(
+      filtered.edges.some(
+        (edge) =>
+          edge.kind === "agent-tool" &&
+          edge.source === graphNodeIds.agent("worker") &&
+          edge.target === graphNodeIds.tool("Write"),
+      ),
+    ).toBe(false);
+  });
+
+  it("returns an empty graph when the agent node is missing", () => {
+    const graph = buildMultiAgentGraph();
+    const filtered = filterGraphToAgent(graph, "missing");
+
+    expect(filtered.nodes).toEqual([]);
+    expect(filtered.edges).toEqual([]);
+    expect(filtered.context).toEqual(graph.context);
   });
 });

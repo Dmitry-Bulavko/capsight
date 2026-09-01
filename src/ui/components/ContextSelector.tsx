@@ -4,6 +4,7 @@ import {
   DEFAULT_CONTEXT_PRESET,
   DEFAULT_CONTEXT_REASON,
 } from "../../core/model/context-presets.js";
+import { CapsightSelect } from "./CapsightSelect.js";
 import {
   DeclaredEffectivePanel,
   extractForkNotice,
@@ -27,33 +28,45 @@ function formatUnknownRate(rate: number): string {
   return `${Math.round(rate * 100)}%`;
 }
 
-interface ContextSelectorProps {
+interface ContextPresetControlProps {
   preset: ContextPreset;
   onPresetChange: (preset: ContextPreset) => void;
-  unknownRate: number | null;
-  loading?: boolean;
-  error?: string | null;
-  hasSelectedAgent?: boolean;
-  effective?: EffectiveConfiguration | null;
-  agent?: Agent | null;
+  /** Unique prefix for radio `name` when multiple controls appear on one page. */
+  namePrefix?: string;
+  compact?: boolean;
 }
 
-export function ContextSelector({
+export function ContextPresetControl({
   preset,
   onPresetChange,
-  unknownRate,
-  loading = false,
-  error = null,
-  hasSelectedAgent = true,
-  effective = null,
-  agent = null,
-}: ContextSelectorProps) {
-  const forkNotice = preset === "fork" && effective ? extractForkNotice(effective) : null;
+  namePrefix = "context-preset",
+  compact = false,
+}: ContextPresetControlProps) {
+  if (compact) {
+    const selectId = `${namePrefix}-select`;
+    return (
+      <div className="context-preset-control-compact-select">
+        <label className="context-preset-select-label" htmlFor={selectId}>
+          Context
+        </label>
+        <CapsightSelect
+          id={selectId}
+          value={preset}
+          options={CONTEXT_PRESETS.map((option) => ({
+            value: option,
+            label: PRESET_LABELS[option],
+            sublabel: option,
+          }))}
+          onChange={(value) => onPresetChange(value as ContextPreset)}
+          ariaLabel="Execution context preset"
+          className="context-preset-select"
+        />
+      </div>
+    );
+  }
 
   return (
-    <section className="panel context-selector">
-      <h2>Execution context</h2>
-
+    <div className="context-preset-control">
       <fieldset className="context-presets">
         <legend>Context preset</legend>
         <ul className="preset-options">
@@ -62,7 +75,7 @@ export function ContextSelector({
               <label className="preset-option">
                 <input
                   type="radio"
-                  name="context-preset"
+                  name={namePrefix}
                   value={option}
                   checked={preset === option}
                   onChange={() => onPresetChange(option)}
@@ -78,6 +91,44 @@ export function ContextSelector({
       <p className="context-default-note">
         <code>{DEFAULT_CONTEXT_PRESET}</code> — {DEFAULT_CONTEXT_REASON}
       </p>
+    </div>
+  );
+}
+
+interface ContextSelectorProps {
+  preset: ContextPreset;
+  onPresetChange: (preset: ContextPreset) => void;
+  unknownRate: number | null;
+  loading?: boolean;
+  error?: string | null;
+  hasSelectedAgent?: boolean;
+  effective?: EffectiveConfiguration | null;
+  agent?: Agent | null;
+  showPresetSelector?: boolean;
+  showDeclaredEffective?: boolean;
+}
+
+export function ContextSelector({
+  preset,
+  onPresetChange,
+  unknownRate,
+  loading = false,
+  error = null,
+  hasSelectedAgent = true,
+  effective = null,
+  agent = null,
+  showPresetSelector = true,
+  showDeclaredEffective = true,
+}: ContextSelectorProps) {
+  const forkNotice = preset === "fork" && effective ? extractForkNotice(effective) : null;
+
+  return (
+    <section className="panel context-selector">
+      <h2>Execution context</h2>
+
+      {showPresetSelector && (
+        <ContextPresetControl preset={preset} onPresetChange={onPresetChange} />
+      )}
 
       {forkNotice && <ForkConfigurationNoticeView notice={forkNotice} />}
 
@@ -97,7 +148,7 @@ export function ContextSelector({
         </dl>
       )}
 
-      {hasSelectedAgent && !loading && !error && effective && (
+      {showDeclaredEffective && hasSelectedAgent && !loading && !error && effective && (
         <DeclaredEffectivePanel effective={effective} agent={agent} />
       )}
     </section>

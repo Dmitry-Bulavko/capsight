@@ -1,18 +1,15 @@
 # Capsight continuation
 
-**Active phase:** none — S9P complete  
-**Last completed:** S9P — Observed partial (invocation-only)
+**Active phase:** none — UI-A complete  
+**Branch:** `feat/ui-a-agents-workspace` (ready for merge)  
+**Last completed:** UI-A — Agent Workspace (IA restructure)
 
-## S9P outcome
+## UI-A outcome
 
-- Dev-only probe harness (S9P-01) + UX contract (S9P-02)
-- `ObservedCapability` core model (S9P-03)
-- `capsight observe --fixture` CLI (S9P-04)
-- Hook invocation collector (S9P-05)
-- UI with one-sided disclaimer (S9P-06)
-- Phase gate (S9P-07) — D4-06 unchanged
-
-Structural `resolved != observed` (S9-04) remains **cancelled**.
+- Dashboard: **Ecosystem | Agents | Simulation** (was 8 tabs)
+- Agents workspace: master-detail with Overview, Context, Capabilities, Warnings, Graph (per-agent), Editor
+- Ecosystem bridge lands in Agents workspace; DriftBanner scoped to Agents tab
+- Graph API: optional `?agent=` for per-agent subgraph
 
 ## Evidence ceiling
 
@@ -24,4 +21,4 @@ Structural `resolved != observed` (S9-04) remains **cancelled**.
 
 ## Orchestration
 
-Autonomous loop complete for S9P wave.
+UI-A-01…UI-A-07 complete. Merge `feat/ui-a-agents-workspace` when ready.

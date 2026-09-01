@@ -1,16 +1,28 @@
-import type { Agent, AgentConfiguration, UnknownFieldType } from "../../core/model/index.js";
+import type { Agent, AgentConfiguration, Scope, UnknownFieldType } from "../../core/model/index.js";
+import { STATUS_LABELS } from "./AgentSelector.js";
 
 interface AgentListProps {
   agents: Agent[];
 }
 
-const STATUS_LABELS: Record<Agent["status"], string> = {
-  active: "Active",
-  invalid: "Invalid",
-  ambiguous: "Ambiguous",
-  shadowed: "Shadowed",
-  unknown: "Unknown",
-};
+export interface SelectableAgentListProps {
+  agents: Agent[];
+  selectedAgentId: string | null;
+  onAgentSelect: (agentId: string) => void;
+}
+
+function collisionIndicatorTitle(agent: Agent): string {
+  if (!agent.collision) {
+    return "";
+  }
+  const base =
+    agent.status === "ambiguous"
+      ? "Name collision — no effective winner selected."
+      : agent.status === "shadowed"
+        ? "Shadowed by another definition."
+        : "Name collision.";
+  return agent.collision.rule ? `${base} (${agent.collision.rule})` : base;
+}
 
 /** Primary array fields — always shown so absent vs empty stays visible. */
 const ARRAY_FIELDS = ["tools", "disallowedTools", "skills"] as const;
@@ -37,6 +49,32 @@ interface HooksSummaryLike {
 
 function agentPath(agent: Agent): string {
   return agent.source.path ?? "—";
+}
+
+/** Project-scoped agents first; builtins last; name within each group. */
+const SCOPE_LIST_RANK: Record<Scope, number> = {
+  project: 0,
+  "nested-project": 1,
+  local: 2,
+  user: 3,
+  plugin: 4,
+  managed: 5,
+  cli: 6,
+  unknown: 7,
+  builtin: 100,
+};
+
+export function compareAgentsForList(left: Agent, right: Agent): number {
+  const scopeDelta =
+    SCOPE_LIST_RANK[left.source.scope] - SCOPE_LIST_RANK[right.source.scope];
+  if (scopeDelta !== 0) {
+    return scopeDelta;
+  }
+  return left.name.localeCompare(right.name);
+}
+
+export function sortAgentsForList(agents: Agent[]): Agent[] {
+  return [...agents].sort(compareAgentsForList);
 }
 
 function configRecord(configuration: AgentConfiguration): Record<string, unknown> {
@@ -128,7 +166,7 @@ function DeclaredListValue({
   return <span className="mono">{value.text}</span>;
 }
 
-function AgentDeclaredConfiguration({ agent }: { agent: Agent }) {
+export function AgentDeclaredConfiguration({ agent }: { agent: Agent }) {
   const record = configRecord(agent.configuration);
   const notInEffect = agent.status === "invalid";
 
@@ -203,6 +241,58 @@ function AgentDeclaredConfiguration({ agent }: { agent: Agent }) {
   );
 }
 
+export function SelectableAgentList({
+  agents,
+  selectedAgentId,
+  onAgentSelect,
+}: SelectableAgentListProps) {
+  if (agents.length === 0) {
+    return <p className="empty-state">No agents discovered.</p>;
+  }
+
+  const sorted = sortAgentsForList(agents);
+
+  return (
+    <ul className="agent-list-compact" role="listbox" aria-label="Agents">
+      {sorted.map((agent) => {
+        const isSelected = agent.id === selectedAgentId;
+        return (
+          <li key={agent.id} role="presentation">
+            <button
+              type="button"
+              role="option"
+              aria-selected={isSelected}
+              className={`agent-list-compact-row status-${agent.status}${
+                isSelected ? " agent-list-compact-row--selected" : ""
+              }`}
+              onClick={() => onAgentSelect(agent.id)}
+            >
+              <span className="agent-list-compact-primary">
+                <span className="agent-list-compact-name">{agent.name}</span>
+                <span className="agent-list-compact-scope">{agent.source.scope}</span>
+              </span>
+              <span className="agent-list-compact-badges">
+                {agent.collision && (
+                  <span
+                    className="agent-list-compact-collision"
+                    title={collisionIndicatorTitle(agent)}
+                    aria-label={collisionIndicatorTitle(agent)}
+                  >
+                    Collision
+                  </span>
+                )}
+                <span className={`status-badge status-${agent.status}`}>
+                  {STATUS_LABELS[agent.status]}
+                </span>
+              </span>
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export function AgentList({ agents }: AgentListProps) {
   if (agents.length === 0) {
     return (
@@ -213,7 +303,7 @@ export function AgentList({ agents }: AgentListProps) {
     );
   }
 
-  const sorted = [...agents].sort((a, b) => a.name.localeCompare(b.name));
+  const sorted = sortAgentsForList(agents);
 
   return (
     <section className="panel agent-list">

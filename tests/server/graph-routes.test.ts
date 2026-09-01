@@ -32,8 +32,25 @@ const mockAgent: Agent = {
   },
   status: "active",
   configuration: {
-    tools: ["Read", "Write", "Grep", "Bash"],
+    tools: ["Read", "Write", "Grep", "Bash", "Agent"],
     disallowedTools: ["Bash"],
+    unknownFields: {},
+  },
+  isPluginAgent: false,
+};
+
+const workerAgent: Agent = {
+  id: "worker",
+  name: "worker",
+  description: "Worker agent",
+  source: {
+    platform: "claude",
+    scope: "project",
+    path: "/mock/project/.claude/agents/worker.md",
+  },
+  status: "active",
+  configuration: {
+    tools: ["Read", "Write"],
     unknownFields: {},
   },
   isPluginAgent: false,
@@ -134,5 +151,49 @@ describe("GET /api/graph", () => {
     expect(foreground.status).toBe(200);
     expect(fork.status).toBe(200);
     expect(foreground.body.edges).not.toEqual(fork.body.edges);
+  });
+
+  it("returns 400 for an unknown agent query parameter", async () => {
+    setLastScan(makeScanResult({ agents: [mockAgent, workerAgent] }));
+
+    const response = await request(app).get("/api/graph?agent=missing-agent");
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/Invalid agent: missing-agent/);
+  });
+
+  it("returns a per-agent subgraph when agent is set", async () => {
+    setLastScan(makeScanResult({ agents: [mockAgent, workerAgent] }));
+
+    const full = await request(app).get("/api/graph?context=main-session");
+    const scoped = await request(app).get("/api/graph?context=main-session&agent=backend");
+
+    expect(full.status).toBe(200);
+    expect(scoped.status).toBe(200);
+    expect(scoped.body.nodes.some((node: { id: string }) => node.id === "agent:backend")).toBe(
+      true,
+    );
+    expect(scoped.body.nodes.some((node: { id: string }) => node.id === "agent:worker")).toBe(
+      true,
+    );
+    expect(
+      scoped.body.edges.some(
+        (edge: { source: string; target: string; kind: string }) =>
+          edge.kind === "agent-agent" &&
+          edge.source === "agent:backend" &&
+          edge.target === "agent:worker",
+      ),
+    ).toBe(true);
+    expect(
+      scoped.body.edges.some(
+        (edge: { source: string }) => edge.source === "agent:worker",
+      ),
+    ).toBe(false);
+    expect(
+      full.body.edges.some(
+        (edge: { source: string }) => edge.source === "agent:worker",
+      ),
+    ).toBe(true);
+    expect(scoped.body.edges.length).toBeLessThan(full.body.edges.length);
   });
 });

@@ -4,17 +4,19 @@ Contract: [SPEC.md](./SPEC.md) · Backlog: [TASKS.md](./TASKS.md) · Workflow: [
 
 ## Current focus
 
-**S9P complete.** Invocation-only observed layer shipped (dev-only observe CLI, hook collector, UI badges). D4-06 unchanged — entry-owed **0**, unverified **18**, fv **42**.
+**UI-A complete.** No active phase. Dashboard IA matches the two-layer data model: Ecosystem (declared) + Agents master-detail workspace (effective) + Simulation.
 
-Structural §9 (S9-04) remains deferred. No active phase scheduled.
+Evidence ceiling unchanged — entry-owed **0**, unverified **18**, fv **42**. Structural §9 (S9-04) remains deferred.
 
 ## Phase order (active backlog)
 
 ```
-(none — S9P complete; structural §9 deferred)
+(no active phase — UI-A complete)
 ```
 
-Completed chain: `… → D5 → S9 → S9P`.
+Completed chain: `… → D5 → S9 → S9P → UI-A`.
+
+**Branch:** merge `feat/ui-a-agents-workspace` → `main` when CI green.
 
 ## Phase status
 
@@ -46,6 +48,17 @@ Completed chain: `… → D5 → S9 → S9P`.
 | D5 | Evidence depth wave 5 | `done` | fv **42** (+1 F11); gate revised; D4-06 unchanged |
 | S9P | Observed partial (invocation-only) | `done` | Dev-only observe + UI; D4-06 unchanged |
 | §9 — Observed layer | `partial` | S9P done — invocation-only; S9-04 structural deferred |
+| UI-A — Agent Workspace | `done` | UI-A-01…UI-A-07 complete; browser IA matches two-layer data model |
+
+## UI-A scope note — Agent Workspace (IA restructure) — closed
+
+After EC, the data model was two-layer (declared ecosystem vs effective resolution) but the UI exposed eight top-level tabs with a global `AgentSelector` in the header. Context, Capabilities, Graph, Editor and Warnings were one logical workflow split across five destinations.
+
+**UI-A outcome (delivered).** Top navigation is **Ecosystem | Agents | Simulation**. The Agents tab is a master-detail workspace: agent list on the left, context preset + drift banner in chrome, sub-tabs on the right (Overview, Context, Capabilities, Warnings, Graph, Editor). Graph scopes to the selected agent via `GET /api/graph?agent=<id>`. Ecosystem bridge lands in Agents workspace Capabilities sub-tab.
+
+**Gate (closed):** UI-A-05 made the new IA the only navigation path; UI-A-07 recorded it in [UI-SURFACE-PLAN.md](./UI-SURFACE-PLAN.md).
+
+**Out of scope (unchanged):** resolver/discovery changes beyond optional `agent` on graph API, apply/rollback UI, URL routing.
 
 ## Surface rule
 

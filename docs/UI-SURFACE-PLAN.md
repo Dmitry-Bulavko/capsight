@@ -1,8 +1,8 @@
 # UI Surface Plan — закрытие gap между логикой и интерфейсом
 
-**Дата:** 2026-08-31  
-**Baseline:** `main` (EC phase — `todo`, handoffs EC-01…EC-08 готовы; ветка `feat/ec-ecosystem` — PR pending)  
-**Статус:** **отревьюирован 2026-08-30** — принят с поправками, промоутирован в `TASKS.md` как фаза V1. См. [«Вердикт ревью»](#вердикт-ревью-2026-08-30) в конце документа; при расхождении с `TASKS.md` источник истины — `TASKS.md`.
+**Дата:** 2026-09-01 (UI-A IA update)  
+**Baseline:** `feat/ui-a-agents-workspace` (V1 + EC merged; UI-A complete)  
+**Статус:** **отревьюирован 2026-08-30** — принят с поправками, промоутирован в `TASKS.md` как фаза V1. **UI-A (2026-09-01)** — dashboard IA restructure complete; см. [«Текущее состояние (post-UI-A)»](#текущее-состояние-post-ui-a). При расхождении с `TASKS.md` источник истины — `TASKS.md`.
 
 ---
 
@@ -14,40 +14,56 @@ Backend, CLI и golden corpus заметно опережают UI. По оце�
 
 ---
 
-## Текущее состояние (main)
+## Текущее состояние (post-UI-A)
 
-### Вкладки dashboard
+### Вкладки dashboard (три top-level)
 
 | Tab | Что показывает | Слой |
 |-----|----------------|------|
-| Overview | `ProjectSummary` — path, version, counts (agents/skills/instructions/MCP) | declared, одна платформа |
-| Context | execution preset + unknown rate | effective |
-| Agents | список agents: name, scope, path, status | declared (минимально) |
-| Editor | in-memory tool toggles | desired (M3-01 only) |
-| Capabilities | effective capabilities + Why panel | effective |
-| Graph | React Flow inspection graph | effective |
+| **Ecosystem** | declared inventory — все платформы, compat badges, detail panel, health | declared |
+| **Agents** | master-detail workspace: список агентов слева, inspector справа | effective |
+| **Simulation** | managed policy overlay preview | effective (simulated) |
+
+Header: brand + `ScanPanel` only. **Нет** глобального `AgentSelector` — выбор агента только внутри Agents workspace.
+
+### Agents workspace (master-detail)
+
+| Sub-tab | Что показывает | Слой |
+|---------|----------------|------|
+| Overview | agent meta (scope, path, status) + declared configuration block | declared + effective meta |
+| Context | execution preset + unknown rate + drift banner | effective |
+| Capabilities | effective capabilities + Why panel + declared/effective pairs | effective |
+| Warnings | per-agent и all-agents warnings | effective |
+| Graph | React Flow inspection graph **для выбранного агента** | effective |
+| Editor | in-memory tool toggles (Claude-only) | desired (M3-01) |
+
+Chrome: context preset control и `DriftBanner` — только внутри Agents workspace, не в header.
+
+**Graph per-agent:** `GET /api/graph?context=&agent=<id>` возвращает subgraph выбранного агента; `GraphView` не fetch'ит без `agentId`. Omitting `agent` сохраняет полный multi-agent graph (CLI/tests).
+
+**Ecosystem bridge:** «Resolve as agent X» из Ecosystem detail panel → Agents tab, Capabilities sub-tab; return banner восстанавливает selection на Ecosystem canvas.
 
 ### API → UI wiring (`src/ui/api.ts`)
 
 | Endpoint | UI client | Tab / component |
 |----------|-----------|-----------------|
-| `GET /api/project` | ✅ | header / overview |
+| `GET /api/project` | ✅ | header / ScanPanel |
 | `POST /api/project/scan` | ✅ | ScanPanel |
 | `POST /api/project/browse` | ✅ | ScanPanel |
-| `GET /api/agents` | ✅ | AgentSelector, Agents |
-| `GET /api/agents/:id/effective` | ✅ | Capabilities, Editor |
+| `GET /api/agents` | ✅ | Agents workspace list |
+| `GET /api/agents/:id/effective` | ✅ | Capabilities, Editor, Context |
 | `GET /api/capabilities/:id/explain` | ✅ | WhyPanel |
-| `GET /api/graph` | ✅ | GraphView |
-| `GET /api/warnings` | ❌ | — |
+| `GET /api/graph` (+ optional `agent`) | ✅ | GraphView (per-agent in Agents workspace) |
+| `GET /api/warnings` | ✅ | WarningsPanel |
+| `GET /api/ecosystem` (+ resource/content) | ✅ | EcosystemView |
+| `POST /api/simulate/managed` | ✅ | SimulationView |
+| `POST /api/plan` | ✅ | AgentEditor (read-only preview) |
 | `POST /api/mcp/:id/probe` | ❌ | — |
-| `POST /api/simulate/managed` | ❌ | — |
-| `POST /api/plan` | ❌ | — |
 | `POST /api/apply` | ❌ | — |
 | `POST /api/rollback/:id` | ❌ | — |
 | `GET /api/history` | ❌ | — |
-| `GET /api/ecosystem` (+ resource/content) | ❌ на main | EC branch only |
 
-**7 endpoint-групп без UI-клиента** (8 с ecosystem после merge EC).
+**4 endpoint-группы без UI-клиента** (apply, rollback, history, MCP probe — explicit deferrals).
 
 ### CLI vs UI
 
@@ -106,30 +122,38 @@ Overview показывает числа skills/instructions/MCP. Нет спи�
 
 `ProjectSnapshot.warnings` (description budget) не отображаются ни на Overview, ни отдельной панелью.
 
-### 8. Два продукта после merge EC
+### 8. ~~Два продукта после merge EC~~ — закрыто UI-A
 
-На `feat/ec-ecosystem` Overview заменён на Ecosystem tab (declared inventory, все платформы, compat badges, detail panel, health). Остальные вкладки остаются **effective layer, одна платформа** из ScanPanel. Связности между canvas и Capabilities/Why нет.
+**Было:** Ecosystem tab (declared) и пять отдельных effective tabs (Context, Capabilities, Graph, Editor, Warnings) без связности.
+
+**Сейчас (UI-A):** три top-level tabs; effective layer собран в Agents master-detail workspace; Ecosystem bridge ведёт в Capabilities sub-tab; graph scoped per selected agent.
 
 ---
 
-## Архитектурное решение для V1
+## Архитектурное решение (V1 + UI-A)
 
-**Принцип:** UI-only phase. Новые API только если неизбежно (например, snapshot fields без route). Resolver/discovery/matrix — out of scope.
+**Принцип:** UI-only phases. Новые API только если неизбежно (например, optional `agent` на graph route). Resolver/discovery/matrix — out of scope.
 
-**Два слоя UI (после EC):**
+**Два слоя UI (реализовано):**
 
 ```
-Declared layer          Effective layer
-─────────────────       ─────────────────
-Ecosystem tab           Context + Capabilities + Graph + Editor
-(inventory, compat,     (one platform, one agent, one context)
- detail, health)
-        │                        ▲
-        └──── bridge actions ────┘
-              «Resolve as agent X»
+Declared layer                    Effective layer
+─────────────────────────         ─────────────────────────────────────
+Ecosystem tab                     Agents workspace (master-detail)
+(inventory, compat,               ├─ agent list (left)
+ detail, health)                  ├─ context preset + drift banner
+                                  └─ sub-tabs: Overview | Context |
+                                     Capabilities | Warnings | Graph | Editor
+        │                                    ▲
+        └──── bridge «Resolve as agent X» ───┘
+              (lands on Capabilities sub-tab)
+
+Simulation tab — managed policy overlay (separate top-level context)
 ```
 
-**Gate:** V1 стартует **после merge EC** (`feat/ec-ecosystem`), чтобы не дублировать Overview и не конфликтовать с заменой вкладки.
+**Navigation model:** два уровня — top tabs (declared vs effective vs simulation) и sub-tabs внутри Agents workspace. Graph и Why panel всегда в контексте выбранного агента.
+
+**Gate (closed):** V1 wired compliance surfaces; UI-A collapsed eight top-level tabs into three and made the two-layer data model the only navigation path.
 
 ---
 
@@ -213,6 +237,7 @@ V1-01, V1-02, V1-04, V1-05 — максимум value, минимум backend.
 | Date | Change |
 |------|--------|
 | 2026-08-31 | Initial draft from UI vs logic gap analysis (`main` baseline) |
+| 2026-09-01 | UI-A complete — dashboard IA: 3 top tabs, Agents master-detail with 6 sub-tabs, graph per-agent scope, ecosystem bridge |
 
 ---
 

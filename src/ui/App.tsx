@@ -17,12 +17,8 @@ import {
   type AgentWarning,
   type ObservedSessionPayload,
 } from "./api.js";
-import { AgentList } from "./components/AgentList.js";
-import { AgentSelector } from "./components/AgentSelector.js";
-import {
-  ContextSelector,
-  DEFAULT_CONTEXT_PRESET,
-} from "./components/ContextSelector.js";
+import { AgentsWorkspace } from "./components/AgentsWorkspace.js";
+import type { AgentInspectorTab } from "./components/AgentInspectorNav.js";
 import {
   loadStoredPlatform,
   loadStoredProjectPath,
@@ -30,15 +26,8 @@ import {
   saveStoredProjectPath,
   ScanPanel,
 } from "./components/ScanPanel.js";
-import { GraphView } from "./components/GraphView.js";
 import { EcosystemView } from "./components/EcosystemView.js";
 import type { EcosystemBridgeTarget } from "./components/ResourceDetailPanel.js";
-import { WhyPanel } from "./components/WhyPanel.js";
-import { AgentEditor } from "./components/AgentEditor.js";
-import { DeclaredEffectivePanel } from "./components/DeclaredEffective.js";
-import { EffectiveCapabilities } from "./components/EffectiveCapabilities.js";
-import { WarningsPanel, type WarningScope } from "./components/WarningsPanel.js";
-import { DriftBanner } from "./components/DriftBanner.js";
 import { DashboardNav, type DashboardTab } from "./components/DashboardNav.js";
 import { SimulationView } from "./components/SimulationView.js";
 import type { ManagedSimulationResult } from "./api.js";
@@ -50,10 +39,8 @@ import {
   toggleTool,
   type EditorPendingState,
 } from "./state/editor-store.js";
-
-function totalPendingChanges(agents: Agent[], pending: EditorPendingState): number {
-  return agents.reduce((sum, agent) => sum + countPendingChanges(agent, pending), 0);
-}
+import { DEFAULT_CONTEXT_PRESET } from "./components/ContextSelector.js";
+import type { WarningScope } from "./components/WarningsPanel.js";
 
 export function App() {
   const [summary, setSummary] = useState<ScanStatusSummary | null>(null);
@@ -91,6 +78,7 @@ export function App() {
   );
   const [editorPending, setEditorPending] = useState<EditorPendingState>(createEmptyEditorState);
   const [activeTab, setActiveTab] = useState<DashboardTab>("ecosystem");
+  const [agentInspectorTab, setAgentInspectorTab] = useState<AgentInspectorTab>("overview");
   const [allAgentWarnings, setAllAgentWarnings] = useState<AgentWarning[]>([]);
   const [allWarningsLoading, setAllWarningsLoading] = useState(false);
   const [allWarningsError, setAllWarningsError] = useState<string | null>(null);
@@ -140,13 +128,9 @@ export function App() {
     [selectedAgent],
   );
 
-  const handleSelectCapability = useCallback((capabilityId: string) => {
+  const handleSelectCapabilityInWorkspace = useCallback((capabilityId: string) => {
     setSelectedCapabilityId(capabilityId);
-    setActiveTab("capabilities");
-  }, []);
-
-  const handleSelectCapabilityFromGraph = useCallback((capabilityId: string) => {
-    setSelectedCapabilityId(capabilityId);
+    setAgentInspectorTab("capabilities");
   }, []);
 
   const handleCloseWhy = useCallback(() => {
@@ -172,7 +156,9 @@ export function App() {
     setEditorPending((current) => clearAgentPending(current, selectedAgentId));
   }, [selectedAgentId]);
 
-  const editorPendingCount = totalPendingChanges(agents, editorPending);
+  const selectedAgentEditorPendingCount = selectedAgent
+    ? countPendingChanges(selectedAgent, editorPending)
+    : 0;
 
   const displayedWarnings =
     warningsScope === "agent"
@@ -222,7 +208,8 @@ export function App() {
       setContextPreset(DEFAULT_CONTEXT_PRESET);
       setSelectedAgentId(target.agentId);
       setSelectedCapabilityId(target.capabilityId ?? null);
-      setActiveTab("capabilities");
+      setAgentInspectorTab("capabilities");
+      setActiveTab("agents");
     },
     [runScan],
   );
@@ -478,14 +465,6 @@ export function App() {
         </div>
 
         <div className="dashboard-header-actions">
-          {summary && (
-            <AgentSelector
-              compact
-              agents={agents}
-              selectedAgentId={selectedAgentId}
-              onAgentChange={setSelectedAgentId}
-            />
-          )}
           {(needsScan || summary) && (
             <ScanPanel
               projectPath={projectPath}
@@ -520,21 +499,9 @@ export function App() {
 
       {summary && (
         <div className="dashboard-shell">
-          <DashboardNav
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            editorPendingCount={editorPendingCount}
-          />
+          <DashboardNav activeTab={activeTab} onTabChange={setActiveTab} />
 
           <main className="dashboard-content">
-            <DriftBanner
-              platform={platform}
-              version={formatVersion(summary.version)}
-              effective={effectiveConfig}
-              loading={effectiveLoading}
-              onSelectCapability={handleSelectCapability}
-            />
-
             {activeTab === "ecosystem" && (
               <EcosystemView
                 refreshKey={summary.scannedAt}
@@ -546,167 +513,43 @@ export function App() {
               />
             )}
 
-            {activeTab === "context" && (
-              <ContextSelector
-                preset={contextPreset}
-                onPresetChange={setContextPreset}
-                unknownRate={unknownRate}
-                loading={effectiveLoading}
-                error={effectiveError}
-                hasSelectedAgent={selectedAgentId !== null}
-                effective={effectiveConfig}
-                agent={selectedAgent}
-              />
-            )}
-
-            {activeTab === "agents" && <AgentList agents={agents} />}
-
-            {activeTab === "editor" && selectedAgent && (
-              <AgentEditor
-                agent={selectedAgent}
-                effective={effectiveConfig}
+            {activeTab === "agents" && (
+              <AgentsWorkspace
+                platform={platform}
+                scanVersion={formatVersion(summary.version)}
+                agents={agents}
+                selectedAgentId={selectedAgentId}
+                selectedAgent={selectedAgent}
+                onAgentSelect={setSelectedAgentId}
+                ecosystemBridgeActive={ecosystemReturnState !== null}
+                onReturnToEcosystem={handleReturnToEcosystem}
+                agentInspectorTab={agentInspectorTab}
+                onAgentInspectorTabChange={setAgentInspectorTab}
+                contextPreset={contextPreset}
+                onContextPresetChange={setContextPreset}
+                effectiveConfig={effectiveConfig}
                 effectiveLoading={effectiveLoading}
-                pending={editorPending}
+                effectiveError={effectiveError}
+                unknownRate={unknownRate}
+                selectedCapabilityId={selectedCapabilityId}
+                onSelectCapability={handleSelectCapabilityInWorkspace}
+                onCloseWhy={handleCloseWhy}
+                explainData={explainData}
+                explainLoading={explainLoading}
+                explainError={explainError}
+                observedById={observedById}
+                observedSessionActive={observedSessionActive}
+                observedDisclaimer={observedSession?.disclaimer}
+                warningsScope={warningsScope}
+                onWarningsScopeChange={setWarningsScope}
+                displayedWarnings={displayedWarnings}
+                allWarningsLoading={allWarningsLoading}
+                allWarningsError={allWarningsError}
+                editorPending={editorPending}
+                editorPendingCount={selectedAgentEditorPendingCount}
                 onToggleTool={handleToggleTool}
                 onClearPending={handleClearPending}
               />
-            )}
-
-            {activeTab === "editor" && !selectedAgent && (
-              <section className="panel">
-                <p className="empty-state">Select an agent in the header to edit tools.</p>
-              </section>
-            )}
-
-            {activeTab === "capabilities" && selectedAgentId && (
-              <div
-                className={`tab-capabilities${
-                  selectedCapabilityId ? " tab-capabilities--with-detail" : ""
-                }`}
-              >
-                {ecosystemReturnState && (
-                  <div
-                    className="ecosystem-bridge-return-banner"
-                    data-testid="ecosystem-bridge-return-banner"
-                  >
-                    <p>
-                      Opened from declared inventory. Effective resolution — one context (
-                      <code>{contextPreset}</code>).
-                    </p>
-                    <button type="button" onClick={handleReturnToEcosystem}>
-                      Back to Ecosystem canvas
-                    </button>
-                  </div>
-                )}
-                <DeclaredEffectivePanel effective={effectiveConfig} agent={selectedAgent} />
-                <EffectiveCapabilities
-                  effective={effectiveConfig}
-                  loading={effectiveLoading}
-                  error={effectiveError}
-                  selectedCapabilityId={selectedCapabilityId}
-                  onSelectCapability={handleSelectCapability}
-                  warnings={effectiveConfig?.warnings ?? []}
-                  observedById={observedById}
-                  observedSessionActive={observedSessionActive}
-                  observedDisclaimer={observedSession?.disclaimer}
-                />
-                {selectedCapabilityId && (
-                  <WhyPanel
-                    explain={explainData}
-                    loading={explainLoading}
-                    error={explainError}
-                    onClose={handleCloseWhy}
-                    observedById={observedById}
-                    observedSessionActive={observedSessionActive}
-                  />
-                )}
-              </div>
-            )}
-
-            {activeTab === "capabilities" && !selectedAgentId && (
-              <section className="panel">
-                <p className="empty-state">Select an agent in the header to view capabilities.</p>
-              </section>
-            )}
-
-            {activeTab === "warnings" && (
-              <div className="tab-warnings">
-                <div className="warnings-scope-toggle" role="group" aria-label="Warning scope">
-                  <button
-                    type="button"
-                    className={`warnings-scope-button${warningsScope === "agent" ? " warnings-scope-button-active" : ""}`}
-                    disabled={!selectedAgentId}
-                    onClick={() => setWarningsScope("agent")}
-                  >
-                    Current agent
-                  </button>
-                  <button
-                    type="button"
-                    className={`warnings-scope-button${warningsScope === "all" ? " warnings-scope-button-active" : ""}`}
-                    onClick={() => setWarningsScope("all")}
-                  >
-                    All active agents
-                  </button>
-                </div>
-                {warningsScope === "agent" && !selectedAgentId && (
-                  <section className="panel">
-                    <p className="empty-state">Select an agent in the header to view warnings.</p>
-                  </section>
-                )}
-                {(warningsScope === "all" || selectedAgentId) && (
-                  <>
-                    {allWarningsLoading && warningsScope === "all" && (
-                      <p className="empty-state">Loading warnings…</p>
-                    )}
-                    {allWarningsError && warningsScope === "all" && (
-                      <p className="error-message">{allWarningsError}</p>
-                    )}
-                    {effectiveLoading && warningsScope === "agent" && (
-                      <p className="empty-state">Loading warnings…</p>
-                    )}
-                    {effectiveError && warningsScope === "agent" && (
-                      <p className="error-message">{effectiveError}</p>
-                    )}
-                    {!allWarningsLoading &&
-                      !effectiveLoading &&
-                      !(warningsScope === "all" && allWarningsError) &&
-                      !(warningsScope === "agent" && effectiveError) && (
-                        <WarningsPanel
-                          warnings={displayedWarnings}
-                          scope={warningsScope}
-                          agentId={selectedAgentId}
-                          emptyMessage={
-                            warningsScope === "agent"
-                              ? "No warnings for this agent and context."
-                              : "No warnings across active agents."
-                          }
-                        />
-                      )}
-                  </>
-                )}
-              </div>
-            )}
-
-            {activeTab === "graph" && (
-              <div
-                className={`tab-graph${selectedCapabilityId ? " tab-graph--with-detail" : ""}`}
-              >
-                <GraphView
-                  context={contextPreset}
-                  selectedCapabilityId={selectedCapabilityId}
-                  onSelectCapability={handleSelectCapabilityFromGraph}
-                />
-                {selectedCapabilityId && selectedAgentId && (
-                  <WhyPanel
-                    explain={explainData}
-                    loading={explainLoading}
-                    error={explainError}
-                    onClose={handleCloseWhy}
-                    observedById={observedById}
-                    observedSessionActive={observedSessionActive}
-                  />
-                )}
-              </div>
             )}
 
             {activeTab === "simulation" && (

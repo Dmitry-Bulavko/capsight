@@ -49,12 +49,15 @@ export function enhanceLayoutNodeForSelection(
 
 interface GraphViewProps {
   context: ContextPreset;
+  /** When set, fetches the per-agent subgraph; omit for the full multi-agent graph. */
+  agentId?: string;
   selectedCapabilityId: string | null;
   onSelectCapability: (capabilityId: string) => void;
 }
 
 export function GraphView({
   context,
+  agentId,
   selectedCapabilityId,
   onSelectCapability,
 }: GraphViewProps) {
@@ -65,13 +68,20 @@ export function GraphView({
   const nodeTypes = useMemo(() => graphNodeTypes(), []);
 
   useEffect(() => {
+    if (agentId === "") {
+      setGraph(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
 
     async function loadGraph() {
       setLoading(true);
       setError(null);
       try {
-        const result = await fetchGraph(context);
+        const result = await fetchGraph(context, agentId);
         if (!cancelled) {
           setGraph(result);
         }
@@ -91,7 +101,7 @@ export function GraphView({
     return () => {
       cancelled = true;
     };
-  }, [context]);
+  }, [context, agentId]);
 
   const { nodes, edges } = useMemo(() => {
     if (!graph) {
@@ -152,10 +162,13 @@ export function GraphView({
         </ul>
       )}
 
-      {loading && <p className="empty-state">Loading graph…</p>}
-      {!loading && error && <p className="error-message">{error}</p>}
+      {agentId === "" && (
+        <p className="empty-state">Select an agent to view the inspection graph.</p>
+      )}
+      {agentId !== "" && loading && <p className="empty-state">Loading graph…</p>}
+      {agentId !== "" && !loading && error && <p className="error-message">{error}</p>}
 
-      {!loading && !error && graph && (
+      {agentId !== "" && !loading && !error && graph && (
         <>
           {graph.nodes.length === 0 ? (
             <p className="empty-state">No graph nodes for this context.</p>

@@ -442,20 +442,14 @@ body {
 }
 
 .dashboard-shell {
-  display: grid;
-  grid-template-columns: minmax(220px, 16rem) minmax(0, 1fr);
-  gap: 1.25rem;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
   flex: 1;
   min-height: 0;
 }
 
 .dashboard-nav {
-  position: sticky;
-  top: 1rem;
-  align-self: start;
-  max-height: calc(100vh - 2rem);
-  overflow: auto;
   border: 1px solid #3c4043;
   border-radius: 8px;
   background: #1a1d24;
@@ -466,9 +460,9 @@ body {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
 }
 
 .dashboard-nav-item {
@@ -527,6 +521,39 @@ body {
   color: #8ab4f8;
   font-size: 0.7rem;
   font-weight: 600;
+}
+
+.agents-workspace-chrome {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #3c4043;
+  border-radius: 8px;
+  background: #1e2128;
+}
+
+.agents-workspace-chrome .drift-banner {
+  margin: 0;
+}
+
+.agent-inspector-nav {
+  margin-bottom: 0.5rem;
+}
+
+.context-preset-control-compact-select {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.context-preset-select-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #9aa0a6;
+}
+
+.agents-workspace-right .drift-banner {
+  margin-bottom: 0.75rem;
 }
 
 .dashboard-content {
@@ -1899,18 +1926,8 @@ body {
 }
 
 @media (max-width: 768px) {
-  .dashboard-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .dashboard-nav {
-    position: static;
-    max-height: none;
-  }
-
   .dashboard-nav-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .dashboard-nav-description {
@@ -3442,4 +3459,238 @@ code {
 
 .simulation-delta-evidence li + li {
   margin-top: 0.25rem;
+}
+
+.agents-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+  min-height: 0;
+}
+
+.context-preset-control-compact .context-presets {
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+.context-preset-control-compact .preset-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+}
+
+.context-preset-control-compact .preset-option {
+  font-size: 0.85rem;
+}
+
+/* legacy compact radio layout — unused after CapsightSelect toolbar control */
+
+.agent-inspector-overview-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.agent-inspector-overview-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.agents-workspace-content--with-detail {
+  overflow: visible;
+}
+
+.agents-workspace-context-placeholder {
+  margin: 0;
+  color: #bdc1c6;
+  font-size: 0.9rem;
+}
+
+.agents-workspace-context-placeholder code {
+  color: #8ab4f8;
+}
+
+.agents-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+  min-height: 0;
+}
+
+.agents-workspace-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  overflow-y: auto;
+  max-height: calc(100vh - 12rem);
+  min-height: 0;
+}
+
+.agents-workspace-left .context-preset-control-compact-select {
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid #3c4043;
+}
+
+.agents-workspace-left .context-preset-select {
+  width: 100%;
+  min-width: 0;
+}
+
+.agent-list-compact {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.agent-list-compact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #3c4043;
+  border-radius: 6px;
+  background: #22252d;
+  color: #e8eaed;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.agent-list-compact-row:hover {
+  background: #2a2d36;
+}
+
+.agent-list-compact-row--selected {
+  border-color: #5c7cfa;
+  background: #252a38;
+  box-shadow: 0 0 0 1px #5c7cfa;
+}
+
+.agent-list-compact-row.status-invalid {
+  border-color: #6b3a3a;
+}
+
+.agent-list-compact-row.status-ambiguous {
+  border-color: #6b5a3a;
+}
+
+.agent-list-compact-row.status-shadowed {
+  border-color: #4a3a6b;
+}
+
+.agent-list-compact-primary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.agent-list-compact-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-list-compact-scope {
+  font-size: 0.78rem;
+  color: #9aa0a6;
+  text-transform: capitalize;
+}
+
+.agent-list-compact-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.agent-list-compact-collision {
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: #3b2f1f;
+  color: #fdd663;
+}
+
+.agents-workspace-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+  min-height: 0;
+}
+
+.agents-workspace-content {
+  min-height: 12rem;
+}
+
+.agent-inspector-nav {
+  min-width: 0;
+}
+
+.agent-inspector-nav-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem;
+  border: 1px solid #3c4043;
+  border-radius: 8px;
+  background: #1e2128;
+}
+
+.agent-inspector-nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #9aa0a6;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.agent-inspector-nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: #394457;
+  color: #8ab4f8;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.agent-inspector-nav-item:hover {
+  color: #e8eaed;
+}
+
+.agent-inspector-nav-item-active {
+  background: #303134;
+  color: #e8eaed;
 }

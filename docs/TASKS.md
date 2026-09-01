@@ -433,9 +433,31 @@ Order: S9P-01 → S9P-02 → S9P-03 → S9P-04 → S9P-05 → S9P-06 → S9P-07.
 | S9P-06 | S9P | UI — one-sided observed status | done | §9.3, §7.5 | src/ui/ObservedStatus.tsx | Contract labels + disclaimer |
 | S9P-07 | S9P | S9P phase gate | done | §9.5, §11.4 | coverage-report.test.ts | D4-06 unchanged; observe off scan |
 
+## UI-A — Agent Workspace (IA restructure)
+
+Reorganize the dashboard from eight top-level tabs into three contexts: **Ecosystem** (declared project inventory), **Agents** (effective inspector — master-detail workspace), **Simulation** (policy overlay). Closes the fragmented agent flow left after EC replaced Overview with Ecosystem.
+
+**Branch:** `feat/ui-a-agents-workspace` (all UI-A work lands here; do not merge to `main` until UI-A-07 gate passes).
+
+**Scope OUT for the whole phase:** new resolver/discovery/matrix logic (except optional `agent` query on `GET /api/graph`), Ecosystem canvas semantics, apply/rollback editor flow (still deferred per V1-07), URL routing.
+
+Design reference: plan *Agents Workspace IA* (2026-09-01); updates [UI-SURFACE-PLAN.md](./UI-SURFACE-PLAN.md) in UI-A-07.
+
+Order: UI-A-01 → UI-A-02 → UI-A-03 → UI-A-04 → UI-A-05 → UI-A-06 → UI-A-07.
+
+| ID | Phase | Title | Status | Spec refs | Files | Acceptance |
+|----|-------|-------|--------|-----------|-------|------------|
+| UI-A-01 | UI-A | AgentsWorkspace shell + AgentInspectorNav | done | §7.4, §4.3 | src/ui/components/AgentsWorkspace.tsx, AgentInspectorNav.tsx, styles.css | Master-detail grid renders; sub-nav switches views; old top-tabs still work |
+| UI-A-02 | UI-A | Selectable agent list (left panel) | done | §7.1, M0 goal | AgentList.tsx or AgentListPanel.tsx | Compact list with selection highlight; invalid/shadowed visible |
+| UI-A-03 | UI-A | Wire inspector sub-views | done | §7.4, §2.4, inv 3 | AgentsWorkspace.tsx, ContextSelector, EffectiveCapabilities, WarningsPanel, AgentEditor | Overview/Context/Capabilities/Warnings/Editor composed; `DeclaredEffectivePanel` once only |
+| UI-A-04 | UI-A | Graph per-agent scope | done | §7.10 | graph.ts, build-graph.ts, GraphView.tsx, api.ts | `GET /api/graph?agent=` returns subgraph; GraphView requires agentId |
+| UI-A-05 | UI-A | Top nav 8→3 + header cleanup | done | §7.4 | DashboardNav.tsx, App.tsx | Three top tabs; AgentSelector removed from header; DriftBanner only in Agents |
+| UI-A-06 | UI-A | Ecosystem bridge → Agents workspace | done | §7.4, §4.1 | App.tsx, ResourceDetailPanel, tests/ui/ | Bridge opens Agents + capabilities sub-tab; return banner preserved |
+| UI-A-07 | UI-A | Docs — IA recorded | done | — | UI-SURFACE-PLAN.md, ROADMAP.md | Two-layer IA documented; phase gate checklist met |
+
 ## Deferred backlog
 
 | ID | Phase | Title | Status | Notes |
 |----|-------|-------|--------|-------|
 | §9 full | S9 | Structural observed layer (S9-04) | deferred | Requires structural pool API |
-| §9 | S9 | Observed runtime layer | partial | S9P in progress — invocation-only path |
+| §9 | S9 | Observed runtime layer | partial | S9P complete — invocation-only path |

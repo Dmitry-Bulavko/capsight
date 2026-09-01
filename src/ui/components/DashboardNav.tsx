@@ -1,12 +1,4 @@
-export type DashboardTab =
-  | "ecosystem"
-  | "context"
-  | "agents"
-  | "editor"
-  | "capabilities"
-  | "warnings"
-  | "graph"
-  | "simulation";
+export type DashboardTab = "ecosystem" | "agents" | "simulation";
 
 interface NavItem {
   id: DashboardTab;
@@ -16,26 +8,19 @@ interface NavItem {
 
 export const DASHBOARD_NAV: readonly NavItem[] = [
   { id: "ecosystem", label: "Ecosystem", description: "Declared inventory — all platforms" },
-  { id: "context", label: "Context", description: "Agent & execution preset" },
-  { id: "agents", label: "Agents", description: "Discovered definitions" },
-  { id: "editor", label: "Editor", description: "In-memory tool toggles" },
-  { id: "capabilities", label: "Capabilities", description: "Effective resolution" },
-  { id: "warnings", label: "Warnings", description: "Resolver & security findings" },
-  { id: "graph", label: "Graph", description: "Effective resolution — one context" },
+  { id: "agents", label: "Agents", description: "Effective resolution workspace" },
   { id: "simulation", label: "Simulation", description: "Managed policy overlay preview" },
 ] as const;
 
 interface DashboardNavProps {
   activeTab: DashboardTab;
   onTabChange: (tab: DashboardTab) => void;
-  editorPendingCount?: number;
   disabled?: boolean;
 }
 
 export function DashboardNav({
   activeTab,
   onTabChange,
-  editorPendingCount = 0,
   disabled = false,
 }: DashboardNavProps) {
   return (
@@ -50,12 +35,7 @@ export function DashboardNav({
               disabled={disabled}
               onClick={() => onTabChange(item.id)}
             >
-              <span className="dashboard-nav-label">
-                {item.label}
-                {item.id === "editor" && editorPendingCount > 0 && (
-                  <span className="dashboard-nav-badge">{editorPendingCount}</span>
-                )}
-              </span>
+              <span className="dashboard-nav-label">{item.label}</span>
               <span className="dashboard-nav-description">{item.description}</span>
             </button>
           </li>

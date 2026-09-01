@@ -1,10 +1,11 @@
-import { createElement } from "react";
+import { createElement, type ComponentProps } from "react";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { RESOURCE_CLASS } from "../../src/core/compat/resource-class.js";
 import type { InspectionGraph } from "../../src/core/graph/build-graph.js";
 import type { Agent } from "../../src/core/model/index.js";
 import type { InventoryResourceWithCompat } from "../../src/server/routes/ecosystem.js";
+import { AgentsWorkspace } from "../../src/ui/components/AgentsWorkspace.js";
 import {
   capabilityIdFromInventoryResource,
   evaluateEcosystemBridge,
@@ -210,5 +211,87 @@ describe("ResourceDetailPanel bridge UI", () => {
 
     expect(html).toContain("Open effective resolution");
     expect(html).toContain("Effective resolution");
+  });
+});
+
+function makeAgentsWorkspaceProps(
+  overrides: Partial<ComponentProps<typeof AgentsWorkspace>> = {},
+): ComponentProps<typeof AgentsWorkspace> {
+  const agent = makeAgent("backend");
+  return {
+    platform: "claude",
+    scanVersion: "1.0.0",
+    agents: [agent],
+    selectedAgentId: "backend",
+    selectedAgent: agent,
+    onAgentSelect: () => {},
+    agentInspectorTab: "capabilities",
+    onAgentInspectorTabChange: () => {},
+    contextPreset: "main-session",
+    onContextPresetChange: () => {},
+    effectiveConfig: null,
+    effectiveLoading: false,
+    effectiveError: null,
+    unknownRate: null,
+    selectedCapabilityId: null,
+    onSelectCapability: () => {},
+    onCloseWhy: () => {},
+    explainData: null,
+    explainLoading: false,
+    explainError: null,
+    observedById: null,
+    observedSessionActive: false,
+    warningsScope: "agent",
+    onWarningsScopeChange: () => {},
+    displayedWarnings: [],
+    allWarningsLoading: false,
+    allWarningsError: null,
+    editorPending: { byAgent: {} },
+    editorPendingCount: 0,
+    onToggleTool: () => {},
+    onClearPending: () => {},
+    ...overrides,
+  };
+}
+
+describe("AgentsWorkspace ecosystem bridge return banner", () => {
+  it("shows return banner on capabilities sub-view when bridge is active", () => {
+    const html = renderToString(
+      createElement(AgentsWorkspace, {
+        ...makeAgentsWorkspaceProps(),
+        ecosystemBridgeActive: true,
+        onReturnToEcosystem: () => {},
+      }),
+    );
+
+    expect(html).toContain('data-testid="ecosystem-bridge-return-banner"');
+    expect(html).toContain("Opened from declared inventory");
+    expect(html).toContain("Effective resolution — one context");
+    expect(html).toContain("<code>main-session</code>");
+    expect(html).toContain("Back to Ecosystem canvas");
+  });
+
+  it("hides return banner when bridge is not active", () => {
+    const html = renderToString(
+      createElement(AgentsWorkspace, {
+        ...makeAgentsWorkspaceProps(),
+        ecosystemBridgeActive: false,
+      }),
+    );
+
+    expect(html).not.toContain('data-testid="ecosystem-bridge-return-banner"');
+    expect(html).not.toContain("Back to Ecosystem canvas");
+  });
+
+  it("hides return banner outside capabilities sub-view even when bridge is active", () => {
+    const html = renderToString(
+      createElement(AgentsWorkspace, {
+        ...makeAgentsWorkspaceProps({ agentInspectorTab: "overview" }),
+        ecosystemBridgeActive: true,
+        onReturnToEcosystem: () => {},
+      }),
+    );
+
+    expect(html).not.toContain('data-testid="ecosystem-bridge-return-banner"');
   });
 });
