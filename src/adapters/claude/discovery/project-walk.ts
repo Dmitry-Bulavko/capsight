@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { isDirectory, pathExists } from "../../shared/fs.js";
 
 /** Maximum parent hops to avoid infinite loops on pathological layouts. */
 const MAX_WALK_DEPTH = 256;
@@ -25,24 +26,6 @@ export interface WalkProjectScopesResult {
   repoRoot: string;
   /** Scope levels from start path upward, inclusive of the stop directory. */
   scopes: ProjectScopeLevel[];
-}
-
-async function isDirectory(dirPath: string): Promise<boolean> {
-  try {
-    const stat = await fs.stat(dirPath);
-    return stat.isDirectory();
-  } catch {
-    return false;
-  }
-}
-
-async function pathExists(filePath: string): Promise<boolean> {
-  try {
-    await fs.access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 async function inspectScopeLevel(dirPath: string): Promise<ProjectScopeLevel> {

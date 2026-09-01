@@ -1,4 +1,5 @@
 import path from "node:path";
+import { compareStrings } from "../../src/core/sort/compare-strings.js";
 import type { CompatVerdict } from "../../src/core/compat/index.js";
 import type {
   InventoryResourceKind,
@@ -55,13 +56,6 @@ function toFixtureRelativePath(
   }
 
   return value.split(path.sep).join("/");
-}
-
-function compareStrings(left: string, right: string): number {
-  if (left === right) {
-    return 0;
-  }
-  return left < right ? -1 : 1;
 }
 
 function sortByKeys<T>(items: T[], keyFn: (item: T) => string[]): T[] {

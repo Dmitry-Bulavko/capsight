@@ -1,4 +1,5 @@
 import path from "node:path";
+import { compareStrings } from "../../src/core/sort/compare-strings.js";
 import type { ManagedSimulationResult } from "../../src/application/simulate.js";
 import type {
   EffectiveConfiguration,
@@ -73,18 +74,6 @@ function normalizeSource(
       ? { path: toPosixRelative(projectRoot, source.path) }
       : {}),
   };
-}
-
-/**
- * Locale-independent string order, for the same reason the resolver uses one:
- * `localeCompare` follows the host's collation, so a golden ordered with it
- * could be recorded on one machine and fail to reproduce on another.
- */
-function compareStrings(left: string, right: string): number {
-  if (left === right) {
-    return 0;
-  }
-  return left < right ? -1 : 1;
 }
 
 function sortByKey<T>(items: T[], keyFn: (item: T) => string): T[] {

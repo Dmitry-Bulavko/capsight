@@ -97,19 +97,7 @@ export interface SimulateManagedOptions {
   snapshot?: ProjectSnapshot;
 }
 
-/**
- * Locale-independent string order. `localeCompare` without an explicit locale
- * follows the host's collation, so two machines can order the same two names
- * differently — and these lists reach a golden through `NormalizedSimulation`,
- * where the recorded order is part of the contract (§11.2, D1-09). Compared by
- * code unit instead.
- */
-function compareStrings(left: string, right: string): number {
-  if (left === right) {
-    return 0;
-  }
-  return left < right ? -1 : 1;
-}
+import { compareStrings } from "../core/sort/compare-strings.js";
 
 function indexAgentsById(agents: Agent[]): Map<string, Agent> {
   return new Map(agents.map((agent) => [agent.id, agent]));

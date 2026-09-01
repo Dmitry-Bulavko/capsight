@@ -20,6 +20,7 @@
  */
 
 import type { CompatMatrixEntry } from "../../../core/compat/matrix.js";
+import { compareSemver } from "../../../core/version/semver.js";
 import { RESOURCE_CLASS } from "../../../core/compat/resource-class.js";
 import type { Enforcement, Warning } from "../../../core/model/index.js";
 import { FACT, type FactId } from "./facts.js";
@@ -455,32 +456,7 @@ export function isMatrixId(value: string): value is MatrixId {
   return MATRIX_ENTRIES.some((entry) => entry.id === value);
 }
 
-function parseSemver(version: string): [number, number, number] | null {
-  const match = version.match(/^(\d+)\.(\d+)\.(\d+)/);
-  if (!match) {
-    return null;
-  }
-  return [Number(match[1]), Number(match[2]), Number(match[3])];
-}
-
-/** @returns negative if a < b, positive if a > b, 0 if equal, null if unparsable */
-export function compareSemver(a: string, b: string): number | null {
-  const left = parseSemver(a);
-  const right = parseSemver(b);
-  if (!left || !right) {
-    return null;
-  }
-
-  for (let i = 0; i < 3; i++) {
-    if (left[i]! < right[i]!) {
-      return -1;
-    }
-    if (left[i]! > right[i]!) {
-      return 1;
-    }
-  }
-  return 0;
-}
+export { compareSemver } from "../../../core/version/semver.js";
 
 /**
  * Resolve a matrix feature for a detected Cursor version.

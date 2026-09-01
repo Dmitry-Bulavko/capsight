@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { isDirectory, pathExists } from "../../shared/fs.js";
 
 export interface ProjectScopeLevel {
   path: string;
@@ -14,24 +15,6 @@ export interface ProjectScopeLevel {
 export interface WalkProjectScopesResult {
   projectPath: string;
   scopes: ProjectScopeLevel[];
-}
-
-async function isDirectory(dirPath: string): Promise<boolean> {
-  try {
-    const stat = await fs.stat(dirPath);
-    return stat.isDirectory();
-  } catch {
-    return false;
-  }
-}
-
-async function pathExists(filePath: string): Promise<boolean> {
-  try {
-    await fs.access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 async function inspectScopeLevel(dirPath: string): Promise<ProjectScopeLevel> {

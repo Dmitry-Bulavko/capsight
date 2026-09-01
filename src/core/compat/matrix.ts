@@ -5,6 +5,7 @@
  */
 
 import type { Enforcement } from "../model/index.js";
+import { compareSemver } from "../version/semver.js";
 import type { ResourceClass } from "./resource-class.js";
 
 export type CompatSupport = "supported" | "not-supported" | "unknown";
@@ -37,32 +38,6 @@ export interface LookupCompatInput {
   /** Detected platform version, or `"unknown"` in degraded mode (§8.3). */
   version: string;
   entries: readonly CompatMatrixEntry[];
-}
-
-function parseSemver(version: string): [number, number, number] | null {
-  const match = version.match(/^(\d+)\.(\d+)\.(\d+)/);
-  if (!match) {
-    return null;
-  }
-  return [Number(match[1]), Number(match[2]), Number(match[3])];
-}
-
-function compareSemver(a: string, b: string): number | null {
-  const left = parseSemver(a);
-  const right = parseSemver(b);
-  if (!left || !right) {
-    return null;
-  }
-
-  for (let i = 0; i < 3; i++) {
-    if (left[i]! < right[i]!) {
-      return -1;
-    }
-    if (left[i]! > right[i]!) {
-      return 1;
-    }
-  }
-  return 0;
 }
 
 function unknownVerdict(message: string): CompatVerdict {

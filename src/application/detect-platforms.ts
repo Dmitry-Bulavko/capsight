@@ -6,6 +6,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { PLATFORM_IDS, type PlatformId } from "../adapters/platform.js";
+import { isDirectory, isRegularFile, pathExists } from "../adapters/shared/fs.js";
 import { RESOURCE_CLASS, type ResourceClass } from "../core/compat/resource-class.js";
 import type { PlatformDetection, SourceInfo } from "../core/model/index.js";
 
@@ -31,33 +32,6 @@ interface ArtifactHit {
   platforms: readonly PlatformId[];
   resourceClass: ResourceClass;
   filePath: string;
-}
-
-async function pathExists(filePath: string): Promise<boolean> {
-  try {
-    await fs.access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function isDirectory(dirPath: string): Promise<boolean> {
-  try {
-    const stat = await fs.stat(dirPath);
-    return stat.isDirectory();
-  } catch {
-    return false;
-  }
-}
-
-async function isRegularFile(filePath: string): Promise<boolean> {
-  try {
-    const stat = await fs.stat(filePath);
-    return stat.isFile();
-  } catch {
-    return false;
-  }
 }
 
 async function walkScopeDirectories(startPath: string): Promise<string[]> {
