@@ -1,5 +1,8 @@
 import { Position, type Edge, type Node } from "@xyflow/react";
 import type { GraphEdgeKind, GraphNodeKind, InspectionGraph } from "../core/graph/build-graph.js";
+import { NODE_KIND_COLORS } from "./graph-node-kinds.js";
+
+export { NODE_KIND_COLORS };
 
 const KIND_ORDER: GraphNodeKind[] = [
   "agent",
@@ -10,20 +13,20 @@ const KIND_ORDER: GraphNodeKind[] = [
   "instruction",
 ];
 
-const NODE_WIDTH = 168;
-const NODE_HEIGHT = 56;
+const CAPABILITY_NODE_WIDTH = 172;
+const CAPABILITY_NODE_HEIGHT = 68;
+const AGENT_NODE_WIDTH = 172;
+const AGENT_NODE_HEIGHT = 150;
 const GRID_GAP_X = 28;
 const GRID_GAP_Y = 14;
 const LANE_GAP = 96;
 
-export const NODE_KIND_COLORS: Record<GraphNodeKind, string> = {
-  agent: "#8ab4f8",
-  tool: "#81c995",
-  mcp_server: "#f28b82",
-  mcp_tool: "#fdd663",
-  skill: "#c58af9",
-  instruction: "#78d9ec",
-};
+function nodeDimensions(kind: GraphNodeKind): { width: number; height: number } {
+  if (kind === "agent") {
+    return { width: AGENT_NODE_WIDTH, height: AGENT_NODE_HEIGHT };
+  }
+  return { width: CAPABILITY_NODE_WIDTH, height: CAPABILITY_NODE_HEIGHT };
+}
 
 const EDGE_COLORS: Record<GraphEdgeKind, string> = {
   "agent-tool": "#6b9e78",
@@ -60,13 +63,14 @@ function gridColumns(count: number): number {
   return 4;
 }
 
-function laneSize(nodeCount: number): { width: number; height: number; columns: number } {
+function laneSize(nodeCount: number, kind: GraphNodeKind): { width: number; height: number; columns: number } {
+  const { width: nodeWidth, height: nodeHeight } = nodeDimensions(kind);
   const columns = gridColumns(nodeCount);
   const rows = Math.ceil(nodeCount / columns);
   return {
     columns,
-    width: columns * NODE_WIDTH + Math.max(0, columns - 1) * GRID_GAP_X,
-    height: rows * NODE_HEIGHT + Math.max(0, rows - 1) * GRID_GAP_Y,
+    width: columns * nodeWidth + Math.max(0, columns - 1) * GRID_GAP_X,
+    height: rows * nodeHeight + Math.max(0, rows - 1) * GRID_GAP_Y,
   };
 }
 
@@ -89,7 +93,7 @@ export function layoutInspectionGraph(graph: InspectionGraph): { nodes: Node[]; 
   const activeKinds = KIND_ORDER.filter((kind) => (nodesByKind.get(kind)?.length ?? 0) > 0);
   const laneMetrics = activeKinds.map((kind) => {
     const count = nodesByKind.get(kind)?.length ?? 0;
-    return { kind, count, ...laneSize(count) };
+    return { kind, count, ...laneSize(count, kind) };
   });
 
   const maxLaneHeight = laneMetrics.reduce((max, lane) => Math.max(max, lane.height), 0);
@@ -107,25 +111,29 @@ export function layoutInspectionGraph(graph: InspectionGraph): { nodes: Node[]; 
     kindNodes.forEach((node, index) => {
       const col = index % lane.columns;
       const row = Math.floor(index / lane.columns);
+      const { width, height } = nodeDimensions(node.kind);
 
       positionedNodes.push({
         id: node.id,
         position: {
-          x: laneX + col * (NODE_WIDTH + GRID_GAP_X),
-          y: laneYOffset + row * (NODE_HEIGHT + GRID_GAP_Y),
+          x: laneX + col * (width + GRID_GAP_X),
+          y: laneYOffset + row * (height + GRID_GAP_Y),
         },
         data: {
           label: node.label,
           kind: node.kind,
+          ...(node.kind === "agent"
+            ? { platform: node.platform, scope: node.scope }
+            : {}),
         },
         sourcePosition: Position.Right,
         targetPosition: Position.Left,
         style: {
-          borderColor: NODE_KIND_COLORS[node.kind],
-          background: "#1a1d24",
-          color: "#e8eaed",
-          width: NODE_WIDTH,
-          fontSize: 12,
+          width,
+          height,
+          padding: 0,
+          background: "transparent",
+          border: "none",
         },
       });
     });

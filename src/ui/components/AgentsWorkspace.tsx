@@ -4,13 +4,17 @@ import { agentPath } from "../format/agent-source.js";
 import type { ObservedCapability } from "../../core/observed/index.js";
 import type { EditorPendingState } from "../state/editor-store.js";
 import { fetchExplain } from "../api.js";
+import { opensAsideDetail } from "../capability-aside-detail.js";
 import { DriftBanner } from "./DriftBanner.js";
 import { AgentDeclaredConfiguration, SelectableAgentList } from "./AgentList.js";
-import { AgentEditor } from "./AgentEditor.js";
-import { AgentInspectorNav, type AgentInspectorTab } from "./AgentInspectorNav.js";
+import { CapabilitiesTable } from "./CapabilitiesTable.js";
+import {
+  AgentCenterNav,
+  type AgentCenterView,
+} from "./AgentInspectorNav.js";
+import { DetailAccordion, DetailAccordionGroup } from "./DetailAccordion.js";
 import { ContextPresetControl, ContextSelector } from "./ContextSelector.js";
 import { DeclaredEffectivePanel } from "./DeclaredEffective.js";
-import { EffectiveCapabilities } from "./EffectiveCapabilities.js";
 import { GraphView } from "./GraphView.js";
 import { WhyPanel } from "./WhyPanel.js";
 import { WarningsPanel, type DisplayWarning, type WarningScope } from "./WarningsPanel.js";
@@ -25,8 +29,8 @@ interface AgentsWorkspaceProps {
   onAgentSelect: (agentId: string) => void;
   ecosystemBridgeActive?: boolean;
   onReturnToEcosystem?: () => void;
-  agentInspectorTab: AgentInspectorTab;
-  onAgentInspectorTabChange: (tab: AgentInspectorTab) => void;
+  agentCenterView: AgentCenterView;
+  onAgentCenterViewChange: (view: AgentCenterView) => void;
   contextPreset: ContextPreset;
   onContextPresetChange: (preset: ContextPreset) => void;
   effectiveConfig: EffectiveConfiguration | null;
@@ -95,6 +99,125 @@ function AgentOverview({ agent }: { agent: Agent }) {
   );
 }
 
+function AgentAsideAccordions({
+  selectedAgent,
+  selectedAgentId,
+  contextPreset,
+  onContextPresetChange,
+  unknownRate,
+  effectiveLoading,
+  effectiveError,
+  effectiveConfig,
+  warningsScope,
+  onWarningsScopeChange,
+  displayedWarnings,
+  allWarningsLoading,
+  allWarningsError,
+}: Pick<
+  AgentsWorkspaceProps,
+  | "selectedAgent"
+  | "selectedAgentId"
+  | "contextPreset"
+  | "onContextPresetChange"
+  | "unknownRate"
+  | "effectiveLoading"
+  | "effectiveError"
+  | "effectiveConfig"
+  | "warningsScope"
+  | "onWarningsScopeChange"
+  | "displayedWarnings"
+  | "allWarningsLoading"
+  | "allWarningsError"
+>) {
+  return (
+    <DetailAccordionGroup>
+      <DetailAccordion title="Overview" defaultOpen>
+        {!selectedAgent ? (
+          <p className="empty-state">Select an agent to view declared configuration.</p>
+        ) : (
+          <AgentOverview agent={selectedAgent} />
+        )}
+      </DetailAccordion>
+
+      <DetailAccordion title="Context" defaultOpen>
+        <DeclaredEffectivePanel effective={effectiveConfig} agent={selectedAgent} />
+        <ContextSelector
+          preset={contextPreset}
+          onPresetChange={onContextPresetChange}
+          unknownRate={unknownRate}
+          loading={effectiveLoading}
+          error={effectiveError}
+          hasSelectedAgent={selectedAgentId !== null}
+          effective={effectiveConfig}
+          agent={selectedAgent}
+          showPresetSelector={false}
+          showDeclaredEffective={false}
+        />
+      </DetailAccordion>
+
+      <DetailAccordion title="Warnings" defaultOpen>
+        <div className="tab-warnings">
+          <div className="warnings-scope-toggle" role="group" aria-label="Warning scope">
+            <button
+              type="button"
+              className={`warnings-scope-button${
+                warningsScope === "agent" ? " warnings-scope-button-active" : ""
+              }`}
+              disabled={!selectedAgentId}
+              onClick={() => onWarningsScopeChange("agent")}
+            >
+              Current agent
+            </button>
+            <button
+              type="button"
+              className={`warnings-scope-button${
+                warningsScope === "all" ? " warnings-scope-button-active" : ""
+              }`}
+              onClick={() => onWarningsScopeChange("all")}
+            >
+              All active agents
+            </button>
+          </div>
+          {warningsScope === "agent" && !selectedAgentId && (
+            <p className="empty-state">Select an agent to view warnings.</p>
+          )}
+          {(warningsScope === "all" || selectedAgentId) && (
+            <>
+              {allWarningsLoading && warningsScope === "all" && (
+                <p className="empty-state">Loading warnings…</p>
+              )}
+              {allWarningsError && warningsScope === "all" && (
+                <p className="error-message">{allWarningsError}</p>
+              )}
+              {effectiveLoading && warningsScope === "agent" && (
+                <p className="empty-state">Loading warnings…</p>
+              )}
+              {effectiveError && warningsScope === "agent" && (
+                <p className="error-message">{effectiveError}</p>
+              )}
+              {!allWarningsLoading &&
+                !effectiveLoading &&
+                !(warningsScope === "all" && allWarningsError) &&
+                !(warningsScope === "agent" && effectiveError) && (
+                  <WarningsPanel
+                    warnings={displayedWarnings}
+                    scope={warningsScope}
+                    agentId={selectedAgentId}
+                    emptyMessage={
+                      warningsScope === "agent"
+                        ? "No warnings for this agent and context."
+                        : "No warnings across active agents."
+                    }
+                  />
+                )}
+            </>
+          )}
+        </div>
+      </DetailAccordion>
+    </DetailAccordionGroup>
+  );
+}
+
 export function AgentsWorkspace({
   platform,
   scanVersion,
@@ -104,8 +227,8 @@ export function AgentsWorkspace({
   onAgentSelect,
   ecosystemBridgeActive = false,
   onReturnToEcosystem,
-  agentInspectorTab,
-  onAgentInspectorTabChange,
+  agentCenterView,
+  onAgentCenterViewChange,
   contextPreset,
   onContextPresetChange,
   effectiveConfig,
@@ -131,9 +254,15 @@ export function AgentsWorkspace({
   onToggleTool,
   onClearPending,
 }: AgentsWorkspaceProps) {
-  const capabilitiesWithDetail =
-    agentInspectorTab === "capabilities" && selectedCapabilityId !== null;
-  const graphWithDetail = agentInspectorTab === "graph" && selectedCapabilityId !== null;
+  const selectedCapability =
+    selectedCapabilityId !== null
+      ? effectiveConfig?.capabilities.find(
+          (capability) => capability.capabilityId === selectedCapabilityId,
+        ) ?? null
+      : null;
+  const showAsideDetail =
+    selectedCapabilityId !== null &&
+    opensAsideDetail(selectedCapability?.kind ?? "tool");
 
   return (
     <div className="agents-workspace" data-testid="agents-workspace">
@@ -152,13 +281,7 @@ export function AgentsWorkspace({
           />
         </aside>
 
-        <section className="agents-workspace-right" aria-label="Agent inspector">
-          <AgentInspectorNav
-            activeTab={agentInspectorTab}
-            onTabChange={onAgentInspectorTabChange}
-            editorPendingCount={editorPendingCount}
-          />
-
+        <section className="agents-workspace-center" aria-label="Capabilities workspace">
           <DriftBanner
             platform={platform}
             version={scanVersion}
@@ -167,191 +290,97 @@ export function AgentsWorkspace({
             onSelectCapability={onSelectCapability}
           />
 
-          <div
-            className={`agents-workspace-content panel${
-              capabilitiesWithDetail || graphWithDetail
-                ? " agents-workspace-content--with-detail"
-                : ""
-            }`}
-          >
-            {agentInspectorTab === "overview" && (
-              <>
-                {!selectedAgent && (
-                  <p className="empty-state">Select an agent to view declared configuration.</p>
-                )}
-                {selectedAgent && <AgentOverview agent={selectedAgent} />}
-              </>
+          <AgentCenterNav
+            activeView={agentCenterView}
+            onViewChange={onAgentCenterViewChange}
+            editorPendingCount={editorPendingCount}
+          />
+
+          <div className="agents-workspace-center-content panel">
+            {!selectedAgentId && (
+              <p className="empty-state">Select an agent to view effective resolution.</p>
             )}
 
-            {agentInspectorTab === "context" && (
-              <ContextSelector
-                preset={contextPreset}
-                onPresetChange={onContextPresetChange}
-                unknownRate={unknownRate}
-                loading={effectiveLoading}
-                error={effectiveError}
-                hasSelectedAgent={selectedAgentId !== null}
-                effective={effectiveConfig}
-                agent={selectedAgent}
-                showPresetSelector={false}
-                showDeclaredEffective={false}
-              />
-            )}
-
-            {agentInspectorTab === "capabilities" && (
-              <>
-                {!selectedAgentId && (
-                  <p className="empty-state">Select an agent to view capabilities.</p>
-                )}
-                {selectedAgentId && (
+            {selectedAgentId && agentCenterView === "capabilities" && (
+              <div className="tab-capabilities">
+                {ecosystemBridgeActive && onReturnToEcosystem && (
                   <div
-                    className={`tab-capabilities${
-                      selectedCapabilityId ? " tab-capabilities--with-detail" : ""
-                    }`}
+                    className="ecosystem-bridge-return-banner"
+                    data-testid="ecosystem-bridge-return-banner"
                   >
-                    {ecosystemBridgeActive && onReturnToEcosystem && (
-                      <div
-                        className="ecosystem-bridge-return-banner"
-                        data-testid="ecosystem-bridge-return-banner"
-                      >
-                        <p>
-                          Opened from declared inventory. Effective resolution — one context (
-                          <code>{contextPreset}</code>).
-                        </p>
-                        <button type="button" onClick={onReturnToEcosystem}>
-                          Back to Ecosystem canvas
-                        </button>
-                      </div>
-                    )}
-                    <DeclaredEffectivePanel effective={effectiveConfig} agent={selectedAgent} />
-                    <EffectiveCapabilities
-                      effective={effectiveConfig}
-                      loading={effectiveLoading}
-                      error={effectiveError}
-                      selectedCapabilityId={selectedCapabilityId}
-                      onSelectCapability={onSelectCapability}
-                      warnings={effectiveConfig?.warnings ?? []}
-                      observedById={observedById}
-                      observedSessionActive={observedSessionActive}
-                      observedDisclaimer={observedDisclaimer}
-                    />
-                    {selectedCapabilityId && (
-                      <WhyPanel
-                        explain={explainData}
-                        loading={explainLoading}
-                        error={explainError}
-                        onClose={onCloseWhy}
-                        observedById={observedById}
-                        observedSessionActive={observedSessionActive}
-                      />
-                    )}
+                    <p>
+                      Opened from declared inventory. Effective resolution — one context (
+                      <code>{contextPreset}</code>).
+                    </p>
+                    <button type="button" onClick={onReturnToEcosystem}>
+                      Back to Ecosystem canvas
+                    </button>
                   </div>
                 )}
-              </>
-            )}
-
-            {agentInspectorTab === "warnings" && (
-              <div className="tab-warnings">
-                <div className="warnings-scope-toggle" role="group" aria-label="Warning scope">
-                  <button
-                    type="button"
-                    className={`warnings-scope-button${
-                      warningsScope === "agent" ? " warnings-scope-button-active" : ""
-                    }`}
-                    disabled={!selectedAgentId}
-                    onClick={() => onWarningsScopeChange("agent")}
-                  >
-                    Current agent
-                  </button>
-                  <button
-                    type="button"
-                    className={`warnings-scope-button${
-                      warningsScope === "all" ? " warnings-scope-button-active" : ""
-                    }`}
-                    onClick={() => onWarningsScopeChange("all")}
-                  >
-                    All active agents
-                  </button>
-                </div>
-                {warningsScope === "agent" && !selectedAgentId && (
-                  <p className="empty-state">Select an agent to view warnings.</p>
-                )}
-                {(warningsScope === "all" || selectedAgentId) && (
-                  <>
-                    {allWarningsLoading && warningsScope === "all" && (
-                      <p className="empty-state">Loading warnings…</p>
-                    )}
-                    {allWarningsError && warningsScope === "all" && (
-                      <p className="error-message">{allWarningsError}</p>
-                    )}
-                    {effectiveLoading && warningsScope === "agent" && (
-                      <p className="empty-state">Loading warnings…</p>
-                    )}
-                    {effectiveError && warningsScope === "agent" && (
-                      <p className="error-message">{effectiveError}</p>
-                    )}
-                    {!allWarningsLoading &&
-                      !effectiveLoading &&
-                      !(warningsScope === "all" && allWarningsError) &&
-                      !(warningsScope === "agent" && effectiveError) && (
-                        <WarningsPanel
-                          warnings={displayedWarnings}
-                          scope={warningsScope}
-                          agentId={selectedAgentId}
-                          emptyMessage={
-                            warningsScope === "agent"
-                              ? "No warnings for this agent and context."
-                              : "No warnings across active agents."
-                          }
-                        />
-                      )}
-                  </>
-                )}
-              </div>
-            )}
-
-            {agentInspectorTab === "graph" && (
-              <div
-                className={`tab-graph${selectedCapabilityId ? " tab-graph--with-detail" : ""}`}
-              >
-                <GraphView
-                  context={contextPreset}
-                  agentId={selectedAgentId ?? ""}
+                <CapabilitiesTable
+                  agent={selectedAgent}
+                  effective={effectiveConfig}
+                  loading={effectiveLoading}
+                  error={effectiveError}
                   selectedCapabilityId={selectedCapabilityId}
                   onSelectCapability={onSelectCapability}
+                  warnings={effectiveConfig?.warnings ?? []}
+                  observedById={observedById}
+                  observedSessionActive={observedSessionActive}
+                  observedDisclaimer={observedDisclaimer}
+                  pending={editorPending}
+                  onToggleTool={onToggleTool}
+                  onClearPending={onClearPending}
                 />
-                {selectedCapabilityId && selectedAgentId && (
-                  <WhyPanel
-                    explain={explainData}
-                    loading={explainLoading}
-                    error={explainError}
-                    onClose={onCloseWhy}
-                    observedById={observedById}
-                    observedSessionActive={observedSessionActive}
-                  />
-                )}
               </div>
             )}
 
-            {agentInspectorTab === "editor" && (
-              <>
-                {!selectedAgent && (
-                  <p className="empty-state">Select an agent to edit tools.</p>
-                )}
-                {selectedAgent && (
-                  <AgentEditor
-                    agent={selectedAgent}
-                    effective={effectiveConfig}
-                    effectiveLoading={effectiveLoading}
-                    pending={editorPending}
-                    onToggleTool={onToggleTool}
-                    onClearPending={onClearPending}
-                  />
-                )}
-              </>
+            {selectedAgentId && agentCenterView === "graph" && (
+              <div className="tab-graph">
+                <GraphView
+                  context={contextPreset}
+                  agentId={selectedAgentId}
+                  selectedCapabilityId={
+                    showAsideDetail ? selectedCapabilityId : null
+                  }
+                  onSelectCapability={onSelectCapability}
+                />
+              </div>
             )}
           </div>
         </section>
+
+        <aside className="agents-workspace-aside panel" aria-label="Agent details">
+          {showAsideDetail ? (
+            <div className="agents-workspace-aside-detail" data-testid="agent-aside-detail">
+              <WhyPanel
+                explain={explainData}
+                loading={explainLoading}
+                error={explainError}
+                onClose={onCloseWhy}
+                observedById={observedById}
+                observedSessionActive={observedSessionActive}
+                embedded
+              />
+            </div>
+          ) : (
+            <AgentAsideAccordions
+              selectedAgent={selectedAgent}
+              selectedAgentId={selectedAgentId}
+              contextPreset={contextPreset}
+              onContextPresetChange={onContextPresetChange}
+              unknownRate={unknownRate}
+              effectiveLoading={effectiveLoading}
+              effectiveError={effectiveError}
+              effectiveConfig={effectiveConfig}
+              warningsScope={warningsScope}
+              onWarningsScopeChange={onWarningsScopeChange}
+              displayedWarnings={displayedWarnings}
+              allWarningsLoading={allWarningsLoading}
+              allWarningsError={allWarningsError}
+            />
+          )}
+        </aside>
       </div>
     </div>
   );

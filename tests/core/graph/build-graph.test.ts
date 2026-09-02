@@ -165,6 +165,14 @@ describe("buildInspectionGraph", () => {
       target: graphNodeIds.agent("worker"),
       kind: "agent-agent",
     });
+
+    const backendAgent = graph.nodes.find((node) => node.id === graphNodeIds.agent("backend"));
+    expect(backendAgent).toMatchObject({
+      kind: "agent",
+      label: "backend",
+      platform: "claude",
+      scope: "project",
+    });
   });
 
   it("omits denied capabilities from the graph", () => {

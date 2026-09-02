@@ -33,10 +33,17 @@ export function enhanceLayoutNodeForSelection(
   node: Node,
   selectedCapabilityId: string | null,
 ): Node {
-  const capabilityId = capabilityIdFromGraphNode(
-    String(node.data.kind),
-    String(node.data.label),
-  );
+  const kind = String(node.data.kind);
+  if (kind === "agent") {
+    return {
+      ...node,
+      className: "graph-node-agent",
+      selectable: false,
+      selected: false,
+    };
+  }
+
+  const capabilityId = capabilityIdFromGraphNode(kind, String(node.data.label));
   const selectable = capabilityId !== null;
 
   return {

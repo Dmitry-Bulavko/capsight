@@ -3,6 +3,7 @@ import type {
   ExecutionContext,
   ProjectSnapshot,
   ResolvedCapability,
+  Scope,
 } from "../model/index.js";
 import type { PlatformToolTables } from "../resolver/tool-tables.js";
 
@@ -26,6 +27,8 @@ export interface GraphNode {
   id: string;
   kind: GraphNodeKind;
   label: string;
+  platform?: string;
+  scope?: Scope;
 }
 
 export interface GraphEdge {
@@ -136,6 +139,8 @@ export function buildInspectionGraph(input: BuildGraphInput): InspectionGraph {
       id: agentNodeId(agent.id),
       kind: "agent",
       label: agent.name,
+      platform: agent.source.platform,
+      scope: agent.source.scope,
     });
   }
 

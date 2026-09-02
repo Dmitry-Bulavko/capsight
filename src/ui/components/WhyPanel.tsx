@@ -171,6 +171,7 @@ interface WhyPanelProps {
   onClose: () => void;
   observedById?: ReadonlyMap<string, ObservedCapability> | null;
   observedSessionActive?: boolean;
+  embedded?: boolean;
 }
 
 export function WhyPanel({
@@ -180,6 +181,7 @@ export function WhyPanel({
   onClose,
   observedById = null,
   observedSessionActive = false,
+  embedded = false,
 }: WhyPanelProps) {
   const capability = explain?.capability;
   const factRefs = capability ? factRefsFromReasons(capability.reasons) : [];
@@ -187,7 +189,10 @@ export function WhyPanel({
   const evidence = capability ? collectEvidence(capability) : [];
 
   return (
-    <section className="panel why-panel" aria-labelledby="why-panel-title">
+    <section
+      className={`why-panel${embedded ? " why-panel--aside" : " panel"}`}
+      aria-labelledby="why-panel-title"
+    >
       <div className="why-panel-header">
         <h2 id="why-panel-title">Why</h2>
         <button type="button" className="why-panel-close" onClick={onClose}>
@@ -242,11 +247,16 @@ export function WhyPanel({
           <section className="why-section">
             <h3>Source of capability</h3>
             <ul className="why-list">
-              {capability.sources.map((source, index) => (
-                <li key={`${source.path ?? source.scope}-${source.fieldPath ?? index}`}>
-                  {formatSourceLine(source)}
-                </li>
-              ))}
+              {capability.sources.map((source, index) => {
+                const line = formatSourceLine(source);
+                return (
+                  <li key={`${source.path ?? source.scope}-${source.fieldPath ?? index}`}>
+                    <span className="why-path-line mono" title={line}>
+                      {line}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           </section>
 
@@ -256,7 +266,9 @@ export function WhyPanel({
               <ul className="why-denied-list">
                 {deniedBy.map((entry, index) => (
                   <li key={`${entry.path}-${index}`}>
-                    <span className="mono">{entry.path}</span>
+                    <span className="why-path-line mono" title={entry.path}>
+                      {entry.path}
+                    </span>
                     <span className="why-denied-detail mono">{entry.detail}</span>
                   </li>
                 ))}

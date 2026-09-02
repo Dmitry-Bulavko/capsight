@@ -136,8 +136,8 @@ describe("AgentsWorkspace agent list wiring", () => {
         selectedAgentId: "agent-1",
         selectedAgent: agent,
         onAgentSelect: () => {},
-        agentInspectorTab: "overview",
-        onAgentInspectorTabChange: () => {},
+        agentCenterView: "capabilities",
+        onAgentCenterViewChange: () => {},
         contextPreset: "main-session",
         onContextPresetChange: () => {},
         effectiveConfig: null,
@@ -167,6 +167,8 @@ describe("AgentsWorkspace agent list wiring", () => {
     expect(html).toContain('data-testid="agents-workspace"');
     expect(html).toContain('aria-label="Agent list"');
     expect(html).toContain('class="agent-list-compact"');
+    expect(html).toContain("Overview");
+    expect(html).toContain("resource-detail-accordion");
     expect(html).toContain('class="agent-list-compact-name">backend<');
     expect(html).toContain('class="capsight-select context-preset-select"');
     expect(html).toContain("Declared configuration");

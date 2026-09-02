@@ -225,8 +225,8 @@ function makeAgentsWorkspaceProps(
     selectedAgentId: "backend",
     selectedAgent: agent,
     onAgentSelect: () => {},
-    agentInspectorTab: "capabilities",
-    onAgentInspectorTabChange: () => {},
+    agentCenterView: "capabilities",
+    onAgentCenterViewChange: () => {},
     contextPreset: "main-session",
     onContextPresetChange: () => {},
     effectiveConfig: null,
@@ -283,10 +283,10 @@ describe("AgentsWorkspace ecosystem bridge return banner", () => {
     expect(html).not.toContain("Back to Ecosystem canvas");
   });
 
-  it("hides return banner outside capabilities sub-view even when bridge is active", () => {
+  it("hides return banner outside capabilities center view even when bridge is active", () => {
     const html = renderToString(
       createElement(AgentsWorkspace, {
-        ...makeAgentsWorkspaceProps({ agentInspectorTab: "overview" }),
+        ...makeAgentsWorkspaceProps({ agentCenterView: "graph" }),
         ecosystemBridgeActive: true,
         onReturnToEcosystem: () => {},
       }),

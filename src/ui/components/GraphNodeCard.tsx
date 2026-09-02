@@ -1,9 +1,30 @@
-function GraphNodeCard({ kind, label }: { kind: string; label: string }) {
+import type { GraphNodeKind } from "../../core/graph/build-graph.js";
+import type { Scope } from "../../core/model/index.js";
+import { EcosystemResourceCard } from "./EcosystemResourceCard.js";
+import { GraphCapabilityCard } from "./GraphCapabilityCard.js";
+import { GraphFlowNodeShell } from "./GraphFlowNodeShell.js";
+import { graphAgentCompat, graphAgentPlatform } from "../graph-agent-card.js";
+
+function GraphAgentNode({
+  label,
+  platform,
+  scope,
+}: {
+  label: string;
+  platform?: string;
+  scope?: Scope;
+}) {
+  const resolvedPlatform = graphAgentPlatform(platform);
   return (
-    <div className="graph-node">
-      <span className="graph-node-kind">{kind.replace("_", " ")}</span>
-      <span className="graph-node-label">{label}</span>
-    </div>
+    <EcosystemResourceCard
+      label={label}
+      kind="agent"
+      blockKind="agent"
+      platform={resolvedPlatform}
+      scope={scope ?? "project"}
+      compat={graphAgentCompat(resolvedPlatform)}
+      dimmed={false}
+    />
   );
 }
 
@@ -12,7 +33,21 @@ export function graphNodeTypes() {
     default: ({
       data,
     }: {
-      data: { label: string; kind: string };
-    }) => <GraphNodeCard kind={data.kind} label={data.label} />,
+      data: {
+        label: string;
+        kind: GraphNodeKind;
+        platform?: string;
+        scope?: Scope;
+      };
+    }) =>
+      data.kind === "agent" ? (
+        <GraphFlowNodeShell>
+          <GraphAgentNode label={data.label} platform={data.platform} scope={data.scope} />
+        </GraphFlowNodeShell>
+      ) : (
+        <GraphFlowNodeShell>
+          <GraphCapabilityCard kind={data.kind} label={data.label} />
+        </GraphFlowNodeShell>
+      ),
   };
 }

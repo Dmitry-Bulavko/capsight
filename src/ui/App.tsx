@@ -18,7 +18,7 @@ import {
   type ObservedSessionPayload,
 } from "./api.js";
 import { AgentsWorkspace } from "./components/AgentsWorkspace.js";
-import type { AgentInspectorTab } from "./components/AgentInspectorNav.js";
+import type { AgentCenterView } from "./components/AgentInspectorNav.js";
 import {
   loadStoredPlatform,
   loadStoredProjectPath,
@@ -41,6 +41,7 @@ import {
 } from "./state/editor-store.js";
 import { DEFAULT_CONTEXT_PRESET } from "./components/ContextSelector.js";
 import type { WarningScope } from "./components/WarningsPanel.js";
+import { shouldOpenAsideDetail } from "./capability-aside-detail.js";
 
 export function App() {
   const [summary, setSummary] = useState<ScanStatusSummary | null>(null);
@@ -78,7 +79,7 @@ export function App() {
   );
   const [editorPending, setEditorPending] = useState<EditorPendingState>(createEmptyEditorState);
   const [activeTab, setActiveTab] = useState<DashboardTab>("ecosystem");
-  const [agentInspectorTab, setAgentInspectorTab] = useState<AgentInspectorTab>("overview");
+  const [agentCenterView, setAgentCenterView] = useState<AgentCenterView>("capabilities");
   const [allAgentWarnings, setAllAgentWarnings] = useState<AgentWarning[]>([]);
   const [allWarningsLoading, setAllWarningsLoading] = useState(false);
   const [allWarningsError, setAllWarningsError] = useState<string | null>(null);
@@ -128,10 +129,15 @@ export function App() {
     [selectedAgent],
   );
 
-  const handleSelectCapabilityInWorkspace = useCallback((capabilityId: string) => {
-    setSelectedCapabilityId(capabilityId);
-    setAgentInspectorTab("capabilities");
-  }, []);
+  const handleSelectCapabilityInWorkspace = useCallback(
+    (capabilityId: string) => {
+      if (!shouldOpenAsideDetail(capabilityId, effectiveConfig)) {
+        return;
+      }
+      setSelectedCapabilityId(capabilityId);
+    },
+    [effectiveConfig],
+  );
 
   const handleCloseWhy = useCallback(() => {
     setSelectedCapabilityId(null);
@@ -208,7 +214,7 @@ export function App() {
       setContextPreset(DEFAULT_CONTEXT_PRESET);
       setSelectedAgentId(target.agentId);
       setSelectedCapabilityId(target.capabilityId ?? null);
-      setAgentInspectorTab("capabilities");
+      setAgentCenterView("capabilities");
       setActiveTab("agents");
     },
     [runScan],
@@ -370,7 +376,11 @@ export function App() {
   }, [summary, contextPreset]);
 
   useEffect(() => {
-    if (!selectedAgentId || !selectedCapabilityId) {
+    if (
+      !selectedAgentId ||
+      !selectedCapabilityId ||
+      !shouldOpenAsideDetail(selectedCapabilityId, effectiveConfig)
+    ) {
       setExplainData(null);
       setExplainError(null);
       return;
@@ -404,7 +414,7 @@ export function App() {
     return () => {
       cancelled = true;
     };
-  }, [selectedAgentId, selectedCapabilityId, contextPreset]);
+  }, [selectedAgentId, selectedCapabilityId, contextPreset, effectiveConfig]);
 
   useEffect(() => {
     let cancelled = false;
@@ -523,8 +533,8 @@ export function App() {
                 onAgentSelect={setSelectedAgentId}
                 ecosystemBridgeActive={ecosystemReturnState !== null}
                 onReturnToEcosystem={handleReturnToEcosystem}
-                agentInspectorTab={agentInspectorTab}
-                onAgentInspectorTabChange={setAgentInspectorTab}
+                agentCenterView={agentCenterView}
+                onAgentCenterViewChange={setAgentCenterView}
                 contextPreset={contextPreset}
                 onContextPresetChange={setContextPreset}
                 effectiveConfig={effectiveConfig}

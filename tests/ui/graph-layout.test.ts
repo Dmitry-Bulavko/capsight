@@ -42,8 +42,10 @@ describe("layoutInspectionGraph", () => {
     const minToolY = Math.min(...tools.map((node) => node.position.y));
     const maxToolY = Math.max(...tools.map((node) => node.position.y));
     const toolMidY = (minToolY + maxToolY) / 2;
+    const agentHeight = Number(agent!.style?.height ?? 150);
+    const agentMidY = agent!.position.y + agentHeight / 2;
 
-    expect(Math.abs(agent!.position.y - toolMidY)).toBeLessThan(40);
+    expect(Math.abs(agentMidY - toolMidY)).toBeLessThan(40);
   });
 
   it("hides repetitive agent-tool edge labels when there are many links", () => {
@@ -69,5 +71,52 @@ describe("layoutInspectionGraph", () => {
 
     const { edges } = layoutInspectionGraph(graph);
     expect(edges[0]?.label).toBe("agent-tool");
+  });
+
+  it("uses ecosystem-sized agent nodes with platform metadata", () => {
+    const { nodes } = layoutInspectionGraph(
+      makeGraph({
+        nodes: [
+          {
+            id: "agent:main",
+            kind: "agent",
+            label: "implementer",
+            platform: "claude",
+            scope: "project",
+          },
+          { id: "tool:Read", kind: "tool", label: "Read" },
+        ],
+        edges: [
+          {
+            id: "agent:main->tool:Read",
+            source: "agent:main",
+            target: "tool:Read",
+            kind: "agent-tool",
+          },
+        ],
+      }),
+    );
+
+    const agent = nodes.find((node) => node.data.kind === "agent");
+    expect(agent?.style?.width).toBe(172);
+    expect(agent?.style?.height).toBe(150);
+    expect(agent?.data).toMatchObject({
+      label: "implementer",
+      platform: "claude",
+      scope: "project",
+    });
+  });
+
+  it("uses compact capability nodes with transparent react-flow wrappers", () => {
+    const { nodes } = layoutInspectionGraph(makeGraph());
+    const tool = nodes.find((node) => node.data.kind === "tool");
+
+    expect(tool?.style).toMatchObject({
+      width: 172,
+      height: 68,
+      padding: 0,
+      background: "transparent",
+      border: "none",
+    });
   });
 });

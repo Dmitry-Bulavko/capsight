@@ -45,7 +45,7 @@ describe("graph capability selection helpers", () => {
 
     expect(unselectedTool.selected).toBe(false);
 
-    expect(agent.className).toBe("graph-node-non-interactive");
+    expect(agent.className).toBe("graph-node-agent");
     expect(agent.selectable).toBe(false);
     expect(agent.selected).toBe(false);
   });

@@ -1,49 +1,39 @@
-export type AgentInspectorTab =
-  | "overview"
-  | "context"
-  | "capabilities"
-  | "warnings"
-  | "graph"
-  | "editor";
+export type AgentCenterView = "capabilities" | "graph";
 
-interface NavItem {
-  id: AgentInspectorTab;
+interface CenterNavItem {
+  id: AgentCenterView;
   label: string;
 }
 
-export const AGENT_INSPECTOR_NAV: readonly NavItem[] = [
-  { id: "overview", label: "Overview" },
-  { id: "context", label: "Context" },
+export const AGENT_CENTER_NAV: readonly CenterNavItem[] = [
   { id: "capabilities", label: "Capabilities" },
-  { id: "warnings", label: "Warnings" },
   { id: "graph", label: "Graph" },
-  { id: "editor", label: "Editor" },
 ] as const;
 
-interface AgentInspectorNavProps {
-  activeTab: AgentInspectorTab;
-  onTabChange: (tab: AgentInspectorTab) => void;
+interface AgentCenterNavProps {
+  activeView: AgentCenterView;
+  onViewChange: (view: AgentCenterView) => void;
   editorPendingCount?: number;
 }
 
-export function AgentInspectorNav({
-  activeTab,
-  onTabChange,
+export function AgentCenterNav({
+  activeView,
+  onViewChange,
   editorPendingCount = 0,
-}: AgentInspectorNavProps) {
+}: AgentCenterNavProps) {
   return (
-    <nav className="agent-inspector-nav" aria-label="Agent inspector sections">
+    <nav className="agent-inspector-nav agent-center-nav" aria-label="Workspace view">
       <ul className="agent-inspector-nav-list">
-        {AGENT_INSPECTOR_NAV.map((item) => (
+        {AGENT_CENTER_NAV.map((item) => (
           <li key={item.id}>
             <button
               type="button"
-              className={`agent-inspector-nav-item${activeTab === item.id ? " agent-inspector-nav-item-active" : ""}`}
-              aria-current={activeTab === item.id ? "page" : undefined}
-              onClick={() => onTabChange(item.id)}
+              className={`agent-inspector-nav-item${activeView === item.id ? " agent-inspector-nav-item-active" : ""}`}
+              aria-current={activeView === item.id ? "page" : undefined}
+              onClick={() => onViewChange(item.id)}
             >
               {item.label}
-              {item.id === "editor" && editorPendingCount > 0 && (
+              {item.id === "capabilities" && editorPendingCount > 0 && (
                 <span className="agent-inspector-nav-badge">{editorPendingCount}</span>
               )}
             </button>
